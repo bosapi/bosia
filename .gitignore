@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.bunia/
+public/bunia-tw.css
+.DS_Store
+*.log
+backup
+.agent
+.vscode
+.idea
+.cursor
+.cursorrules
+.trae
+.traeignore
+backup/
+.claude
+PLAN*

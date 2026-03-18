@@ -1,0 +1,5 @@
+{
+  "name": "bunia-monorepo",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"]
+}
