@@ -184,6 +184,19 @@ function buildHtml(
 </html>`;
 }
 
+// ─── Gzip Compression ────────────────────────────────────
+
+function compress(body: string, contentType: string, req: Request): Response {
+    const headers: Record<string, string> = { "Content-Type": contentType, "Vary": "Accept-Encoding" };
+    const accept = req.headers.get("accept-encoding") ?? "";
+    // Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
+    // responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
+    if (!isDev && body.length > 1024 && accept.includes("gzip")) {
+        return new Response(Bun.gzipSync(body), { headers: { ...headers, "Content-Encoding": "gzip" } });
+    }
+    return new Response(body, { headers });
+}
+
 // ─── Static File Detection ────────────────────────────────
 
 const STATIC_EXTS = new Set([".ico", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".css", ".js", ".woff", ".woff2", ".ttf"]);
@@ -210,8 +223,8 @@ async function resolve(event: RequestEvent): Promise<Response> {
         event.url = routeUrl;
         try {
             const data = await loadRouteData(routeUrl, locals, request);
-            if (!data) return Response.json({ pageData: {}, layoutData: [] });
-            return Response.json(data);
+            if (!data) return compress(JSON.stringify({ pageData: {}, layoutData: [] }), "application/json", request);
+            return compress(JSON.stringify(data), "application/json", request);
         } catch (err) {
             console.error("Data endpoint error:", err);
             return Response.json({ error: "Internal Server Error" }, { status: 500 });
@@ -220,6 +233,19 @@ async function resolve(event: RequestEvent): Promise<Response> {
 
     // Static files
     if (isStaticPath(path)) {
+        // dist/client: serve with cache headers based on whether filename is hashed
+        if (path.startsWith("/dist/client/")) {
+            const file = Bun.file(`.${path.split("?")[0]}`);
+            if (await file.exists()) {
+                const filename = path.split("/").pop() ?? "";
+                const isHashed = /\-[a-z0-9]{8,}\.[a-z]+$/.test(filename);
+                const cacheControl = !isDev && isHashed
+                    ? "public, max-age=31536000, immutable"
+                    : "no-cache";
+                return new Response(file, { headers: { "Cache-Control": cacheControl } });
+            }
+            return new Response("Not Found", { status: 404 });
+        }
         const pub = Bun.file(`./public${path}`);
         if (await pub.exists()) return new Response(pub);
         const dist = Bun.file(`.${path}`);
@@ -257,7 +283,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
             return new Response("Not Found", { status: 404 });
         }
         const html = buildHtml(ssr.body, ssr.head, ssr.pageData, ssr.layoutData, ssr.csr);
-        return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+        return compress(html, "text/html; charset=utf-8", request);
     } catch (err) {
         console.error("SSR error:", err);
         return new Response("Internal Server Error", { status: 500 });
@@ -279,7 +305,7 @@ const PORT = isDev ? 3001 : 3000;
 
 const app = new Elysia()
     .use(staticPlugin({ assets: "public", prefix: "/" }))
-    .use(staticPlugin({ assets: "dist/client", prefix: "/dist/client" }))
+    // dist/client is served by our resolve() handler with proper cache headers
     // API routes must intercept all HTTP methods before the GET catch-all
     .onBeforeHandle(async ({ request }) => {
         const url = new URL(request.url);

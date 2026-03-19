@@ -139,15 +139,18 @@ function generateRoutesFile(manifest: RouteManifest): void {
     lines.push("  pattern: string;");
     lines.push("  page: () => Promise<any>;");
     lines.push("  layouts: (() => Promise<any>)[];");
+    lines.push("  hasServerData: boolean;");
     lines.push("}> = [");
     for (const r of manifest.pages) {
         const layoutImports = r.layouts
             .map(l => `() => import(${JSON.stringify(toImportPath(l))})`)
             .join(", ");
+        const hasServerData = !!(r.pageServer || r.layoutServers.length > 0);
         lines.push("  {");
         lines.push(`    pattern: ${JSON.stringify(r.pattern)},`);
         lines.push(`    page: () => import(${JSON.stringify(toImportPath(r.page))}),`);
         lines.push(`    layouts: [${layoutImports}],`);
+        lines.push(`    hasServerData: ${hasServerData},`);
         lines.push("  },");
     }
     lines.push("];\n");

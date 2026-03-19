@@ -35,12 +35,14 @@
 
     // Load components + data in parallel, then update state atomically
     // to avoid a flash of stale/empty data before the fetch completes.
+    const dataFetch = match.route.hasServerData
+      ? fetch(`/__bunia/data?path=${encodeURIComponent(path)}`).then(r => r.ok ? r.json() : null).catch(() => null)
+      : Promise.resolve(null);
+
     Promise.all([
       match.route.page(),
       Promise.all(match.route.layouts.map((l: any) => l())),
-      fetch(`/__bunia/data?path=${encodeURIComponent(path)}`)
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null),
+      dataFetch,
     ]).then(([pageMod, layoutMods, result]: [any, any[], any]) => {
       if (cancelled) return;
       PageComponent = pageMod.default;
