@@ -51,10 +51,10 @@ async function startAppServer() {
     }
 
     // Read the server entry filename from the manifest written by build.ts
-    let serverEntry = "server.js";
+    let serverEntry = "index.js";
     try {
         const manifest = await Bun.file("./dist/manifest.json").json();
-        serverEntry = manifest.serverEntry ?? "server.js";
+        serverEntry = manifest.serverEntry ?? "index.js";
     } catch { }
 
     appProcess = spawn(["bun", "run", `dist/server/${serverEntry}`], {

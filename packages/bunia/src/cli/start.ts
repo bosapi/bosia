@@ -4,10 +4,10 @@ import { join } from "path";
 const BUNIA_NODE_MODULES = join(import.meta.dir, "..", "..", "node_modules");
 
 export async function runStart() {
-    let serverEntry = "server.js";
+    let serverEntry = "index.js";
     try {
         const manifest = await Bun.file("./dist/manifest.json").json();
-        serverEntry = manifest.serverEntry ?? "server.js";
+        serverEntry = manifest.serverEntry ?? "index.js";
     } catch { }
 
     const proc = spawn(["bun", "run", `dist/server/${serverEntry}`], {

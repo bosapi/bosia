@@ -92,7 +92,7 @@ const serverResult = await Bun.build({
     outdir: "./dist/server",
     target: "bun",
     splitting: true,
-    naming: { chunk: "[name]-[hash].[ext]" },
+    naming: { entry: "index.[ext]", chunk: "[name]-[hash].[ext]" },
     minify: isProduction,
     external: ["elysia", "@elysiajs/static"],
     plugins: [buniaPlugin, SveltePlugin()],
@@ -104,11 +104,10 @@ if (!serverResult.success) {
     process.exit(1);
 }
 
-// Collect the server entry filename (e.g. "server.js")
+// Entry is always "index.js" due to naming: { entry: "index.[ext]" }
 const serverEntry = serverResult.outputs
-    .filter(o => !o.path.includes("-") || o.path.endsWith("server.js"))
-    .find(o => o.path.endsWith(".js") && !o.path.match(/-[a-z0-9]{8}\.js$/))
-    ?.path.split("/").pop() ?? "server.js";
+    .find(o => o.path.endsWith("index.js"))
+    ?.path.split("/").pop() ?? "index.js";
 
 // 8. Write dist/manifest.json
 mkdirSync("./dist", { recursive: true });
