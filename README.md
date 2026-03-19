@@ -61,6 +61,10 @@ cd apps/demo
 bun run dev
 ```
 
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for what's done, what's next, and the full plan toward production readiness.
+
 ## License
 
 MIT
