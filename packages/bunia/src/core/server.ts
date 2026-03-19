@@ -91,9 +91,11 @@ async function loadRouteData(url: URL, locals: Record<string, any>, req: Request
 
     // Run page server loader
     let pageData: Record<string, any> = {};
+    let csr = true;
     if (route.pageServer) {
         try {
             const mod = await route.pageServer();
+            if (mod.csr === false) csr = false;
             if (typeof mod.load === "function") {
                 const parent = async () => {
                     const merged: Record<string, any> = {};
@@ -107,7 +109,7 @@ async function loadRouteData(url: URL, locals: Record<string, any>, req: Request
         }
     }
 
-    return { pageData: { ...pageData, params }, layoutData };
+    return { pageData: { ...pageData, params }, layoutData, csr };
 }
 
 // ─── SSR Renderer ────────────────────────────────────────
@@ -137,7 +139,7 @@ async function renderSSR(url: URL, locals: Record<string, any>, req: Request) {
         },
     });
 
-    return { body, head, pageData: data.pageData, layoutData: data.layoutData };
+    return { body, head, pageData: data.pageData, layoutData: data.layoutData, csr: data.csr };
 }
 
 // ─── HTML Builder ─────────────────────────────────────────
@@ -149,6 +151,7 @@ function buildHtml(
     head: string,
     pageData: any,
     layoutData: any[],
+    csr = true,
 ): string {
     const cacheBust = isDev ? `?v=${Date.now()}` : "";
 
@@ -158,7 +161,11 @@ function buildHtml(
 
     const fallbackTitle = head.includes("<title>") ? "" : "<title>Bunia App</title>";
 
-    const dataScript = `<script>window.__BUNIA_PAGE_DATA__=${JSON.stringify(pageData)};window.__BUNIA_LAYOUT_DATA__=${JSON.stringify(layoutData)};</script>`;
+    const scripts = csr
+        ? `\n  <script>window.__BUNIA_PAGE_DATA__=${JSON.stringify(pageData)};window.__BUNIA_LAYOUT_DATA__=${JSON.stringify(layoutData)};</script>\n  <script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
+        : isDev
+            ? `\n  <script>!function r(){var e=new EventSource("/__bunia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
+            : "";
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -172,9 +179,7 @@ function buildHtml(
   <link rel="stylesheet" href="/bunia-tw.css${cacheBust}">
 </head>
 <body>
-  <div id="app">${body}</div>
-  ${dataScript}
-  <script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>
+  <div id="app">${body}</div>${scripts}
 </body>
 </html>`;
 }
@@ -251,7 +256,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
         if (!ssr) {
             return new Response("Not Found", { status: 404 });
         }
-        const html = buildHtml(ssr.body, ssr.head, ssr.pageData, ssr.layoutData);
+        const html = buildHtml(ssr.body, ssr.head, ssr.pageData, ssr.layoutData, ssr.csr);
         return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     } catch (err) {
         console.error("SSR error:", err);
