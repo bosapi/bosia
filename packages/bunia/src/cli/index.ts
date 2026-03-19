@@ -3,6 +3,7 @@
 //   bunia create <name>   scaffold a new project
 //   bunia dev             start the development server
 //   bunia build           build for production
+//   bunia start           run the production server
 //   bunia add <name>      add a UI component from the registry
 //   bunia feat <name>     add a feature scaffold from the registry
 
@@ -23,6 +24,11 @@ async function main() {
         case "build": {
             const { runBuild } = await import("./build.ts");
             await runBuild();
+            break;
+        }
+        case "start": {
+            const { runStart } = await import("./start.ts");
+            await runStart();
             break;
         }
         case "add": {
@@ -46,6 +52,7 @@ Commands:
   create <name>       Scaffold a new Bunia project
   dev                 Start the development server
   build               Build for production
+  start               Run the production server
   add <component>     Add a UI component from the registry
   feat <feature>      Add a feature scaffold from the registry
 
@@ -53,6 +60,7 @@ Examples:
   bunia create my-app
   bunia dev
   bunia build
+  bunia start
   bunia add button
   bunia feat login
 `);

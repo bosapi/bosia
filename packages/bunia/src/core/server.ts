@@ -201,6 +201,8 @@ async function resolve(event: RequestEvent): Promise<Response> {
     if (path === "/__bunia/data") {
         const routePath = url.searchParams.get("path") ?? "/";
         const routeUrl = new URL(routePath, url.origin);
+        // Rewrite event.url so logging middleware sees the real page path, not /__bunia/data
+        event.url = routeUrl;
         try {
             const data = await loadRouteData(routeUrl, locals, request);
             if (!data) return Response.json({ pageData: {}, layoutData: [] });

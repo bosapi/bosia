@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "bunia dev",
     "build": "bunia build",
-    "start": "NODE_ENV=production bun run dist/server/index.js",
+    "start": "bunia start",
     "check": "tsc --noEmit"
   },
   "dependencies": {

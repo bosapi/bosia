@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "bun run ../../packages/bunia/src/core/dev.ts",
     "build": "NODE_ENV=production bun run ../../packages/bunia/src/core/build.ts",
-    "start": "NODE_ENV=production bun run dist/server/index.js"
+    "start": "bun run ../../packages/bunia/src/cli/index.ts start"
   },
   "dependencies": {
     "bunia": "workspace:*",

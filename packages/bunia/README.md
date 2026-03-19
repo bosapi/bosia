@@ -23,6 +23,7 @@ Commands:
   create <name>       Scaffold a new Bunia project
   dev                 Start the development server (port 3000)
   build               Build for production
+  start               Run the production server
   add <component>     Install a UI component from the registry
   feat <feature>      Install a feature scaffold from the registry
 ```
