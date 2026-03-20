@@ -74,9 +74,6 @@
 - [x] `.env` file support
 - [x] CORS configuration (framework-level)
 
-### Cleanup
-- [ ] Remove duplicate type defs in template `app.d.ts`
-
 ---
 
 ## v0.2.x — DX & Robustness

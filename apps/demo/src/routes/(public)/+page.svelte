@@ -66,7 +66,7 @@
     <div class="space-y-4">
         <h2 class="text-2xl font-semibold tracking-tight">Routes in this demo</h2>
         <div class="flex flex-wrap gap-2">
-            {#each ["/", "/about", "/blog", "/blog/hello-world", "/blog/route-groups", "/missing-page"] as href}
+            {#each ["/", "/about", "/blog", "/blog/hello-world", "/blog/route-groups", "/all/foo/bar", "/missing-page"] as href}
                 <a
                     {href}
                     class="rounded-md border px-3 py-1.5 text-sm font-mono hover:bg-muted transition-colors"
