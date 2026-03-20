@@ -15,3 +15,4 @@ export type {
     Cookies,
     CookieOptions,
 } from "../core/hooks.ts";
+export type { CsrfConfig } from "../core/csrf.ts";

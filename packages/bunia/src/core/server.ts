@@ -8,6 +8,8 @@ import { apiRoutes } from "bunia:routes";
 import type { Handle, RequestEvent } from "./hooks.ts";
 import { HttpError, Redirect } from "./errors.ts";
 import { CookieJar } from "./cookies.ts";
+import { checkCsrf } from "./csrf.ts";
+import type { CsrfConfig } from "./csrf.ts";
 import { isDev, compress, isStaticPath } from "./html.ts";
 import { loadRouteData, renderSSRStream, renderErrorPage } from "./renderer.ts";
 import { getServerTime } from "../lib/utils.ts";
@@ -29,6 +31,26 @@ if (existsSync(hooksPath)) {
     } catch (err) {
         console.warn("⚠️  Failed to load hooks.server.ts:", err);
     }
+}
+
+// ─── CSRF Config ─────────────────────────────────────────
+// Parsed once at startup from CSRF_ALLOWED_ORIGINS env var.
+// Format: "https://x.com, https://y.com" — commas with or without spaces.
+
+const _csrfAllowedOrigins = process.env.CSRF_ALLOWED_ORIGINS
+    ?.split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+
+const CSRF_CONFIG: CsrfConfig = {
+    checkOrigin: true,
+    allowedOrigins: _csrfAllowedOrigins,
+};
+
+if (_csrfAllowedOrigins?.length) {
+    console.log(`🛡️  CSRF allowed origins: ${_csrfAllowedOrigins.join(", ")}`);
+} else {
+    console.log("🛡️  CSRF: same-origin only");
 }
 
 // ─── Core Request Resolver ────────────────────────────────
@@ -151,6 +173,12 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 async function handleRequest(request: Request, url: URL): Promise<Response> {
+    const csrfError = checkCsrf(request, url, CSRF_CONFIG);
+    if (csrfError) {
+        console.warn(`[CSRF] Blocked request: ${csrfError}`);
+        return Response.json({ error: "Forbidden", message: csrfError }, { status: 403 });
+    }
+
     const cookieJar = new CookieJar(request.headers.get("cookie") ?? "");
     const event: RequestEvent = { request, url, locals: {}, params: {}, cookies: cookieJar };
     const response = userHandle
