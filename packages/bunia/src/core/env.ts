@@ -8,6 +8,12 @@ const FRAMEWORK_VARS = new Set([
     "NODE_ENV",
     "BODY_SIZE_LIMIT",
     "CSRF_ALLOWED_ORIGINS",
+    "CORS_ALLOWED_ORIGINS",
+    "CORS_ALLOWED_METHODS",
+    "CORS_ALLOWED_HEADERS",
+    "CORS_EXPOSED_HEADERS",
+    "CORS_CREDENTIALS",
+    "CORS_MAX_AGE",
 ]);
 
 // ─── .env File Parser ────────────────────────────────────

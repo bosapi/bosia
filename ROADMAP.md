@@ -72,7 +72,7 @@
 ### Production
 - [x] Graceful shutdown handler (SIGTERM/SIGINT)
 - [x] `.env` file support
-- [ ] CORS configuration (framework-level)
+- [x] CORS configuration (framework-level)
 
 ### Cleanup
 - [ ] Remove duplicate type defs in template `app.d.ts`

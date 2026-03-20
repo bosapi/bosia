@@ -10,6 +10,8 @@ import { HttpError, Redirect } from "./errors.ts";
 import { CookieJar } from "./cookies.ts";
 import { checkCsrf } from "./csrf.ts";
 import type { CsrfConfig } from "./csrf.ts";
+import { getCorsHeaders, handlePreflight } from "./cors.ts";
+import type { CorsConfig } from "./cors.ts";
 import { isDev, compress, isStaticPath } from "./html.ts";
 import { loadRouteData, renderSSRStream, renderErrorPage } from "./renderer.ts";
 import { getServerTime } from "../lib/utils.ts";
@@ -51,6 +53,34 @@ if (_csrfAllowedOrigins?.length) {
     console.log(`🛡️  CSRF allowed origins: ${_csrfAllowedOrigins.join(", ")}`);
 } else {
     console.log("🛡️  CSRF: same-origin only");
+}
+
+// ─── CORS Config ──────────────────────────────────────────
+// Parsed once at startup from CORS_ALLOWED_ORIGINS env var.
+// Format: "https://x.com, https://y.com" — commas with or without spaces.
+
+const _corsAllowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+    ?.split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+
+function splitCsvEnv(key: string): string[] | undefined {
+    return process.env[key]?.split(",").map(s => s.trim()).filter(Boolean) || undefined;
+}
+
+const CORS_CONFIG: CorsConfig | null = _corsAllowedOrigins?.length
+    ? {
+        allowedOrigins: _corsAllowedOrigins,
+        allowedMethods: splitCsvEnv("CORS_ALLOWED_METHODS"),
+        allowedHeaders: splitCsvEnv("CORS_ALLOWED_HEADERS"),
+        exposedHeaders: splitCsvEnv("CORS_EXPOSED_HEADERS"),
+        credentials: process.env.CORS_CREDENTIALS === "true" || undefined,
+        maxAge: process.env.CORS_MAX_AGE ? parseInt(process.env.CORS_MAX_AGE, 10) : undefined,
+    }
+    : null;
+
+if (_corsAllowedOrigins?.length) {
+    console.log(`🌐 CORS allowed origins: ${_corsAllowedOrigins.join(", ")}`);
 }
 
 // ─── Core Request Resolver ────────────────────────────────
@@ -176,6 +206,12 @@ const SECURITY_HEADERS: Record<string, string> = {
 
 async function handleRequest(request: Request, url: URL): Promise<Response> {
     try {
+        // Handle CORS preflight before CSRF check (OPTIONS is CSRF-exempt)
+        if (CORS_CONFIG && request.method === "OPTIONS") {
+            const preflight = handlePreflight(request, CORS_CONFIG);
+            if (preflight) return preflight;
+        }
+
         const csrfError = checkCsrf(request, url, CSRF_CONFIG);
         if (csrfError) {
             console.warn(`[CSRF] Blocked request: ${csrfError}`);
@@ -190,6 +226,13 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 
         const headers = new Headers(response.headers);
         for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
+        // Apply CORS headers for allowed origins
+        if (CORS_CONFIG) {
+            const corsHeaders = getCorsHeaders(request, CORS_CONFIG);
+            if (corsHeaders) {
+                for (const [k, v] of Object.entries(corsHeaders)) headers.set(k, v);
+            }
+        }
         // Apply any Set-Cookie headers accumulated during the request
         for (const cookie of cookieJar.outgoing) headers.append("Set-Cookie", cookie);
         return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
@@ -254,7 +297,10 @@ const app = new Elysia({ serve: { maxRequestBodySize: BODY_SIZE_LIMIT } })
     .put("*", () => new Response("Not Found", { status: 404 }))
     .patch("*", () => new Response("Not Found", { status: 404 }))
     .delete("*", () => new Response("Not Found", { status: 404 }))
-    .options("*", () => new Response("Not Found", { status: 404 }));
+    .options("*", ({ request }) => {
+        const url = new URL(request.url);
+        return handleRequest(request, url);
+    });
 
 app.listen(PORT, () => {
     // In dev mode the proxy owns the user-facing port — don't print the internal port
