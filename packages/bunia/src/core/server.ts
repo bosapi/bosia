@@ -261,4 +261,14 @@ app.listen(PORT, () => {
     if (!isDev) console.log(`🐰 Bunia server running at http://localhost:${PORT}`);
 });
 
+function shutdown() {
+    console.log("Shutting down...");
+    app.stop().then(() => process.exit(0));
+    // Force exit if stop hangs
+    setTimeout(() => process.exit(1), 10_000);
+}
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
+
 export { app };

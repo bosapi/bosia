@@ -70,7 +70,7 @@
 - [x] Request body size limits
 
 ### Production
-- [ ] Graceful shutdown handler (SIGTERM/SIGINT)
+- [x] Graceful shutdown handler (SIGTERM/SIGINT)
 - [ ] `.env` file support
 - [ ] CORS configuration (framework-level)
 
