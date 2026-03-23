@@ -14,6 +14,8 @@ const FRAMEWORK_VARS = new Set([
     "CORS_EXPOSED_HEADERS",
     "CORS_CREDENTIALS",
     "CORS_MAX_AGE",
+    "LOAD_TIMEOUT",
+    "METADATA_TIMEOUT",
 ]);
 
 // ─── .env File Parser ────────────────────────────────────

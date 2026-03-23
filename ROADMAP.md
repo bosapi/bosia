@@ -103,7 +103,7 @@
 - [ ] Dev server auto-restart — restart app process when it crashes unexpectedly (not just on file change)
 - [ ] Stream backpressure handling — check `controller.desiredSize` to prevent memory buildup on slow/disconnected clients
 - [ ] Prerender process cleanup — proper signal handling, verified termination, configurable timeout
-- [ ] Request timeouts on `load()` and `metadata()` functions — prevent hung responses from slow data sources
+- [x] Request timeouts on `load()` and `metadata()` functions — prevent hung responses from slow data sources
 
 ### Data Loading
 - [ ] `depends()` and `invalidate()` — selective data reloading

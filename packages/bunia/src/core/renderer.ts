@@ -8,6 +8,34 @@ import App from "./client/App.svelte";
 import { buildHtml, buildHtmlShell, buildHtmlShellOpen, buildMetadataChunk, buildHtmlTail, compress, safeJsonStringify, isDev } from "./html.ts";
 import type { Metadata } from "./hooks.ts";
 
+// ─── Timeout Helpers ─────────────────────────────────────
+
+class LoadTimeoutError extends Error {
+    constructor(label: string, ms: number) {
+        super(`${label} timed out after ${ms}ms`);
+        this.name = "LoadTimeoutError";
+    }
+}
+
+function parseTimeout(raw: string | undefined, fallback: number): number {
+    if (!raw || raw === "Infinity") return 0;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+const LOAD_TIMEOUT = parseTimeout(process.env.LOAD_TIMEOUT, 5000);
+const METADATA_TIMEOUT = parseTimeout(process.env.METADATA_TIMEOUT, 3000);
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+    if (ms <= 0) return promise;
+    return Promise.race([
+        promise,
+        new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new LoadTimeoutError(label, ms)), ms)
+        ),
+    ]);
+}
+
 // ─── Session-Aware Fetch ─────────────────────────────────
 // Passed to load() functions so they can call internal APIs
 // with the current user's cookies automatically forwarded.
@@ -57,7 +85,7 @@ export async function loadRouteData(
                     for (let d = 0; d < ls.depth; d++) Object.assign(merged, layoutData[d] ?? {});
                     return merged;
                 };
-                layoutData[ls.depth] = (await mod.load({ params, url, locals, cookies, parent, fetch, metadata: null })) ?? {};
+                layoutData[ls.depth] = (await withTimeout(mod.load({ params, url, locals, cookies, parent, fetch, metadata: null }), LOAD_TIMEOUT, `layout load (depth=${ls.depth}, ${url.pathname})`)) ?? {};
             }
         } catch (err) {
             if (err instanceof HttpError || err instanceof Redirect) throw err;
@@ -79,7 +107,7 @@ export async function loadRouteData(
                     for (const d of layoutData) if (d) Object.assign(merged, d);
                     return merged;
                 };
-                pageData = (await mod.load({ params, url, locals, cookies, parent, fetch, metadata: metadataData })) ?? {};
+                pageData = (await withTimeout(mod.load({ params, url, locals, cookies, parent, fetch, metadata: metadataData }), LOAD_TIMEOUT, `page load (${url.pathname})`)) ?? {};
             }
         } catch (err) {
             if (err instanceof HttpError || err instanceof Redirect) throw err;
@@ -136,7 +164,7 @@ async function loadMetadata(
         const mod = await route.pageServer();
         if (typeof mod.metadata === "function") {
             const fetch = makeFetch(req, url);
-            return (await mod.metadata({ params, url, locals, cookies, fetch })) ?? null;
+            return (await withTimeout(mod.metadata({ params, url, locals, cookies, fetch }), METADATA_TIMEOUT, `metadata (${url.pathname})`)) ?? null;
         }
     } catch (err) {
         if (isDev) console.error("Metadata load error:", err);
