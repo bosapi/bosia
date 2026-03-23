@@ -25,7 +25,14 @@ export function safeJsonStringify(data: unknown): string {
         "\u2028": "\\u2028",
         "\u2029": "\\u2029",
     };
-    return JSON.stringify(data).replace(/[<>&\u2028\u2029]/g, c => map[c]);
+    let json: string;
+    try {
+        json = JSON.stringify(data);
+    } catch {
+        console.error("safeJsonStringify: failed to serialize data (circular reference?)");
+        json = "null";
+    }
+    return json.replace(/[<>&\u2028\u2029]/g, c => map[c]);
 }
 
 // ─── Public Env Injection ─────────────────────────────────
