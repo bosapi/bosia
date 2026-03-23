@@ -89,7 +89,7 @@
 - [ ] Cookie option validation — whitelist/validate `domain`, `path`, `sameSite` values to prevent header injection
 - [x] `PUBLIC_` env scoping — only expose vars declared in `.env` files, not all `PUBLIC_*` from `process.env`
 - [ ] Trusted proxy configuration — `TRUST_PROXY` env to control when `X-Forwarded-*` headers are trusted in CSRF checks
-- [ ] Streaming error safety — validate route match before creating stream; catch all errors after first chunk sent
+- [x] Streaming error safety — validate route match before creating stream; catch all errors after first chunk sent
 - [ ] `safeJsonStringify` crash guard — try-catch around `JSON.stringify` for circular reference protection
 
 ---

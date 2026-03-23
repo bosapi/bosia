@@ -262,7 +262,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
     }
 
     // SSR pages (+page.svelte) — streaming by default
-    const streamResponse = renderSSRStream(url, locals, request, cookies);
+    const streamResponse = await renderSSRStream(url, locals, request, cookies);
     if (!streamResponse) return renderErrorPage(404, "Not Found", url, request);
     return streamResponse;
 }

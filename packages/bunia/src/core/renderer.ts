@@ -147,32 +147,49 @@ async function loadMetadata(
 
 // ─── Streaming SSR Renderer ──────────────────────────────
 
-export function renderSSRStream(
+export async function renderSSRStream(
     url: URL,
     locals: Record<string, any>,
     req: Request,
     cookies: Cookies,
-): Response | null {
+): Promise<Response | null> {
     const match = findMatch(serverRoutes, url.pathname);
     if (!match) return null;
 
     const { route, params } = match;
-    const enc = new TextEncoder();
+
+    // ── Pre-stream phase: resolve metadata before committing to a 200 ──
+    // Errors here return a proper error response with correct status code.
+    let metadata: Metadata | null = null;
+    try {
+        metadata = await loadMetadata(route, params, url, locals, cookies, req);
+    } catch (err) {
+        if (err instanceof Redirect) {
+            return Response.redirect(err.location, err.status);
+        }
+        if (err instanceof HttpError) {
+            return renderErrorPage(err.status, err.message, url, req);
+        }
+        if (isDev) console.error("Metadata load error:", err);
+        else console.error("Metadata load error:", (err as Error).message ?? err);
+        // Continue with null metadata — don't break the page for a metadata failure
+    }
 
     // Kick off imports immediately (parallel with data loading)
     const pageModPromise = route.pageModule();
     const layoutModsPromise = Promise.all(route.layoutModules.map((l: () => Promise<any>) => l()));
+
+    const enc = new TextEncoder();
 
     const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
             // Chunk 1: head opening (CSS, modulepreload — cached)
             controller.enqueue(enc.encode(buildHtmlShellOpen()));
 
-            try {
-                // Chunk 2: metadata() resolves → send title/meta, close head, open body + spinner
-                const metadata = await loadMetadata(route, params, url, locals, cookies, req);
-                controller.enqueue(enc.encode(buildMetadataChunk(metadata)));
+            // Chunk 2: metadata tags, close </head>, open <body> + spinner
+            controller.enqueue(enc.encode(buildMetadataChunk(metadata)));
 
+            try {
                 // Pass metadata.data to load() so it can reuse fetched data
                 const metadataData = metadata?.data ?? null;
 
@@ -203,6 +220,7 @@ export function renderSSRStream(
                 controller.enqueue(enc.encode(buildHtmlTail(body, head, data.pageData, data.layoutData, data.csr)));
                 controller.close();
             } catch (err) {
+                // Head is closed and body is open at this point — HTML structure is valid
                 if (err instanceof Redirect) {
                     controller.enqueue(enc.encode(
                         `<script>location.replace(${safeJsonStringify(err.location)})</script></body></html>`
@@ -212,7 +230,7 @@ export function renderSSRStream(
                 }
                 if (err instanceof HttpError) {
                     controller.enqueue(enc.encode(
-                        `<script>location.replace("/__bunia/error?status=${err.status}&message=${encodeURIComponent(err.message)}")</script></body></html>`
+                        `<script>location.replace("/__bunia/error?status=${err.status}&message="+encodeURIComponent(${safeJsonStringify(err.message)}))</script></body></html>`
                     ));
                     controller.close();
                     return;
