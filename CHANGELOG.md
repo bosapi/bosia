@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Security: `PUBLIC_*` env vars injected into client HTML are now scoped to keys declared in `.env` files only — system env vars that happen to start with `PUBLIC_` are no longer leaked to the browser
 - Streaming SSR: metadata errors now return proper error responses (correct status codes) instead of broken partial HTML; post-stream errors produce valid HTML structure; XSS-safe error message encoding via `safeJsonStringify`
 - `safeJsonStringify` no longer crashes on circular references — falls back to `null` with a console error
+- Security: path traversal protection on all static file serving (`/public`, `/dist/client`, prerendered pages) — resolved paths are validated to stay within allowed directories
+- Cookie parsing no longer crashes on malformed percent-encoding (e.g. `%ZZ`) — falls back to raw value
 
 ## [0.0.3] - 2026-03-23
 
