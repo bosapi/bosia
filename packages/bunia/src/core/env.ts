@@ -14,6 +14,9 @@ const FRAMEWORK_VARS = new Set([
     "CORS_EXPOSED_HEADERS",
     "CORS_CREDENTIALS",
     "CORS_MAX_AGE",
+    "LOAD_TIMEOUT",
+    "METADATA_TIMEOUT",
+    "PRERENDER_TIMEOUT",
 ]);
 
 // ─── .env File Parser ────────────────────────────────────
@@ -81,6 +84,11 @@ export function loadEnv(mode: string, dir?: string): Record<string, string> {
         console.log(`✓ Loaded ${loaded.join(", ")}`);
     }
 
+    // Track declared keys so html.ts only exposes .env-declared PUBLIC_* vars
+    for (const key of Object.keys(merged)) {
+        _declaredKeys.add(key);
+    }
+
     // Apply to process.env — system env wins (don't overwrite existing)
     for (const [key, value] of Object.entries(merged)) {
         if (!(key in process.env)) {
@@ -97,6 +105,16 @@ export function loadEnv(mode: string, dir?: string): Record<string, string> {
     }
 
     return result;
+}
+
+// ─── Declared Key Tracking ───────────────────────────
+// Track which keys were declared in .env files so html.ts only exposes those to the client.
+
+const _declaredKeys = new Set<string>();
+
+/** Returns the set of env var keys that were declared in .env files. */
+export function getDeclaredEnvKeys(): ReadonlySet<string> {
+    return _declaredKeys;
 }
 
 // ─── Classifier ──────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import { existsSync } from "fs";
-import { join } from "path";
+import { join, resolve as resolvePath } from "path";
 
 import { findMatch } from "./matcher.ts";
 import { apiRoutes, serverRoutes } from "bunia:routes";
@@ -94,6 +94,13 @@ function isValidRoutePath(path: string, origin: string): boolean {
     }
 }
 
+/** Resolve a file path and verify it stays within the allowed base directory. Returns null if traversal detected. */
+function safePath(base: string, untrusted: string): string | null {
+    const root = resolvePath(base);
+    const full = resolvePath(join(base, untrusted));
+    return full.startsWith(root + "/") || full === root ? full : null;
+}
+
 /** Extract action name from URL searchParams — `?/login` → "login", no slash key → "default". */
 function parseActionName(url: URL): string {
     for (const key of url.searchParams.keys()) {
@@ -143,35 +150,48 @@ async function resolve(event: RequestEvent): Promise<Response> {
     if (isStaticPath(path)) {
         // dist/client: serve with cache headers based on whether filename is hashed
         if (path.startsWith("/dist/client/")) {
-            const file = Bun.file(`.${path.split("?")[0]}`);
-            if (await file.exists()) {
-                const filename = path.split("/").pop() ?? "";
-                const isHashed = /\-[a-z0-9]{8,}\.[a-z]+$/.test(filename);
-                const cacheControl = !isDev && isHashed
-                    ? "public, max-age=31536000, immutable"
-                    : "no-cache";
-                return new Response(file, { headers: { "Cache-Control": cacheControl } });
+            const resolved = safePath("./dist/client", path.split("?")[0].slice("/dist/client".length));
+            if (resolved) {
+                const file = Bun.file(resolved);
+                if (await file.exists()) {
+                    const filename = path.split("/").pop() ?? "";
+                    const isHashed = /\-[a-z0-9]{8,}\.[a-z]+$/.test(filename);
+                    const cacheControl = !isDev && isHashed
+                        ? "public, max-age=31536000, immutable"
+                        : "no-cache";
+                    return new Response(file, { headers: { "Cache-Control": cacheControl } });
+                }
             }
             return new Response("Not Found", { status: 404 });
         }
-        const pub = Bun.file(`./public${path}`);
-        if (await pub.exists()) return new Response(pub);
-        const dist = Bun.file(`.${path}`);
-        if (await dist.exists()) return new Response(dist);
+        const pubPath = safePath("./public", path);
+        if (pubPath) {
+            const pub = Bun.file(pubPath);
+            if (await pub.exists()) return new Response(pub);
+        }
+        const distPath = safePath("./dist", path);
+        if (distPath) {
+            const dist = Bun.file(distPath);
+            if (await dist.exists()) return new Response(dist);
+        }
         return new Response("Not Found", { status: 404 });
     }
 
     // Prerendered pages — serve static HTML built at build time
-    const prerenderFile = Bun.file(
-        path === "/" ? "./dist/prerendered/index.html" : `./dist/prerendered${path}/index.html`
+    const prerenderPath = safePath(
+        "./dist/prerendered",
+        path === "/" ? "index.html" : `${path}/index.html`,
     );
-    if (await prerenderFile.exists()) {
-        return new Response(prerenderFile, {
-            headers: {
-                "Content-Type": "text/html; charset=utf-8",
-                "Cache-Control": "public, max-age=3600",
-            },
-        });
+    if (prerenderPath) {
+        const prerenderFile = Bun.file(prerenderPath);
+        if (await prerenderFile.exists()) {
+            return new Response(prerenderFile, {
+                headers: {
+                    "Content-Type": "text/html; charset=utf-8",
+                    "Cache-Control": "public, max-age=3600",
+                },
+            });
+        }
     }
 
     // API routes (+server.ts)
@@ -262,7 +282,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
     }
 
     // SSR pages (+page.svelte) — streaming by default
-    const streamResponse = renderSSRStream(url, locals, request, cookies);
+    const streamResponse = await renderSSRStream(url, locals, request, cookies);
     if (!streamResponse) return renderErrorPage(404, "Not Found", url, request);
     return streamResponse;
 }

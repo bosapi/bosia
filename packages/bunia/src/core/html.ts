@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "fs";
+import { getDeclaredEnvKeys } from "./env.ts";
 
 // ─── Dist Manifest ───────────────────────────────────────
 // Maps hashed filenames → script/link tags.
@@ -24,25 +25,30 @@ export function safeJsonStringify(data: unknown): string {
         "\u2028": "\\u2028",
         "\u2029": "\\u2029",
     };
-    return JSON.stringify(data).replace(/[<>&\u2028\u2029]/g, c => map[c]);
+    let json: string;
+    try {
+        json = JSON.stringify(data);
+    } catch {
+        console.error("safeJsonStringify: failed to serialize data (circular reference?)");
+        json = "null";
+    }
+    return json.replace(/[<>&\u2028\u2029]/g, c => map[c]);
 }
 
 // ─── Public Env Injection ─────────────────────────────────
 
 /**
- * Collect PUBLIC_* (non-static) vars from process.env that were declared in .bunia/env.server.ts.
- * We read the generated server env module to know which keys to expose.
- * Falls back to an empty object if the module hasn't been generated yet (e.g., dev before first build).
+ * Collect PUBLIC_* (non-static) vars that were declared in .env files.
+ * Only exposes keys tracked by loadEnv() — never leaks system env vars
+ * that happen to start with PUBLIC_.
  */
 function getPublicDynamicEnv(): Record<string, string> {
-    // Read keys from .bunia/env.server.ts declarations of PUBLIC_* (non-static) vars
-    // by inspecting process.env keys that start with PUBLIC_ but not PUBLIC_STATIC_.
-    // We only expose keys that came from .env files — tracked in process.env via loadEnv.
-    // At runtime the server module exports are inlined; we collect from process.env here.
+    const declared = getDeclaredEnvKeys();
     const result: Record<string, string> = {};
-    for (const [key, value] of Object.entries(process.env)) {
-        if (key.startsWith("PUBLIC_") && !key.startsWith("PUBLIC_STATIC_") && value !== undefined) {
-            result[key] = value;
+    for (const key of declared) {
+        if (key.startsWith("PUBLIC_") && !key.startsWith("PUBLIC_STATIC_")) {
+            const value = process.env[key];
+            if (value !== undefined) result[key] = value;
         }
     }
     return result;

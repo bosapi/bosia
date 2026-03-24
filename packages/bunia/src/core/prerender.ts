@@ -5,6 +5,8 @@ import type { RouteManifest } from "./types.ts";
 const CORE_DIR = import.meta.dir;
 const BUNIA_NODE_MODULES = join(CORE_DIR, "..", "..", "node_modules");
 
+const PRERENDER_TIMEOUT = Number(process.env.PRERENDER_TIMEOUT) || 5_000; // 5s default
+
 // ─── Prerendering ─────────────────────────────────────────
 
 async function detectPrerenderRoutes(manifest: RouteManifest): Promise<string[]> {
@@ -61,7 +63,7 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 
     for (const routePath of paths) {
         try {
-            const res = await fetch(`${base}${routePath}`);
+            const res = await fetch(`${base}${routePath}`, { signal: AbortSignal.timeout(PRERENDER_TIMEOUT) });
             const html = await res.text();
             const outPath = routePath === "/"
                 ? "./dist/prerendered/index.html"
@@ -70,7 +72,11 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
             writeFileSync(outPath, html);
             console.log(`   ✅ ${routePath} → ${outPath}`);
         } catch (err) {
-            console.error(`   ❌ Failed to prerender ${routePath}:`, err);
+            if (err instanceof DOMException && err.name === "TimeoutError") {
+                console.error(`   ❌ Prerender timed out for ${routePath} after ${PRERENDER_TIMEOUT / 1000}s — increase PRERENDER_TIMEOUT to raise the limit`);
+            } else {
+                console.error(`   ❌ Failed to prerender ${routePath}:`, err);
+            }
         }
     }
 

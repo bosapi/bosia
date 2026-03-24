@@ -8,6 +8,34 @@ import App from "./client/App.svelte";
 import { buildHtml, buildHtmlShell, buildHtmlShellOpen, buildMetadataChunk, buildHtmlTail, compress, safeJsonStringify, isDev } from "./html.ts";
 import type { Metadata } from "./hooks.ts";
 
+// ─── Timeout Helpers ─────────────────────────────────────
+
+class LoadTimeoutError extends Error {
+    constructor(label: string, ms: number) {
+        super(`${label} timed out after ${ms}ms`);
+        this.name = "LoadTimeoutError";
+    }
+}
+
+function parseTimeout(raw: string | undefined, fallback: number): number {
+    if (!raw || raw === "Infinity") return 0;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+const LOAD_TIMEOUT = parseTimeout(process.env.LOAD_TIMEOUT, 5000);
+const METADATA_TIMEOUT = parseTimeout(process.env.METADATA_TIMEOUT, 3000);
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+    if (ms <= 0) return promise;
+    return Promise.race([
+        promise,
+        new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new LoadTimeoutError(label, ms)), ms)
+        ),
+    ]);
+}
+
 // ─── Session-Aware Fetch ─────────────────────────────────
 // Passed to load() functions so they can call internal APIs
 // with the current user's cookies automatically forwarded.
@@ -57,7 +85,7 @@ export async function loadRouteData(
                     for (let d = 0; d < ls.depth; d++) Object.assign(merged, layoutData[d] ?? {});
                     return merged;
                 };
-                layoutData[ls.depth] = (await mod.load({ params, url, locals, cookies, parent, fetch, metadata: null })) ?? {};
+                layoutData[ls.depth] = (await withTimeout(mod.load({ params, url, locals, cookies, parent, fetch, metadata: null }), LOAD_TIMEOUT, `layout load (depth=${ls.depth}, ${url.pathname})`)) ?? {};
             }
         } catch (err) {
             if (err instanceof HttpError || err instanceof Redirect) throw err;
@@ -79,7 +107,7 @@ export async function loadRouteData(
                     for (const d of layoutData) if (d) Object.assign(merged, d);
                     return merged;
                 };
-                pageData = (await mod.load({ params, url, locals, cookies, parent, fetch, metadata: metadataData })) ?? {};
+                pageData = (await withTimeout(mod.load({ params, url, locals, cookies, parent, fetch, metadata: metadataData }), LOAD_TIMEOUT, `page load (${url.pathname})`)) ?? {};
             }
         } catch (err) {
             if (err instanceof HttpError || err instanceof Redirect) throw err;
@@ -136,7 +164,7 @@ async function loadMetadata(
         const mod = await route.pageServer();
         if (typeof mod.metadata === "function") {
             const fetch = makeFetch(req, url);
-            return (await mod.metadata({ params, url, locals, cookies, fetch })) ?? null;
+            return (await withTimeout(mod.metadata({ params, url, locals, cookies, fetch }), METADATA_TIMEOUT, `metadata (${url.pathname})`)) ?? null;
         }
     } catch (err) {
         if (isDev) console.error("Metadata load error:", err);
@@ -147,32 +175,49 @@ async function loadMetadata(
 
 // ─── Streaming SSR Renderer ──────────────────────────────
 
-export function renderSSRStream(
+export async function renderSSRStream(
     url: URL,
     locals: Record<string, any>,
     req: Request,
     cookies: Cookies,
-): Response | null {
+): Promise<Response | null> {
     const match = findMatch(serverRoutes, url.pathname);
     if (!match) return null;
 
     const { route, params } = match;
-    const enc = new TextEncoder();
+
+    // ── Pre-stream phase: resolve metadata before committing to a 200 ──
+    // Errors here return a proper error response with correct status code.
+    let metadata: Metadata | null = null;
+    try {
+        metadata = await loadMetadata(route, params, url, locals, cookies, req);
+    } catch (err) {
+        if (err instanceof Redirect) {
+            return Response.redirect(err.location, err.status);
+        }
+        if (err instanceof HttpError) {
+            return renderErrorPage(err.status, err.message, url, req);
+        }
+        if (isDev) console.error("Metadata load error:", err);
+        else console.error("Metadata load error:", (err as Error).message ?? err);
+        // Continue with null metadata — don't break the page for a metadata failure
+    }
 
     // Kick off imports immediately (parallel with data loading)
     const pageModPromise = route.pageModule();
     const layoutModsPromise = Promise.all(route.layoutModules.map((l: () => Promise<any>) => l()));
+
+    const enc = new TextEncoder();
 
     const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
             // Chunk 1: head opening (CSS, modulepreload — cached)
             controller.enqueue(enc.encode(buildHtmlShellOpen()));
 
-            try {
-                // Chunk 2: metadata() resolves → send title/meta, close head, open body + spinner
-                const metadata = await loadMetadata(route, params, url, locals, cookies, req);
-                controller.enqueue(enc.encode(buildMetadataChunk(metadata)));
+            // Chunk 2: metadata tags, close </head>, open <body> + spinner
+            controller.enqueue(enc.encode(buildMetadataChunk(metadata)));
 
+            try {
                 // Pass metadata.data to load() so it can reuse fetched data
                 const metadataData = metadata?.data ?? null;
 
@@ -203,6 +248,7 @@ export function renderSSRStream(
                 controller.enqueue(enc.encode(buildHtmlTail(body, head, data.pageData, data.layoutData, data.csr)));
                 controller.close();
             } catch (err) {
+                // Head is closed and body is open at this point — HTML structure is valid
                 if (err instanceof Redirect) {
                     controller.enqueue(enc.encode(
                         `<script>location.replace(${safeJsonStringify(err.location)})</script></body></html>`
@@ -212,7 +258,7 @@ export function renderSSRStream(
                 }
                 if (err instanceof HttpError) {
                     controller.enqueue(enc.encode(
-                        `<script>location.replace("/__bunia/error?status=${err.status}&message=${encodeURIComponent(err.message)}")</script></body></html>`
+                        `<script>location.replace("/__bunia/error?status=${err.status}&message="+encodeURIComponent(${safeJsonStringify(err.message)}))</script></body></html>`
                     ));
                     controller.close();
                     return;

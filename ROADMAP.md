@@ -4,7 +4,7 @@
 
 ---
 
-## v0.0.x — Foundation (Current)
+## v0.0.1 — Foundation (Current)
 
 ### Core Framework
 - [x] SSR with Svelte 5 Runes (`$props`, `$state`)
@@ -79,14 +79,35 @@
 
 ---
 
-## v0.2.x — DX & Robustness
+## v0.0.3 — Critical Security Fixes
 
-> Important improvements, not blocking first release.
+> Must be fixed before any production use. Exploitable vulnerabilities.
+
+### Security
+- [x] Path traversal protection — validate static/prerendered file paths stay within allowed directories
+- [x] Cookie parsing error recovery — wrap `decodeURIComponent()` in try-catch to prevent crash on malformed cookies
+- [x] Cookie option validation — whitelist/validate `domain`, `path`, `sameSite` values to prevent header injection
+- [x] `PUBLIC_` env scoping — only expose vars declared in `.env` files, not all `PUBLIC_*` from `process.env`
+- [ ] Trusted proxy configuration — `TRUST_PROXY` env to control when `X-Forwarded-*` headers are trusted in CSRF checks
+- [x] Streaming error safety — validate route match before creating stream; catch all errors after first chunk sent
+- [x] `safeJsonStringify` crash guard — try-catch around `JSON.stringify` for circular reference protection
+
+---
+
+## v0.0.4 — Production Hardening & DX
+
+> Important improvements for production reliability and developer experience.
+
+### Server Reliability
+- [ ] Graceful shutdown drain — drain in-flight requests before stopping; return 503 from health check during shutdown
+- [ ] Dev server auto-restart — restart app process when it crashes unexpectedly (not just on file change)
+- [ ] Stream backpressure handling — check `controller.desiredSize` to prevent memory buildup on slow/disconnected clients
+- [ ] Prerender process cleanup — proper signal handling, verified termination, configurable timeout
+- [x] Request timeouts on `load()` and `metadata()` functions — prevent hung responses from slow data sources
 
 ### Data Loading
 - [ ] `depends()` and `invalidate()` — selective data reloading
 - [ ] `setHeaders()` in load functions — set response headers from loaders
-- [ ] Request timeouts on `load()` functions
 
 ### Navigation
 - [ ] Link prefetching — `data-bunia-preload` attribute for hover/viewport prefetch
@@ -103,19 +124,29 @@
 - [ ] Cookie RFC 6265 validation
 - [ ] Open redirect validation on `redirect()`
 - [ ] Structured logging with request correlation IDs
+- [ ] CORS preflight validation — validate requested method/headers against allowed config
+
+### Build
+- [ ] Validate Tailwind CSS binary exists before build — clear error message if missing
+- [ ] Validate `.env` variable names — reject invalid identifiers that break codegen
+- [ ] Fail build on tsconfig.json corruption — don't silently continue with degraded config
+
+### DX
+- [ ] Stale env cleanup in dev — reset removed `.env` vars on hot-reload
+- [x] Prerender fetch timeout — prevent infinite build hangs on slow routes
 
 ### Types
 - [ ] Error page types in generated `$types.d.ts`
 
 ---
 
-## v0.3.x — Ecosystem
+## v0.0.5 — Ecosystem & Observability
 
 > Nice-to-haves for a growing framework.
 
 - [x] Form actions (SvelteKit-style)
 - [x] Streaming SSR for metadata (non-blocking `load()`)
-- [ ] Production sourcemaps
+- [ ] Production sourcemaps — external source maps for debuggable production errors
 - [ ] Testing guide (Vitest + Playwright)
 - [ ] Deployment guides (Docker, Railway, Fly.io)
 
