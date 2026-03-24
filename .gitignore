@@ -1,7 +1,7 @@
 node_modules/
 dist/
-.bunia/
-**/public/bunia-tw.css
+.bosbun/
+**/public/bosbun-tw.css
 .DS_Store
 *.log
 .env*.local

@@ -1,4 +1,4 @@
-# Bunia — Roadmap
+# Bosbun — Roadmap
 
 > Track what's done, what's next, and where we're headed.
 
@@ -40,15 +40,15 @@
 - [x] Static route prerendering (`export const prerender = true`)
 - [x] Tailwind CSS v4 integration
 - [x] `$lib` alias → `src/lib/*`
-- [x] `bunia:routes` virtual module
+- [x] `bosbun:routes` virtual module
 
 ### CLI
-- [x] `bunia dev` — dev server with file watching
-- [x] `bunia build` — production build
-- [x] `bunia start` — production server
-- [x] `bunia create` — scaffold new project
-- [x] `bunia add` — registry-based UI component installation
-- [x] `bunia feat` — registry-based feature scaffolding
+- [x] `bosbun dev` — dev server with file watching
+- [x] `bosbun build` — production build
+- [x] `bosbun start` — production server
+- [x] `bosbun create` — scaffold new project
+- [x] `bosbun add` — registry-based UI component installation
+- [x] `bosbun feat` — registry-based feature scaffolding
 
 ### Hooks & Middleware
 - [x] `hooks.server.ts` with `Handle` interface
@@ -66,14 +66,14 @@
 
 ### Security
 - [x] XSS escaping in HTML templates — sanitize `JSON.stringify()` output in `<script>` tags
-- [x] SSRF validation on `/__bunia/data` — validate `path` query param
+- [x] SSRF validation on `/__bosbun/data` — validate `path` query param
 - [x] CSRF protection — Origin/Referer header validation for state-changing requests
 - [x] Strip stack traces from error responses in production
 - [x] Request body size limits
 
 ### Production
 - [x] Graceful shutdown handler (SIGTERM/SIGINT)
-- [x] `.env` file support with `bunia:env` virtual module
+- [x] `.env` file support with `bosbun:env` virtual module
 - [x] CORS configuration (framework-level)
 - [x] Session-aware fetch (cookies forwarded in internal API calls)
 
@@ -110,7 +110,7 @@
 - [ ] `setHeaders()` in load functions — set response headers from loaders
 
 ### Navigation
-- [x] Link prefetching — `data-bunia-preload` attribute for hover/viewport prefetch
+- [x] Link prefetching — `data-bosbun-preload` attribute for hover/viewport prefetch
 - [ ] `beforeNavigate` / `afterNavigate` lifecycle hooks
 - [ ] Scroll restoration and snapshot support (`export const snapshot`)
 

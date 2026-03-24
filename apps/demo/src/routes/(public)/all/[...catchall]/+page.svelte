@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-    <title>Catch-all Demo | Bunia Demo</title>
+    <title>Catch-all Demo | Bosbun Demo</title>
 </svelte:head>
 
 <div class="flex flex-col items-center justify-center py-24 text-center space-y-6">

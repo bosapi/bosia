@@ -1,5 +1,5 @@
-import { sequence } from "bunia";
-import type { Handle } from "bunia";
+import { sequence } from "bosbun";
+import type { Handle } from "bosbun";
 
 // Sets locals that every loader and API handler can read
 const authHandle: Handle = async ({ event, resolve }) => {

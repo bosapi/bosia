@@ -3,12 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run ../../packages/bunia/src/core/dev.ts",
-    "build": "NODE_ENV=production bun run ../../packages/bunia/src/core/build.ts",
-    "start": "bun run ../../packages/bunia/src/cli/index.ts start"
+    "dev": "bun run ../../packages/bosbun/src/core/dev.ts",
+    "build": "NODE_ENV=production bun run ../../packages/bosbun/src/core/build.ts",
+    "start": "bun run ../../packages/bosbun/src/cli/index.ts start"
   },
   "dependencies": {
-    "bunia": "workspace:*",
+    "bosbun": "workspace:*",
     "svelte": "^5.20.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.5.0"

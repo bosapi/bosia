@@ -4,8 +4,8 @@
             slug: "hello-world",
             title: "Hello, World!",
             date: "2026-03-05",
-            excerpt: "The first post in the Bunia demo — a quick intro to the framework.",
-            tags: ["intro", "bunia"],
+            excerpt: "The first post in the Bosbun demo — a quick intro to the framework.",
+            tags: ["intro", "bosbun"],
         },
         {
             slug: "route-groups",
@@ -25,7 +25,7 @@
 </script>
 
 <svelte:head>
-    <title>Blog | Bunia Demo</title>
+    <title>Blog | Bosbun Demo</title>
 </svelte:head>
 
 <div class="space-y-8">
@@ -34,7 +34,7 @@
         <p class="text-muted-foreground">Routing patterns and framework internals.</p>
     </div>
 
-    <div class="grid gap-4" data-bunia-preload="hover">
+    <div class="grid gap-4" data-bosbun-preload="hover">
         {#each posts as post}
             <a href="/blog/{post.slug}" class="group block rounded-lg border bg-card p-5 hover:border-primary transition-colors">
                 <div class="flex items-start justify-between gap-4">

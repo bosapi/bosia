@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-    <title>{post ? post.title : "Post Not Found"} | Bunia Demo</title>
+    <title>{post ? post.title : "Post Not Found"} | Bosbun Demo</title>
 </svelte:head>
 
 {#if post}

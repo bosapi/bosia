@@ -1,6 +1,6 @@
 <script lang="ts">
 
-    import { PUBLIC_STATIC_BASE_URL } from "bunia:env";
+    import { PUBLIC_STATIC_BASE_URL } from "bosbun:env";
 
     let count = $state(0);
 
@@ -10,20 +10,20 @@
         { icon: "🔁", label: "Server loaders", desc: "+page.server.ts and +layout.server.ts with parent() threading" },
         { icon: "🪝", label: "Hooks", desc: "sequence() middleware — auth, logging, locals" },
         { icon: "📡", label: "API routes", desc: "+server.ts exports GET, POST, PUT, PATCH, DELETE" },
-        { icon: "🧩", label: "Component registry", desc: "bunia add button — shadcn-style, code you own" },
-        { icon: "✨", label: "feat system", desc: "bunia feat login — scaffold entire features, not just components" },
+        { icon: "🧩", label: "Component registry", desc: "bosbun add button — shadcn-style, code you own" },
+        { icon: "✨", label: "feat system", desc: "bosbun feat login — scaffold entire features, not just components" },
     ];
 </script>
 
 <svelte:head>
-    <title>Bunia Demo</title>
-    <meta name="description" content="Bunia — SSR + Svelte 5 + Bun + ElysiaJS" />
+    <title>Bosbun Demo</title>
+    <meta name="description" content="Bosbun — SSR + Svelte 5 + Bun + ElysiaJS" />
 </svelte:head>
 
 <div class="space-y-12">
     <!-- Hero -->
     <div class="space-y-3 pt-4">
-        <h1 class="text-5xl font-bold tracking-tight">🐰 Bunia {PUBLIC_STATIC_BASE_URL}</h1>
+        <h1 class="text-5xl font-bold tracking-tight">🐰 Bosbun {PUBLIC_STATIC_BASE_URL}</h1>
         <p class="text-xl text-muted-foreground max-w-xl">
             A minimalist fullstack framework — SSR, Svelte 5 Runes, Bun, and ElysiaJS.
         </p>

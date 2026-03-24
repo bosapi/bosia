@@ -1,9 +1,9 @@
-import type { RequestEvent } from "bunia";
+import type { RequestEvent } from "bosbun";
 
 export function GET({ params, locals }: RequestEvent) {
     return Response.json({
         method: "GET",
-        message: "Hello from Bunia API!",
+        message: "Hello from Bosbun API!",
         params,
         locals: {
             requestTime: locals.requestTime ?? null,

@@ -1,9 +1,9 @@
 <svelte:head>
-    <title>About | Bunia Demo</title>
+    <title>About | Bosbun Demo</title>
 </svelte:head>
 
 <div class="space-y-6 max-w-2xl">
-    <h1 class="text-4xl font-bold tracking-tight">About Bunia</h1>
+    <h1 class="text-4xl font-bold tracking-tight">About Bosbun</h1>
     <p class="text-muted-foreground text-lg">
         A minimalist fullstack framework built on Bun, ElysiaJS, and Svelte 5.
     </p>
@@ -19,8 +19,8 @@
             "Dynamic params [slug] and catch-all [...rest]",
             "Server loaders with parent() data threading",
             "Hooks — sequence() middleware for auth, logging, etc.",
-            "Component registry — bunia add button",
-            "Feature registry — bunia feat login",
+            "Component registry — bosbun add button",
+            "Feature registry — bosbun feat login",
         ] as item}
             <li class="flex items-start gap-2">
                 <span class="text-primary mt-0.5">✓</span>

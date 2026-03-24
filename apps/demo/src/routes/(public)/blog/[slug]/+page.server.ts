@@ -1,11 +1,11 @@
-import type { LoadEvent, MetadataEvent } from "bunia";
+import type { LoadEvent, MetadataEvent } from "bosbun";
 
 const posts: Record<string, { title: string; date: string; tags: string[]; content: string }> = {
     "hello-world": {
         title: "Hello, World!",
         date: "2026-03-05",
-        tags: ["intro", "bunia"],
-        content: `Welcome to Bunia! This page was loaded by a +page.server.ts file.
+        tags: ["intro", "bosbun"],
+        content: `Welcome to Bosbun! This page was loaded by a +page.server.ts file.
 
 The slug param was extracted from the URL by the route matcher and passed to the load() function as params.slug.
 
@@ -37,7 +37,7 @@ export function metadata({ params }: MetadataEvent) {
     // In production this would be a DB query for the post
     const post = posts[params.slug] ?? null;
     return {
-        title: post ? `${post.title} — Bunia Blog` : `Post not found`,
+        title: post ? `${post.title} — Bosbun Blog` : `Post not found`,
         description: post ? `A blog post about ${params.slug}` : undefined,
         meta: post
             ? [{ property: "og:title", content: post.title }]

@@ -1,0 +1,21 @@
+{
+  "name": "{{PROJECT_NAME}}",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bosbun dev",
+    "build": "bosbun build",
+    "start": "bosbun start",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "bosbun": "*",
+    "svelte": "^5.20.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5"
+  }
+}

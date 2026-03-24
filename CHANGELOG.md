@@ -1,15 +1,20 @@
 # Changelog
 
-All notable changes to Bunia are documented in this file.
+All notable changes to Bosbun are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.0.6] - 2026-03-25
+
+### Changed
+- Renamed framework from `bunia` to `bosbun` — package name, CLI binary, virtual modules (`bosbun:routes`, `bosbun:env`), generated directory (`.bosbun/`), internal endpoints (`/__bosbun/`), window globals (`__BOSBUN_*`), CSS classes, and all documentation
+
 ## [0.0.5] - 2026-03-24
 
 ### Added
-- Link prefetching: `data-bunia-preload="hover"` prefetches on mouseenter, `data-bunia-preload="viewport"` prefetches when link scrolls into view; attribute can be placed on ancestor elements (e.g. `<nav>`) to apply to all links inside; 5s TTL cache eliminates the network request on click
+- Link prefetching: `data-bosbun-preload="hover"` prefetches on mouseenter, `data-bosbun-preload="viewport"` prefetches when link scrolls into view; attribute can be placed on ancestor elements (e.g. `<nav>`) to apply to all links inside; 5s TTL cache eliminates the network request on click
 
 ## [0.0.4] - 2026-03-23
 
@@ -33,7 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.0.3] - 2026-03-21
 
 ### Added
-- Streaming SSR metadata: `metadata()` export in `+page.server.ts` sends `<title>`, `<meta>` tags in the initial HTML head before `load()` completes; 3-chunk streaming flow (head open → metadata + spinner → rendered content); `MetadataEvent` and `Metadata` types exported from `bunia`; SEO-friendly — crawlers see metadata without JS execution; `metadata()` can return `data` object that gets passed to `load()` via `event.metadata` to avoid duplicate queries
+- Streaming SSR metadata: `metadata()` export in `+page.server.ts` sends `<title>`, `<meta>` tags in the initial HTML head before `load()` completes; 3-chunk streaming flow (head open → metadata + spinner → rendered content); `MetadataEvent` and `Metadata` types exported from `bosbun`; SEO-friendly — crawlers see metadata without JS execution; `metadata()` can return `data` object that gets passed to `load()` via `event.metadata` to avoid duplicate queries
 - Form actions (SvelteKit-style): `actions` export in `+page.server.ts` for handling form POST submissions; `fail()` helper and `ActionFailure` class for returning validation errors; `ActionData` type auto-generated in `$types.d.ts`; `form` prop passed to page components; named actions via `action="?/name"` attribute; re-runs `load()` after action; proper status codes (400 for failures, 200 for success, 303 for redirects)
 
 ---
@@ -41,19 +46,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.0.2] - 2026-03-20
 
 ### Added
-- `.env` file support with `bunia:env` virtual module: prefix-based classification (`PUBLIC_STATIC_*`, `PUBLIC_*`, `STATIC_*`, private); load order `.env` → `.env.local` → `.env.[mode]` → `.env.[mode].local`; build-time codegen of `.bunia/env.server.ts`, `.bunia/env.client.ts`, `.bunia/types/env.d.ts`; `window.__BUNIA_ENV__` injected at SSR for dynamic public vars; CLI loads env before spawning subprocesses
+- `.env` file support with `bosbun:env` virtual module: prefix-based classification (`PUBLIC_STATIC_*`, `PUBLIC_*`, `STATIC_*`, private); load order `.env` → `.env.local` → `.env.[mode]` → `.env.[mode].local`; build-time codegen of `.bosbun/env.server.ts`, `.bosbun/env.client.ts`, `.bosbun/types/env.d.ts`; `window.__BOSBUN_ENV__` injected at SSR for dynamic public vars; CLI loads env before spawning subprocesses
 - Graceful shutdown: SIGTERM/SIGINT handlers call `app.stop()` then `process.exit(0)`; force-exit after 10s if stop hangs
 - Request body size limits: `BODY_SIZE_LIMIT` env var (`512K`, `1M`, `Infinity`, or bytes); defaults to `512K`; wired into Elysia/Bun server config for 413 enforcement before handlers run
-- CSRF protection: Origin/Referer header validation on all non-safe requests (POST/PUT/PATCH/DELETE); blocked requests return 403 with a descriptive message; exports `CsrfConfig` type from `bunia`
-- CORS configuration: `CORS_ALLOWED_ORIGINS` env var (comma-separated); `getCorsHeaders()` adds `Access-Control-Allow-Origin` + `Vary: Origin` for matching origins; OPTIONS preflight returns 204 with `Access-Control-Allow-Methods/Headers/Max-Age`; exports `CorsConfig` type from `bunia`
+- CSRF protection: Origin/Referer header validation on all non-safe requests (POST/PUT/PATCH/DELETE); blocked requests return 403 with a descriptive message; exports `CsrfConfig` type from `bosbun`
+- CORS configuration: `CORS_ALLOWED_ORIGINS` env var (comma-separated); `getCorsHeaders()` adds `Access-Control-Allow-Origin` + `Vary: Origin` for matching origins; OPTIONS preflight returns 204 with `Access-Control-Allow-Methods/Headers/Max-Age`; exports `CorsConfig` type from `bosbun`
 - Strip stack traces in production: `handleRequest` wrapped in try/catch; Elysia `.onError()` safety net; all `console.error` calls log full error in dev and message-only in prod
 
 ### Removed
-- Duplicate `PageLoadEvent` and `LayoutLoadEvent` interfaces from template `app.d.ts`; use `import type { LoadEvent } from "bunia"` instead
+- Duplicate `PageLoadEvent` and `LayoutLoadEvent` interfaces from template `app.d.ts`; use `import type { LoadEvent } from "bosbun"` instead
 
 ### Fixed
 - XSS: escape `<`, `>`, `&`, U+2028, U+2029 in JSON embedded in SSR `<script>` tags (`safeJsonStringify`)
-- SSRF: validate `path` query param on `/__bunia/data` — reject non-root-relative paths, double-slash URLs, and traversal sequences
+- SSRF: validate `path` query param on `/__bosbun/data` — reject non-root-relative paths, double-slash URLs, and traversal sequences
 
 ---
 
@@ -72,7 +77,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 #### Data Loading
 - **`load()` function** — Plain `export async function load({ params, cookies })` pattern (no wrapper needed)
-- **`$types` codegen** — Auto-generated `.bunia/types/src/routes/**/$types.d.ts` per route directory
+- **`$types` codegen** — Auto-generated `.bosbun/types/src/routes/**/$types.d.ts` per route directory
   - `PageData`, `PageProps` for pages
   - `LayoutData`, `LayoutProps` for layouts
   - `import type { PageData } from './$types'` resolves transparently via `tsconfig.json` `rootDirs`
@@ -101,13 +106,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Static prerendering** — Opt-in prerendering of routes at build time (`export const prerender = true`)
 - **Tailwind CSS v4** — Integrated via `@tailwindcss/cli`
 - **`$lib` alias** — `$lib/*` maps to `src/lib/*`
-- **`bunia:routes` virtual module** — Auto-generated route registry at build time
+- **`bosbun:routes` virtual module** — Auto-generated route registry at build time
 
 #### CLI
-- **`bunia dev`** — Start dev server with file watching and HMR
-- **`bunia build`** — Production build
-- **`bunia start`** — Start production server from `dist/server/index.js`
-- **`bunia create`** — Scaffold a new project from the default template
+- **`bosbun dev`** — Start dev server with file watching and HMR
+- **`bosbun build`** — Production build
+- **`bosbun start`** — Start production server from `dist/server/index.js`
+- **`bosbun create`** — Scaffold a new project from the default template
 
 #### Hooks
 - **`hooks.server.ts`** — `Handle` middleware interface with `sequence()` helper
@@ -115,7 +120,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **`LoadEvent`** — `params`, `url`, `cookies`, `locals`
 
 #### Developer Experience
-- **Default project template** — `packages/bunia/templates/default/` for `bunia create`
+- **Default project template** — `packages/bosbun/templates/default/` for `bosbun create`
 - **Dockerfile** — Multi-stage Docker build for the demo app
 - **TypeScript** — Full type coverage; `tsconfig.json` auto-patched on first build
 - **README** — Monorepo, framework, demo app, and template READMEs
