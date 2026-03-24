@@ -46,6 +46,7 @@ export type LoadEvent = {
     cookies: Cookies;
     fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
     parent: () => Promise<Record<string, any>>;
+    metadata: Record<string, any> | null;
 };
 
 export type ResolveFunction = (event: RequestEvent) => MaybePromise<Response>;
@@ -54,6 +55,23 @@ export type Handle = (input: {
     event: RequestEvent;
     resolve: ResolveFunction;
 }) => MaybePromise<Response>;
+
+// ─── Metadata Types ──────────────────────────────────────
+
+export type MetadataEvent = {
+    params: Record<string, string>;
+    url: URL;
+    locals: Record<string, any>;
+    cookies: Cookies;
+    fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+};
+
+export type Metadata = {
+    title?: string;
+    description?: string;
+    meta?: Array<{ name?: string; property?: string; content: string }>;
+    data?: Record<string, any>;
+};
 
 type MaybePromise<T> = T | Promise<T>;
 

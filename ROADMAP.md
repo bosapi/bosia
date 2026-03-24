@@ -47,6 +47,8 @@
 - [x] `bunia build` — production build
 - [x] `bunia start` — production server
 - [x] `bunia create` — scaffold new project
+- [x] `bunia add` — registry-based UI component installation
+- [x] `bunia feat` — registry-based feature scaffolding
 
 ### Hooks & Middleware
 - [x] `hooks.server.ts` with `Handle` interface
@@ -71,8 +73,9 @@
 
 ### Production
 - [x] Graceful shutdown handler (SIGTERM/SIGINT)
-- [x] `.env` file support
+- [x] `.env` file support with `bunia:env` virtual module
 - [x] CORS configuration (framework-level)
+- [x] Session-aware fetch (cookies forwarded in internal API calls)
 
 ---
 
@@ -80,12 +83,29 @@
 
 > Important improvements, not blocking first release.
 
-- [ ] Cookie RFC 6265 validation
+### Data Loading
+- [ ] `depends()` and `invalidate()` — selective data reloading
+- [ ] `setHeaders()` in load functions — set response headers from loaders
 - [ ] Request timeouts on `load()` functions
-- [ ] Structured logging with request correlation IDs
+
+### Navigation
+- [ ] Link prefetching — `data-bunia-preload` attribute for hover/viewport prefetch
+- [ ] `beforeNavigate` / `afterNavigate` lifecycle hooks
+- [ ] Scroll restoration and snapshot support (`export const snapshot`)
+
+### Routing
 - [ ] Dynamic route prerendering with `entries()` export
-- [ ] Error page types in generated `$types.d.ts`
+- [ ] Page option: `ssr` toggle (`export const ssr = false`)
+- [ ] Page option: `trailingSlash` configuration
+- [ ] Layout reset (`+layout@.svelte` or `+page@.svelte`)
+
+### Server
+- [ ] Cookie RFC 6265 validation
 - [ ] Open redirect validation on `redirect()`
+- [ ] Structured logging with request correlation IDs
+
+### Types
+- [ ] Error page types in generated `$types.d.ts`
 
 ---
 
@@ -93,8 +113,8 @@
 
 > Nice-to-haves for a growing framework.
 
-- [ ] Form actions (SvelteKit-style)
-- [ ] Streaming SSR for metadata (non-blocking `load()`)
+- [x] Form actions (SvelteKit-style)
+- [x] Streaming SSR for metadata (non-blocking `load()`)
 - [ ] Production sourcemaps
 - [ ] Testing guide (Vitest + Playwright)
 - [ ] Deployment guides (Docker, Railway, Fly.io)
@@ -105,8 +125,10 @@
 
 Intentional omissions — out of scope for the framework:
 
-- `+page.ts` universal load (decided against)
+- `+page.ts` / `+layout.ts` universal load (decided against)
 - Image optimization (infrastructure concern)
 - i18n (user's responsibility)
 - Rate limiting (reverse proxy concern)
 - Plugin/extension system (premature)
+- Adapter system (intentionally tied to Bun + Elysia)
+- Service worker tooling (out of scope)

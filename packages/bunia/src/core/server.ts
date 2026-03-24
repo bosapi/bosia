@@ -4,16 +4,16 @@ import { existsSync } from "fs";
 import { join } from "path";
 
 import { findMatch } from "./matcher.ts";
-import { apiRoutes } from "bunia:routes";
+import { apiRoutes, serverRoutes } from "bunia:routes";
 import type { Handle, RequestEvent } from "./hooks.ts";
-import { HttpError, Redirect } from "./errors.ts";
+import { HttpError, Redirect, ActionFailure } from "./errors.ts";
 import { CookieJar } from "./cookies.ts";
 import { checkCsrf } from "./csrf.ts";
 import type { CsrfConfig } from "./csrf.ts";
 import { getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
 import { isDev, compress, isStaticPath } from "./html.ts";
-import { loadRouteData, renderSSRStream, renderErrorPage } from "./renderer.ts";
+import { loadRouteData, renderSSRStream, renderErrorPage, renderPageWithFormData } from "./renderer.ts";
 import { getServerTime } from "../lib/utils.ts";
 
 // ─── User Hooks ──────────────────────────────────────────
@@ -92,6 +92,14 @@ function isValidRoutePath(path: string, origin: string): boolean {
     } catch {
         return false;
     }
+}
+
+/** Extract action name from URL searchParams — `?/login` → "login", no slash key → "default". */
+function parseActionName(url: URL): string {
+    for (const key of url.searchParams.keys()) {
+        if (key.startsWith("/")) return key.slice(1) || "default";
+    }
+    return "default";
 }
 
 async function resolve(event: RequestEvent): Promise<Response> {
@@ -187,6 +195,69 @@ async function resolve(event: RequestEvent): Promise<Response> {
             if (isDev) console.error("API route error:", err);
             else console.error("API route error:", (err as Error).message ?? err);
             return Response.json({ error: "Internal Server Error" }, { status: 500 });
+        }
+    }
+
+    // Form actions — POST to page routes with `actions` export
+    if (method === "POST") {
+        const pageMatch = findMatch(serverRoutes, path);
+        if (pageMatch?.route.pageServer) {
+            try {
+                const mod = await pageMatch.route.pageServer();
+                if (mod.actions && typeof mod.actions === "object") {
+                    const actionName = parseActionName(url);
+                    const action = mod.actions[actionName];
+                    if (!action) {
+                        return renderErrorPage(404, `Action "${actionName}" not found`, url, request);
+                    }
+
+                    event.params = pageMatch.params;
+                    let result: any;
+                    try {
+                        result = await action(event);
+                    } catch (err) {
+                        if (err instanceof Redirect) {
+                            return new Response(null, {
+                                status: 303,
+                                headers: { Location: err.location },
+                            });
+                        }
+                        if (err instanceof HttpError) {
+                            return renderErrorPage(err.status, err.message, url, request);
+                        }
+                        throw err;
+                    }
+
+                    // Redirect returned (not thrown)
+                    if (result instanceof Redirect) {
+                        return new Response(null, {
+                            status: 303,
+                            headers: { Location: result.location },
+                        });
+                    }
+
+                    // ActionFailure — re-render with failure status
+                    if (result instanceof ActionFailure) {
+                        return renderPageWithFormData(url, locals, request, cookies, result.data, result.status);
+                    }
+
+                    // Success — re-render page with action return data
+                    return renderPageWithFormData(url, locals, request, cookies, result ?? null, 200);
+                }
+            } catch (err) {
+                if (err instanceof Redirect) {
+                    return new Response(null, {
+                        status: 303,
+                        headers: { Location: err.location },
+                    });
+                }
+                if (err instanceof HttpError) {
+                    return renderErrorPage(err.status, err.message, url, request);
+                }
+                if (isDev) console.error("Form action error:", err);
+                else console.error("Form action error:", (err as Error).message ?? err);
+                return Response.json({ error: "Internal Server Error" }, { status: 500 });
+            }
         }
     }
 
@@ -293,7 +364,10 @@ const app = new Elysia({ serve: { maxRequestBodySize: BODY_SIZE_LIMIT } })
         return handleRequest(request, url);
     })
     // Non-GET catch-alls so onBeforeHandle fires for API routes on other methods
-    .post("*", () => new Response("Not Found", { status: 404 }))
+    .post("*", ({ request }) => {
+        const url = new URL(request.url);
+        return handleRequest(request, url);
+    })
     .put("*", () => new Response("Not Found", { status: 404 }))
     .patch("*", () => new Response("Not Found", { status: 404 }))
     .delete("*", () => new Response("Not Found", { status: 404 }))

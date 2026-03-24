@@ -9,12 +9,14 @@
     ssrLayoutComponents = [],
     ssrPageData = {},
     ssrLayoutData = [],
+    ssrFormData = null,
   }: {
     ssrMode?: boolean;
     ssrPageComponent?: any;
     ssrLayoutComponents?: any[];
     ssrPageData?: Record<string, any>;
     ssrLayoutData?: Record<string, any>[];
+    ssrFormData?: any;
   } = $props();
 
   let PageComponent = $state<any>(ssrPageComponent);
@@ -23,6 +25,7 @@
   let layoutData = $state<Record<string, any>[]>(ssrLayoutData ?? []);
   // Kept separate to avoid a read→write cycle inside the $effect below
   let routeParams = $state<Record<string, string>>(ssrPageData?.params ?? {});
+  let formData = $state<any>(ssrFormData);
   let navigating = $state(false);
   let navDone = $state(false);
   // Skip bar on the very first effect run (initial hydration — data already present)
@@ -41,6 +44,7 @@
     const isFirst = firstNav;
     firstNav = false;
     if (!isFirst) {
+      formData = null;
       if (navDoneTimer) { clearTimeout(navDoneTimer); navDoneTimer = null; }
       navDone = false;
       navigating = true;
@@ -94,7 +98,7 @@
 {#if layoutComponents.length > 0}
   {@render renderLayout(0)}
 {:else if PageComponent}
-  <PageComponent data={{ ...pageData, params: routeParams }} />
+  <PageComponent data={{ ...pageData, params: routeParams }} form={formData} />
 {:else}
   <p>Loading...</p>
 {/if}
@@ -110,7 +114,7 @@
   {:else}
     <Layout {data}>
       {#if PageComponent}
-        <PageComponent data={{ ...pageData, params: routeParams }} />
+        <PageComponent data={{ ...pageData, params: routeParams }} form={formData} />
       {:else}
         <p>Loading...</p>
       {/if}

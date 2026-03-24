@@ -51,6 +51,17 @@ export function generateRouteTypes(manifest: RouteManifest): void {
         }
         lines.push(`export type PageProps = { data: PageData };`);
 
+        // ActionData — union of all action return types, unwrapping ActionFailure
+        if (info.pageServer) {
+            lines.push(``);
+            lines.push(`import type { actions as _actions } from '${srcBase}+page.server.ts';`);
+            lines.push(`type _ActionReturn<T> = T extends (...args: any[]) => infer R ? Awaited<R> : never;`);
+            lines.push(`type _UnwrapFailure<T> = T extends { status: number; data: infer D } ? D : T;`);
+            lines.push(`export type ActionData = _actions extends Record<string, (...args: any[]) => any>`);
+            lines.push(`  ? _UnwrapFailure<_ActionReturn<_actions[keyof _actions]>> | null`);
+            lines.push(`  : null;`);
+        }
+
         if (info.layoutServer) {
             lines.push(`\nimport type { load as _layoutLoad } from '${srcBase}+layout.server.ts';`);
             lines.push(`export type LayoutData = Awaited<ReturnType<typeof _layoutLoad>> & { params: Record<string, string> };`);

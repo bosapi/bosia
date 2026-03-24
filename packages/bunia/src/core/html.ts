@@ -56,6 +56,7 @@ export function buildHtml(
     pageData: any,
     layoutData: any[],
     csr = true,
+    formData: any = null,
 ): string {
     const cacheBust = isDev ? `?v=${Date.now()}` : "";
 
@@ -70,8 +71,12 @@ export function buildHtml(
         ? `\n  <script>window.__BUNIA_ENV__=${safeJsonStringify(publicEnv)};</script>`
         : "";
 
+    const formScript = formData != null
+        ? `window.__BUNIA_FORM_DATA__=${safeJsonStringify(formData)};`
+        : "";
+
     const scripts = csr
-        ? `${envScript}\n  <script>window.__BUNIA_PAGE_DATA__=${safeJsonStringify(pageData)};window.__BUNIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};</script>\n  <script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
+        ? `${envScript}\n  <script>window.__BUNIA_PAGE_DATA__=${safeJsonStringify(pageData)};window.__BUNIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formScript}</script>\n  <script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
         : isDev
             ? `\n  <script>!function r(){var e=new EventSource("/__bunia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
             : "";
@@ -95,29 +100,69 @@ export function buildHtml(
 
 // ─── Streaming HTML Helpers ──────────────────────────────
 
+import type { Metadata } from "./hooks.ts";
+
 let _shell: string | null = null;
 
 export function buildHtmlShell(): string {
     if (_shell) return _shell;
+    _shell = buildHtmlShellOpen() + buildMetadataChunk(null);
+    return _shell;
+}
+
+let _shellOpen: string | null = null;
+
+/** Chunk 1: everything from <!DOCTYPE> through CSS/modulepreload links (head still open) */
+export function buildHtmlShellOpen(): string {
+    if (_shellOpen) return _shellOpen;
     const cacheBust = isDev ? `?v=${Date.now()}` : "";
     const cssLinks = (distManifest.css ?? [])
         .map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
         .join("\n  ");
-    _shell = `<!DOCTYPE html>\n<html lang="en">\n<head>\n` +
+    _shellOpen = `<!DOCTYPE html>\n<html lang="en">\n<head>\n` +
         `  <meta charset="UTF-8">\n` +
         `  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n` +
         `  <link rel="icon" href="data:,">\n` +
         `  ${cssLinks}\n` +
         `  <link rel="stylesheet" href="/bunia-tw.css${cacheBust}">\n` +
-        `  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">\n` +
-        `</head>\n<body>\n` +
-        `<div id="__bs__"><style>` +
-        `:root{--bunia-loading-color:#f73b27}` +
-        `#__bs__{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}` +
-        `#__bs__ i{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:var(--bunia-loading-color);` +
-        `border-radius:50%;animation:__bs__ .8s linear infinite}` +
-        `@keyframes __bs__{to{transform:rotate(360deg)}}</style><i></i></div>`;
-    return _shell;
+        `  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`;
+    return _shellOpen;
+}
+
+const SPINNER = `<div id="__bs__"><style>` +
+    `:root{--bunia-loading-color:#f73b27}` +
+    `#__bs__{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}` +
+    `#__bs__ i{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:var(--bunia-loading-color);` +
+    `border-radius:50%;animation:__bs__ .8s linear infinite}` +
+    `@keyframes __bs__{to{transform:rotate(360deg)}}</style><i></i></div>`;
+
+/** Chunk 2: metadata tags + close </head> + open <body> + spinner */
+export function buildMetadataChunk(metadata: Metadata | null): string {
+    let out = "\n";
+    if (metadata) {
+        if (metadata.title) out += `  <title>${escapeHtml(metadata.title)}</title>\n`;
+        if (metadata.description) {
+            out += `  <meta name="description" content="${escapeAttr(metadata.description)}">\n`;
+        }
+        if (metadata.meta) {
+            for (const m of metadata.meta) {
+                const attrs = m.name ? `name="${escapeAttr(m.name)}"` : `property="${escapeAttr(m.property ?? "")}"`;
+                out += `  <meta ${attrs} content="${escapeAttr(m.content)}">\n`;
+            }
+        }
+    } else {
+        out += `  <title>Bunia App</title>\n`;
+    }
+    out += `</head>\n<body>\n${SPINNER}`;
+    return out;
+}
+
+function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function escapeAttr(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 export function buildHtmlTail(
@@ -126,6 +171,7 @@ export function buildHtmlTail(
     pageData: any,
     layoutData: any[],
     csr: boolean,
+    formData: any = null,
 ): string {
     const cacheBust = isDev ? `?v=${Date.now()}` : "";
     let out = `<script>document.getElementById('__bs__').remove()</script>`;
@@ -136,8 +182,9 @@ export function buildHtmlTail(
         if (Object.keys(publicEnv).length > 0) {
             out += `\n<script>window.__BUNIA_ENV__=${safeJsonStringify(publicEnv)};</script>`;
         }
+        const formInject = formData != null ? `window.__BUNIA_FORM_DATA__=${safeJsonStringify(formData)};` : "";
         out += `\n<script>window.__BUNIA_PAGE_DATA__=${safeJsonStringify(pageData)};` +
-               `window.__BUNIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};</script>`;
+               `window.__BUNIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formInject}</script>`;
         out += `\n<script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`;
     } else if (isDev) {
         out += `\n<script>!function r(){var e=new EventSource("/__bunia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;

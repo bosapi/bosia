@@ -37,6 +37,7 @@ async function main() {
             ssrLayoutComponents,
             ssrPageData: (window as any).__BUNIA_PAGE_DATA__ ?? {},
             ssrLayoutData: (window as any).__BUNIA_LAYOUT_DATA__ ?? [],
+            ssrFormData: (window as any).__BUNIA_FORM_DATA__ ?? null,
         },
     });
 }

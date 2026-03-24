@@ -21,3 +21,15 @@ export function error(status: number, message: string): never {
 export function redirect(status: number, location: string): never {
     throw new Redirect(status, location);
 }
+
+// ─── Form Action Helpers ─────────────────────────────────
+// Return from form actions — not thrown, just returned.
+
+export class ActionFailure<T extends Record<string, any> = Record<string, any>> {
+    constructor(public status: number, public data: T) {}
+}
+
+/** Return a failure from a form action with a status code and data. */
+export function fail<T extends Record<string, any>>(status: number, data: T): ActionFailure<T> {
+    return new ActionFailure(status, data);
+}

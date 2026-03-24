@@ -17,6 +17,11 @@ export function matchPattern(
     pattern: string,
     pathname: string,
 ): Record<string, string> | null {
+    // Strip trailing slash (but keep "/" as-is)
+    if (pathname.length > 1 && pathname.endsWith("/")) {
+        pathname = pathname.slice(0, -1);
+    }
+
     // Exact match
     if (pattern === pathname) return {};
 
@@ -54,29 +59,19 @@ export function matchPattern(
 
 /**
  * Find the first matching route from a list.
- * Uses 3-pass priority: exact → dynamic → catch-all.
+ * Routes must be pre-sorted by priority (exact → dynamic → catch-all).
+ * Single pass — first match wins.
  */
 export function findMatch<T extends { pattern: string }>(
     routes: T[],
     pathname: string,
 ): RouteMatch<T> | null {
-    // Pass 1 — exact
-    for (const route of routes) {
-        if (route.pattern === pathname) {
-            return { route, params: {} };
-        }
+    // Strip trailing slash (but keep "/" as-is)
+    if (pathname.length > 1 && pathname.endsWith("/")) {
+        pathname = pathname.slice(0, -1);
     }
 
-    // Pass 2 — dynamic segments (no catch-all)
     for (const route of routes) {
-        if (!route.pattern.includes("[") || route.pattern.includes("[...")) continue;
-        const params = matchPattern(route.pattern, pathname);
-        if (params !== null) return { route, params };
-    }
-
-    // Pass 3 — catch-all
-    for (const route of routes) {
-        if (!route.pattern.includes("[...")) continue;
         const params = matchPattern(route.pattern, pathname);
         if (params !== null) return { route, params };
     }

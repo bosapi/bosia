@@ -1,4 +1,4 @@
-import type { LoadEvent } from "bunia";
+import type { LoadEvent, MetadataEvent } from "bunia";
 
 const posts: Record<string, { title: string; date: string; tags: string[]; content: string }> = {
     "hello-world": {
@@ -33,11 +33,26 @@ The route matcher uses 3-pass priority: exact matches first, then dynamic segmen
     },
 };
 
-export async function load({ params, parent }: LoadEvent) {
+export function metadata({ params }: MetadataEvent) {
+    // In production this would be a DB query for the post
+    const post = posts[params.slug] ?? null;
+    return {
+        title: post ? `${post.title} — Bunia Blog` : `Post not found`,
+        description: post ? `A blog post about ${params.slug}` : undefined,
+        meta: post
+            ? [{ property: "og:title", content: post.title }]
+            : [],
+        // Pass fetched post to load() — avoids duplicate query
+        data: { post },
+    };
+}
+
+export async function load({ params, parent, metadata }: LoadEvent) {
     // parent() gives us data from +layout.server.ts (appName, requestTime)
     const parentData = await parent();
 
-    const post = posts[params.slug] ?? null;
+    // Reuse post from metadata() — no duplicate DB query
+    const post = metadata?.post ?? posts[params.slug] ?? null;
 
     return {
         post,
