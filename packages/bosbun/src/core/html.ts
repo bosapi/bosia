@@ -107,15 +107,6 @@ export function buildHtml(
 
 import type { Metadata } from "./hooks.ts";
 
-let _shell: string | null = null;
-
-export function buildHtmlShell(): string {
-    if (_shell) return _shell;
-    _shell = buildHtmlShellOpen() + buildMetadataChunk(null);
-    return _shell;
-}
-
-
 let _shellOpen: string | null = null;
 
 /** Chunk 1: everything from <!DOCTYPE> through CSS/modulepreload links (head still open) */
@@ -212,7 +203,7 @@ export function compress(body: string, contentType: string, req: Request, status
 
 // ─── Static File Detection ────────────────────────────────
 
-export const STATIC_EXTS = new Set([".ico", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".css", ".js", ".woff", ".woff2", ".ttf"]);
+const STATIC_EXTS = new Set([".ico", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".css", ".js", ".woff", ".woff2", ".ttf"]);
 
 export function isStaticPath(path: string): boolean {
     if (path.startsWith("/dist/") || path.startsWith("/__bosbun/")) return true;

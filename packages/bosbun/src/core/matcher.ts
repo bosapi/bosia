@@ -13,7 +13,7 @@ import type { RouteMatch } from "./types.ts";
  * Match a URL pathname against a single route pattern.
  * Returns extracted params if matched, null otherwise.
  */
-export function matchPattern(
+function matchPattern(
     pattern: string,
     pathname: string,
 ): Record<string, string> | null {

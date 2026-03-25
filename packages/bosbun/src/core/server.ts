@@ -35,14 +35,15 @@ if (existsSync(hooksPath)) {
     }
 }
 
-// ─── CSRF Config ─────────────────────────────────────────
-// Parsed once at startup from CSRF_ALLOWED_ORIGINS env var.
-// Format: "https://x.com, https://y.com" — commas with or without spaces.
+// ─── Env Helpers ─────────────────────────────────────────
 
-const _csrfAllowedOrigins = process.env.CSRF_ALLOWED_ORIGINS
-    ?.split(",")
-    .map(s => s.trim())
-    .filter(Boolean);
+function splitCsvEnv(key: string): string[] | undefined {
+    return process.env[key]?.split(",").map(s => s.trim()).filter(Boolean) || undefined;
+}
+
+// ─── CSRF Config ─────────────────────────────────────────
+
+const _csrfAllowedOrigins = splitCsvEnv("CSRF_ALLOWED_ORIGINS");
 
 const CSRF_CONFIG: CsrfConfig = {
     checkOrigin: true,
@@ -56,17 +57,8 @@ if (_csrfAllowedOrigins?.length) {
 }
 
 // ─── CORS Config ──────────────────────────────────────────
-// Parsed once at startup from CORS_ALLOWED_ORIGINS env var.
-// Format: "https://x.com, https://y.com" — commas with or without spaces.
 
-const _corsAllowedOrigins = process.env.CORS_ALLOWED_ORIGINS
-    ?.split(",")
-    .map(s => s.trim())
-    .filter(Boolean);
-
-function splitCsvEnv(key: string): string[] | undefined {
-    return process.env[key]?.split(",").map(s => s.trim()).filter(Boolean) || undefined;
-}
+const _corsAllowedOrigins = splitCsvEnv("CORS_ALLOWED_ORIGINS");
 
 const CORS_CONFIG: CorsConfig | null = _corsAllowedOrigins?.length
     ? {

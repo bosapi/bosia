@@ -5,7 +5,7 @@ import { serverRoutes, errorPage } from "bosbun:routes";
 import type { Cookies } from "./hooks.ts";
 import { HttpError, Redirect } from "./errors.ts";
 import App from "./client/App.svelte";
-import { buildHtml, buildHtmlShell, buildHtmlShellOpen, buildMetadataChunk, buildHtmlTail, compress, safeJsonStringify, isDev } from "./html.ts";
+import { buildHtml, buildHtmlShellOpen, buildMetadataChunk, buildHtmlTail, compress, safeJsonStringify, isDev } from "./html.ts";
 import type { Metadata } from "./hooks.ts";
 
 // ─── Timeout Helpers ─────────────────────────────────────
@@ -118,36 +118,6 @@ export async function loadRouteData(
     }
 
     return { pageData: { ...pageData, params }, layoutData, csr };
-}
-
-// ─── SSR Renderer ────────────────────────────────────────
-
-export async function renderSSR(url: URL, locals: Record<string, any>, req: Request, cookies: Cookies) {
-    const match = findMatch(serverRoutes, url.pathname);
-    if (!match) return null;
-
-    const { route } = match;
-
-    // Kick off component imports in parallel with data loading
-    const pageModPromise = route.pageModule();
-    const layoutModsPromise = Promise.all(route.layoutModules.map((l: () => Promise<any>) => l()));
-
-    const data = await loadRouteData(url, locals, req, cookies);
-    if (!data) return null;
-
-    const [pageMod, layoutMods] = await Promise.all([pageModPromise, layoutModsPromise]);
-
-    const { body, head } = render(App, {
-        props: {
-            ssrMode: true,
-            ssrPageComponent: pageMod.default,
-            ssrLayoutComponents: layoutMods.map((m: any) => m.default),
-            ssrPageData: data.pageData,
-            ssrLayoutData: data.layoutData,
-        },
-    });
-
-    return { body, head, pageData: data.pageData, layoutData: data.layoutData, csr: data.csr };
 }
 
 // ─── Metadata Loader ─────────────────────────────────────

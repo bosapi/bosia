@@ -12,7 +12,7 @@ export interface CsrfConfig {
     allowedOrigins?: string[];
 }
 
-export const DEFAULT_CSRF_CONFIG: CsrfConfig = {
+const DEFAULT_CSRF_CONFIG: CsrfConfig = {
     checkOrigin: true,
 };
 

@@ -104,13 +104,13 @@
 - [x] Remove duplicate static file serving — `staticPlugin` and manual `resolve()` both serve from `public/`, causing double handling and inconsistent security
 
 ### Dead Code Cleanup
-- [ ] Remove `renderSSR` function from `renderer.ts` — fully replaced by `renderSSRStream`, never called
-- [ ] Remove `buildHtmlShell` function and `_shell` variable from `html.ts` — never called anywhere
-- [ ] Remove unused `buildHtmlShell` import from `renderer.ts`
-- [ ] Remove `export` from `STATIC_EXTS` in `html.ts` — only used internally by `isStaticPath`
-- [ ] Remove `export` from `DEFAULT_CSRF_CONFIG` in `csrf.ts` — only used as default parameter in same file
-- [ ] Remove `export` from `matchPattern` in `matcher.ts` — only used by `findMatch` in same file
-- [ ] Use `splitCsvEnv` for CSRF/CORS origin parsing in `server.ts` — eliminate duplicate `.split(",").map().filter()` pattern
+- [x] Remove `renderSSR` function from `renderer.ts` — fully replaced by `renderSSRStream`, never called
+- [x] Remove `buildHtmlShell` function and `_shell` variable from `html.ts` — never called anywhere
+- [x] Remove unused `buildHtmlShell` import from `renderer.ts`
+- [x] Remove `export` from `STATIC_EXTS` in `html.ts` — only used internally by `isStaticPath`
+- [x] Remove `export` from `DEFAULT_CSRF_CONFIG` in `csrf.ts` — only used as default parameter in same file
+- [x] Remove `export` from `matchPattern` in `matcher.ts` — only used by `findMatch` in same file
+- [x] Use `splitCsvEnv` for CSRF/CORS origin parsing in `server.ts` — eliminate duplicate `.split(",").map().filter()` pattern
 
 ---
 
