@@ -6,13 +6,14 @@ import { findMatch } from "../matcher.ts";
 import { clientRoutes } from "bosbun:routes";
 
 export const router = new class Router {
-    currentRoute = $state(typeof window !== "undefined" ? window.location.pathname : "/");
+    currentRoute = $state(typeof window !== "undefined" ? window.location.pathname + window.location.search + window.location.hash : "/");
     params = $state<Record<string, string>>({});
 
     navigate(path: string) {
         if (this.currentRoute === path) return;
         // Unknown route — let the server handle it (renders +error.svelte with 404)
-        if (!findMatch(clientRoutes, path)) {
+        const pathname = path.split("?")[0].split("#")[0];
+        if (!findMatch(clientRoutes, pathname)) {
             window.location.href = path;
             return;
         }

@@ -37,7 +37,8 @@
     if (ssrMode) return;
 
     const path = router.currentRoute;
-    const match = findMatch(clientRoutes, path);
+    const pathname = path.split("?")[0].split("#")[0];
+    const match = findMatch(clientRoutes, pathname);
     if (!match) return;
 
     let cancelled = false;

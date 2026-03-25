@@ -99,8 +99,8 @@
 
 ### Bug Fixes
 - [x] Fix `withTimeout` timer leak — `setTimeout` in `Promise.race` is never cleared when the main promise resolves, causing dangling timers under load
-- [ ] Fix `_shellOpen` caching in dev — `buildHtmlShellOpen()` caches `Date.now()` cache-bust value on first call, making it stale for subsequent requests
-- [ ] Fix client-side navigation with query strings/hashes — `navigate()` deduplication compares inconsistently (pathname vs full path)
+- [x] Fix `_shellOpen` caching in dev — `buildHtmlShellOpen()` caches `Date.now()` cache-bust value on first call, making it stale for subsequent requests
+- [x] Fix client-side navigation with query strings/hashes — `navigate()` deduplication compares inconsistently (pathname vs full path)
 - [x] Remove duplicate static file serving — `staticPlugin` and manual `resolve()` both serve from `public/`, causing double handling and inconsistent security
 
 ### Dead Code Cleanup

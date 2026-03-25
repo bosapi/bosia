@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Route PUT/PATCH/DELETE through `handleRequest()` — these methods now get CSRF, CORS, security headers, cookie handling, and user hooks applied consistently (previously returned bare 404 responses)
 - Fix `withTimeout` timer leak — `setTimeout` is now cleared via `.finally()` when the main promise resolves, preventing dangling timers under load
 - Remove duplicate static file serving — removed `@elysiajs/static` plugin; all static files now served through `resolve()` with consistent path traversal protection, CSRF, CORS, security headers, and user hooks
+- Fix `_shellOpen` and `_shell` caching in dev — hoist `cacheBust` to module level so it's computed once at startup (stable within a process, fresh after dev server restart on rebuild)
+- Fix client-side navigation with query strings/hashes — `currentRoute` now initialized with full path (including search + hash) for consistent deduplication; `findMatch` in both `router.navigate()` and `App.svelte` now receives only the pathname, so query-driven patterns like pagination work via client-side navigation instead of falling back to full page reloads
 
 ---
 

@@ -13,6 +13,7 @@ export const distManifest: { js: string[]; css: string[]; entry: string } = (() 
 })();
 
 export const isDev = process.env.NODE_ENV !== "production";
+const cacheBust = isDev ? `?v=${Date.now()}` : "";
 
 // ─── Safe JSON Serialization ──────────────────────────────
 
@@ -64,8 +65,6 @@ export function buildHtml(
     csr = true,
     formData: any = null,
 ): string {
-    const cacheBust = isDev ? `?v=${Date.now()}` : "";
-
     const cssLinks = (distManifest.css ?? [])
         .map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
         .join("\n  ");
@@ -122,7 +121,6 @@ let _shellOpen: string | null = null;
 /** Chunk 1: everything from <!DOCTYPE> through CSS/modulepreload links (head still open) */
 export function buildHtmlShellOpen(): string {
     if (_shellOpen) return _shellOpen;
-    const cacheBust = isDev ? `?v=${Date.now()}` : "";
     const cssLinks = (distManifest.css ?? [])
         .map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
         .join("\n  ");
@@ -180,7 +178,6 @@ export function buildHtmlTail(
     csr: boolean,
     formData: any = null,
 ): string {
-    const cacheBust = isDev ? `?v=${Date.now()}` : "";
     let out = `<script>document.getElementById('__bs__').remove()</script>`;
     out += `\n<div id="app">${body}</div>`;
     if (head) out += `\n<script>document.head.innerHTML+=${safeJsonStringify(head)}</script>`;
