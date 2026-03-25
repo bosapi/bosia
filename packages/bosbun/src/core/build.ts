@@ -124,7 +124,7 @@ const serverResult = await Bun.build({
     splitting: true,
     naming: { entry: "index.[ext]", chunk: "[name]-[hash].[ext]" },
     minify: isProduction,
-    external: ["elysia", "@elysiajs/static"],
+    external: ["elysia"],
     plugins: [serverPlugin, SveltePlugin()],
 });
 

@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { staticPlugin } from "@elysiajs/static";
+
 import { existsSync } from "fs";
 import { join, resolve as resolvePath } from "path";
 
@@ -370,8 +370,7 @@ const app = new Elysia({ serve: { maxRequestBodySize: BODY_SIZE_LIMIT } })
         else console.error("Uncaught server error:", (error as Error)?.message ?? error);
         return Response.json({ error: "Internal Server Error" }, { status: 500 });
     })
-    .use(staticPlugin({ assets: "public", prefix: "/" }))
-    // dist/client is served by our resolve() handler with proper cache headers
+    // Static files are served by resolve() with path traversal protection and security headers
     // API routes must intercept all HTTP methods before the GET catch-all
     .onBeforeHandle(async ({ request }) => {
         const url = new URL(request.url);

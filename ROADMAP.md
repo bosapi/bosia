@@ -5,7 +5,7 @@
 
 ---
 
-## Completed (v0.0.1 – v0.0.8)
+## Completed (v0.0.1 – v0.0.7)
 
 <details>
 <summary>Click to expand completed items</summary>
@@ -89,7 +89,7 @@
 
 ---
 
-## v0.0.9 — Critical Bug Fixes
+## v0.0.8 — Critical Bug Fixes
 
 > Security and correctness issues that must be fixed before production use.
 
@@ -101,7 +101,7 @@
 - [x] Fix `withTimeout` timer leak — `setTimeout` in `Promise.race` is never cleared when the main promise resolves, causing dangling timers under load
 - [ ] Fix `_shellOpen` caching in dev — `buildHtmlShellOpen()` caches `Date.now()` cache-bust value on first call, making it stale for subsequent requests
 - [ ] Fix client-side navigation with query strings/hashes — `navigate()` deduplication compares inconsistently (pathname vs full path)
-- [ ] Remove duplicate static file serving — `staticPlugin` and manual `resolve()` both serve from `public/`, causing double handling and inconsistent security
+- [x] Remove duplicate static file serving — `staticPlugin` and manual `resolve()` both serve from `public/`, causing double handling and inconsistent security
 
 ### Dead Code Cleanup
 - [ ] Remove `renderSSR` function from `renderer.ts` — fully replaced by `renderSSRStream`, never called
@@ -114,7 +114,7 @@
 
 ---
 
-## v0.0.10 — Production Hardening
+## v0.0.9 — Production Hardening
 
 > Stability and reliability improvements for production workloads.
 
@@ -145,7 +145,7 @@
 
 ---
 
-## v0.0.11 — Features & DX
+## v0.0.10 — Features & DX
 
 > New capabilities and developer experience improvements.
 
@@ -171,7 +171,7 @@
 
 ---
 
-## v0.0.12 — Ecosystem & Observability
+## v0.0.11 — Ecosystem & Observability
 
 > Nice-to-haves for a growing framework.
 

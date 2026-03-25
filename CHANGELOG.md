@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 - Route PUT/PATCH/DELETE through `handleRequest()` — these methods now get CSRF, CORS, security headers, cookie handling, and user hooks applied consistently (previously returned bare 404 responses)
 - Fix `withTimeout` timer leak — `setTimeout` is now cleared via `.finally()` when the main promise resolves, preventing dangling timers under load
+- Remove duplicate static file serving — removed `@elysiajs/static` plugin; all static files now served through `resolve()` with consistent path traversal protection, CSRF, CORS, security headers, and user hooks
 
 ---
 
