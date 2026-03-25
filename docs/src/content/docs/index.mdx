@@ -1,0 +1,78 @@
+---
+title: Bosbun
+description: Fast, batteries-included fullstack framework built on Bun + Svelte 5 + ElysiaJS.
+template: splash
+hero:
+  tagline: A fast, batteries-included fullstack framework. SvelteKit conventions, zero Node.js, zero Vite, zero adapter complexity.
+  actions:
+    - text: Get Started
+      link: /bosbun/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/bosapi/bosbun
+      icon: external
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+## Features
+
+<CardGrid stagger>
+  <Card title="File-Based Routing" icon="document">
+    SvelteKit conventions — `+page.svelte`, `+layout.svelte`, `+page.server.ts`,
+    dynamic `[params]`, route groups `(name)`.
+  </Card>
+
+  <Card title="Server-Side Rendering" icon="rocket">
+    Every page renders on the server with streaming SSR and full client hydration.
+  </Card>
+
+  <Card title="Server Loaders" icon="setting">
+    `load()` functions with `parent()` data threading, `metadata()` for SEO, and
+    session-aware `fetch`.
+  </Card>
+
+  <Card title="API Routes" icon="laptop">
+    Export HTTP verb functions from `+server.ts` — GET, POST, PUT, PATCH, DELETE.
+  </Card>
+
+  <Card title="Middleware Hooks" icon="puzzle">
+    `hooks.server.ts` with `sequence()` composition. Set locals, manage cookies,
+    log requests.
+  </Card>
+
+  <Card title="Form Actions" icon="pencil">
+    SvelteKit-style form actions with `fail()` validation and progressive
+    enhancement.
+  </Card>
+
+  <Card title="Tailwind CSS v4" icon="seti:css">
+    Built-in with shadcn-inspired design tokens, dark mode, and `cn()` utility.
+  </Card>
+
+  <Card title="CLI + Registry" icon="open-book">
+    `bosbun create`, `dev`, `build`, `add` (components), `feat` (feature
+    scaffolds).
+  </Card>
+</CardGrid>
+
+## Quick Start
+
+```bash
+bunx bosbun create my-app
+cd my-app
+bun run dev
+```
+
+Open [http://localhost:9000](http://localhost:9000) and start building.
+
+## Tech Stack
+
+| Layer      | Technology       |
+| ---------- | ---------------- |
+| Runtime    | Bun              |
+| HTTP       | ElysiaJS         |
+| UI         | Svelte 5 (Runes) |
+| CSS        | Tailwind CSS v4  |
+| Bundler    | Bun.build        |

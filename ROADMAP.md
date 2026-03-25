@@ -148,7 +148,7 @@
 - [x] Streaming SSR for metadata (non-blocking `load()`)
 - [ ] Production sourcemaps — external source maps for debuggable production errors
 - [ ] Testing guide (Vitest + Playwright)
-- [ ] Deployment guides (Docker, Railway, Fly.io)
+- [x] Deployment guides (Docker, Railway, Fly.io)
 
 ---
 

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.0.8] - 2026-03-25
+
+### Added
+- Documentation site built with Astro Starlight — 14 pages covering getting started, routing, server loaders, API routes, form actions, middleware hooks, environment variables, styling, security, CLI reference, API reference, deployment, and SvelteKit differences
+- GitHub Actions workflow for auto-deploying docs to GitHub Pages on push to `main`
+
+---
+
 ## [0.0.7] - 2026-03-25
 
 ### Added

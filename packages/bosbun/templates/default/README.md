@@ -97,6 +97,6 @@ cn("px-4 py-2", isActive && "bg-primary")
 
 ## Learn More
 
-- [Bosbun documentation](https://github.com/bosapi/bosbun)
+- [Bosbun documentation](https://bosapi.github.io/bosbun)
 - [Svelte 5 docs](https://svelte.dev)
 - [Tailwind CSS v4](https://tailwindcss.com)

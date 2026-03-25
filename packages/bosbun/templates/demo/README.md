@@ -21,3 +21,9 @@ bun x bosbun start   # run production server
 | `/api/hello` | `api/hello/+server.ts` | Multi-method JSON API |
 | `/actions-test` | `actions-test/+page.svelte` | Form actions demo |
 | `/*` | `(public)/[...catchall]/+page.svelte` | 404 catch-all |
+
+## Learn More
+
+- [Bosbun documentation](https://bosapi.github.io/bosbun)
+- [Svelte 5 docs](https://svelte.dev)
+- [Tailwind CSS v4](https://tailwindcss.com)

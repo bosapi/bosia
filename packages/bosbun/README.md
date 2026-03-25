@@ -1,5 +1,7 @@
 # Bosbun
 
+> Full documentation: [bosapi.github.io/bosbun](https://bosapi.github.io/bosbun)
+
 A fast, batteries-included fullstack framework — SSR · Svelte 5 Runes · Bun · ElysiaJS.
 
 File-based routing inspired by SvelteKit, built on top of the Bun runtime and ElysiaJS HTTP server. No Node.js, no Vite, no adapters.

@@ -15,6 +15,25 @@ File-based routing inspired by SvelteKit, built on top of the Bun runtime and El
 - **Tailwind CSS v4** — compiled at build time, shadcn-inspired design tokens out of the box
 - **CLI** — `bosbun create`, `bosbun dev`, `bosbun build`, `bosbun add`, `bosbun feat`
 
+## Documentation
+
+Full documentation available at [bosapi.github.io/bosbun](https://bosapi.github.io/bosbun).
+
+- [Getting Started](docs/src/content/docs/getting-started.md)
+- [Project Structure](docs/src/content/docs/project-structure.md)
+- [Routing](docs/src/content/docs/guides/routing.md)
+- [Server Loaders](docs/src/content/docs/guides/server-loaders.md)
+- [API Routes](docs/src/content/docs/guides/api-routes.md)
+- [Form Actions](docs/src/content/docs/guides/form-actions.md)
+- [Middleware Hooks](docs/src/content/docs/guides/middleware-hooks.md)
+- [Environment Variables](docs/src/content/docs/guides/environment-variables.md)
+- [Styling](docs/src/content/docs/guides/styling.md)
+- [Security](docs/src/content/docs/guides/security.md)
+- [CLI Reference](docs/src/content/docs/reference/cli.md)
+- [API Reference](docs/src/content/docs/reference/api.md)
+- [Deployment](docs/src/content/docs/reference/deployment.md)
+- [SvelteKit Differences](docs/src/content/docs/reference/sveltekit-differences.md)
+
 ## Monorepo Structure
 
 ```
@@ -39,6 +58,8 @@ bun run dev
 bun run build
 bun run start
 ```
+
+See [Getting Started](docs/src/content/docs/getting-started.md) for a full walkthrough.
 
 ## Tech Stack
 
