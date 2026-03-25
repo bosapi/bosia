@@ -28,10 +28,11 @@ const METADATA_TIMEOUT = parseTimeout(process.env.METADATA_TIMEOUT, 3000);
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
     if (ms <= 0) return promise;
+    let timer: Timer;
     return Promise.race([
-        promise,
+        promise.finally(() => clearTimeout(timer)),
         new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new LoadTimeoutError(label, ms)), ms)
+            timer = setTimeout(() => reject(new LoadTimeoutError(label, ms)), ms)
         ),
     ]);
 }

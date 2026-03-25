@@ -388,9 +388,18 @@ const app = new Elysia({ serve: { maxRequestBodySize: BODY_SIZE_LIMIT } })
         const url = new URL(request.url);
         return handleRequest(request, url);
     })
-    .put("*", () => new Response("Not Found", { status: 404 }))
-    .patch("*", () => new Response("Not Found", { status: 404 }))
-    .delete("*", () => new Response("Not Found", { status: 404 }))
+    .put("*", ({ request }) => {
+        const url = new URL(request.url);
+        return handleRequest(request, url);
+    })
+    .patch("*", ({ request }) => {
+        const url = new URL(request.url);
+        return handleRequest(request, url);
+    })
+    .delete("*", ({ request }) => {
+        const url = new URL(request.url);
+        return handleRequest(request, url);
+    })
     .options("*", ({ request }) => {
         const url = new URL(request.url);
         return handleRequest(request, url);
