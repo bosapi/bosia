@@ -1,5 +1,5 @@
-import { fail, redirect } from "bosbun";
-import type { RequestEvent } from "bosbun";
+import { fail, redirect } from "bosia";
+import type { RequestEvent } from "bosia";
 
 export async function load() {
     return { greeting: "Test form actions" };

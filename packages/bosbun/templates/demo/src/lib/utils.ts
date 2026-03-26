@@ -1,1 +1,1 @@
-export { cn } from "bosbun";
+export { cn } from "bosia";

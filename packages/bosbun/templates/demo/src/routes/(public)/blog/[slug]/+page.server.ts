@@ -1,11 +1,11 @@
-import type { LoadEvent, MetadataEvent } from "bosbun";
+import type { LoadEvent, MetadataEvent } from "bosia";
 
 const posts: Record<string, { title: string; date: string; tags: string[]; content: string }> = {
     "hello-world": {
         title: "Hello, World!",
         date: "2026-03-05",
-        tags: ["intro", "bosbun"],
-        content: `Welcome to Bosbun! This page was loaded by a +page.server.ts file.
+        tags: ["intro", "bosia"],
+        content: `Welcome to Bosia! This page was loaded by a +page.server.ts file.
 
 The slug param was extracted from the URL by the route matcher and passed to the load() function as params.slug.
 

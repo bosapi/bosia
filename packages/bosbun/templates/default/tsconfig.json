@@ -11,7 +11,7 @@
     "verbatimModuleSyntax": true,
     "types": ["bun-types"],
     "lib": ["dom", "dom.iterable", "esnext"],
-    "rootDirs": [".", ".bosbun/types"],
+    "rootDirs": [".", ".bosia/types"],
     "paths": {
       "$lib": ["./src/lib"],
       "$lib/*": ["./src/lib/*"]

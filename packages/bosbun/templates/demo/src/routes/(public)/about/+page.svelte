@@ -19,8 +19,8 @@
             "Dynamic params [slug] and catch-all [...rest]",
             "Server loaders with parent() data threading",
             "Hooks — sequence() middleware for auth, logging, etc.",
-            "Component registry — bosbun add button",
-            "Feature registry — bosbun feat login",
+            "Component registry — bosia add button",
+            "Feature registry — bosia feat login",
         ] as item}
             <li class="flex items-start gap-2">
                 <span class="text-primary mt-0.5">✓</span>

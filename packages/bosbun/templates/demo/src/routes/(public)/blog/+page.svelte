@@ -5,7 +5,7 @@
             title: "Hello, World!",
             date: "2026-03-05",
             excerpt: "The first post in the demo — a quick intro to the framework.",
-            tags: ["intro", "bosbun"],
+            tags: ["intro", "bosia"],
         },
         {
             slug: "route-groups",
@@ -34,7 +34,7 @@
         <p class="text-muted-foreground">Routing patterns and framework internals.</p>
     </div>
 
-    <div class="grid gap-4" data-bosbun-preload="hover">
+    <div class="grid gap-4" data-bosia-preload="hover">
         {#each posts as post}
             <a href="/blog/{post.slug}" class="group block rounded-lg border bg-card p-5 hover:border-primary transition-colors">
                 <div class="flex items-start justify-between gap-4">

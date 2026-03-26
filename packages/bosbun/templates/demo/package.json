@@ -3,12 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bosbun dev",
-    "build": "bosbun build",
-    "start": "bosbun start"
+    "dev": "bosia dev",
+    "build": "bosia build",
+    "start": "bosia start"
   },
   "dependencies": {
-    "bosbun": "^{{BOSBUN_VERSION}}",
+    "bosia": "^{{BOSIA_VERSION}}",
     "svelte": "^5.20.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.5.0"

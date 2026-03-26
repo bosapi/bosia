@@ -1,4 +1,4 @@
-import type { LoadEvent } from "bosbun";
+import type { LoadEvent } from "bosia";
 
 // Data returned here is available to all child loaders via parent()
 // and to all layouts via the `data` prop.

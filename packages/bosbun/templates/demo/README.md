@@ -1,13 +1,13 @@
 # {{PROJECT_NAME}}
 
-A [Bosbun](https://github.com/nicholascostadev/bosbun) project with demo routes, hooks, API endpoints, and form actions.
+A [Bosia](https://github.com/nicholascostadev/bosia) project with demo routes, hooks, API endpoints, and form actions.
 
 ## Running
 
 ```bash
-bun x bosbun dev     # http://localhost:9000
-bun x bosbun build   # production build
-bun x bosbun start   # run production server
+bun x bosia dev     # http://localhost:9000
+bun x bosia build   # production build
+bun x bosia start   # run production server
 ```
 
 ## Routes
@@ -24,6 +24,6 @@ bun x bosbun start   # run production server
 
 ## Learn More
 
-- [Bosbun documentation](https://bosbun.bosapi.com)
+- [Bosia documentation](https://bosia.bosapi.com)
 - [Svelte 5 docs](https://svelte.dev)
 - [Tailwind CSS v4](https://tailwindcss.com)

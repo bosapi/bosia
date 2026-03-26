@@ -1,6 +1,6 @@
 # {{PROJECT_NAME}}
 
-A [Bosbun](https://github.com/bosapi/bosbun) project — SSR · Svelte 5 · Bun · ElysiaJS.
+A [Bosia](https://github.com/bosapi/bosia) project — SSR · Svelte 5 · Bun · ElysiaJS.
 
 ## Getting Started
 
@@ -45,7 +45,7 @@ Fetch data on the server before rendering:
 
 ```typescript
 // src/routes/blog/[slug]/+page.server.ts
-import type { LoadEvent } from "bosbun";
+import type { LoadEvent } from "bosia";
 
 export async function load({ params }: LoadEvent) {
     return { post: await getPost(params.slug) };
@@ -97,6 +97,6 @@ cn("px-4 py-2", isActive && "bg-primary")
 
 ## Learn More
 
-- [Bosbun documentation](https://bosbun.bosapi.com)
+- [Bosia documentation](https://bosia.bosapi.com)
 - [Svelte 5 docs](https://svelte.dev)
 - [Tailwind CSS v4](https://tailwindcss.com)

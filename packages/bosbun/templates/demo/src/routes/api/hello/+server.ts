@@ -1,9 +1,9 @@
-import type { RequestEvent } from "bosbun";
+import type { RequestEvent } from "bosia";
 
 export function GET({ params, locals }: RequestEvent) {
     return Response.json({
         method: "GET",
-        message: "Hello from Bosbun API!",
+        message: "Hello from Bosia API!",
         params,
         locals: {
             requestTime: locals.requestTime ?? null,

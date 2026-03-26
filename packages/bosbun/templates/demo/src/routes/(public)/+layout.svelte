@@ -21,7 +21,7 @@
     </main>
 
     <footer class="border-t py-4 text-center text-sm text-muted-foreground">
-        Powered by Bosbun
+        Powered by Bosia
         {#if data.requestTime}
             <span class="ml-2 opacity-40 font-mono text-xs">
                 req at {new Date(data.requestTime).toISOString()}

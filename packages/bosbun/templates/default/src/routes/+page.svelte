@@ -7,13 +7,13 @@
         <img src="/favicon.svg" alt="" class="size-16" />
         <h1 class="text-4xl font-bold tracking-tight">{name}</h1>
         <p class="text-muted-foreground text-lg">
-            A Bosbun project — SSR + Svelte 5 + Bun + ElysiaJS
+            A Bosia project — SSR + Svelte 5 + Bun + ElysiaJS
         </p>
     </div>
 
     <div class="mt-4 flex gap-3">
         <a
-            href="https://github.com/bosapi/bosbun"
+            href="https://github.com/bosapi/bosia"
             target="_blank"
             rel="noopener noreferrer"
             class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
@@ -21,7 +21,7 @@
             Docs
         </a>
         <a
-            href="https://github.com/bosapi/bosbun/tree/main/registry"
+            href="https://github.com/bosapi/bosia/tree/main/registry"
             target="_blank"
             rel="noopener noreferrer"
             class="border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md border px-4 py-2 text-sm font-medium transition-colors"

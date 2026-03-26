@@ -7,8 +7,8 @@
         { icon: "🔁", label: "Server loaders", desc: "+page.server.ts and +layout.server.ts with parent() threading" },
         { icon: "🪝", label: "Hooks", desc: "sequence() middleware — auth, logging, locals" },
         { icon: "📡", label: "API routes", desc: "+server.ts exports GET, POST, PUT, PATCH, DELETE" },
-        { icon: "🧩", label: "Component registry", desc: "bosbun add button — shadcn-style, code you own" },
-        { icon: "✨", label: "feat system", desc: "bosbun feat login — scaffold entire features, not just components" },
+        { icon: "🧩", label: "Component registry", desc: "bosia add button — shadcn-style, code you own" },
+        { icon: "✨", label: "feat system", desc: "bosia feat login — scaffold entire features, not just components" },
     ];
 </script>
 
