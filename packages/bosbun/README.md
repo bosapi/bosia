@@ -1,6 +1,6 @@
-# Bosbun
+# Bosia
 
-> Full documentation: [bosbun.bosapi.com](https://bosbun.bosapi.com)
+> Full documentation: [bosia.bosapi.com](https://bosia.bosapi.com)
 
 A fast, batteries-included fullstack framework — SSR · Svelte 5 Runes · Bun · ElysiaJS.
 
@@ -15,13 +15,13 @@ File-based routing inspired by SvelteKit, built on top of the Bun runtime and El
 - **Middleware hooks** — `hooks.server.ts` with `sequence()` for auth, logging, locals
 - **Dev server with HMR** — file watcher + SSE browser reload, no page blink
 - **Tailwind CSS v4** — compiled at build time, shadcn-inspired design tokens out of the box
-- **CLI** — `bosbun create`, `bosbun dev`, `bosbun build`, `bosbun add`, `bosbun feat`
+- **CLI** — `bosia create`, `bosia dev`, `bosia build`, `bosia add`, `bosia feat`
 
 ## Quick Start
 
 ```bash
 # Scaffold a new project
-bun x bosbun create my-app
+bun x bosia create my-app
 cd my-app
 
 # Start development
@@ -78,7 +78,7 @@ src/routes/
 
 ```typescript
 // src/routes/blog/[slug]/+page.server.ts
-import type { LoadEvent } from "bosbun";
+import type { LoadEvent } from "bosia";
 
 export async function load({ params, url, locals, fetch, parent }: LoadEvent) {
     const parentData = await parent(); // data from layout loaders above
@@ -103,7 +103,7 @@ Export named HTTP verb functions from `+server.ts`:
 
 ```typescript
 // src/routes/api/items/+server.ts
-import type { RequestEvent } from "bosbun";
+import type { RequestEvent } from "bosia";
 
 export function GET({ params, url, locals }: RequestEvent) {
     return Response.json({ items: [] });
@@ -120,8 +120,8 @@ export async function POST({ request }: RequestEvent) {
 Create `src/hooks.server.ts` to intercept every request:
 
 ```typescript
-import { sequence } from "bosbun";
-import type { Handle } from "bosbun";
+import { sequence } from "bosia";
+import type { Handle } from "bosia";
 
 const authHandle: Handle = async ({ event, resolve }) => {
     event.locals.user = await getUser(event.request);
@@ -142,8 +142,8 @@ export const handle = sequence(authHandle, loggingHandle);
 ## Public API
 
 ```typescript
-import { cn, sequence } from "bosbun";
-import type { RequestEvent, LoadEvent, Handle } from "bosbun";
+import { cn, sequence } from "bosia";
+import type { RequestEvent, LoadEvent, Handle } from "bosia";
 ```
 
 | Export | Description |

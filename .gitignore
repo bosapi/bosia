@@ -1,8 +1,8 @@
 node_modules/
 dist/
 docs/.astro/
-.bosbun/
-**/public/bosbun-tw.css
+.bosia/
+**/public/bosia-tw.css
 .DS_Store
 *.log
 .env*.local

@@ -1,4 +1,4 @@
-# Bosbun
+# Bosia
 
 A fast, batteries-included fullstack framework — SSR · Svelte 5 Runes · Bun · ElysiaJS.
 
@@ -13,11 +13,11 @@ File-based routing inspired by SvelteKit, built on top of the Bun runtime and El
 - **Middleware hooks** — `hooks.server.ts` with `sequence()` for auth, logging, locals
 - **Dev server with HMR** — file watcher + SSE browser reload, no page blink
 - **Tailwind CSS v4** — compiled at build time, shadcn-inspired design tokens out of the box
-- **CLI** — `bosbun create`, `bosbun dev`, `bosbun build`, `bosbun add`, `bosbun feat`
+- **CLI** — `bosia create`, `bosia dev`, `bosia build`, `bosia add`, `bosia feat`
 
 ## Documentation
 
-Full documentation available at [bosbun.bosapi.com](https://bosbun.bosapi.com).
+Full documentation available at [bosia.bosapi.com](https://bosia.bosapi.com).
 
 - [Getting Started](docs/src/content/docs/getting-started.md)
 - [Project Structure](docs/src/content/docs/project-structure.md)
@@ -37,18 +37,18 @@ Full documentation available at [bosbun.bosapi.com](https://bosbun.bosapi.com).
 ## Monorepo Structure
 
 ```
-bosbun/
+bosia/
 ├── apps/
 │   └── demo/          # Example app showing routing, loaders, API, hooks
 └── packages/
-    └── bosbun/         # Framework package (CLI + core + templates)
+    └── bosia/         # Framework package (CLI + core + templates)
 ```
 
 ## Quick Start
 
 ```bash
 # Scaffold a new project
-bun x bosbun create my-app
+bun x bosia create my-app
 cd my-app
 
 # Start development
