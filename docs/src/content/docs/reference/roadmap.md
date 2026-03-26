@@ -4,11 +4,11 @@ description: What's done, what's next, and where Bosia is headed.
 ---
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.0.8**
+> Current version: **0.1.0**
 
 ---
 
-## Completed (v0.0.1 – v0.0.7)
+## Completed (v0.0.1 – v0.1.0)
 
 <details>
 <summary>Click to expand completed items</summary>
@@ -25,6 +25,8 @@ description: What's done, what's next, and where Bosia is headed.
 - [x] Plain `export async function load()` pattern (no wrapper)
 - [x] `$types` codegen — auto-generated `PageData`, `PageProps`, `LayoutData`, `LayoutProps`
 - [x] `parent()` data threading in layouts
+- [x] Streaming SSR for metadata (non-blocking `load()`)
+- [x] Form actions (SvelteKit-style)
 
 ### Server
 - [x] ElysiaJS HTTP server
@@ -38,6 +40,7 @@ description: What's done, what's next, and where Bosia is headed.
 - [x] CORS configuration (framework-level)
 - [x] Session-aware fetch (cookies forwarded in internal API calls)
 - [x] Request timeouts on `load()` and `metadata()` functions
+- [x] Route PUT/PATCH/DELETE through `handleRequest()` — consistent CSRF, CORS, security headers, and cookie handling
 
 ### Security
 - [x] XSS escaping in HTML templates — sanitize `JSON.stringify()` output in `<script>` tags
@@ -59,8 +62,7 @@ description: What's done, what's next, and where Bosia is headed.
 - [x] HMR via SSE in dev mode
 - [x] Per-page CSR opt-out (`export const csr = false`)
 - [x] Link prefetching — `data-bosia-preload` attribute for hover/viewport prefetch
-- [x] Form actions (SvelteKit-style)
-- [x] Streaming SSR for metadata (non-blocking `load()`)
+- [x] Fix client-side navigation with query strings/hashes
 
 ### Build & Tooling
 - [x] Bun build pipeline (client + server bundles)
@@ -71,6 +73,8 @@ description: What's done, what's next, and where Bosia is headed.
 - [x] `bosia:routes` virtual module
 - [x] Validate Tailwind CSS binary exists before build
 - [x] Prerender fetch timeout
+- [x] Fix `withTimeout` timer leak
+- [x] Remove duplicate static file serving
 
 ### CLI
 - [x] `bosia dev` — dev server with file watching
@@ -86,53 +90,37 @@ description: What's done, what's next, and where Bosia is headed.
 - [x] `RequestEvent` — `request`, `params`, `url`, `cookies`, `locals`
 
 ### Docs & Ecosystem
+- [x] Documentation site (Astro Starlight) — 14 pages
+- [x] Indonesian (Bahasa Indonesia) translation with Starlight i18n
 - [x] Deployment guides (Docker, Railway, Fly.io)
-- [x] Indonesian (Bahasa Indonesia) documentation translation with Starlight i18n
+- [x] GitHub Actions for auto-publishing to npm and deploying docs
+- [x] Dev server auto-restart on crash
+- [x] Components documentation page with usage examples and prop tables
+
+### v0.1.0
+- [x] Rename framework from `bosbun` to `bosia`
+- [x] Dead code cleanup (`renderSSR`, `buildHtmlShell`, unexported internals)
+- [x] `splitCsvEnv` helper for CSRF/CORS origin parsing
 
 </details>
 
 ---
 
-## v0.0.8 — Critical Bug Fixes
+## v0.1.1 — Production Hardening & Security
 
-> Security and correctness issues that must be fixed before production use.
+> Stability, reliability, and security improvements for production workloads.
 
 ### Security
-- [x] Route PUT/PATCH/DELETE through `handleRequest()` — currently these methods bypass CSRF, CORS, security headers, and cookie handling for non-API routes
 - [ ] Trusted proxy configuration — `TRUST_PROXY` env to control when `X-Forwarded-*` headers are trusted in CSRF checks
-
-### Bug Fixes
-- [x] Fix `withTimeout` timer leak — `setTimeout` in `Promise.race` is never cleared when the main promise resolves, causing dangling timers under load
-- [x] Fix `_shellOpen` caching in dev — `buildHtmlShellOpen()` caches `Date.now()` cache-bust value on first call, making it stale for subsequent requests
-- [x] Fix client-side navigation with query strings/hashes — `navigate()` deduplication compares inconsistently (pathname vs full path)
-- [x] Remove duplicate static file serving — `staticPlugin` and manual `resolve()` both serve from `public/`, causing double handling and inconsistent security
-
-### Dead Code Cleanup
-- [x] Remove `renderSSR` function from `renderer.ts` — fully replaced by `renderSSRStream`, never called
-- [x] Remove `buildHtmlShell` function and `_shell` variable from `html.ts` — never called anywhere
-- [x] Remove unused `buildHtmlShell` import from `renderer.ts`
-- [x] Remove `export` from `STATIC_EXTS` in `html.ts` — only used internally by `isStaticPath`
-- [x] Remove `export` from `DEFAULT_CSRF_CONFIG` in `csrf.ts` — only used as default parameter in same file
-- [x] Remove `export` from `matchPattern` in `matcher.ts` — only used by `findMatch` in same file
-- [x] Use `splitCsvEnv` for CSRF/CORS origin parsing in `server.ts` — eliminate duplicate `.split(",").map().filter()` pattern
-
----
-
-## v0.0.9 — Production Hardening
-
-> Stability and reliability improvements for production workloads.
-
-### Server Reliability
-- [ ] Graceful shutdown drain — drain in-flight requests before stopping; return 503 from health check during shutdown
-- [x] Dev server auto-restart — restart app process when it crashes unexpectedly (not just on file change)
-- [ ] Stream backpressure handling — check `controller.desiredSize` to prevent memory buildup on slow/disconnected clients
-- [ ] Prerender process cleanup — proper signal handling, verified termination, use random port instead of hardcoded 13572
-- [ ] Concurrent build guard in dev — prevent overlapping builds when rapid file changes trigger `buildAndRestart()` while a build is already running
-
-### Server
 - [ ] Cookie RFC 6265 validation — also review `encodeURIComponent` on cookie names (interop concern)
 - [ ] Open redirect validation on `redirect()`
 - [ ] CORS preflight validation — validate requested method/headers against allowed config
+
+### Server Reliability
+- [ ] Graceful shutdown drain — drain in-flight requests before stopping; return 503 from health check during shutdown
+- [ ] Stream backpressure handling — check `controller.desiredSize` to prevent memory buildup on slow/disconnected clients
+- [ ] Prerender process cleanup — proper signal handling, verified termination, use random port instead of hardcoded 13572
+- [ ] Concurrent build guard in dev — prevent overlapping builds when rapid file changes trigger `buildAndRestart()` while a build is already running
 
 ### Client
 - [ ] Use `insertAdjacentHTML` for head injection — current `innerHTML+=` re-parses entire `<head>`, risking duplicate stylesheets and script re-execution
@@ -149,7 +137,7 @@ description: What's done, what's next, and where Bosia is headed.
 
 ---
 
-## v0.0.10 — Features & DX
+## v0.1.2 — Features & DX
 
 > New capabilities and developer experience improvements.
 
@@ -175,7 +163,7 @@ description: What's done, what's next, and where Bosia is headed.
 
 ---
 
-## v0.0.11 — Ecosystem & Observability
+## v0.1.3 — Ecosystem & Observability
 
 > Nice-to-haves for a growing framework.
 

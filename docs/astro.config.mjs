@@ -93,6 +93,53 @@ export default defineConfig({
           ],
         },
         {
+          label: "Components",
+          translations: { id: "Komponen" },
+          items: [
+            {
+              label: "Overview",
+              translations: { id: "Ringkasan" },
+              slug: "components/overview",
+            },
+            {
+              label: "Button",
+              slug: "components/button",
+            },
+            {
+              label: "Badge",
+              slug: "components/badge",
+            },
+            {
+              label: "Card",
+              slug: "components/card",
+            },
+            {
+              label: "Input",
+              slug: "components/input",
+            },
+            {
+              label: "Avatar",
+              slug: "components/avatar",
+            },
+            {
+              label: "Separator",
+              slug: "components/separator",
+            },
+            {
+              label: "Icon",
+              slug: "components/icon",
+            },
+            {
+              label: "Dropdown Menu",
+              slug: "components/dropdown-menu",
+            },
+            {
+              label: "Data Table",
+              slug: "components/data-table",
+            },
+          ],
+        },
+        {
           label: "Reference",
           translations: { id: "Referensi" },
           items: [

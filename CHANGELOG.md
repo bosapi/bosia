@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.1.1] - 2026-03-26
+
+### Added
+- Component registry — 9 Svelte 5 UI components (avatar, badge, button, card, data-table, dropdown-menu, icon, input, separator) in `registry/components/`
+- `bosia add --local` flag for installing components from the local registry during development
+- `bosia add` now auto-creates `src/lib/utils.ts` (cn utility) if it doesn't exist
+- Components documentation page with usage examples and prop tables for all 9 components
+
+---
+
 ## [0.1.0] - 2026-03-26
 
 ### Changed
