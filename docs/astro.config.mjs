@@ -137,6 +137,18 @@ export default defineConfig({
               label: "Data Table",
               slug: "components/data-table",
             },
+            {
+              label: "Chart",
+              slug: "components/chart",
+            },
+            {
+              label: "Navbar",
+              slug: "components/navbar",
+            },
+            {
+              label: "Sidebar",
+              slug: "components/sidebar",
+            },
           ],
         },
         {
@@ -172,7 +184,7 @@ export default defineConfig({
               label: "Changelog",
               translations: { id: "Changelog" },
               slug: "reference/changelog",
-              badge: { text: "v0.1.0", variant: "tip" },
+              badge: { text: "v0.1.1", variant: "tip" },
             },
           ],
         },

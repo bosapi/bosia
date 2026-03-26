@@ -35,3 +35,19 @@ for (const file of files) {
   writeFileSync(join(outDir, file.dest), output);
   console.log(`✓ Synced ${file.source} → docs/src/content/docs/reference/${file.dest}`);
 }
+
+// Sync version badge in astro.config.mjs from package.json
+const pkg = JSON.parse(readFileSync(join(repoRoot, "packages", "bosia", "package.json"), "utf-8"));
+const version = `v${pkg.version}`;
+const configPath = join(docsDir, "astro.config.mjs");
+const configContent = readFileSync(configPath, "utf-8");
+const updated = configContent.replace(
+  /badge:\s*\{\s*text:\s*"v[^"]*"/,
+  `badge: { text: "${version}"`,
+);
+if (updated !== configContent) {
+  writeFileSync(configPath, updated);
+  console.log(`✓ Updated changelog badge to ${version}`);
+} else {
+  console.log(`✓ Changelog badge already at ${version}`);
+}

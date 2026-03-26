@@ -4,10 +4,13 @@
     "badge",
     "button",
     "card",
+    "chart",
     "data-table",
     "dropdown-menu",
     "icon",
     "input",
-    "separator"
+    "navbar",
+    "separator",
+    "sidebar"
   ]
 }

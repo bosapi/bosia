@@ -1,0 +1,12 @@
+{
+  "name": "navbar",
+  "description": "A responsive navbar with desktop links, mobile dropdown menu, theme toggle, and user avatar.",
+  "dependencies": ["button", "avatar", "dropdown-menu", "icon"],
+  "files": [
+    "navbar.svelte",
+    "navbar-link.svelte",
+    "navbar-mobile-menu.svelte",
+    "index.ts"
+  ],
+  "npmDeps": {}
+}

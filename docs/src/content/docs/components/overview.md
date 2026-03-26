@@ -48,6 +48,9 @@ Import from the component's barrel export:
 | [Icon](/components/icon/)                          | Inline SVG icons (Lucide-style)                  |
 | [Dropdown Menu](/components/dropdown-menu/)        | Context-managed dropdown                         |
 | [Data Table](/components/data-table/)              | Table with sorting, filtering, pagination        |
+| [Chart](/components/chart/)                        | SVG line and bar charts with tooltips            |
+| [Navbar](/components/navbar/)                      | Responsive navbar with mobile menu and theme toggle |
+| [Sidebar](/components/sidebar/)                    | Composable sidebar with collapsible icon mode    |
 
 ## Customization
 
