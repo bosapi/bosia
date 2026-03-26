@@ -48,7 +48,7 @@ This runs:
 
 1. Route scanning and manifest generation
 2. Type generation (`$types.d.ts` files)
-3. Environment variable module generation (`bosbun:env`)
+3. Environment variable module generation (`$env`)
 4. Client bundle (JavaScript + CSS via Tailwind)
 5. Server entry bundle
 6. Static prerendering (routes with `export const prerender = true`)

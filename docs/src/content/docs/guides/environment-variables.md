@@ -31,10 +31,10 @@ Variable names control where and when they're available:
 
 ## Accessing Variables
 
-Import from the `bosbun:env` virtual module:
+Import from the `$env` virtual module:
 
 ```ts
-import { PUBLIC_API_URL, DATABASE_URL } from "bosbun:env";
+import { PUBLIC_API_URL, DATABASE_URL } from "$env";
 ```
 
 Only variables declared in your `.env` files are available through this import. The module is type-safe with auto-generated type declarations.
@@ -59,7 +59,7 @@ These variables are reserved by Bosbun and control framework behavior:
 | `CORS_CREDENTIALS`      | `false`   | Set to `"true"` to allow credentials             |
 | `CORS_MAX_AGE`          | `86400`   | Preflight cache duration in seconds              |
 
-Framework variables are accessed via `process.env` directly, not through `bosbun:env`.
+Framework variables are accessed via `process.env` directly, not through `$env`.
 
 ## Example .env File
 

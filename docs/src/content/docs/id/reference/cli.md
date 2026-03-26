@@ -48,7 +48,7 @@ Perintah ini menjalankan:
 
 1. Pemindaian rute dan pembuatan manifest
 2. Pembuatan tipe (`$types.d.ts` files)
-3. Pembuatan modul variabel lingkungan (`bosbun:env`)
+3. Pembuatan modul variabel lingkungan (`$env`)
 4. Bundle klien (JavaScript + CSS via Tailwind)
 5. Bundle entry server
 6. Prerendering statis (rute dengan `export const prerender = true`)

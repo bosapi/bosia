@@ -34,7 +34,7 @@ description: What's done, what's next, and where Bosbun is headed.
 - [x] Cookie support (`cookies.get`, `cookies.set`, `cookies.delete`)
 - [x] Security headers (X-Content-Type-Options, X-Frame-Options, etc.)
 - [x] Graceful shutdown handler (SIGTERM/SIGINT)
-- [x] `.env` file support with `bosbun:env` virtual module
+- [x] `.env` file support with `$env` virtual module
 - [x] CORS configuration (framework-level)
 - [x] Session-aware fetch (cookies forwarded in internal API calls)
 - [x] Request timeouts on `load()` and `metadata()` functions

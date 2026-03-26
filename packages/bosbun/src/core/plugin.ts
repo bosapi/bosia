@@ -3,7 +3,7 @@ import { join, dirname } from "path";
 // ─── Bun Build Plugin ─────────────────────────────────────
 // Resolves:
 //   bosbun:routes  → .bosbun/routes.ts  (generated route map)
-//   bosbun:env     → .bosbun/env.server.ts (bun) or .bosbun/env.client.ts (browser)
+//   $env           → .bosbun/env.server.ts (bun) or .bosbun/env.client.ts (browser)
 //   $lib/*        → src/lib/*         (user library alias)
 
 export function makeBosbunPlugin(target: "browser" | "bun" = "bun") {
@@ -15,8 +15,8 @@ export function makeBosbunPlugin(target: "browser" | "bun" = "bun") {
                 path: join(process.cwd(), ".bosbun", "routes.ts"),
             }));
 
-            // bosbun:env → .bosbun/env.client.ts (browser) or .bosbun/env.server.ts (bun)
-            build.onResolve({ filter: /^bosbun:env$/ }, () => ({
+            // $env → .bosbun/env.client.ts (browser) or .bosbun/env.server.ts (bun)
+            build.onResolve({ filter: /^\$env$/ }, () => ({
                 path: join(
                     process.cwd(),
                     ".bosbun",

@@ -31,7 +31,7 @@ Hal-hal berikut bekerja dengan cara yang sama seperti yang Anda harapkan:
 | **Universal load** | `+page.ts` / `+layout.ts` | Tidak didukung — hanya server loaders |
 | **Stores** | `$app/stores` | Tidak tersedia — gunakan `$props()` |
 | **Navigation** | `$app/navigation` | Router klien bawaan |
-| **Env vars** | `$env/static/public`, dll. | `bosbun:env` dengan prefix empat tingkat |
+| **Env vars** | `$env/static/public`, dll. | `$env` dengan prefix empat tingkat |
 | **HMR** | Vite HMR (granular) | SSE full-page reload |
 | **Direktori generate** | `.svelte-kit/` | `.bosbun/` |
 | **Registry komponen** | Tidak ada | `bosbun add` (gaya shadcn) |
@@ -58,7 +58,7 @@ Hal-hal berikut bekerja dengan cara yang sama seperti yang Anda harapkan:
 
 **Fungsi `metadata()`** — Unik untuk Bosbun. Mengembalikan `title`, `description`, dan tag `meta`. Dapat meneruskan `data` ke `load()` untuk menghindari duplikasi query database.
 
-**`bosbun:env`** — Sebagai pengganti empat modul `$env` terpisah milik SvelteKit, Bosbun menggunakan satu modul `bosbun:env` dengan sistem berbasis prefix:
+**`$env`** — Sebagai pengganti empat modul `$env/*` terpisah milik SvelteKit, Bosbun menggunakan satu modul `$env` dengan sistem berbasis prefix:
 
 ```ts
 // SvelteKit
@@ -66,7 +66,7 @@ import { PUBLIC_KEY } from "$env/static/public";
 import { SECRET } from "$env/static/private";
 
 // Bosbun
-import { PUBLIC_STATIC_KEY, SECRET } from "bosbun:env";
+import { PUBLIC_STATIC_KEY, SECRET } from "$env";
 ```
 
 ## Tidak Didukung

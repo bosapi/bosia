@@ -31,7 +31,7 @@ These work the same way you'd expect:
 | **Universal load** | `+page.ts` / `+layout.ts` | Not supported — server loaders only |
 | **Stores** | `$app/stores` | Not available — use `$props()` |
 | **Navigation** | `$app/navigation` | Built-in client router |
-| **Env vars** | `$env/static/public`, etc. | `bosbun:env` with four-tier prefix |
+| **Env vars** | `$env/static/public`, etc. | `$env` with four-tier prefix |
 | **HMR** | Vite HMR (granular) | SSE full-page reload |
 | **Generated dir** | `.svelte-kit/` | `.bosbun/` |
 | **Component registry** | None | `bosbun add` (shadcn-style) |
@@ -58,7 +58,7 @@ These work the same way you'd expect:
 
 **`metadata()` function** — Unique to Bosbun. Returns `title`, `description`, and `meta` tags. Can pass `data` to `load()` to avoid duplicate database queries.
 
-**`bosbun:env`** — Instead of SvelteKit's four separate `$env` modules, Bosbun uses a single `bosbun:env` module with a prefix-based system:
+**`$env`** — Instead of SvelteKit's four separate `$env/*` sub-modules, Bosbun uses a single `$env` module with a prefix-based system:
 
 ```ts
 // SvelteKit
@@ -66,7 +66,7 @@ import { PUBLIC_KEY } from "$env/static/public";
 import { SECRET } from "$env/static/private";
 
 // Bosbun
-import { PUBLIC_STATIC_KEY, SECRET } from "bosbun:env";
+import { PUBLIC_STATIC_KEY, SECRET } from "$env";
 ```
 
 ## Not Supported

@@ -212,5 +212,5 @@ interface CorsConfig {
 | ----------------------------------------- | ---------------- |
 | `import { cn, sequence } from "bosbun"`  | Framework package |
 | `import { cn } from "$lib/utils"`         | Project utility   |
-| `import { VAR } from "bosbun:env"`       | Environment vars  |
+| `import { VAR } from "$env"`             | Environment vars  |
 | `import type { PageData } from "./$types"` | Generated types  |

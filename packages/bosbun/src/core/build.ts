@@ -71,7 +71,7 @@ if (tailwindResult.exitCode !== 0) {
 }
 console.log("✅ Tailwind CSS built: public/bosbun-tw.css");
 
-// Separate plugin instances per build target (bosbun:env resolves differently)
+// Separate plugin instances per build target ($env resolves differently)
 const clientPlugin = makeBosbunPlugin("browser");
 const serverPlugin = makeBosbunPlugin("bun");
 

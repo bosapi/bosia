@@ -31,10 +31,10 @@ Nama variabel mengontrol di mana dan kapan variabel tersebut tersedia:
 
 ## Mengakses Variabel
 
-Impor dari modul virtual `bosbun:env`:
+Impor dari modul virtual `$env`:
 
 ```ts
-import { PUBLIC_API_URL, DATABASE_URL } from "bosbun:env";
+import { PUBLIC_API_URL, DATABASE_URL } from "$env";
 ```
 
 Hanya variabel yang dideklarasikan dalam file `.env` Anda yang tersedia melalui impor ini. Modul ini bersifat type-safe dengan deklarasi tipe yang dibuat secara otomatis.
@@ -59,7 +59,7 @@ Variabel-variabel ini dicadangkan oleh Bosbun dan mengontrol perilaku framework:
 | `CORS_CREDENTIALS`      | `false`   | Setel ke `"true"` untuk mengizinkan credentials              |
 | `CORS_MAX_AGE`          | `86400`   | Durasi cache preflight dalam detik                           |
 
-Variabel framework diakses melalui `process.env` secara langsung, bukan melalui `bosbun:env`.
+Variabel framework diakses melalui `process.env` secara langsung, bukan melalui `$env`.
 
 ## Contoh File .env
 
