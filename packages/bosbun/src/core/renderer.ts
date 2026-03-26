@@ -1,7 +1,7 @@
 import { render } from "svelte/server";
 
 import { findMatch } from "./matcher.ts";
-import { serverRoutes, errorPage } from "bosbun:routes";
+import { serverRoutes, errorPage } from "bosia:routes";
 import type { Cookies } from "./hooks.ts";
 import { HttpError, Redirect } from "./errors.ts";
 import App from "./client/App.svelte";
@@ -60,7 +60,7 @@ function makeFetch(req: Request, url: URL) {
 
 // ─── Route Data Loader ───────────────────────────────────
 // Runs layout + page server loaders for a given URL.
-// Used by both SSR and the /__bosbun/data JSON endpoint.
+// Used by both SSR and the /__bosia/data JSON endpoint.
 
 export async function loadRouteData(
     url: URL,
@@ -229,7 +229,7 @@ export async function renderSSRStream(
                 }
                 if (err instanceof HttpError) {
                     controller.enqueue(enc.encode(
-                        `<script>location.replace("/__bosbun/error?status=${err.status}&message="+encodeURIComponent(${safeJsonStringify(err.message)}))</script></body></html>`
+                        `<script>location.replace("/__bosia/error?status=${err.status}&message="+encodeURIComponent(${safeJsonStringify(err.message)}))</script></body></html>`
                     ));
                     controller.close();
                     return;

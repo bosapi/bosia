@@ -69,21 +69,21 @@ export function buildHtml(
         .map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
         .join("\n  ");
 
-    const fallbackTitle = head.includes("<title>") ? "" : "<title>Bosbun App</title>";
+    const fallbackTitle = head.includes("<title>") ? "" : "<title>Bosia App</title>";
 
     const publicEnv = getPublicDynamicEnv();
     const envScript = Object.keys(publicEnv).length > 0
-        ? `\n  <script>window.__BOSBUN_ENV__=${safeJsonStringify(publicEnv)};</script>`
+        ? `\n  <script>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`
         : "";
 
     const formScript = formData != null
-        ? `window.__BOSBUN_FORM_DATA__=${safeJsonStringify(formData)};`
+        ? `window.__BOSIA_FORM_DATA__=${safeJsonStringify(formData)};`
         : "";
 
     const scripts = csr
-        ? `${envScript}\n  <script>window.__BOSBUN_PAGE_DATA__=${safeJsonStringify(pageData)};window.__BOSBUN_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formScript}</script>\n  <script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
+        ? `${envScript}\n  <script>window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formScript}</script>\n  <script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
         : isDev
-            ? `\n  <script>!function r(){var e=new EventSource("/__bosbun/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
+            ? `\n  <script>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
             : "";
 
     return `<!DOCTYPE html>
@@ -95,9 +95,9 @@ export function buildHtml(
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   ${head}
   ${cssLinks}
-  <link rel="stylesheet" href="/bosbun-tw.css${cacheBust}">
+  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">
 </head>
-<body data-bosbun-preload="hover">
+<body data-bosia-preload="hover">
   <div id="app">${body}</div>${scripts}
 </body>
 </html>`;
@@ -120,15 +120,15 @@ export function buildHtmlShellOpen(): string {
         `  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n` +
         `  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n` +
         `  ${cssLinks}\n` +
-        `  <link rel="stylesheet" href="/bosbun-tw.css${cacheBust}">\n` +
+        `  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
         `  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`;
     return _shellOpen;
 }
 
 const SPINNER = `<div id="__bs__"><style>` +
-    `:root{--bosbun-loading-color:#f73b27}` +
+    `:root{--bosia-loading-color:#f73b27}` +
     `#__bs__{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}` +
-    `#__bs__ i{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:var(--bosbun-loading-color);` +
+    `#__bs__ i{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:var(--bosia-loading-color);` +
     `border-radius:50%;animation:__bs__ .8s linear infinite}` +
     `@keyframes __bs__{to{transform:rotate(360deg)}}</style><i></i></div>`;
 
@@ -147,9 +147,9 @@ export function buildMetadataChunk(metadata: Metadata | null): string {
             }
         }
     } else {
-        out += `  <title>Bosbun App</title>\n`;
+        out += `  <title>Bosia App</title>\n`;
     }
-    out += `</head>\n<body data-bosbun-preload="hover">\n${SPINNER}`;
+    out += `</head>\n<body data-bosia-preload="hover">\n${SPINNER}`;
     return out;
 }
 
@@ -175,14 +175,14 @@ export function buildHtmlTail(
     if (csr) {
         const publicEnv = getPublicDynamicEnv();
         if (Object.keys(publicEnv).length > 0) {
-            out += `\n<script>window.__BOSBUN_ENV__=${safeJsonStringify(publicEnv)};</script>`;
+            out += `\n<script>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`;
         }
-        const formInject = formData != null ? `window.__BOSBUN_FORM_DATA__=${safeJsonStringify(formData)};` : "";
-        out += `\n<script>window.__BOSBUN_PAGE_DATA__=${safeJsonStringify(pageData)};` +
-               `window.__BOSBUN_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formInject}</script>`;
+        const formInject = formData != null ? `window.__BOSIA_FORM_DATA__=${safeJsonStringify(formData)};` : "";
+        out += `\n<script>window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};` +
+               `window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formInject}</script>`;
         out += `\n<script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`;
     } else if (isDev) {
-        out += `\n<script>!function r(){var e=new EventSource("/__bosbun/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;
+        out += `\n<script>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;
     }
     out += `\n</body>\n</html>`;
     return out;
@@ -206,7 +206,7 @@ export function compress(body: string, contentType: string, req: Request, status
 const STATIC_EXTS = new Set([".ico", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".css", ".js", ".woff", ".woff2", ".ttf"]);
 
 export function isStaticPath(path: string): boolean {
-    if (path.startsWith("/dist/") || path.startsWith("/__bosbun/")) return true;
+    if (path.startsWith("/dist/") || path.startsWith("/__bosia/")) return true;
     const dot = path.lastIndexOf(".");
     return dot !== -1 && STATIC_EXTS.has(path.slice(dot));
 }

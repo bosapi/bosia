@@ -1,4 +1,4 @@
-// ─── Bosbun Core Types ────────────────────────────────────
+// ─── Bosia Core Types ────────────────────────────────────
 
 /** A page route discovered from the file system */
 export interface PageRoute {

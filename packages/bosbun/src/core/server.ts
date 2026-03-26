@@ -4,7 +4,7 @@ import { existsSync } from "fs";
 import { join, resolve as resolvePath } from "path";
 
 import { findMatch } from "./matcher.ts";
-import { apiRoutes, serverRoutes } from "bosbun:routes";
+import { apiRoutes, serverRoutes } from "bosia:routes";
 import type { Handle, RequestEvent } from "./hooks.ts";
 import { HttpError, Redirect, ActionFailure } from "./errors.ts";
 import { CookieJar } from "./cookies.ts";
@@ -113,13 +113,13 @@ async function resolve(event: RequestEvent): Promise<Response> {
     }
 
     // Data endpoint — returns server loader data as JSON for client-side navigation
-    if (path === "/__bosbun/data") {
+    if (path === "/__bosia/data") {
         const routePath = url.searchParams.get("path") ?? "/";
         if (!isValidRoutePath(routePath, url.origin)) {
             return Response.json({ error: "Invalid path", status: 400 }, { status: 400 });
         }
         const routeUrl = new URL(routePath, url.origin);
-        // Rewrite event.url so logging middleware sees the real page path, not /__bosbun/data
+        // Rewrite event.url so logging middleware sees the real page path, not /__bosia/data
         event.url = routeUrl;
         try {
             const data = await loadRouteData(routeUrl, locals, request, cookies);
@@ -398,7 +398,7 @@ const app = new Elysia({ serve: { maxRequestBodySize: BODY_SIZE_LIMIT } })
 
 app.listen(PORT, () => {
     // In dev mode the proxy owns the user-facing port — don't print the internal port
-    if (!isDev) console.log(`⬡ Bosbun server running at http://localhost:${PORT}`);
+    if (!isDev) console.log(`⬡ Bosia server running at http://localhost:${PORT}`);
 });
 
 function shutdown() {

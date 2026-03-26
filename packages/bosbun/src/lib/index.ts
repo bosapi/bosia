@@ -1,7 +1,7 @@
-// ─── Bosbun Public API ─────────────────────────────────────
+// ─── Bosia Public API ─────────────────────────────────────
 // Usage in user apps:
-//   import { cn, sequence } from "bosbun"
-//   import type { RequestEvent, LoadEvent, Handle, Cookies } from "bosbun"
+//   import { cn, sequence } from "bosia"
+//   import type { RequestEvent, LoadEvent, Handle, Cookies } from "bosia"
 
 export { cn, getServerTime } from "./utils.ts";
 export { sequence } from "../core/hooks.ts";

@@ -3,7 +3,7 @@
 // Singleton used by App.svelte and hydrate.ts.
 
 import { findMatch } from "../matcher.ts";
-import { clientRoutes } from "bosbun:routes";
+import { clientRoutes } from "bosia:routes";
 
 export const router = new class Router {
     currentRoute = $state(typeof window !== "undefined" ? window.location.pathname + window.location.search + window.location.hash : "/");

@@ -2,24 +2,24 @@ import { join, dirname } from "path";
 
 // ─── Bun Build Plugin ─────────────────────────────────────
 // Resolves:
-//   bosbun:routes  → .bosbun/routes.ts  (generated route map)
-//   $env           → .bosbun/env.server.ts (bun) or .bosbun/env.client.ts (browser)
+//   bosia:routes  → .bosia/routes.ts  (generated route map)
+//   $env           → .bosia/env.server.ts (bun) or .bosia/env.client.ts (browser)
 //   $lib/*        → src/lib/*         (user library alias)
 
-export function makeBosbunPlugin(target: "browser" | "bun" = "bun") {
+export function makeBosiaPlugin(target: "browser" | "bun" = "bun") {
     return {
-        name: "bosbun-resolver",
+        name: "bosia-resolver",
         setup(build: import("bun").PluginBuilder) {
-            // bosbun:routes → .bosbun/routes.ts
-            build.onResolve({ filter: /^bosbun:routes$/ }, () => ({
-                path: join(process.cwd(), ".bosbun", "routes.ts"),
+            // bosia:routes → .bosia/routes.ts
+            build.onResolve({ filter: /^bosia:routes$/ }, () => ({
+                path: join(process.cwd(), ".bosia", "routes.ts"),
             }));
 
-            // $env → .bosbun/env.client.ts (browser) or .bosbun/env.server.ts (bun)
+            // $env → .bosia/env.client.ts (browser) or .bosia/env.server.ts (bun)
             build.onResolve({ filter: /^\$env$/ }, () => ({
                 path: join(
                     process.cwd(),
-                    ".bosbun",
+                    ".bosia",
                     target === "browser" ? "env.client.ts" : "env.server.ts",
                 ),
             }));
@@ -32,7 +32,7 @@ export function makeBosbunPlugin(target: "browser" | "bun" = "bun") {
             });
 
             // Force svelte imports to resolve from the app's node_modules.
-            // Without this, when bosbun is symlinked (bun link / workspace),
+            // Without this, when bosia is symlinked (bun link / workspace),
             // hydrate.ts resolves "svelte" from the framework's location while
             // compiled components resolve "svelte/internal/client" from the app's.
             // Two different Svelte copies = duplicate runtime state = broken hydration.
@@ -66,13 +66,13 @@ export function makeBosbunPlugin(target: "browser" | "bun" = "bun") {
             });
 
             // "tailwindcss" inside app.css is a Tailwind CLI directive —
-            // it's already compiled to public/bosbun-tw.css by the CLI step.
+            // it's already compiled to public/bosia-tw.css by the CLI step.
             // Return an empty CSS module so Bun's CSS bundler doesn't choke on it.
             build.onResolve({ filter: /^tailwindcss$/ }, () => ({
                 path: "tailwindcss",
-                namespace: "bosbun-empty-css",
+                namespace: "bosia-empty-css",
             }));
-            build.onLoad({ filter: /.*/, namespace: "bosbun-empty-css" }, () => ({
+            build.onLoad({ filter: /.*/, namespace: "bosia-empty-css" }, () => ({
                 contents: "",
                 loader: "css",
             }));

@@ -3,16 +3,16 @@ import { mkdirSync, writeFileSync } from "fs";
 import { spawn } from "bun";
 import { addComponent } from "./add.ts";
 
-// ─── bosbun feat <feature> ─────────────────────────────────
+// ─── bosia feat <feature> ─────────────────────────────────
 // Fetches a feature scaffold from the GitHub registry.
 // Installs required components, copies route/lib files, installs npm deps.
 
-const REGISTRY_BASE = "https://raw.githubusercontent.com/bosapi/bosbun/main/registry";
+const REGISTRY_BASE = "https://raw.githubusercontent.com/bosapi/bosia/main/registry";
 
 interface FeatureMeta {
     name: string;
     description: string;
-    components: string[];              // bosbun components to install via `bosbun add`
+    components: string[];              // bosia components to install via `bosia add`
     files: string[];                   // source filenames in the registry feature dir
     targets: string[];                 // destination paths relative to project root
     npmDeps: Record<string, string>;
@@ -20,7 +20,7 @@ interface FeatureMeta {
 
 export async function runFeat(name: string | undefined) {
     if (!name) {
-        console.error("❌ Please provide a feature name.\n   Usage: bosbun feat <feature>");
+        console.error("❌ Please provide a feature name.\n   Usage: bosia feat <feature>");
         process.exit(1);
     }
 

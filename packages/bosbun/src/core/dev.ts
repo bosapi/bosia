@@ -2,7 +2,7 @@ import { spawn, type Subprocess } from "bun";
 import { watch } from "fs";
 import { join } from "path";
 
-console.log("⬡ Bosbun dev server starting...\n");
+console.log("⬡ Bosia dev server starting...\n");
 
 // ─── State ────────────────────────────────────────────────
 
@@ -32,7 +32,7 @@ function broadcastReload() {
 
 // ─── Build ────────────────────────────────────────────────
 
-import { BOSBUN_NODE_PATH } from "./paths.ts";
+import { BOSIA_NODE_PATH } from "./paths.ts";
 
 const BUILD_SCRIPT = join(import.meta.dir, "build.ts");
 
@@ -75,8 +75,8 @@ async function startAppServer() {
             NODE_ENV: "development",
             // Force app server to APP_PORT — prevents PORT from .env conflicting with the dev proxy
             PORT: String(APP_PORT),
-            // Allow externalized deps (elysia, etc.) to resolve from bosbun's node_modules
-            NODE_PATH: BOSBUN_NODE_PATH,
+            // Allow externalized deps (elysia, etc.) to resolve from bosia's node_modules
+            NODE_PATH: BOSIA_NODE_PATH,
         },
     });
 
@@ -137,7 +137,7 @@ Bun.serve({
         const url = new URL(req.url);
 
         // SSE endpoint — owned by dev server, not the app
-        if (url.pathname === "/__bosbun/sse") {
+        if (url.pathname === "/__bosia/sse") {
             return new Response(
                 new ReadableStream({
                     start(ctrl) {
@@ -202,8 +202,8 @@ console.log(`\n🌐 Open http://localhost:${DEV_PORT}\n`);
 // Watch src/ recursively. Skip generated files to avoid loops.
 
 const GENERATED = [
-    join(process.cwd(), ".bosbun"),
-    join(process.cwd(), "public", "bosbun-tw.css"),
+    join(process.cwd(), ".bosia"),
+    join(process.cwd(), "public", "bosia-tw.css"),
 ];
 
 function isGenerated(path: string): boolean {

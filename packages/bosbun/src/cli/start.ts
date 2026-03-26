@@ -1,6 +1,6 @@
 import { spawn } from "bun";
 import { loadEnv } from "../core/env.ts";
-import { BOSBUN_NODE_PATH } from "../core/paths.ts";
+import { BOSIA_NODE_PATH } from "../core/paths.ts";
 
 export async function runStart() {
     loadEnv("production");
@@ -18,7 +18,7 @@ export async function runStart() {
         env: {
             ...process.env,
             NODE_ENV: "production",
-            NODE_PATH: BOSBUN_NODE_PATH,
+            NODE_PATH: BOSIA_NODE_PATH,
         },
     });
 

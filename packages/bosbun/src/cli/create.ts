@@ -3,11 +3,11 @@ import { existsSync, mkdirSync, readdirSync, statSync, readFileSync, writeFileSy
 import { spawn } from "bun";
 import * as readline from "readline";
 
-// ─── bosbun create <name> [--template <name>] ──────────────
+// ─── bosia create <name> [--template <name>] ──────────────
 
 const TEMPLATES_DIR = resolve(import.meta.dir, "../../templates");
-const BOSBUN_PKG = JSON.parse(readFileSync(resolve(import.meta.dir, "../../package.json"), "utf-8"));
-const BOSBUN_VERSION: string = BOSBUN_PKG.version;
+const BOSIA_PKG = JSON.parse(readFileSync(resolve(import.meta.dir, "../../package.json"), "utf-8"));
+const BOSIA_VERSION: string = BOSIA_PKG.version;
 
 const TEMPLATE_DESCRIPTIONS: Record<string, string> = {
     default: "Minimal starter with routing and Tailwind",
@@ -16,7 +16,7 @@ const TEMPLATE_DESCRIPTIONS: Record<string, string> = {
 
 export async function runCreate(name: string | undefined, args: string[] = []) {
     if (!name) {
-        console.error("❌ Please provide a project name.\n   Usage: bosbun create my-app");
+        console.error("❌ Please provide a project name.\n   Usage: bosia create my-app");
         process.exit(1);
     }
 
@@ -47,7 +47,7 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
         process.exit(1);
     }
 
-    console.log(`\n⬡ Creating Bosbun project: ${basename(targetDir)} (template: ${template})\n`);
+    console.log(`\n⬡ Creating Bosia project: ${basename(targetDir)} (template: ${template})\n`);
 
     copyDir(templateDir, targetDir, name);
 
@@ -63,7 +63,7 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
     if (exitCode !== 0) {
         console.warn("⚠️  bun install failed — run it manually.");
     } else {
-        console.log(`\n🎉 Ready!\n\n  cd ${name}\n  bun x bosbun dev\n`);
+        console.log(`\n🎉 Ready!\n\n  cd ${name}\n  bun x bosia dev\n`);
     }
 }
 
@@ -111,7 +111,7 @@ function copyDir(src: string, dest: string, projectName: string) {
         } else {
             const content = readFileSync(srcPath, "utf-8")
                 .replaceAll("{{PROJECT_NAME}}", projectName)
-                .replaceAll("{{BOSBUN_VERSION}}", BOSBUN_VERSION);
+                .replaceAll("{{BOSIA_VERSION}}", BOSIA_VERSION);
             writeFileSync(destPath, content, "utf-8");
         }
     }

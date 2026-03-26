@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
-// ─── Bosbun CLI ────────────────────────────────────────────
-//   bosbun create <name>   scaffold a new project
-//   bosbun dev             start the development server
-//   bosbun build           build for production
-//   bosbun start           run the production server
-//   bosbun add <name>      add a UI component from the registry
-//   bosbun feat <name>     add a feature scaffold from the registry
+// ─── Bosia CLI ────────────────────────────────────────────
+//   bosia create <name>   scaffold a new project
+//   bosia dev             start the development server
+//   bosia build           build for production
+//   bosia start           run the production server
+//   bosia add <name>      add a UI component from the registry
+//   bosia feat <name>     add a feature scaffold from the registry
 
 const [, , command, ...args] = process.argv;
 
@@ -43,13 +43,13 @@ async function main() {
         }
         default: {
             console.log(`
-⬡ Bosbun
+⬡ Bosia
 
 Usage:
-  bosbun <command> [options]
+  bosia <command> [options]
 
 Commands:
-  create <name> [--template <t>]  Scaffold a new Bosbun project
+  create <name> [--template <t>]  Scaffold a new Bosia project
   dev                 Start the development server
   build               Build for production
   start               Run the production server
@@ -57,13 +57,13 @@ Commands:
   feat <feature>      Add a feature scaffold from the registry
 
 Examples:
-  bosbun create my-app
-  bosbun create my-app --template demo
-  bosbun dev
-  bosbun build
-  bosbun start
-  bosbun add button
-  bosbun feat login
+  bosia create my-app
+  bosia create my-app --template demo
+  bosia dev
+  bosia build
+  bosia start
+  bosia add button
+  bosia feat login
 `);
             break;
         }

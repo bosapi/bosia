@@ -1,5 +1,5 @@
 // ─── Link Prefetching ─────────────────────────────────────
-// Supports `data-bosbun-preload="hover"` and `data-bosbun-preload="viewport"`
+// Supports `data-bosia-preload="hover"` and `data-bosia-preload="viewport"`
 // on <a> elements or their ancestors.
 
 export const prefetchCache = new Map<string, any>();
@@ -22,7 +22,7 @@ export async function prefetchPath(path: string): Promise<void> {
 
     pending.add(path);
     try {
-        const res = await fetch(`/__bosbun/data?path=${encodeURIComponent(path)}`);
+        const res = await fetch(`/__bosia/data?path=${encodeURIComponent(path)}`);
         if (res.ok) {
             prefetchCache.set(path, await res.json());
         }
@@ -52,7 +52,7 @@ function observeViewportLinks(container: Element | Document = document) {
     }, { rootMargin: "0px" });
 
     const links = (container === document ? document : container as Element)
-        .querySelectorAll<HTMLAnchorElement>("a[data-bosbun-preload='viewport']");
+        .querySelectorAll<HTMLAnchorElement>("a[data-bosia-preload='viewport']");
 
     for (const link of links) {
         observer.observe(link);
@@ -67,9 +67,9 @@ export function initPrefetch(): void {
 
     document.addEventListener("mouseover", (e) => {
         if (!(e.target instanceof Element)) return;
-        // Early exit: skip if no [data-bosbun-preload="hover"] ancestor exists
-        const preloadEl = e.target.closest("[data-bosbun-preload]");
-        if (!preloadEl || preloadEl.getAttribute("data-bosbun-preload") !== "hover") return;
+        // Early exit: skip if no [data-bosia-preload="hover"] ancestor exists
+        const preloadEl = e.target.closest("[data-bosia-preload]");
+        if (!preloadEl || preloadEl.getAttribute("data-bosia-preload") !== "hover") return;
         const anchor = e.target.closest("a") as HTMLAnchorElement | null;
         if (!anchor) return;
         const href = getLinkHref(anchor);
@@ -92,12 +92,12 @@ export function initPrefetch(): void {
             for (const node of record.addedNodes) {
                 if (!(node instanceof Element)) continue;
                 // The node itself might be a viewport link
-                if (node.matches("a[data-bosbun-preload='viewport']")) {
+                if (node.matches("a[data-bosia-preload='viewport']")) {
                     observer.observe(node as HTMLAnchorElement);
                 }
                 // Or it might contain viewport links
                 for (const link of node.querySelectorAll<HTMLAnchorElement>(
-                    "a[data-bosbun-preload='viewport']"
+                    "a[data-bosia-preload='viewport']"
                 )) {
                     observer.observe(link);
                 }

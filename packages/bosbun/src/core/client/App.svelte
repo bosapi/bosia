@@ -1,7 +1,7 @@
 <script lang="ts">
   import { router } from "./router.svelte.ts";
   import { findMatch } from "../matcher.ts";
-  import { clientRoutes } from "bosbun:routes";
+  import { clientRoutes } from "bosia:routes";
   import { consumePrefetch, prefetchCache } from "./prefetch.ts";
 
   let {
@@ -59,7 +59,7 @@
     const dataFetch = cached
       ? Promise.resolve(cached)
       : match.route.hasServerData
-        ? fetch(`/__bosbun/data?path=${encodeURIComponent(path)}`).then(r => r.json()).catch(() => null)
+        ? fetch(`/__bosia/data?path=${encodeURIComponent(path)}`).then(r => r.json()).catch(() => null)
         : Promise.resolve(null);
 
     Promise.all([
@@ -96,9 +96,9 @@
 -->
 
 {#if navigating}
-  <div class="bosbun-bar loading"></div>
+  <div class="bosia-bar loading"></div>
 {:else if navDone}
-  <div class="bosbun-bar done"></div>
+  <div class="bosia-bar done"></div>
 {/if}
 
 {#if layoutComponents.length > 0}
@@ -129,28 +129,28 @@
 {/snippet}
 
 <style>
-  .bosbun-bar {
+  .bosia-bar {
     position: fixed;
     top: 0;
     left: 0;
     height: 2px;
     width: 100%;
-    background: var(--bosbun-loading-color, #f73b27);
+    background: var(--bosia-loading-color, #f73b27);
     z-index: 9999;
     pointer-events: none;
     transform-origin: left center;
   }
-  .bosbun-bar.loading {
-    animation: bosbun-load 8s cubic-bezier(0.02, 0.5, 0.5, 1) forwards;
+  .bosia-bar.loading {
+    animation: bosia-load 8s cubic-bezier(0.02, 0.5, 0.5, 1) forwards;
   }
-  .bosbun-bar.done {
-    animation: bosbun-done 0.35s ease forwards;
+  .bosia-bar.done {
+    animation: bosia-done 0.35s ease forwards;
   }
-  @keyframes bosbun-load {
+  @keyframes bosia-load {
     from { transform: scaleX(0); }
     to   { transform: scaleX(0.85); }
   }
-  @keyframes bosbun-done {
+  @keyframes bosia-done {
     from { transform: scaleX(1); opacity: 1; }
     to   { transform: scaleX(1); opacity: 0; }
   }

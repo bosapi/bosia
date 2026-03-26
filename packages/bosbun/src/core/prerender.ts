@@ -2,7 +2,7 @@ import { writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 import type { RouteManifest } from "./types.ts";
 
-import { BOSBUN_NODE_PATH } from "./paths.ts";
+import { BOSIA_NODE_PATH } from "./paths.ts";
 
 const CORE_DIR = import.meta.dir;
 
@@ -37,7 +37,7 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
     const child = Bun.spawn(
         ["bun", "run", "./dist/server/index.js"],
         {
-            env: { ...process.env, NODE_ENV: "production", PORT: String(port), NODE_PATH: BOSBUN_NODE_PATH },
+            env: { ...process.env, NODE_ENV: "production", PORT: String(port), NODE_PATH: BOSIA_NODE_PATH },
             stdout: "ignore",
             stderr: "ignore",
         },

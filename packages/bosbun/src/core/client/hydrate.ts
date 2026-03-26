@@ -3,7 +3,7 @@ import App from "./App.svelte";
 import { router } from "./router.svelte.ts";
 import { initPrefetch } from "./prefetch.ts";
 import { findMatch } from "../matcher.ts";
-import { clientRoutes } from "bosbun:routes";
+import { clientRoutes } from "bosia:routes";
 
 // ─── Hydration ────────────────────────────────────────────
 
@@ -37,9 +37,9 @@ async function main() {
             ssrMode: false,
             ssrPageComponent,
             ssrLayoutComponents,
-            ssrPageData: (window as any).__BOSBUN_PAGE_DATA__ ?? {},
-            ssrLayoutData: (window as any).__BOSBUN_LAYOUT_DATA__ ?? [],
-            ssrFormData: (window as any).__BOSBUN_FORM_DATA__ ?? null,
+            ssrPageData: (window as any).__BOSIA_PAGE_DATA__ ?? {},
+            ssrLayoutData: (window as any).__BOSIA_LAYOUT_DATA__ ?? [],
+            ssrFormData: (window as any).__BOSIA_FORM_DATA__ ?? null,
         },
     });
 }
@@ -53,10 +53,10 @@ if (process.env.NODE_ENV !== "production") {
     let retryDelay = 1000;
 
     function connectSSE() {
-        const es = new EventSource("/__bosbun/sse");
+        const es = new EventSource("/__bosia/sse");
 
         es.addEventListener("reload", () => {
-            console.log("[Bosbun] Reloading...");
+            console.log("[Bosia] Reloading...");
             window.location.reload();
         });
 
@@ -71,7 +71,7 @@ if (process.env.NODE_ENV !== "production") {
 
         es.onerror = () => {
             es.close();
-            console.log(`[Bosbun] SSE disconnected. Retrying in ${retryDelay / 1000}s...`);
+            console.log(`[Bosia] SSE disconnected. Retrying in ${retryDelay / 1000}s...`);
             setTimeout(connectSSE, retryDelay);
             retryDelay = Math.min(retryDelay + 1000, 5000);
         };

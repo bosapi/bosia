@@ -2,16 +2,16 @@ import { join, dirname } from "path";
 import { mkdirSync, writeFileSync } from "fs";
 import { spawn } from "bun";
 
-// ─── bosbun add <component> ────────────────────────────────
+// ─── bosia add <component> ────────────────────────────────
 // Fetches a component from the GitHub registry and copies it
 // into the user's src/lib/components/ui/<name>/ directory.
 
-const REGISTRY_BASE = "https://raw.githubusercontent.com/bosapi/bosbun/main/registry";
+const REGISTRY_BASE = "https://raw.githubusercontent.com/bosapi/bosia/main/registry";
 
 interface ComponentMeta {
     name: string;
     description: string;
-    dependencies: string[];   // other bosbun components required
+    dependencies: string[];   // other bosia components required
     files: string[];
     npmDeps: Record<string, string>;
 }
@@ -21,7 +21,7 @@ const installed = new Set<string>();
 
 export async function runAdd(name: string | undefined) {
     if (!name) {
-        console.error("❌ Please provide a component name.\n   Usage: bosbun add <component>");
+        console.error("❌ Please provide a component name.\n   Usage: bosia add <component>");
         process.exit(1);
     }
     await addComponent(name, true);

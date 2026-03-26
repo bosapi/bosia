@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 
 // ─── Framework-reserved vars ─────────────────────────────
-// These are controlled by Bosbun itself — users access them via process.env directly.
+// These are controlled by Bosia itself — users access them via process.env directly.
 const FRAMEWORK_VARS = new Set([
     "PORT",
     "NODE_ENV",

@@ -6,29 +6,29 @@ import { spawnSync } from "bun";
 import { scanRoutes } from "./scanner.ts";
 import { generateRoutesFile } from "./routeFile.ts";
 import { generateRouteTypes, ensureRootDirs } from "./routeTypes.ts";
-import { makeBosbunPlugin } from "./plugin.ts";
+import { makeBosiaPlugin } from "./plugin.ts";
 import { prerenderStaticRoutes } from "./prerender.ts";
 import { loadEnv, classifyEnvVars } from "./env.ts";
 import { generateEnvModules } from "./envCodegen.ts";
-import { BOSBUN_NODE_PATH, resolveBosbunBin } from "./paths.ts";
+import { BOSIA_NODE_PATH, resolveBosiaBin } from "./paths.ts";
 
-// Resolved from this file's location inside the bosbun package
+// Resolved from this file's location inside the bosia package
 const CORE_DIR = import.meta.dir;
 
 // ─── Entry Point ─────────────────────────────────────────
 
 const isProduction = process.env.NODE_ENV === "production";
 
-console.log("🏗️  Starting Bosbun build...\n");
+console.log("🏗️  Starting Bosia build...\n");
 
-// 0. Load .env files (before cleaning .bosbun so loadEnv can set process.env early)
+// 0. Load .env files (before cleaning .bosia so loadEnv can set process.env early)
 const envMode = isProduction ? "production" : "development";
 const envVars = loadEnv(envMode);
 const classifiedEnv = classifyEnvVars(envVars);
 
 // 0b. Clean all generated output first
 try { rmSync("./dist",   { recursive: true, force: true }); } catch { }
-try { rmSync("./.bosbun", { recursive: true, force: true }); } catch { }
+try { rmSync("./.bosia", { recursive: true, force: true }); } catch { }
 
 // 1. Scan routes
 const manifest = scanRoutes();
@@ -43,37 +43,37 @@ if (manifest.apis.length > 0) {
     }
 }
 
-// 2. Generate .bosbun/routes.ts (single file replaces all old code generators)
+// 2. Generate .bosia/routes.ts (single file replaces all old code generators)
 generateRoutesFile(manifest);
 
-// 2b. Generate .bosbun/types/src/routes/**/$types.d.ts for IDE type inference
+// 2b. Generate .bosia/types/src/routes/**/$types.d.ts for IDE type inference
 generateRouteTypes(manifest);
 
-// 2c. Ensure tsconfig.json has rootDirs pointing at .bosbun/types
+// 2c. Ensure tsconfig.json has rootDirs pointing at .bosia/types
 ensureRootDirs();
 
-// 2d. Generate .bosbun/env.server.ts, .bosbun/env.client.ts, .bosbun/types/env.d.ts
+// 2d. Generate .bosia/env.server.ts, .bosia/env.client.ts, .bosia/types/env.d.ts
 generateEnvModules(classifiedEnv);
 
 // 3. Build Tailwind CSS
 console.log("\n🎨 Building Tailwind CSS...");
-const tailwindBin = resolveBosbunBin("tailwindcss");
+const tailwindBin = resolveBosiaBin("tailwindcss");
 const tailwindResult = spawnSync(
-    [tailwindBin, "-i", "./src/app.css", "-o", "./public/bosbun-tw.css", ...(isProduction ? ["--minify"] : [])],
+    [tailwindBin, "-i", "./src/app.css", "-o", "./public/bosia-tw.css", ...(isProduction ? ["--minify"] : [])],
     {
         cwd: process.cwd(),
-        env: { ...process.env, NODE_PATH: BOSBUN_NODE_PATH },
+        env: { ...process.env, NODE_PATH: BOSIA_NODE_PATH },
     },
 );
 if (tailwindResult.exitCode !== 0) {
     console.error("❌ Tailwind CSS build failed:\n" + tailwindResult.stderr.toString());
     process.exit(1);
 }
-console.log("✅ Tailwind CSS built: public/bosbun-tw.css");
+console.log("✅ Tailwind CSS built: public/bosia-tw.css");
 
 // Separate plugin instances per build target ($env resolves differently)
-const clientPlugin = makeBosbunPlugin("browser");
-const serverPlugin = makeBosbunPlugin("bun");
+const clientPlugin = makeBosiaPlugin("browser");
+const serverPlugin = makeBosiaPlugin("bun");
 
 // Build-time defines: inline PUBLIC_STATIC_* and STATIC_* vars
 const staticDefines: Record<string, string> = {};

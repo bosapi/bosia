@@ -1,8 +1,8 @@
-// ─── Bosbun Hooks ─────────────────────────────────────────
+// ─── Bosia Hooks ─────────────────────────────────────────
 // SvelteKit-compatible middleware API.
 // Usage in src/hooks.server.ts:
 //
-//   import { sequence } from "bosbun";
+//   import { sequence } from "bosia";
 //   export const handle = sequence(authHandle, loggingHandle);
 
 // ─── Cookie Types ─────────────────────────────────────────
