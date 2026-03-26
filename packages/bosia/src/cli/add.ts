@@ -34,6 +34,7 @@ export async function runAdd(name: string | undefined, flags: string[] = []) {
         console.log(`⬡ Using local registry: ${registryRoot}\n`);
     }
 
+    ensureUtils();
     await addComponent(name, true);
 }
 
@@ -78,6 +79,25 @@ export async function addComponent(name: string, root = false) {
     }
 
     if (root) console.log(`\n✅ ${name} installed at src/lib/components/ui/${name}/`);
+}
+
+// ─── Ensure $lib/utils.ts exists ─────────────────────────────
+
+const UTILS_CONTENT = `import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+}
+`;
+
+function ensureUtils() {
+    const utilsPath = join(process.cwd(), "src", "lib", "utils.ts");
+    if (!existsSync(utilsPath)) {
+        mkdirSync(dirname(utilsPath), { recursive: true });
+        writeFileSync(utilsPath, UTILS_CONTENT, "utf-8");
+        console.log("   ✍️  src/lib/utils.ts (cn utility)\n");
+    }
 }
 
 // ─── Registry resolvers ──────────────────────────────────────
