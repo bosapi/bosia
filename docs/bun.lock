@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "bosbun-docs",
+      "name": "bosia-docs",
       "dependencies": {
         "@astrojs/starlight": "^0.34",
         "astro": "^5.7",

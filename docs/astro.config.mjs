@@ -125,7 +125,7 @@ export default defineConfig({
               label: "Changelog",
               translations: { id: "Changelog" },
               slug: "reference/changelog",
-              badge: { text: "v0.0.8", variant: "tip" },
+              badge: { text: "v0.1.0", variant: "tip" },
             },
           ],
         },
