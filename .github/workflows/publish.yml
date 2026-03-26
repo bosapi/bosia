@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "packages/bosbun/package.json"
+      - "packages/bosia/package.json"
 
 jobs:
   publish:
@@ -15,11 +15,11 @@ jobs:
       - name: Check version
         id: version
         run: |
-          VERSION=$(jq -r '.version' packages/bosbun/package.json)
+          VERSION=$(jq -r '.version' packages/bosia/package.json)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
           # Check if this version is already published
-          if npm view "bosbun@$VERSION" version 2>/dev/null; then
+          if npm view "bosia@$VERSION" version 2>/dev/null; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "Version $VERSION already published — skipping"
           else
@@ -40,6 +40,6 @@ jobs:
       - name: Publish
         if: steps.version.outputs.skip == 'false'
         run: |
-          echo "Publishing bosbun@${{ steps.version.outputs.version }} with tag ${{ steps.version.outputs.tag }}"
+          echo "Publishing bosia@${{ steps.version.outputs.version }} with tag ${{ steps.version.outputs.tag }}"
           npm publish --tag "${{ steps.version.outputs.tag }}" --access public
-        working-directory: packages/bosbun
+        working-directory: packages/bosia
