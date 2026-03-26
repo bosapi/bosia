@@ -1,5 +1,5 @@
 {
-  "name": "bosbun",
+  "name": "bosia",
   "version": "0.0.8-rc.2",
   "type": "module",
   "description": "A fast, batteries-included fullstack framework — SSR · Svelte 5 Runes · Bun · ElysiaJS. File-based routing inspired by SvelteKit. No Node.js, no Vite, no adapters.",
@@ -16,13 +16,13 @@
     "name": "Jekibus",
     "url": "https://github.com/jekibus"
   },
-  "homepage": "https://github.com/bosapi/bosbun#readme",
+  "homepage": "https://github.com/bosapi/bosia#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bosapi/bosbun.git"
+    "url": "git+https://github.com/bosapi/bosia.git"
   },
   "bugs": {
-    "url": "https://github.com/bosapi/bosbun/issues"
+    "url": "https://github.com/bosapi/bosia/issues"
   },
   "files": [
     "src",
@@ -34,7 +34,7 @@
     ".": "./src/lib/index.ts"
   },
   "bin": {
-    "bosbun": "src/cli/index.ts"
+    "bosia": "src/cli/index.ts"
   },
   "scripts": {
     "check": "tsc --noEmit"

@@ -1,12 +1,12 @@
 {
-  "name": "bosbun-monorepo",
+  "name": "bosia-monorepo",
   "private": true,
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "scripts": {
-    "publish": "npm publish --workspace packages/bosbun --access public",
-    "publish:dry": "npm publish --workspace packages/bosbun --dry-run"
+    "publish": "npm publish --workspace packages/bosia --access public",
+    "publish:dry": "npm publish --workspace packages/bosia --dry-run"
   }
 }
