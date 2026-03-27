@@ -4,9 +4,9 @@
   "type": "module",
   "scripts": {
     "sync": "bun run sync-docs.ts",
-    "dev": "bun run sync && bun run ../../packages/bosia/src/core/dev.ts",
-    "build": "bun run sync && NODE_ENV=production bun run ../../packages/bosia/src/core/build.ts",
-    "start": "bun run ../../packages/bosia/src/cli/index.ts start"
+    "dev": "bun run sync && bun run ../packages/bosia/src/core/dev.ts",
+    "build": "bun run sync && NODE_ENV=production bun run ../packages/bosia/src/core/build.ts",
+    "start": "bun run ../packages/bosia/src/cli/index.ts start"
   },
   "dependencies": {
     "bosia": "workspace:*",

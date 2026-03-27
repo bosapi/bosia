@@ -1,8 +1,9 @@
 import { readFileSync, statSync, existsSync } from "fs";
-import { join } from "path";
+import { join, resolve } from "path";
 import { parseMarkdown, type DocPage } from "./markdown";
 
-const contentDir = join(import.meta.dir, "..", "..", "..", "content", "docs");
+// Resolve content directory relative to the docs project root (cwd at runtime)
+const contentDir = resolve(process.cwd(), "content", "docs");
 
 interface CacheEntry {
     mtime: number;

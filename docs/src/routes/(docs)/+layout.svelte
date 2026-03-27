@@ -1,5 +1,4 @@
 <script lang="ts">
-    import "../../app.css";
     import DocsNavbar from "$lib/components/DocsNavbar.svelte";
     import DocsSidebar from "$lib/components/DocsSidebar.svelte";
 
