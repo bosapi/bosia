@@ -5,7 +5,7 @@ import { serverRoutes, errorPage } from "bosia:routes";
 import type { Cookies } from "./hooks.ts";
 import { HttpError, Redirect } from "./errors.ts";
 import App from "./client/App.svelte";
-import { buildHtml, buildHtmlShellOpen, buildMetadataChunk, buildHtmlTail, compress, safeJsonStringify, isDev } from "./html.ts";
+import { buildHtml, buildHtmlShellOpen, buildMetadataChunk, buildHtmlTail, compress, isDev } from "./html.ts";
 import type { Metadata } from "./hooks.ts";
 
 // ─── Timeout Helpers ─────────────────────────────────────
@@ -176,9 +176,28 @@ export async function renderSSRStream(
         // Continue with null metadata — don't break the page for a metadata failure
     }
 
-    // Kick off imports immediately (parallel with data loading)
-    const pageModPromise = route.pageModule();
-    const layoutModsPromise = Promise.all(route.layoutModules.map((l: () => Promise<any>) => l()));
+    // ── Pre-stream phase: run load() + module imports in parallel before committing to a 200 ──
+    // This ensures HttpError/Redirect from load() can return a proper response before any bytes are sent.
+    const metadataData = metadata?.data ?? null;
+    let data: Awaited<ReturnType<typeof loadRouteData>>;
+    let pageMod: any;
+    let layoutMods: any[];
+
+    try {
+        [data, pageMod, layoutMods] = await Promise.all([
+            loadRouteData(url, locals, req, cookies, metadataData),
+            route.pageModule(),
+            Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
+        ]);
+    } catch (err) {
+        if (err instanceof Redirect) return Response.redirect(err.location, err.status);
+        if (err instanceof HttpError) return renderErrorPage(err.status, err.message, url, req);
+        if (isDev) console.error("SSR load error:", err);
+        else console.error("SSR load error:", (err as Error).message ?? err);
+        return renderErrorPage(500, "Internal Server Error", url, req);
+    }
+
+    if (!data) return renderErrorPage(404, "Not Found", url, req);
 
     const enc = new TextEncoder();
 
@@ -191,53 +210,23 @@ export async function renderSSRStream(
             controller.enqueue(enc.encode(buildMetadataChunk(metadata)));
 
             try {
-                // Pass metadata.data to load() so it can reuse fetched data
-                const metadataData = metadata?.data ?? null;
-
-                // Wait for data + component imports
-                const [data, pageMod, layoutMods] = await Promise.all([
-                    loadRouteData(url, locals, req, cookies, metadataData),
-                    pageModPromise,
-                    layoutModsPromise,
-                ]);
-
-                if (!data) {
-                    controller.enqueue(enc.encode(`</body></html>`));
-                    controller.close();
-                    return;
-                }
-
                 const { body, head } = render(App, {
                     props: {
                         ssrMode: true,
                         ssrPageComponent: pageMod.default,
                         ssrLayoutComponents: layoutMods.map((m: any) => m.default),
-                        ssrPageData: data.pageData,
-                        ssrLayoutData: data.layoutData,
+                        ssrPageData: data!.pageData,
+                        ssrLayoutData: data!.layoutData,
                     },
                 });
 
                 // Chunk 3: rendered content
-                controller.enqueue(enc.encode(buildHtmlTail(body, head, data.pageData, data.layoutData, data.csr)));
+                controller.enqueue(enc.encode(buildHtmlTail(body, head, data!.pageData, data!.layoutData, data!.csr)));
                 controller.close();
             } catch (err) {
-                // Head is closed and body is open at this point — HTML structure is valid
-                if (err instanceof Redirect) {
-                    controller.enqueue(enc.encode(
-                        `<script>location.replace(${safeJsonStringify(err.location)})</script></body></html>`
-                    ));
-                    controller.close();
-                    return;
-                }
-                if (err instanceof HttpError) {
-                    controller.enqueue(enc.encode(
-                        `<script>location.replace("/__bosia/error?status=${err.status}&message="+encodeURIComponent(${safeJsonStringify(err.message)}))</script></body></html>`
-                    ));
-                    controller.close();
-                    return;
-                }
-                if (isDev) console.error("SSR stream error:", err);
-                else console.error("SSR stream error:", (err as Error).message ?? err);
+                // Only render() can throw here — data is already loaded successfully
+                if (isDev) console.error("SSR render error:", err);
+                else console.error("SSR render error:", (err as Error).message ?? err);
                 controller.enqueue(enc.encode(`<p>Internal Server Error</p></body></html>`));
                 controller.close();
             }

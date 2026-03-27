@@ -9,6 +9,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.1.2] - 2026-03-28
+
+### Added
+- Docs site rebuilt as a Bosia app (dogfooding) — replaces Astro + Starlight with a fully Bosia-powered site at `docs/`
+- Markdown pipeline with `marked` + `shiki` syntax highlighting (lazy-loaded, 6 grammars) and `gray-matter` frontmatter parsing
+- File-based doc content at `docs/content/docs/` with mtime-keyed parse cache
+- Docs layout with sidebar, navbar, dark mode toggle, and table of contents
+- i18n support (EN + ID) via `/id/` URL prefix with locale-aware sidebar links and language switcher
+- Live component preview system — `demo` frontmatter key renders interactive Svelte components above doc content (7 demos: button, badge, input, separator, avatar, card, dropdown-menu)
+- Landing page with hero, features grid, and quick-start code block
+- Registry API — `GET /api/registry/index` and `GET /api/registry/components/[...path]` serve component files directly from the docs site with path traversal protection
+- `bosia add` now fetches from `https://bosia.bosapi.com/api/registry` (docs site as registry source of truth); `--local` flag retained for development
+
+### Changed
+- `getVersion()` extracted to shared `$lib/utils` — eliminates duplicate implementations across server files
+- `DocsSidebar` now uses `localizeUrl()` from `$lib/docs/i18n` instead of inline duplication
+- Page `metadata()` now uses frontmatter `title` for dynamic `<title>` tags (e.g. `"Getting Started - Bosia Docs"`)
+
+### Fixed
+- Added viewport meta tag to root layout for correct mobile rendering
+- Silent `catch {}` in syntax highlighter now logs errors with language context
+
+---
+
 ## [0.1.1] - 2026-03-27
 
 ### Added
