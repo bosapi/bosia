@@ -11,7 +11,7 @@ import * as p from "@clack/prompts";
 //   bosia add button       → src/lib/components/ui/button/
 //   bosia add shop/cart    → src/lib/components/shop/cart/
 
-const REMOTE_BASE = "https://raw.githubusercontent.com/bosapi/bosia/main/registry";
+const REMOTE_BASE = "https://bosia.bosapi.com/api/registry";
 
 interface ComponentMeta {
     name: string;

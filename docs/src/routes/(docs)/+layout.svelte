@@ -10,15 +10,6 @@
     }
 </script>
 
-<svelte:head>
-    <script>
-        // Restore theme before paint
-        if (localStorage.getItem("theme") === "dark" || (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-            document.documentElement.classList.add("dark");
-        }
-    </script>
-</svelte:head>
-
 <div class="min-h-screen">
     <DocsNavbar
         version={data.version}
