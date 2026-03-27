@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { NavGroup } from "$lib/docs/nav";
-    import type { Locale } from "$lib/docs/i18n";
+    import { localizeUrl, type Locale } from "$lib/docs/i18n";
 
     let {
         groups,
@@ -13,11 +13,6 @@
         locale: Locale;
         onnavigate?: () => void;
     } = $props();
-
-    function href(slug: string): string {
-        const base = slug === "" ? "/" : `/${slug}`;
-        return locale === "id" ? (slug === "" ? "/id" : `/id/${slug}`) : base;
-    }
 
     function isActive(slug: string): boolean {
         return currentSlug === slug;
@@ -38,7 +33,7 @@
                 {#each group.items as item}
                     <li>
                         <a
-                            href={href(item.slug)}
+                            href={localizeUrl(item.slug, locale)}
                             onclick={onnavigate}
                             class="block rounded-md px-2 py-1.5 transition-colors {isActive(item.slug)
                                 ? 'bg-accent text-accent-foreground font-medium'

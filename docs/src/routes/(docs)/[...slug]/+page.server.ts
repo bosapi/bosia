@@ -23,8 +23,9 @@ export async function load({ params, url }: LoadEvent) {
     };
 }
 
-export function metadata({ params }: { params: Record<string, string> }) {
+export function metadata({ data }: { data: { frontmatter: Record<string, any> } }) {
+    const title = data.frontmatter?.title;
     return {
-        title: `Bosia Docs`,
+        title: title ? `${title} - Bosia Docs` : `Bosia Docs`,
     };
 }

@@ -53,7 +53,9 @@ export async function parseMarkdown(raw: string): Promise<DocPage> {
                             defaultColor: false,
                         });
                     }
-                } catch { }
+                } catch (err) {
+                    console.error(`Syntax highlighting failed for language "${language}":`, err);
+                }
                 return `<pre><code class="language-${language}">${escapeHtml(text)}</code></pre>`;
             },
         },
