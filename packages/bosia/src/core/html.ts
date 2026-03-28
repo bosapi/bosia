@@ -98,7 +98,7 @@ export function buildHtml(
   <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">
   <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>
 </head>
-<body data-bosia-preload="hover">
+<body>
   <div id="app">${body}</div>${scripts}
 </body>
 </html>`;
@@ -151,7 +151,7 @@ export function buildMetadataChunk(metadata: Metadata | null): string {
     } else {
         out += `  <title>Bosia App</title>\n`;
     }
-    out += `</head>\n<body data-bosia-preload="hover">\n${SPINNER}`;
+    out += `</head>\n<body>\n${SPINNER}`;
     return out;
 }
 

@@ -19,13 +19,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - i18n support (EN + ID) via `/id/` URL prefix with locale-aware sidebar links and language switcher
 - Live component preview system — `demo` frontmatter key renders interactive Svelte components above doc content (7 demos: button, badge, input, separator, avatar, card, dropdown-menu)
 - Landing page with hero, features grid, and quick-start code block
-- Registry API — `GET /api/registry/index` and `GET /api/registry/components/[...path]` serve component files directly from the docs site with path traversal protection
-- `bosia add` now fetches from `https://bosia.bosapi.com/api/registry` (docs site as registry source of truth); `--local` flag retained for development
+- Dynamic route prerendering with `entries()` export — enumerate dynamic route params for static prerendering of `[param]` and `[...slug]` routes
+- `generateStaticSite()` — merge prerendered HTML + client assets + public into `dist/static/` for static hosting (GitHub Pages, Netlify, etc.)
+- GitHub Pages deployment workflow (`.github/workflows/docs.yml`)
 
 ### Changed
 - `getVersion()` extracted to shared `$lib/utils` — eliminates duplicate implementations across server files
 - `DocsSidebar` now uses `localizeUrl()` from `$lib/docs/i18n` instead of inline duplication
 - Page `metadata()` now uses frontmatter `title` for dynamic `<title>` tags (e.g. `"Getting Started - Bosia Docs"`)
+- `bosia add` registry URL switched from docs site API to raw GitHub (`raw.githubusercontent.com`)
+
+### Removed
+- `/api/registry/` routes from docs app — registry now served directly from GitHub
 
 ### Fixed
 - Added viewport meta tag to root layout for correct mobile rendering

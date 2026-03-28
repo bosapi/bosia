@@ -45,12 +45,12 @@
 
     const isFirst = firstNav;
     firstNav = false;
-    if (!isFirst) {
-      formData = null;
-      if (navDoneTimer) { clearTimeout(navDoneTimer); navDoneTimer = null; }
-      navDone = false;
-      navigating = true;
-    }
+    if (isFirst) return; // Initial hydration — data already in SSR props, no fetch needed
+
+    formData = null;
+    if (navDoneTimer) { clearTimeout(navDoneTimer); navDoneTimer = null; }
+    navDone = false;
+    navigating = true;
 
     // Load components + data in parallel, then update state atomically
     // to avoid a flash of stale/empty data before the fetch completes.
@@ -75,7 +75,8 @@
         router.navigate(result.redirect);
         return;
       }
-      if (result?.error) {
+      if (result?.error || (result === null && match.route.hasServerData)) {
+        // Data fetch failed (e.g. static hosting with no server) — full page load
         window.location.href = path;
         return;
       }
