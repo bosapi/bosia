@@ -2,6 +2,13 @@
 // Supports `data-bosia-preload="hover"` and `data-bosia-preload="viewport"`
 // on <a> elements or their ancestors.
 
+/** Builds the `/__bosia/data/…` URL for a given client path. */
+export function dataUrl(path: string): string {
+    const url = new URL(path, window.location.origin);
+    let p = url.pathname.replace(/\/$/, "");
+    return `/__bosia/data${p || "/index"}.json${url.search}`;
+}
+
 export const prefetchCache = new Map<string, any>();
 
 // In-flight fetch deduplication
@@ -22,7 +29,7 @@ export async function prefetchPath(path: string): Promise<void> {
 
     pending.add(path);
     try {
-        const res = await fetch(`/__bosia/data?path=${encodeURIComponent(path)}`);
+        const res = await fetch(dataUrl(path));
         if (res.ok) {
             prefetchCache.set(path, await res.json());
         }

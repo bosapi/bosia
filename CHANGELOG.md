@@ -21,6 +21,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - GitHub Pages deployment workflow (`.github/workflows/docs.yml`)
 
 ### Changed
+- Data endpoint switched from query-param (`/__bosia/data?path=...`) to path-based URLs (`/__bosia/data/guides/server-loaders.json`) — enables static hosting of data payloads for client-side navigation
+- Prerendering now also generates JSON data payloads alongside HTML — client navigation works on fully static sites without a running server
+- Extracted shared `dataUrl()` helper in `prefetch.ts` — eliminates duplicated URL-building logic across `App.svelte` and `prefetch.ts`
 - `getVersion()` extracted to shared `$lib/utils` — eliminates duplicate implementations across server files
 - `DocsSidebar` now uses `localizeUrl()` from `$lib/docs/i18n` instead of inline duplication
 - Page `metadata()` now uses frontmatter `title` for dynamic `<title>` tags (e.g. `"Getting Started - Bosia Docs"`)

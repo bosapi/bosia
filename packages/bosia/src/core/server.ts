@@ -113,12 +113,16 @@ async function resolve(event: RequestEvent): Promise<Response> {
     }
 
     // Data endpoint — returns server loader data as JSON for client-side navigation
-    if (path === "/__bosia/data") {
-        const routePath = url.searchParams.get("path") ?? "/";
-        if (!isValidRoutePath(routePath, url.origin)) {
+    if (path.startsWith("/__bosia/data/")) {
+        const routePathStr = path.slice("/__bosia/data".length).replace(/\.json$/, "").replace(/^\/index$/, "/") || "/";
+
+        if (!isValidRoutePath(routePathStr, url.origin)) {
             return Response.json({ error: "Invalid path", status: 400 }, { status: 400 });
         }
-        const routeUrl = new URL(routePath, url.origin);
+        const routeUrl = new URL(routePathStr, url.origin);
+        for (const [key, val] of url.searchParams.entries()) {
+            routeUrl.searchParams.append(key, val);
+        }
         // Rewrite event.url so logging middleware sees the real page path, not /__bosia/data
         event.url = routeUrl;
         try {

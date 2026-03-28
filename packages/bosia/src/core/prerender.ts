@@ -91,7 +91,19 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
                 : `./dist/prerendered${routePath}/index.html`;
             mkdirSync(outPath.substring(0, outPath.lastIndexOf("/")), { recursive: true });
             writeFileSync(outPath, html);
-            console.log(`   ✅ ${routePath} → ${outPath}`);
+
+            // Also prerender the data payload
+            const dataPath = routePath === "/" ? "/index.json" : `${routePath.replace(/\/$/, "")}.json`;
+            const dataRes = await fetch(`${base}/__bosia/data${dataPath}`, { signal: AbortSignal.timeout(PRERENDER_TIMEOUT) });
+            if (dataRes.ok) {
+                const dataJson = await dataRes.text();
+                const dataOutPath = `./dist/prerendered/__bosia/data${dataPath}`;
+                mkdirSync(dataOutPath.substring(0, dataOutPath.lastIndexOf("/")), { recursive: true });
+                writeFileSync(dataOutPath, dataJson);
+                console.log(`   ✅ ${routePath} → ${outPath} (+ data)`);
+            } else {
+                console.log(`   ✅ ${routePath} → ${outPath}`);
+            }
         } catch (err) {
             if (err instanceof DOMException && err.name === "TimeoutError") {
                 console.error(`   ❌ Prerender timed out for ${routePath} after ${PRERENDER_TIMEOUT / 1000}s — increase PRERENDER_TIMEOUT to raise the limit`);

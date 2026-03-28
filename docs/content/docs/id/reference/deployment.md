@@ -52,6 +52,8 @@ export const prerender = true;
 
 Halaman yang di-prerender dibuat sebagai HTML statis selama `bosia build` dan disajikan dari `dist/prerendered/` dengan cache header 1 jam.
 
+Payload data untuk navigasi sisi klien juga di-prerender sebagai file JSON di `dist/prerendered/__bosia/data/<route>.json`. Ini berarti navigasi klien berfungsi di situs statis (GitHub Pages, Netlify, dll.) tanpa server yang berjalan.
+
 ## Caching Aset Statis
 
 Bosia mengatur cache header secara otomatis:

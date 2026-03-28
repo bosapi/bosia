@@ -2,7 +2,7 @@
   import { router } from "./router.svelte.ts";
   import { findMatch } from "../matcher.ts";
   import { clientRoutes } from "bosia:routes";
-  import { consumePrefetch, prefetchCache } from "./prefetch.ts";
+  import { consumePrefetch, prefetchCache, dataUrl } from "./prefetch.ts";
 
   let {
     ssrMode = false,
@@ -59,7 +59,7 @@
     const dataFetch = cached
       ? Promise.resolve(cached)
       : match.route.hasServerData
-        ? fetch(`/__bosia/data?path=${encodeURIComponent(path)}`).then(r => r.json()).catch(() => null)
+        ? fetch(dataUrl(path)).then(r => r.json()).catch(() => null)
         : Promise.resolve(null);
 
     Promise.all([

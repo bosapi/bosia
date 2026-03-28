@@ -52,6 +52,8 @@ export const prerender = true;
 
 Prerendered pages are built as static HTML during `bosia build` and served from `dist/prerendered/` with a 1-hour cache header.
 
+Data payloads for client-side navigation are also prerendered as JSON files at `dist/prerendered/__bosia/data/<route>.json`. This means client navigation works on fully static sites (GitHub Pages, Netlify, etc.) without a running server.
+
 ## Static Asset Caching
 
 Bosia sets cache headers automatically:

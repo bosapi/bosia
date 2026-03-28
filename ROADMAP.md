@@ -41,7 +41,7 @@
 
 ### Security
 - [x] XSS escaping in HTML templates — sanitize `JSON.stringify()` output in `<script>` tags
-- [x] SSRF validation on `/__bosia/data` — validate `path` query param
+- [x] SSRF validation on `/__bosia/data/` — validate route path segment
 - [x] CSRF protection — Origin/Referer header validation for state-changing requests
 - [x] Strip stack traces from error responses in production
 - [x] Request body size limits
