@@ -14,6 +14,7 @@
     "rootDirs": [".", ".bosia/types"],
     "paths": {
       "$lib": ["./src/lib"],
+      "$lib/components/ui/*": ["../registry/components/ui/*"],
       "$lib/*": ["./src/lib/*"],
       "$registry": ["../registry/components/ui"],
       "$registry/*": ["../registry/components/ui/*"]
