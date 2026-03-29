@@ -5,15 +5,21 @@ All notable changes to Bosia are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
-
-## [0.1.2] - 2026-03-29
+## [0.1.3] - 2026-03-29
 
 ### Added
+- `bosia add` now resolves component paths from `registry/index.json` — top-level components like `todo` no longer get wrongly prefixed with `ui/`
+- `bosia feat` now supports nested feature dependencies — `features` field in feature `meta.json` triggers recursive installation (e.g. `bosia feat todo` automatically installs `bosia feat drizzle`)
+- `bosia feat` now prompts before overwriting existing files (previously silently replaced them)
 - `drizzle` project template — PostgreSQL + Drizzle ORM starter with full CRUD todo demo, seed system, and REST API (`bosia create --template drizzle`)
 - `drizzle` feature registry entry — `bosia feat drizzle` scaffolds DB connection singleton, schema aggregator, migrations directory, seed runner with `__bosia_seeds` tracking table, and `drizzle.config.ts`
 - `todo` feature registry entry — `bosia feat todo` scaffolds todo schema, typed queries, routes with form actions, REST API, components, and seed data (depends on drizzle feature)
 - `todo` component registry entry — `bosia add todo` installs todo-form, todo-item, todo-list Svelte components
 - Feature registry support in `registry/index.json` — new `features` array alongside existing `components`
+
+## [0.1.2] - 2026-03-28
+
+### Added
 - Docs site rebuilt as a Bosia app (dogfooding) — replaces Astro + Starlight with a fully Bosia-powered site at `docs/`
 - Markdown pipeline with `marked` + `shiki` syntax highlighting (lazy-loaded, 6 grammars) and `gray-matter` frontmatter parsing
 - File-based doc content at `docs/content/docs/` with mtime-keyed parse cache

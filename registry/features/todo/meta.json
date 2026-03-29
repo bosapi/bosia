@@ -1,6 +1,7 @@
 {
   "name": "todo",
-  "description": "Full-stack todo feature — schema, queries, types, routes, components, and seed data. Requires: bosia feat drizzle",
+  "description": "Full-stack todo feature — schema, queries, types, routes, components, and seed data.",
+  "features": ["drizzle"],
   "components": ["todo"],
   "files": [
     "todo.table.ts",

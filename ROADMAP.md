@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.1.2**
+> Current version: **0.1.3**
 
 ---
 
@@ -80,6 +80,9 @@
 - [x] `bosia create` — scaffold new project (with `--template` flag and interactive picker)
 - [x] `bosia add` — registry-based UI component installation
 - [x] `bosia feat` — registry-based feature scaffolding
+- [x] `bosia add` index-based path resolution — resolves component names from `index.json` instead of blindly prefixing `ui/`
+- [x] `bosia feat` nested feature dependencies — `features` field in meta.json for recursive installation
+- [x] `bosia feat` overwrite prompt — asks before replacing existing files
 
 ### Templates & Features
 - [x] `drizzle` template — PostgreSQL + Drizzle ORM with full CRUD todo demo

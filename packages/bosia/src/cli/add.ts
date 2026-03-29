@@ -21,11 +21,23 @@ interface ComponentMeta {
     npmDeps: Record<string, string>;
 }
 
+interface RegistryIndex {
+    components: string[];
+    features: string[];
+}
+
 // Track already-installed components within a session to avoid re-running deps
 const installed = new Set<string>();
 
-// Resolved once in runAdd, used by addComponent
+// Resolved once in runAdd or initAddRegistry, used by addComponent
 let registryRoot: string | null = null;
+let registryIndex: RegistryIndex | null = null;
+
+/** Initialize registry context so addComponent can be called externally (e.g. from feat.ts) */
+export async function initAddRegistry(root: string | null) {
+    registryRoot = root;
+    registryIndex = await loadIndex();
+}
 
 export async function runAdd(name: string | undefined, flags: string[] = []) {
     if (!name) {
@@ -39,17 +51,47 @@ export async function runAdd(name: string | undefined, flags: string[] = []) {
         console.log(`⬡ Using local registry: ${registryRoot}\n`);
     }
 
+    // Load index once to resolve component paths
+    registryIndex = await loadIndex();
+
     ensureUtils();
     await addComponent(name, true);
 }
 
 /**
- * Resolve the destination path for a component.
- * - "button"     → "ui/button"     (default ui/ prefix)
+ * Resolve the full registry path for a component using the index.
+ * - "todo"       → "todo"          (exact match in index)
+ * - "button"     → "ui/button"     (suffix match in index)
  * - "shop/cart"  → "shop/cart"     (explicit path used as-is)
  */
 function resolveDestPath(name: string): string {
-    return name.includes("/") ? name : `ui/${name}`;
+    if (name.includes("/")) return name;
+
+    if (registryIndex) {
+        // Exact match (e.g. "todo" → "todo")
+        if (registryIndex.components.includes(name)) return name;
+        // Suffix match (e.g. "button" → "ui/button")
+        const match = registryIndex.components.find(
+            (c) => c.endsWith(`/${name}`)
+        );
+        if (match) return match;
+    }
+
+    // Fallback for backwards compatibility
+    return `ui/${name}`;
+}
+
+async function loadIndex(): Promise<RegistryIndex | null> {
+    try {
+        if (registryRoot) {
+            const path = join(registryRoot, "index.json");
+            if (existsSync(path)) return JSON.parse(readFileSync(path, "utf-8"));
+            return null;
+        }
+        return await fetchJSON<RegistryIndex>(`${REMOTE_BASE}/index.json`);
+    } catch {
+        return null;
+    }
 }
 
 export async function addComponent(name: string, root = false) {

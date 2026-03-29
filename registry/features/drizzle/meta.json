@@ -20,5 +20,13 @@
     "drizzle-orm": "^0.44.0",
     "postgres": "^3.4.5",
     "drizzle-kit": "^0.31.0"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "bun run src/features/drizzle/seeds/runner.ts"
+  },
+  "envVars": {
+    "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/myapp"
   }
 }
