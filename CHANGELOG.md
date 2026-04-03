@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.1.6] - 2026-04-03
+
+### Fixed
+- Cookie RFC 6265 compliance — validate cookie names against the HTTP token spec instead of blindly `encodeURIComponent`-ing them; fixes interop with other servers/libraries that don't expect URL-encoded cookie names
+
 ## [0.1.5] - 2026-04-01
 
 ### Added

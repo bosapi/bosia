@@ -1,9 +1,15 @@
 import type { Cookies, CookieOptions } from "./hooks.ts";
 
-// ─── Cookie Validation ───────────────────────────────────
+// ─── Cookie Validation (RFC 6265) ────────────────────────
 /** Rejects characters that could inject into Set-Cookie headers. */
 const UNSAFE_COOKIE_VALUE = /[;\r\n]/;
 const VALID_SAMESITE = new Set(["Strict", "Lax", "None"]);
+
+/**
+ * RFC 6265 §4.1.1: cookie-name is an HTTP token (RFC 2616 §2.2).
+ * Must be 1+ chars of ASCII 33-126, excluding separators: ( ) < > @ , ; : \ " / [ ] ? = { }
+ */
+const VALID_COOKIE_NAME = /^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$/;
 
 // ─── Cookie Helpers ──────────────────────────────────────
 
@@ -39,7 +45,8 @@ export class CookieJar implements Cookies {
     }
 
     set(name: string, value: string, options?: CookieOptions): void {
-        let header = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+        if (!VALID_COOKIE_NAME.test(name)) throw new Error(`Invalid cookie name: ${name}`);
+        let header = `${name}=${encodeURIComponent(value)}`;
         const path = options?.path ?? "/";
         if (UNSAFE_COOKIE_VALUE.test(path)) throw new Error(`Invalid cookie path: ${path}`);
         header += `; Path=${path}`;

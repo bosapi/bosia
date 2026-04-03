@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.1.5**
+> Current version: **0.1.6**
 
 ---
 
@@ -119,7 +119,7 @@
 
 ### Security
 - [ ] Trusted proxy configuration — `TRUST_PROXY` env to control when `X-Forwarded-*` headers are trusted in CSRF checks
-- [ ] Cookie RFC 6265 validation — also review `encodeURIComponent` on cookie names (interop concern)
+- [x] Cookie RFC 6265 validation — validate names against HTTP token spec; use `encodeURIComponent` only for values
 - [x] Open redirect validation on `redirect()`
 - [ ] CORS preflight validation — validate requested method/headers against allowed config
 
