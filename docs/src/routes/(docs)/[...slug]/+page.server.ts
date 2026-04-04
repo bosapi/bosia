@@ -2,6 +2,7 @@ import { error } from "bosia";
 import type { LoadEvent } from "bosia";
 import { loadDoc } from "$lib/docs/content";
 import { getLocale, stripLocale } from "$lib/docs/i18n";
+import { buildSeoMeta } from "$lib/docs/seo";
 import { readdirSync } from "fs";
 import { join } from "path";
 
@@ -59,9 +60,21 @@ export async function metadata({ params }: { params: Record<string, string> }) {
     const page = await loadDoc(slug);
     const title = page?.frontmatter?.title;
     const description = page?.frontmatter?.description;
+    const locale = getLocale(slug);
+    const bareSlug = stripLocale(slug);
+
+    const fullTitle = title ? `${title} - Bosia Docs` : "Bosia Docs";
+    const seo = buildSeoMeta({
+        title: fullTitle,
+        description: description || "Documentation for Bosia — the fullstack framework for Bun + Svelte.",
+        slug: bareSlug,
+        locale,
+    });
+
     return {
-        title: title ? `${title} - Bosia Docs` : `Bosia Docs`,
+        title: fullTitle,
         description: description || undefined,
+        ...seo,
         data: { page },
     };
 }

@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.1.8**
+> Current version: **0.1.9**
 
 ---
 
@@ -115,6 +115,9 @@
 - [x] Dev server auto-restart on crash
 - [x] Components documentation page with usage examples and prop tables
 - [x] Interactive component previews in docs — live Svelte demos (button, badge, input, separator, avatar, card, dropdown-menu)
+- [x] SEO infrastructure — `Metadata` type supports `lang` and `link` fields; dynamic `<html lang>`; `<link>` tag rendering in streaming SSR
+- [x] Docs SEO — OG tags, Twitter cards, canonical URLs, hreflang alternates on all pages
+- [x] `robots.txt` and `sitemap.xml` generation for docs site
 
 ### v0.1.0
 - [x] Rename framework from `bosbun` to `bosia`

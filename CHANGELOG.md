@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.1.9] - 2026-04-05
+
+### Added
+- SEO infrastructure — `Metadata` type now supports `lang` and `link` fields; `<html lang>` is dynamic per page; `<link>` tags (canonical, hreflang) rendered in streaming SSR head
+- Docs SEO — OG tags, Twitter cards, canonical URLs, and hreflang alternates on all docs pages (landing pages EN/ID + all content pages) via shared `buildSeoMeta()` helper
+- `robots.txt` for docs site — static file at `docs/public/robots.txt` with sitemap reference
+- `sitemap.xml` generation — post-build script scans `content/docs/` and writes `dist/static/sitemap.xml` with `<xhtml:link>` locale alternates for EN/ID pages
+
 ## [0.1.8] - 2026-04-04
 
 ### Changed

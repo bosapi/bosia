@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bosia.bosapi.com/sitemap.xml
