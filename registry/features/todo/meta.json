@@ -1,12 +1,13 @@
 {
   "name": "todo",
-  "description": "Full-stack todo feature — schema, queries, types, routes, components, and seed data.",
+  "description": "Full-stack todo feature — schema, repository, service, types, routes, components, and seed data.",
   "features": ["drizzle"],
   "components": ["todo"],
   "files": [
     "todo.table.ts",
     "types.ts",
-    "queries.ts",
+    "todo.repository.ts",
+    "todo.service.ts",
     "todo-index.ts",
     "schemas.ts",
     "seed-todos.ts",
@@ -18,7 +19,8 @@
   "targets": [
     "src/features/todo/schemas/todo.table.ts",
     "src/features/todo/types.ts",
-    "src/features/todo/queries.ts",
+    "src/features/todo/todo.repository.ts",
+    "src/features/todo/todo.service.ts",
     "src/features/todo/index.ts",
     "src/features/drizzle/schemas.ts",
     "src/features/drizzle/seeds/001_initial_todos.ts",

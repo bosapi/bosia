@@ -1,7 +1,15 @@
 import { join, dirname } from "path";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
-import { spawn } from "bun";
 import * as p from "@clack/prompts";
+import type { InstallOptions } from "./feat.ts";
+import {
+    REGISTRY_URL,
+    resolveLocalRegistry,
+    readRegistryJSON,
+    readRegistryFile,
+    mergePkgJson,
+    bunAdd,
+} from "./registry.ts";
 
 // ─── bosia add <component> ────────────────────────────────
 // Fetches a component from the GitHub registry (or local registry
@@ -10,8 +18,6 @@ import * as p from "@clack/prompts";
 // Path-based names:
 //   bosia add button       → src/lib/components/ui/button/
 //   bosia add shop/cart    → src/lib/components/shop/cart/
-
-const REMOTE_BASE = "https://raw.githubusercontent.com/bosapi/bosia/main/registry";
 
 interface ComponentMeta {
     name: string;
@@ -46,8 +52,12 @@ export async function runAdd(name: string | undefined, flags: string[] = []) {
     }
 
     if (flags.includes("--local")) {
-        // Walk up from this file to find the repo's registry/ directory
-        registryRoot = resolveLocalRegistry();
+        try {
+            registryRoot = resolveLocalRegistry();
+        } catch {
+            console.error("❌ Could not find local registry/ directory.");
+            process.exit(1);
+        }
         console.log(`⬡ Using local registry: ${registryRoot}\n`);
     }
 
@@ -88,31 +98,35 @@ async function loadIndex(): Promise<RegistryIndex | null> {
             if (existsSync(path)) return JSON.parse(readFileSync(path, "utf-8"));
             return null;
         }
-        return await fetchJSON<RegistryIndex>(`${REMOTE_BASE}/index.json`);
+        const res = await fetch(`${REGISTRY_URL}/index.json`);
+        if (!res.ok) return null;
+        return await res.json() as RegistryIndex;
     } catch {
         return null;
     }
 }
 
-export async function addComponent(name: string, root = false) {
+export async function addComponent(name: string, root = false, options?: InstallOptions) {
     // Resolve the full path (e.g. "button" → "ui/button", "shop/cart" stays "shop/cart")
     const fullPath = resolveDestPath(name);
 
     if (installed.has(fullPath)) return;
     installed.add(fullPath);
 
+    const cwd = options?.cwd ?? process.cwd();
+
     console.log(root ? `⬡ Installing component: ${name}\n` : `   📦 Dependency: ${name}`);
 
-    const meta = await readMeta(fullPath);
+    const meta = await readRegistryJSON<ComponentMeta>(registryRoot, "components", fullPath, "meta.json");
 
     // Install component dependencies first (recursive)
     for (const dep of meta.dependencies) {
-        await addComponent(dep, false);
+        await addComponent(dep, false, options);
     }
 
-    // Check if component already exists
-    const destDir = join(process.cwd(), "src", "lib", "components", fullPath);
-    if (existsSync(destDir)) {
+    // Check if component already exists (skip check entirely in non-interactive mode)
+    const destDir = join(cwd, "src", "lib", "components", fullPath);
+    if (!options?.skipPrompts && existsSync(destDir)) {
         const replace = await p.confirm({
             message: `Component "${name}" already exists at src/lib/components/${fullPath}/. Replace it?`,
         });
@@ -126,25 +140,20 @@ export async function addComponent(name: string, root = false) {
     mkdirSync(destDir, { recursive: true });
 
     for (const file of meta.files) {
-        const content = await readFile(fullPath, file);
+        const content = await readRegistryFile(registryRoot, "components", fullPath, file);
         const dest = join(destDir, file);
-        mkdirSync(dirname(dest), { recursive: true });
+        if (file.includes("/")) mkdirSync(dirname(dest), { recursive: true });
         writeFileSync(dest, content, "utf-8");
         console.log(`   ✍️  src/lib/components/${fullPath}/${file}`);
     }
 
     // Install npm dependencies
-    const npmEntries = Object.entries(meta.npmDeps);
-    if (npmEntries.length > 0) {
-        const packages = npmEntries.map(([pkg, ver]) => (ver ? `${pkg}@${ver}` : pkg));
-        console.log(`   📥 npm: ${packages.join(", ")}`);
-        const proc = spawn(["bun", "add", ...packages], {
-            stdout: "inherit",
-            stderr: "inherit",
-            cwd: process.cwd(),
-        });
-        if ((await proc.exited) !== 0) {
-            console.warn(`   ⚠️  bun add failed for: ${packages.join(", ")}`);
+    if (Object.keys(meta.npmDeps).length > 0) {
+        if (options?.skipInstall) {
+            const { addedDeps } = mergePkgJson(cwd, { deps: meta.npmDeps });
+            if (addedDeps.length > 0) console.log(`   📥 Added to package.json: ${addedDeps.join(", ")}`);
+        } else {
+            await bunAdd(cwd, meta.npmDeps);
         }
     }
 
@@ -168,54 +177,4 @@ function ensureUtils() {
         writeFileSync(utilsPath, UTILS_CONTENT, "utf-8");
         console.log("   ✍️  src/lib/utils.ts (cn utility)\n");
     }
-}
-
-// ─── Registry resolvers ──────────────────────────────────────
-
-function resolveLocalRegistry(): string {
-    // Walk up from this file's directory to find registry/
-    let dir = dirname(new URL(import.meta.url).pathname);
-    for (let i = 0; i < 10; i++) {
-        const candidate = join(dir, "registry");
-        if (existsSync(join(candidate, "index.json"))) return candidate;
-        const parent = dirname(dir);
-        if (parent === dir) break;
-        dir = parent;
-    }
-    console.error("❌ Could not find local registry/ directory.");
-    process.exit(1);
-}
-
-async function readMeta(name: string): Promise<ComponentMeta> {
-    if (registryRoot) {
-        const path = join(registryRoot, "components", name, "meta.json");
-        if (!existsSync(path)) {
-            throw new Error(`Component "${name}" not found in local registry`);
-        }
-        return JSON.parse(readFileSync(path, "utf-8"));
-    }
-    return fetchJSON<ComponentMeta>(`${REMOTE_BASE}/components/${name}/meta.json`);
-}
-
-async function readFile(name: string, file: string): Promise<string> {
-    if (registryRoot) {
-        const path = join(registryRoot, "components", name, file);
-        if (!existsSync(path)) {
-            throw new Error(`File "${file}" not found for component "${name}" in local registry`);
-        }
-        return readFileSync(path, "utf-8");
-    }
-    return fetchText(`${REMOTE_BASE}/components/${name}/${file}`);
-}
-
-async function fetchJSON<T>(url: string): Promise<T> {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Failed to fetch ${url} (${res.status})`);
-    return res.json() as Promise<T>;
-}
-
-async function fetchText(url: string): Promise<string> {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Failed to fetch ${url} (${res.status})`);
-    return res.text();
 }

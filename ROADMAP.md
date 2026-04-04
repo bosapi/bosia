@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.1.7**
+> Current version: **0.1.8**
 
 ---
 
@@ -98,8 +98,9 @@
 ### Templates & Features
 - [x] `drizzle` template — PostgreSQL + Drizzle ORM with full CRUD todo demo
 - [x] `drizzle` feature — `bosia feat drizzle` scaffolds DB connection, schema aggregator, migrations dir, seed runner
-- [x] `todo` feature — `bosia feat todo` scaffolds todo schema, queries, routes, components, and seed data
+- [x] `todo` feature — `bosia feat todo` scaffolds todo schema, repository, service, routes, components, and seed data
 - [x] `todo` component — `bosia add todo` installs todo-form, todo-item, todo-list components
+- [x] Registry as single source of truth — `bosia create --template drizzle` installs features from registry via `template.json` instead of duplicating files
 
 ### Hooks & Middleware
 - [x] `hooks.server.ts` with `Handle` interface
@@ -193,7 +194,61 @@
 > Nice-to-haves for a growing framework.
 
 - [ ] Production sourcemaps — external source maps for debuggable production errors
-- [ ] Testing guide (Vitest + Playwright)
+
+---
+
+## v0.2.0 — Test Integration (Phase 1 + 2)
+
+> Built-in testing powered by `bun test`. See [TEST_PLAN.md](backup/TEST_PLAN.md) for full details.
+
+### CLI
+- [ ] `bosia test` command — wraps `bun test` with framework-aware defaults
+- [ ] Auto-load `.env.test` (fallback `.env`) before running tests
+- [ ] Set `BOSIA_ENV=test` automatically
+- [ ] Pass through flags (`--watch`, `--coverage`, `--bail`, `--timeout`, etc.)
+
+### Test Utilities (`bosia/testing`)
+- [ ] `createRequestEvent()` — mock factory for testing `+server.ts` handlers and hooks
+- [ ] `createLoadEvent()` — mock factory for testing `load()` functions
+- [ ] `createMetadataEvent()` — mock factory for testing `metadata()` functions
+- [ ] `mockCookies()` — in-memory cookie jar implementing `Cookies` interface
+- [ ] `mockFetch()` — fetch interceptor for isolating loaders
+- [ ] `createFormData()` — helper for building form action payloads
+
+---
+
+## v0.2.1 — Route & API Integration Testing (Phase 3)
+
+> Test routes end-to-end without starting a real server.
+
+- [ ] `createTestApp()` — build an in-process Elysia instance from the route manifest
+- [ ] `testRequest()` — send HTTP requests to the test app, get standard `Response` back
+- [ ] Support API routes, page routes (SSR HTML), and form actions
+- [ ] Response assertion helpers: `expectJson()`, `expectRedirect()`, `expectHtml()`
+
+---
+
+## v0.2.2 — Component Testing (Phase 4)
+
+> Render and assert on Svelte 5 components in tests.
+
+- [ ] `renderComponent(Component, { props })` — SSR render a component, return HTML
+- [ ] `renderPage(route, options?)` — full SSR pipeline (loader → layout → page)
+- [ ] Snapshot testing support (built into `bun test`)
+- [ ] Investigate `@testing-library/svelte` compatibility with Bun
+
+---
+
+## v0.3.0 — E2E Testing & Docs (Phase 5 + 6)
+
+> Full browser testing with Playwright + comprehensive test docs.
+
+- [ ] `startTestServer()` — spin up a real Bosia server on a random port for E2E
+- [ ] `bosia test --e2e` — auto-launch Playwright with the server
+- [ ] Playwright config template in `bosia create` scaffolding
+- [ ] Test file examples in project templates
+- [ ] `bosia feat test` scaffolder for generating test files
+- [ ] Docs: testing overview, unit tests, integration tests, component tests, E2E
 
 ---
 

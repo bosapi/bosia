@@ -2,6 +2,8 @@ import { resolve, join, basename, relative } from "path";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { spawn } from "bun";
 import * as p from "@clack/prompts";
+import { installFeature, initFeatRegistry, resolveLocalRegistry } from "./feat.ts";
+import { initAddRegistry } from "./add.ts";
 
 // ─── bosia create <name> [--template <name>] ──────────────
 
@@ -59,7 +61,32 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
         writeFileSync(join(targetDir, ".env"), readFileSync(join(targetDir, ".env.example"), "utf-8"));
     }
 
-    console.log(`✅ Project created at ${targetDir}\n`);
+    // Install template features from registry
+    const templateConfigPath = join(templateDir, "template.json");
+    if (existsSync(templateConfigPath)) {
+        const config = JSON.parse(readFileSync(templateConfigPath, "utf-8"));
+        if (config.features?.length) {
+            let localRegistry: string | null = null;
+            try {
+                localRegistry = resolveLocalRegistry();
+            } catch {
+                // Local registry not found — will use remote
+            }
+
+            await initAddRegistry(localRegistry);
+            initFeatRegistry(localRegistry);
+
+            for (const feat of config.features) {
+                await installFeature(feat, true, {
+                    skipInstall: true,
+                    skipPrompts: true,
+                    cwd: targetDir,
+                });
+            }
+        }
+    }
+
+    console.log(`\n✅ Project created at ${targetDir}\n`);
 
     console.log("Installing dependencies...");
     const proc = spawn(["bun", "install"], {
@@ -72,7 +99,7 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
         console.warn("⚠️  bun install failed — run it manually.");
     } else {
         console.log(`\n🎉 Ready!\n\ncd ${name}`);
-        
+
         const instPath = join(templateDir, "instructions.txt");
         if (existsSync(instPath)) {
             const instructions = readFileSync(instPath, "utf-8").trimEnd();
@@ -117,9 +144,9 @@ function copyDir(src: string, dest: string, projectName: string, isLocal: boolea
     for (const entry of readdirSync(src, { withFileTypes: true })) {
         const srcPath = join(src, entry.name);
         const destPath = join(dest, entry.name);
-        
-        // Do not copy instructions.txt to the final project
-        if (entry.name === "instructions.txt") continue;
+
+        // Do not copy instructions.txt or template.json to the final project
+        if (entry.name === "instructions.txt" || entry.name === "template.json") continue;
 
         if (entry.isDirectory()) {
             copyDir(srcPath, destPath, projectName, isLocal);

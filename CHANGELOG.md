@@ -6,10 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.1.8] - 2026-04-04
+
+### Changed
+- Registry is now the single source of truth for template features — `bosia create --template drizzle` scaffolds a base skeleton then installs features (`todo`, `drizzle`) and components from the registry via `template.json`; eliminates ~20 duplicated files between the drizzle template and the registry
+- `installFeature()` and `addComponent()` now accept `InstallOptions` (`skipInstall`, `skipPrompts`, `cwd`) for non-interactive, programmatic usage (used by `bosia create`)
+- Registry `drizzle-index.ts` uses defensive `DATABASE_URL` check with `console.warn` instead of non-null assertion
+
 ## [0.1.7] - 2026-04-04
 
 ### Added
 - Cookie secure defaults — `cookies.set()` now defaults to `{ path: "/", httpOnly: true, secure: true, sameSite: "Lax" }`; user-provided options override defaults via spread merge; `secure` is automatically disabled in dev mode so cookies work over `http://localhost`
+
+### Changed
+- Refactored drizzle template and todo feature to repository pattern — replaced loose `queries.ts` functions with `TodoRepository` (data access) and `TodoService` (business logic/validation) static classes; route files now act as thin controllers calling the service layer
 
 ## [0.1.6] - 2026-04-03
 

@@ -1,23 +1,23 @@
 import { fail } from "bosia";
 import type { RequestEvent } from "bosia";
-import { todoQueries } from "../../features/todo";
+import { TodoService } from "../../features/todo";
 
 export async function load() {
-    const todos = await todoQueries.getAll();
+    const todos = await TodoService.getAll();
     return { todos };
 }
 
 export const actions = {
     create: async ({ request }: RequestEvent) => {
         const data = await request.formData();
-        const title = (data.get("title") as string)?.trim();
+        const title = data.get("title") as string;
 
-        if (!title) {
-            return fail(400, { error: "Title is required" });
+        try {
+            await TodoService.create(title);
+            return { success: true };
+        } catch (e: any) {
+            return fail(400, { error: e.message });
         }
-
-        await todoQueries.create({ title });
-        return { success: true };
     },
 
     toggle: async ({ request }: RequestEvent) => {
@@ -25,28 +25,28 @@ export const actions = {
         const id = data.get("id") as string;
         const completed = data.get("completed") === "true";
 
-        await todoQueries.toggle(id, completed);
+        await TodoService.toggle(id, completed);
         return { success: true };
     },
 
     update: async ({ request }: RequestEvent) => {
         const data = await request.formData();
         const id = data.get("id") as string;
-        const title = (data.get("title") as string)?.trim();
+        const title = data.get("title") as string;
 
-        if (!title) {
-            return fail(400, { error: "Title is required" });
+        try {
+            await TodoService.update(id, { title });
+            return { success: true };
+        } catch (e: any) {
+            return fail(400, { error: e.message });
         }
-
-        await todoQueries.update(id, { title });
-        return { success: true };
     },
 
     delete: async ({ request }: RequestEvent) => {
         const data = await request.formData();
         const id = data.get("id") as string;
 
-        await todoQueries.remove(id);
+        await TodoService.remove(id);
         return { success: true };
     },
 };
