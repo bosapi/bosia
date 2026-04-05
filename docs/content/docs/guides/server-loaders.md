@@ -138,6 +138,32 @@ redirect(303, "https://oauth.provider.com/authorize", {
 });
 ```
 
+## Caching
+
+Bosia automatically sets `Cache-Control` headers on data responses (`/__bosia/data/`) based on whether cookies were accessed during loading:
+
+- **Cookies accessed** → `Cache-Control: private, no-cache` — prevents CDNs/proxies from caching per-user data
+- **No cookies accessed** → `Cache-Control: public, max-age=0, must-revalidate` — allows shared caches to store the response but requires revalidation
+
+This means public pages (e.g. blog posts) are safely cacheable by CDNs, while authenticated pages (e.g. dashboards) are marked private automatically.
+
+```ts
+// Public page — no cookies read, response is cache-friendly
+export async function load({ params }: LoadEvent) {
+  const post = await db.getPost(params.slug);
+  return { post };
+}
+
+// Authenticated page — cookies.get() triggers private caching
+export async function load({ cookies, locals }: LoadEvent) {
+  const session = cookies.get("session_id");
+  const dashboard = await getDashboard(session);
+  return { dashboard };
+}
+```
+
+Under the hood, Bosia tracks whether `cookies.get()` or `cookies.getAll()` was called during `load()` or `metadata()`. If either was called, the response is marked `private`. This mirrors SvelteKit's behavior.
+
 ## Timeouts
 
 Loaders have configurable timeouts to prevent hung responses:

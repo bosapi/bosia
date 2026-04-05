@@ -41,6 +41,7 @@ export class CookieJar implements Cookies {
     private _incoming: Record<string, string>;
     private _outgoing: string[] = [];
     private _defaults: CookieOptions;
+    private _accessed = false;
 
     constructor(cookieHeader: string, dev = false) {
         this._incoming = parseCookies(cookieHeader);
@@ -51,11 +52,17 @@ export class CookieJar implements Cookies {
     }
 
     get(name: string): string | undefined {
+        this._accessed = true;
         return this._incoming[name];
     }
 
     getAll(): Record<string, string> {
+        this._accessed = true;
         return { ...this._incoming };
+    }
+
+    get accessed(): boolean {
+        return this._accessed;
     }
 
     set(name: string, value: string, options?: CookieOptions): void {

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.1.9] - 2026-04-05
 
 ### Added
+- Auto-detect `Cache-Control` on `/__bosia/data/` endpoint — when `cookies.get()` or `cookies.getAll()` is called during `load()` or `metadata()`, the response is marked `private, no-cache`; otherwise it's `public, max-age=0, must-revalidate` so CDNs can safely cache public page data
 - SEO infrastructure — `Metadata` type now supports `lang` and `link` fields; `<html lang>` is dynamic per page; `<link>` tags (canonical, hreflang) rendered in streaming SSR head
 - Docs SEO — OG tags, Twitter cards, canonical URLs, and hreflang alternates on all docs pages (landing pages EN/ID + all content pages) via shared `buildSeoMeta()` helper
 - `robots.txt` for docs site — static file at `docs/public/robots.txt` with sitemap reference

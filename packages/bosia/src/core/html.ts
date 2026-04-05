@@ -203,8 +203,8 @@ export function buildHtmlTail(
 
 // ─── Gzip Compression ────────────────────────────────────
 
-export function compress(body: string, contentType: string, req: Request, status = 200): Response {
-    const headers: Record<string, string> = { "Content-Type": contentType, "Vary": "Accept-Encoding" };
+export function compress(body: string, contentType: string, req: Request, status = 200, extraHeaders?: Record<string, string>): Response {
+    const headers: Record<string, string> = { "Content-Type": contentType, "Vary": "Accept-Encoding", ...extraHeaders };
     const accept = req.headers.get("accept-encoding") ?? "";
     // Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
     // responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.

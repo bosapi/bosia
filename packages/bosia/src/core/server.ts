@@ -131,7 +131,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
         try {
             const pageMatch = findMatch(serverRoutes, routeUrl.pathname);
             const data = await loadRouteData(routeUrl, locals, request, cookies);
-            if (!data) return compress(JSON.stringify({ pageData: {}, layoutData: [] }), "application/json", request);
+            if (!data) {
+                const cc = (cookies as CookieJar).accessed ? "private, no-cache" : "public, max-age=0, must-revalidate";
+                return compress(JSON.stringify({ pageData: {}, layoutData: [] }), "application/json", request, 200, { "Cache-Control": cc });
+            }
 
             // Include metadata for client-side title/description updates
             let metadata = null;
@@ -142,7 +145,12 @@ async function resolve(event: RequestEvent): Promise<Response> {
                 } catch { /* non-fatal */ }
             }
 
-            return compress(JSON.stringify({ ...data, metadata }), "application/json", request);
+            const cacheControl = (cookies as CookieJar).accessed
+                ? "private, no-cache"
+                : "public, max-age=0, must-revalidate";
+            const cacheHeaders = { "Cache-Control": cacheControl };
+
+            return compress(JSON.stringify({ ...data, metadata }), "application/json", request, 200, cacheHeaders);
         } catch (err) {
             if (err instanceof Redirect) {
                 return compress(JSON.stringify({ redirect: err.location, status: err.status }), "application/json", request);

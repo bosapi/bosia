@@ -136,7 +136,7 @@
 - [ ] Trusted proxy configuration — `TRUST_PROXY` env to control when `X-Forwarded-*` headers are trusted in CSRF checks
 - [ ] CORS preflight validation — validate requested method/headers against allowed config
 - [x] Cookie secure defaults — default `HttpOnly; Secure; SameSite=Lax` on `cookies.set()` with opt-out
-- [ ] `Cache-Control: no-store, private` on `/__bosia/data/` — prevent shared caches from leaking per-user load data
+- [x] Auto-detect `Cache-Control` on `/__bosia/data/` — `private, no-cache` when cookies accessed; `public, max-age=0, must-revalidate` otherwise
 - [ ] CORS `Vary: Origin` on all responses when CORS is configured — prevent CDN caching bugs on non-matching origins
 - [ ] Validate `CORS_MAX_AGE` env — reject non-numeric values instead of producing `NaN` header
 - [ ] `allowExternal` redirect validation — still validate against `javascript:`, `data:`, `vbscript:` schemes even when `allowExternal: true`
