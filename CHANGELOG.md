@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.1.10] - 2026-04-06
+
+### Changed
+- Restructured `todo` registry to nested subfolder pattern — each sub-component (`todo-form`, `todo-item`, `todo-list`) in its own folder with `meta.json` and barrel `index.ts`, matching the `ui/` convention
+- `bosia add todo` now installs via group dependencies; `bosia add todo/todo-form` installs individual sub-components
+- Moved UI component docs into `components/ui/` subfolder; added todo component docs under `components/todo/`
+- Docs sidebar now supports nested nav groups — UI and Todo render as sub-groups under Components
+
 ## [0.1.9] - 2026-04-05
 
 ### Added

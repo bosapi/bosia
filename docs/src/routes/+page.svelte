@@ -28,7 +28,7 @@
                 <a href="/getting-started">
                     <Button size="lg">Get Started →</Button>
                 </a>
-                <a href="/components/button">
+                <a href="/components/overview">
                     <Button variant="outline" size="lg">Browse Components</Button>
                 </a>
             </div>

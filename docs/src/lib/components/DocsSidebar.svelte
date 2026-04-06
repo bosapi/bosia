@@ -31,17 +31,40 @@
             </h4>
             <ul class="flex flex-col gap-0.5">
                 {#each group.items as item}
-                    <li>
-                        <a
-                            href={localizeUrl(item.slug, locale)}
-                            onclick={onnavigate}
-                            class="block rounded-md px-2 py-1.5 transition-colors {isActive(item.slug)
-                                ? 'bg-accent text-accent-foreground font-medium'
-                                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'}"
-                        >
-                            {label(item)}
-                        </a>
-                    </li>
+                    {#if item.children}
+                        <li>
+                            <span class="mt-2 block px-2 py-1 text-xs font-medium text-muted-foreground/70">
+                                {label(item)}
+                            </span>
+                            <ul class="flex flex-col gap-0.5 pl-2">
+                                {#each item.children as child}
+                                    <li>
+                                        <a
+                                            href={localizeUrl(child.slug ?? "", locale)}
+                                            onclick={onnavigate}
+                                            class="block rounded-md px-2 py-1.5 transition-colors {isActive(child.slug ?? '')
+                                                ? 'bg-accent text-accent-foreground font-medium'
+                                                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'}"
+                                        >
+                                            {label(child)}
+                                        </a>
+                                    </li>
+                                {/each}
+                            </ul>
+                        </li>
+                    {:else}
+                        <li>
+                            <a
+                                href={localizeUrl(item.slug ?? "", locale)}
+                                onclick={onnavigate}
+                                class="block rounded-md px-2 py-1.5 transition-colors {isActive(item.slug ?? '')
+                                    ? 'bg-accent text-accent-foreground font-medium'
+                                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'}"
+                            >
+                                {label(item)}
+                            </a>
+                        </li>
+                    {/if}
                 {/each}
             </ul>
         </div>

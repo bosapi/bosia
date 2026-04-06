@@ -1,6 +1,9 @@
 {
   "components": [
     "todo",
+    "todo/todo-form",
+    "todo/todo-item",
+    "todo/todo-list",
     "ui/avatar",
     "ui/badge",
     "ui/button",

@@ -1,0 +1,7 @@
+{
+  "name": "todo-item",
+  "description": "A single todo item with toggle, inline edit, and delete actions.",
+  "dependencies": [],
+  "files": ["todo-item.svelte", "index.ts"],
+  "npmDeps": {}
+}

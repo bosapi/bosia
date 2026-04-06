@@ -1,0 +1,7 @@
+{
+  "name": "todo-list",
+  "description": "A list component that renders todo items with completion stats.",
+  "dependencies": ["todo/todo-item"],
+  "files": ["todo-list.svelte", "index.ts"],
+  "npmDeps": {}
+}

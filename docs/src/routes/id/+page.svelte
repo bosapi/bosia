@@ -33,7 +33,7 @@
                 <a href="/id/getting-started">
                     <Button size="lg">Mulai Sekarang →</Button>
                 </a>
-                <a href="/id/components/button">
+                <a href="/id/components/overview">
                     <Button variant="outline" size="lg">Jelajahi Komponen</Button>
                 </a>
             </div>

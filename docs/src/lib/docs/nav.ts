@@ -1,7 +1,8 @@
 export interface NavItem {
     label: string;
     labelId?: string;
-    slug: string;
+    slug?: string;
+    children?: NavItem[];
 }
 
 export interface NavGroup {
@@ -40,18 +41,31 @@ export const sidebar: NavGroup[] = [
         labelId: "Komponen",
         items: [
             { label: "Overview", labelId: "Ringkasan", slug: "components/overview" },
-            { label: "Button", slug: "components/button" },
-            { label: "Badge", slug: "components/badge" },
-            { label: "Card", slug: "components/card" },
-            { label: "Input", slug: "components/input" },
-            { label: "Avatar", slug: "components/avatar" },
-            { label: "Separator", slug: "components/separator" },
-            { label: "Icon", slug: "components/icon" },
-            { label: "Dropdown Menu", slug: "components/dropdown-menu" },
-            { label: "Data Table", slug: "components/data-table" },
-            { label: "Chart", slug: "components/chart" },
-            { label: "Navbar", slug: "components/navbar" },
-            { label: "Sidebar", slug: "components/sidebar" },
+            {
+                label: "UI",
+                children: [
+                    { label: "Avatar", slug: "components/ui/avatar" },
+                    { label: "Badge", slug: "components/ui/badge" },
+                    { label: "Button", slug: "components/ui/button" },
+                    { label: "Card", slug: "components/ui/card" },
+                    { label: "Chart", slug: "components/ui/chart" },
+                    { label: "Data Table", slug: "components/ui/data-table" },
+                    { label: "Dropdown Menu", slug: "components/ui/dropdown-menu" },
+                    { label: "Icon", slug: "components/ui/icon" },
+                    { label: "Input", slug: "components/ui/input" },
+                    { label: "Navbar", slug: "components/ui/navbar" },
+                    { label: "Separator", slug: "components/ui/separator" },
+                    { label: "Sidebar", slug: "components/ui/sidebar" },
+                ],
+            },
+            {
+                label: "Todo",
+                children: [
+                    { label: "Todo Form", slug: "components/todo/todo-form" },
+                    { label: "Todo Item", slug: "components/todo/todo-item" },
+                    { label: "Todo List", slug: "components/todo/todo-list" },
+                ],
+            },
         ],
     },
     {

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Todo } from "../../../features/todo/types";
+    import type { Todo } from "../../../../features/todo/types";
 
     let { todo }: { todo: Todo } = $props();
     let editing = $state(false);

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { Todo } from "../../../features/todo/types";
-    import TodoItem from "./todo-item.svelte";
+    import type { Todo } from "../../../../features/todo/types";
+    import TodoItem from "../todo-item/todo-item.svelte";
 
     let { todos }: { todos: Todo[] } = $props();
 </script>
