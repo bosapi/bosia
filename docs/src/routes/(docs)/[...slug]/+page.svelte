@@ -14,6 +14,7 @@
     import DataTableDemo from "$lib/components/demos/DataTableDemo.svelte";
     import NavbarDemo from "$lib/components/demos/NavbarDemo.svelte";
     import SidebarDemo from "$lib/components/demos/SidebarDemo.svelte";
+    import CheckboxDemo from "$lib/components/demos/CheckboxDemo.svelte";
     import DialogDemo from "$lib/components/demos/DialogDemo.svelte";
     import LabelDemo from "$lib/components/demos/LabelDemo.svelte";
     import IconGrid from "$lib/components/IconGrid.svelte";
@@ -22,6 +23,7 @@
         ButtonDemo,
         BadgeDemo,
         CardDemo,
+        CheckboxDemo,
         InputDemo,
         AvatarDemo,
         SeparatorDemo,

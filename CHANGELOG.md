@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - `label` UI component — accessible `<label>` with `for` prop, `peer-disabled` opacity handling, and `cn()` class merging
 - `dialog` UI component — modal overlay with focus trap, body scroll lock, backdrop click/Escape to close, CSS animations, and full ARIA attributes (`role="dialog"`, `aria-modal`, `aria-labelledby`, `aria-describedby`); includes Dialog, DialogContent, DialogTrigger, DialogClose, DialogHeader, DialogTitle, DialogDescription, and DialogFooter sub-components
+- `checkbox` UI component — accessible checkbox with `role="checkbox"` and `aria-checked` (including `"mixed"` for indeterminate), SVG check/minus icons, hidden input for form submission, focus-visible ring, and `data-state` attribute
 
 ## [0.1.11] - 2026-04-07
 
