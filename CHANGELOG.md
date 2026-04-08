@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.1.12] - 2026-04-08
+
+### Added
+- `label` UI component — accessible `<label>` with `for` prop, `peer-disabled` opacity handling, and `cn()` class merging
+
 ## [0.1.11] - 2026-04-07
 
 ### Changed

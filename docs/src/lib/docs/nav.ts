@@ -53,6 +53,7 @@ export const sidebar: NavGroup[] = [
                     { label: "Dropdown Menu", slug: "components/ui/dropdown-menu" },
                     { label: "Icon", slug: "components/ui/icon" },
                     { label: "Input", slug: "components/ui/input" },
+                    { label: "Label", slug: "components/ui/label" },
                     { label: "Navbar", slug: "components/ui/navbar" },
                     { label: "Separator", slug: "components/ui/separator" },
                     { label: "Sidebar", slug: "components/ui/sidebar" },

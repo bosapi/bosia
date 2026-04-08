@@ -14,6 +14,7 @@
     import DataTableDemo from "$lib/components/demos/DataTableDemo.svelte";
     import NavbarDemo from "$lib/components/demos/NavbarDemo.svelte";
     import SidebarDemo from "$lib/components/demos/SidebarDemo.svelte";
+    import LabelDemo from "$lib/components/demos/LabelDemo.svelte";
     import IconGrid from "$lib/components/IconGrid.svelte";
 
     const demos: Record<string, any> = {
@@ -28,6 +29,7 @@
         DataTableDemo,
         NavbarDemo,
         SidebarDemo,
+        LabelDemo,
         IconGrid,
     };
 

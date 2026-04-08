@@ -1,0 +1,7 @@
+{
+  "name": "label",
+  "description": "An accessible label component for form controls.",
+  "dependencies": [],
+  "files": ["label.svelte", "index.ts"],
+  "npmDeps": {}
+}
