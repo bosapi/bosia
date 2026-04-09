@@ -23,6 +23,7 @@
     "ui/radio-group",
     "ui/select",
     "ui/separator",
+    "ui/sonner",
     "ui/switch",
     "ui/textarea",
     "ui/toggle",

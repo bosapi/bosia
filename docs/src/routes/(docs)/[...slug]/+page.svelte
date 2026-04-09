@@ -27,6 +27,7 @@
     import ToggleGroupDemo from "$lib/components/demos/ToggleGroupDemo.svelte";
     import SliderDemo from "$lib/components/demos/SliderDemo.svelte";
     import FieldDemo from "$lib/components/demos/FieldDemo.svelte";
+    import SonnerDemo from "$lib/components/demos/SonnerDemo.svelte";
     import IconGrid from "$lib/components/IconGrid.svelte";
 
     const demos: Record<string, any> = {
@@ -54,6 +55,7 @@
         ToggleDemo,
         ToggleGroupDemo,
         SliderDemo,
+        SonnerDemo,
         IconGrid,
     };
 

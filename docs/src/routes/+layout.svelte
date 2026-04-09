@@ -1,5 +1,6 @@
 <script lang="ts">
     import "../app.css";
+    import { Toaster } from "$registry/sonner";
     let { children }: { children: any } = $props();
 </script>
 
@@ -12,4 +13,5 @@
     </script>
 </svelte:head>
 
+<Toaster />
 {@render children()}
