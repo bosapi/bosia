@@ -23,6 +23,7 @@
     "ui/separator",
     "ui/switch",
     "ui/textarea",
+    "ui/toggle",
     "ui/sidebar"
   ],
   "features": [

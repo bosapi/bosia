@@ -1,0 +1,7 @@
+{
+  "name": "toggle",
+  "description": "A two-state button that can be toggled on or off.",
+  "dependencies": [],
+  "files": ["toggle.svelte", "index.ts"],
+  "npmDeps": {}
+}

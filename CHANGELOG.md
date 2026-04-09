@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.1.13] - 2026-04-09
 
 ### Added
+- `toggle` UI component — two-state button with `aria-pressed` and `data-state="on"|"off"`, `default` and `outline` variants, three sizes (`sm`, `default`, `lg`), disabled state, and `cn()` class merging; distinct from Switch (form control) — used for toolbar actions like bold/italic
 - `textarea` UI component — multi-line text input with bindable `value`, `field-sizing-content` for auto-growing height, `min-h-16` minimum, placeholder and disabled states, and `cn()` class merging
 - `switch` UI component — toggle switch with `role="switch"` and `aria-checked`, pill-shaped track with sliding thumb, hidden `<input type="checkbox">` for form submission, focus-visible ring, disabled state, and `data-state` attribute
 - `field` UI component — form field accessibility wrapper with `Field` (root, generates unique `id`, sets context), `FieldLabel` (auto-wired `for`), `FieldControl` (passes `id`, `aria-describedby`, `aria-invalid` via `child` snippet prop), `FieldDescription` (helper text), and `FieldError` (`role="alert"`, falls back to context `error`)
