@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.1.15] - 2026-04-11
+
+### Added
+- `breadcrumb` UI component — semantic, stateless navigation component with `Breadcrumb` (`<nav aria-label="breadcrumb">`), `BreadcrumbList` (`<ol>` with `flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground sm:gap-2.5`), `BreadcrumbItem` (`<li>` with `inline-flex items-center gap-1.5`), `BreadcrumbLink` (`<a>` with `href` prop and `hover:text-foreground transition-colors`), `BreadcrumbPage` (`<span>` with `role="link"`, `aria-disabled="true"`, `aria-current="page"` and `text-foreground font-normal` styling), `BreadcrumbSeparator` (`<li role="presentation" aria-hidden="true">` with inline chevron-right SVG default, overridable via children snippet), and `BreadcrumbEllipsis` (`<span aria-hidden="true">` with inline horizontal ellipsis SVG and `sr-only` "More" text); zero dependencies, zero state
+
 ## [0.1.14] - 2026-04-10
 
 ### Added
