@@ -1,0 +1,12 @@
+{
+  "name": "popover",
+  "description": "A click-triggered floating content panel with configurable side and alignment.",
+  "dependencies": [],
+  "files": [
+    "popover.svelte",
+    "popover-trigger.svelte",
+    "popover-content.svelte",
+    "index.ts"
+  ],
+  "npmDeps": {}
+}

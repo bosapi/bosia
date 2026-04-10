@@ -60,6 +60,7 @@ export const sidebar: NavGroup[] = [
                     { label: "Input", slug: "components/ui/input" },
                     { label: "Label", slug: "components/ui/label" },
                     { label: "Navbar", slug: "components/ui/navbar" },
+                    { label: "Popover", slug: "components/ui/popover" },
                     { label: "Progress", slug: "components/ui/progress" },
                     { label: "Radio Group", slug: "components/ui/radio-group" },
                     { label: "Select", slug: "components/ui/select" },
