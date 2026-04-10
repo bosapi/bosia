@@ -22,6 +22,7 @@
     "ui/input",
     "ui/label",
     "ui/navbar",
+    "ui/navigation-menu",
     "ui/popover",
     "ui/progress",
     "ui/radio-group",
