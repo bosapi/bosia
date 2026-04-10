@@ -33,6 +33,7 @@
     import ProgressDemo from "$lib/components/demos/ProgressDemo.svelte";
     import PopoverDemo from "$lib/components/demos/PopoverDemo.svelte";
     import TooltipDemo from "$lib/components/demos/TooltipDemo.svelte";
+    import HoverCardDemo from "$lib/components/demos/HoverCardDemo.svelte";
     import IconGrid from "$lib/components/IconGrid.svelte";
 
     const demos: Record<string, any> = {
@@ -66,6 +67,7 @@
         ProgressDemo,
         PopoverDemo,
         TooltipDemo,
+        HoverCardDemo,
         IconGrid,
     };
 

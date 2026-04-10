@@ -16,6 +16,7 @@
     "ui/dialog",
     "ui/dropdown-menu",
     "ui/field",
+    "ui/hover-card",
     "ui/icon",
     "ui/input",
     "ui/label",
