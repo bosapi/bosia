@@ -17,6 +17,7 @@
     import DataTableDemo from "$lib/components/demos/DataTableDemo.svelte";
     import NavbarDemo from "$lib/components/demos/NavbarDemo.svelte";
     import NavigationMenuDemo from "$lib/components/demos/NavigationMenuDemo.svelte";
+    import PaginationDemo from "$lib/components/demos/PaginationDemo.svelte";
     import SidebarDemo from "$lib/components/demos/SidebarDemo.svelte";
     import CheckboxDemo from "$lib/components/demos/CheckboxDemo.svelte";
     import DialogDemo from "$lib/components/demos/DialogDemo.svelte";
@@ -57,6 +58,7 @@
         FieldDemo,
         NavbarDemo,
         NavigationMenuDemo,
+        PaginationDemo,
         SidebarDemo,
         LabelDemo,
         RadioGroupDemo,

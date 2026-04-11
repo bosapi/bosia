@@ -23,6 +23,7 @@
     "ui/label",
     "ui/navbar",
     "ui/navigation-menu",
+    "ui/pagination",
     "ui/popover",
     "ui/progress",
     "ui/radio-group",

@@ -1,0 +1,16 @@
+{
+  "name": "pagination",
+  "description": "Pagination with page navigation, next and previous links.",
+  "dependencies": [],
+  "files": [
+    "pagination.svelte",
+    "pagination-content.svelte",
+    "pagination-item.svelte",
+    "pagination-link.svelte",
+    "pagination-previous.svelte",
+    "pagination-next.svelte",
+    "pagination-ellipsis.svelte",
+    "index.ts"
+  ],
+  "npmDeps": {}
+}
