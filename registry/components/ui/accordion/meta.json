@@ -1,0 +1,7 @@
+{
+  "name": "accordion",
+  "description": "A vertically stacked set of interactive headings that each reveal a section of content.",
+  "dependencies": [],
+  "files": ["accordion.svelte", "accordion-item.svelte", "accordion-trigger.svelte", "accordion-content.svelte", "index.ts"],
+  "npmDeps": {}
+}
