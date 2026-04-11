@@ -10,6 +10,7 @@
     import BadgeDemo from "$lib/components/demos/BadgeDemo.svelte";
     import BreadcrumbDemo from "$lib/components/demos/BreadcrumbDemo.svelte";
     import CardDemo from "$lib/components/demos/CardDemo.svelte";
+    import CommandDemo from "$lib/components/demos/CommandDemo.svelte";
     import InputDemo from "$lib/components/demos/InputDemo.svelte";
     import AvatarDemo from "$lib/components/demos/AvatarDemo.svelte";
     import SeparatorDemo from "$lib/components/demos/SeparatorDemo.svelte";
@@ -50,6 +51,7 @@
         BreadcrumbDemo,
         CardDemo,
         CheckboxDemo,
+        CommandDemo,
         InputDemo,
         AvatarDemo,
         SeparatorDemo,

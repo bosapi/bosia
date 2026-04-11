@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.1.16] - 2026-04-12
+
+### Added
+- `command` UI component — filterable command palette primitive with `Command` (root, context provider, `$bindable()` `value`, pluggable `filter` function with default substring match on value + optional per-item `keywords`, internal `items[]` registration via Svelte context, `userHighlight` + `$derived.by()` `highlightedValue` pattern that auto-falls back to first visible item when the user-highlighted item is filtered out, `ArrowUp`/`ArrowDown`/`Home`/`End` keyboard navigation with wrap-around, `Enter` selects highlighted item), `CommandInput` (`role="combobox"`, `aria-autocomplete="list"`, inlined search-icon SVG, bound to context `query`), `CommandList` (`role="listbox"`, `max-h-[300px] overflow-y-auto`), `CommandEmpty` (renders only when `visibleCount === 0`, configurable children with `"No results found."` default), `CommandGroup` (`role="group"`, optional `heading`, auto-hides via CSS `:has([role="option"]:not([hidden]))` when all its items are filtered out), `CommandItem` (`role="option"`, `aria-selected`, `aria-disabled`, `data-state="selected"`, registers/unregisters with `untrack()` so prop identity changes don't retrigger effect, `hidden` attribute when filtered out, `onmouseenter` sets highlight, `onclick` selects, `keywords` array for extended search matching, `disabled` state, custom `onSelect` callback), `CommandSeparator` (`role="separator"`), and `CommandShortcut` (`ml-auto` muted text); zero dependencies
+
 ## [0.1.15] - 2026-04-11
 
 ### Added
