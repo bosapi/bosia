@@ -1,6 +1,7 @@
 <script lang="ts">
     import { cn } from "$lib/utils.ts";
     import type { ColumnDef, SortState, RenderDescriptor } from "./types.ts";
+    import { TableHeader, TableRow, TableHead } from "../table";
 
     let {
         columns = [],
@@ -42,13 +43,13 @@
     }
 </script>
 
-<thead class="[&_tr]:border-b">
-    <tr class="border-b transition-colors hover:bg-muted/50">
+<TableHeader>
+    <TableRow>
         {#each columns as col (col.id)}
             {@const resolved = resolveHeader(col)}
-            <th
+            <TableHead
                 class={cn(
-                    "h-10 px-4 text-left align-middle text-sm font-medium text-muted-foreground",
+                    "px-4 text-sm",
                     isSortable(col) && "cursor-pointer select-none",
                     col.headerClass,
                 )}
@@ -75,7 +76,7 @@
                         </span>
                     {/if}
                 </div>
-            </th>
+            </TableHead>
         {/each}
-    </tr>
-</thead>
+    </TableRow>
+</TableHeader>

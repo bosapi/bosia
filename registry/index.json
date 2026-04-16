@@ -40,6 +40,7 @@
     "ui/sonner",
     "ui/spinner",
     "ui/switch",
+    "ui/table",
     "ui/tabs",
     "ui/textarea",
     "ui/toggle",

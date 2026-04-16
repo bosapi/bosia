@@ -1,7 +1,7 @@
 {
   "name": "data-table",
   "description": "A fully-featured data table with sorting, filtering, and pagination.",
-  "dependencies": ["ui/button", "ui/input", "ui/separator"],
+  "dependencies": ["ui/button", "ui/input", "ui/separator", "ui/table"],
   "files": [
     "data-table.svelte",
     "data-table-header.svelte",

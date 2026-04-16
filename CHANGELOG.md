@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.1.19] - 2026-04-17
+
+### Added
+- `table` UI component — styled wrapper sub-components around native HTML table elements; `Table` (`<table>` in a scrollable `<div>`, `w-full caption-bottom text-sm`), `TableHeader` (`<thead>`, `[&_tr]:border-b`), `TableBody` (`<tbody>`, `[&_tr:last-child]:border-0`), `TableFooter` (`<tfoot>`, `bg-muted/50 border-t font-medium`), `TableRow` (`<tr>`, `border-b hover:bg-muted/50 data-[state=selected]:bg-muted`), `TableHead` (`<th>`, `h-10 px-2 font-medium text-muted-foreground`), `TableCell` (`<td>`, `p-2 align-middle`), and `TableCaption` (`<caption>`, `text-muted-foreground mt-4 text-sm`); each sub-component supports `cn()` class merging, `children` snippet, and `...restProps` spread; zero dependencies
+
+### Changed
+- `data-table` now uses `Table`, `TableBody`, `TableRow`, `TableCell`, `TableHeader`, `TableHead` primitives from `ui/table` instead of raw HTML elements; logic, API, and behavior unchanged
+
 ## [0.1.18] - 2026-04-16
 
 ### Added

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { cn } from "$lib/utils.ts";
     import type { ColumnDef, FilterDef, SortState, TableState, RenderDescriptor } from "./types.ts";
+    import { Table, TableBody, TableRow, TableCell } from "../table";
     import DataTableHeader from "./data-table-header.svelte";
     import DataTableFilters from "./data-table-filters.svelte";
     import DataTableEmpty from "./data-table-empty.svelte";
@@ -87,22 +88,22 @@
             </div>
         {/if}
 
-        <table class="w-full caption-bottom text-sm">
+        <Table>
             <DataTableHeader
                 {columns}
                 {sort}
                 onSortChange={handleSortChange}
             />
 
-            <tbody class="[&_tr:last-child]:border-0">
+            <TableBody>
                 {#if data.length === 0}
                     <DataTableEmpty colspan={columns.length} message={emptyMessage} />
                 {:else}
                     {#each data as row, index (index)}
-                        <tr class="border-b transition-colors hover:bg-muted/50">
+                        <TableRow>
                             {#each columns as col (col.id)}
                                 {@const cellContent = resolveCell(row, col, index)}
-                                <td class={cn("px-4 py-3 align-middle", col.class)}>
+                                <TableCell class={col.class}>
                                     {#if typeof cellContent === "string"}
                                         {cellContent}
                                     {:else if cellContent.type === "snippet"}
@@ -113,13 +114,13 @@
                                             {...cellContent.props}
                                         />
                                     {/if}
-                                </td>
+                                </TableCell>
                             {/each}
-                        </tr>
+                        </TableRow>
                     {/each}
                 {/if}
-            </tbody>
-        </table>
+            </TableBody>
+        </Table>
     </div>
 
     <DataTablePagination

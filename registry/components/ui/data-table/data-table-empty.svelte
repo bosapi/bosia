@@ -1,5 +1,6 @@
 <script lang="ts">
     import { cn } from "$lib/utils.ts";
+    import { TableRow, TableCell } from "../table";
 
     let {
         colspan = 1,
@@ -12,11 +13,11 @@
     } = $props();
 </script>
 
-<tr>
-    <td
+<TableRow>
+    <TableCell
         {colspan}
         class={cn(
-            "h-32 text-center align-middle text-sm text-muted-foreground",
+            "h-32 text-center text-sm text-muted-foreground",
             className,
         )}
     >
@@ -38,5 +39,5 @@
             </svg>
             <span>{message}</span>
         </div>
-    </td>
-</tr>
+    </TableCell>
+</TableRow>

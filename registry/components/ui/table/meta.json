@@ -1,0 +1,17 @@
+{
+  "name": "table",
+  "description": "A set of styled table sub-components for building data displays.",
+  "dependencies": [],
+  "files": [
+    "table.svelte",
+    "table-header.svelte",
+    "table-body.svelte",
+    "table-footer.svelte",
+    "table-row.svelte",
+    "table-head.svelte",
+    "table-cell.svelte",
+    "table-caption.svelte",
+    "index.ts"
+  ],
+  "npmDeps": {}
+}
