@@ -8,6 +8,7 @@
     import AlertDialogDemo from "$lib/components/demos/AlertDialogDemo.svelte";
     import ButtonDemo from "$lib/components/demos/ButtonDemo.svelte";
     import ButtonGroupDemo from "$lib/components/demos/ButtonGroupDemo.svelte";
+    import CalendarDemo from "$lib/components/demos/CalendarDemo.svelte";
     import BadgeDemo from "$lib/components/demos/BadgeDemo.svelte";
     import BreadcrumbDemo from "$lib/components/demos/BreadcrumbDemo.svelte";
     import CardDemo from "$lib/components/demos/CardDemo.svelte";
@@ -54,6 +55,7 @@
         AlertDialogDemo,
         ButtonDemo,
         ButtonGroupDemo,
+        CalendarDemo,
         BadgeDemo,
         BreadcrumbDemo,
         CardDemo,

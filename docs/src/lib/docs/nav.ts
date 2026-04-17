@@ -52,6 +52,7 @@ export const sidebar: NavGroup[] = [
                     { label: "Breadcrumb", slug: "components/ui/breadcrumb" },
                     { label: "Button", slug: "components/ui/button" },
                     { label: "Button Group", slug: "components/ui/button-group" },
+                    { label: "Calendar", slug: "components/ui/calendar" },
                     { label: "Card", slug: "components/ui/card" },
                     { label: "Checkbox", slug: "components/ui/checkbox" },
                     { label: "Chart", slug: "components/ui/chart" },
