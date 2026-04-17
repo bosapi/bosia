@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 - `data-table` now uses `Table`, `TableBody`, `TableRow`, `TableCell`, `TableHeader`, `TableHead` primitives from `ui/table` instead of raw HTML elements; logic, API, and behavior unchanged
 
+### Removed
+- `clsx` external dependency — class merging logic inlined into `cn()` utility; removed from `packages/bosia`, `apps/demo`, `docs`, and all project templates
+
 ## [0.1.18] - 2026-04-16
 
 ### Added

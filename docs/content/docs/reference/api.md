@@ -14,7 +14,7 @@ import type { RequestEvent, LoadEvent, Handle, Cookies } from "bosia";
 
 ### cn(...inputs)
 
-Merge Tailwind CSS classes safely. Combines [clsx](https://github.com/lukeed/clsx) and [tailwind-merge](https://github.com/dcastil/tailwind-merge).
+Merge Tailwind CSS classes safely. Uses built-in class merging and [tailwind-merge](https://github.com/dcastil/tailwind-merge).
 
 ```ts
 cn("px-4 py-2", "px-6")          // → "py-2 px-6"

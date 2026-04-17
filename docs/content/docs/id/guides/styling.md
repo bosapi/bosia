@@ -77,7 +77,7 @@ Aktifkan di layout Anda:
 
 ## Utilitas cn()
 
-Fungsi `cn()` menggabungkan [clsx](https://github.com/lukeed/clsx) dan [tailwind-merge](https://github.com/dcastil/tailwind-merge) untuk menggabungkan kelas Tailwind secara aman:
+Fungsi `cn()` menggunakan penggabungan class bawaan dan [tailwind-merge](https://github.com/dcastil/tailwind-merge) untuk menggabungkan kelas Tailwind secara aman:
 
 ```ts
 import { cn } from "$lib/utils";

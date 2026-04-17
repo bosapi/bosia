@@ -148,7 +148,7 @@ import type { RequestEvent, LoadEvent, Handle } from "bosia";
 
 | Export | Description |
 |--------|-------------|
-| `cn(...classes)` | Tailwind class merge utility (clsx + tailwind-merge) |
+| `cn(...classes)` | Tailwind class merge utility (built-in class merging + tailwind-merge) |
 | `sequence(...handlers)` | Compose multiple `Handle` middleware functions |
 | `RequestEvent` | Type for API route and hook handlers |
 | `LoadEvent` | Type for `load()` in `+page.server.ts` / `+layout.server.ts` |

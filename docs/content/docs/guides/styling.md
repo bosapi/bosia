@@ -77,7 +77,7 @@ Toggle it in your layout:
 
 ## cn() Utility
 
-The `cn()` function combines [clsx](https://github.com/lukeed/clsx) and [tailwind-merge](https://github.com/dcastil/tailwind-merge) to safely merge Tailwind classes:
+The `cn()` function uses built-in class merging and [tailwind-merge](https://github.com/dcastil/tailwind-merge) to safely merge Tailwind classes:
 
 ```ts
 import { cn } from "$lib/utils";

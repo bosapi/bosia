@@ -47,7 +47,6 @@
     "@clack/prompts": "^1.1.0",
     "@tailwindcss/cli": "^4.2.1",
     "bun-plugin-svelte": "^0.0.6",
-    "clsx": "^2.1.1",
     "elysia": "^1.4.26",
     "svelte": "^5.53.6",
     "tailwind-merge": "^3.5.0",

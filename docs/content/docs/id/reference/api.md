@@ -14,7 +14,7 @@ import type { RequestEvent, LoadEvent, Handle, Cookies } from "bosia";
 
 ### cn(...inputs)
 
-Gabungkan class Tailwind CSS dengan aman. Mengombinasikan [clsx](https://github.com/lukeed/clsx) dan [tailwind-merge](https://github.com/dcastil/tailwind-merge).
+Gabungkan class Tailwind CSS dengan aman. Menggunakan penggabungan class bawaan dan [tailwind-merge](https://github.com/dcastil/tailwind-merge).
 
 ```ts
 cn("px-4 py-2", "px-6")          // → "py-2 px-6"

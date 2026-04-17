@@ -10,7 +10,6 @@
   "dependencies": {
     "bosia": "^{{BOSIA_VERSION}}",
     "svelte": "^5.20.0",
-    "clsx": "^2.1.1",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {

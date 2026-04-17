@@ -87,7 +87,7 @@ Components use Tailwind CSS design tokens (`bg-primary`, `text-muted-foreground`
 
 ## The `cn()` Utility
 
-Auto-created at `src/lib/utils.ts` on first `bosia add`. It merges Tailwind classes using `clsx` + `tailwind-merge`:
+Auto-created at `src/lib/utils.ts` on first `bosia add`. It merges Tailwind classes using built-in class merging + `tailwind-merge`:
 
 ```ts
 import { cn } from "$lib/utils";
