@@ -17,6 +17,7 @@
     import InputDemo from "$lib/components/demos/InputDemo.svelte";
     import InputGroupDemo from "$lib/components/demos/InputGroupDemo.svelte";
     import InputOtpDemo from "$lib/components/demos/InputOtpDemo.svelte";
+    import ItemDemo from "$lib/components/demos/ItemDemo.svelte";
     import AvatarDemo from "$lib/components/demos/AvatarDemo.svelte";
     import SeparatorDemo from "$lib/components/demos/SeparatorDemo.svelte";
     import DropdownMenuDemo from "$lib/components/demos/DropdownMenuDemo.svelte";
@@ -66,6 +67,7 @@
         InputDemo,
         InputGroupDemo,
         InputOtpDemo,
+        ItemDemo,
         AvatarDemo,
         SeparatorDemo,
         DropdownMenuDemo,

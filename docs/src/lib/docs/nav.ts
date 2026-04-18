@@ -68,6 +68,7 @@ export const sidebar: NavGroup[] = [
                     { label: "Input", slug: "components/ui/input" },
                     { label: "Input Group", slug: "components/ui/input-group" },
                     { label: "Input OTP", slug: "components/ui/input-otp" },
+                    { label: "Item", slug: "components/ui/item" },
                     { label: "Label", slug: "components/ui/label" },
                     { label: "Navbar", slug: "components/ui/navbar" },
                     { label: "Native Select", slug: "components/ui/native-select" },

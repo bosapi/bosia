@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.1.20] - 2026-04-18
 
 ### Added
+- `item` UI component — versatile flex container compound component for displaying content with media, title, description, and actions; `Item` root with `variant` (`"default"` | `"outline"` | `"muted"`) and `size` (`"default"` | `"sm"`) props, `child` snippet for polymorphic rendering; `ItemMedia` with `variant` (`"default"` | `"icon"` | `"image"`); `ItemContent`, `ItemTitle`, `ItemDescription`, `ItemActions`, `ItemHeader`, `ItemFooter` layout sub-components; `ItemGroup` (`role="list"` wrapper) and `ItemSeparator` (divider); all sub-components support `cn()` class merging and `...restProps`; zero dependencies
 - `date-picker` UI component — convenience wrapper that composes `Popover` + `Calendar` into a single date picker; `DatePicker` with `$bindable()` `value` (`Date | undefined`), configurable `placeholder`, `min`/`max` date constraints, custom `disabled` function, `weekStartsOn` 0–6, `fixedWeeks` boolean, `buttonDisabled`, custom `formatDate` function (default `toLocaleDateString`), `trigger` snippet for custom trigger content, `contentClass` for popover styling; auto-closes popover on date selection via `$effect` + `untrack()` pattern; inlined calendar icon SVG; depends on `ui/popover` and `ui/calendar`
 
 ---
