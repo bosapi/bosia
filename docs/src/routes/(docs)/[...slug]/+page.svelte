@@ -9,6 +9,7 @@
     import ButtonDemo from "$lib/components/demos/ButtonDemo.svelte";
     import ButtonGroupDemo from "$lib/components/demos/ButtonGroupDemo.svelte";
     import CalendarDemo from "$lib/components/demos/CalendarDemo.svelte";
+    import CollapsibleDemo from "$lib/components/demos/CollapsibleDemo.svelte";
     import BadgeDemo from "$lib/components/demos/BadgeDemo.svelte";
     import BreadcrumbDemo from "$lib/components/demos/BreadcrumbDemo.svelte";
     import CardDemo from "$lib/components/demos/CardDemo.svelte";
@@ -62,6 +63,7 @@
         BreadcrumbDemo,
         CardDemo,
         CheckboxDemo,
+        CollapsibleDemo,
         CommandDemo,
         ComboboxDemo,
         InputDemo,

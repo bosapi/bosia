@@ -16,6 +16,7 @@
     "ui/card",
     "ui/checkbox",
     "ui/chart",
+    "ui/collapsible",
     "ui/command",
     "ui/combobox",
     "ui/data-table",
