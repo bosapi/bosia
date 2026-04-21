@@ -12,18 +12,20 @@
 <div class="w-full rounded-lg border overflow-hidden" style="height: 460px;">
     <div class="flex h-full">
         <Sidebar collapsible="icon" bind:collapsed>
-            <SidebarHeader>
-                <div class="flex items-center gap-2">
+            <SidebarHeader class={collapsed ? "px-3" : "px-4"}>
+                <div class="flex items-center gap-2 w-full">
                     <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-primary border">
                         <img src="/logo-dark.svg" alt="Bosia" class="hidden h-5 w-5 dark:block" />
                         <img src="/logo-light.svg" alt="Bosia" class="block h-5 w-5 dark:hidden" />
                     </div>
                     {#if !collapsed}
-                        <div class="flex flex-1 flex-col leading-tight">
-                            <span class="text-sm font-semibold">Acme Inc</span>
-                            <span class="text-xs text-muted-foreground">Enterprise</span>
+                        <div class="flex items-center justify-between w-full">
+                            <div class="flex flex-1 flex-col leading-tight">
+                                <span class="text-sm font-semibold">Acme Inc</span>
+                                <span class="text-xs text-muted-foreground">Enterprise</span>
+                            </div>
+                            <Icon name="chevron-down" size={14} class="text-muted-foreground" />
                         </div>
-                        <Icon name="chevron-down" size={14} class="text-muted-foreground" />
                     {/if}
                 </div>
             </SidebarHeader>

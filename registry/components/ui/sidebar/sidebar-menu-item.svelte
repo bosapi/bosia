@@ -30,25 +30,39 @@
 <li class={cn("list-none", className)} {...restProps}>
     {#if hasChildren}
         <button
-            onclick={(e) => { e.preventDefault(); if (!sidebar.collapsed) open = !open; }}
+            onclick={(e) => {
+                e.preventDefault();
+                if (!sidebar.collapsed) open = !open;
+            }}
             class={cn(
-                "flex w-full items-center rounded-md py-1.5 text-sm font-medium transition-colors",
+                "flex w-full items-center rounded-md py-1.5 text-sm transition-colors",
                 "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 active && "bg-sidebar-accent text-sidebar-accent-foreground",
                 sidebar.collapsed ? "justify-center px-0" : "gap-2 px-2",
             )}
         >
             {#if icon}
-                <span class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground">{@render icon()}</span>
+                <span
+                    class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
+                    >{@render icon()}</span
+                >
             {/if}
             {#if !sidebar.collapsed}
                 <span class="flex-1 truncate text-left">{label}</span>
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="14" height="14" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"
-                    class={cn("shrink-0 transition-transform", open && "rotate-180")}
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class={cn(
+                        "shrink-0 transition-transform",
+                        open && "rotate-180",
+                    )}
                 >
                     <path d="m6 9 6 6 6-6" />
                 </svg>
@@ -72,19 +86,27 @@
             )}
         >
             {#if icon}
-                <span class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground">{@render icon()}</span>
+                <span
+                    class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
+                    >{@render icon()}</span
+                >
             {/if}
             {#if !sidebar.collapsed}
                 <span class="truncate">{label}</span>
             {/if}
         </a>
     {:else}
-        <span class={cn(
-            "flex items-center rounded-md py-1.5 text-sm text-sidebar-foreground",
-            sidebar.collapsed ? "justify-center px-0" : "gap-2 px-2",
-        )}>
+        <span
+            class={cn(
+                "flex items-center rounded-md py-1.5 text-sm text-sidebar-foreground",
+                sidebar.collapsed ? "justify-center px-0" : "gap-2 px-2",
+            )}
+        >
             {#if icon}
-                <span class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground">{@render icon()}</span>
+                <span
+                    class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
+                    >{@render icon()}</span
+                >
             {/if}
             {#if !sidebar.collapsed}
                 <span class="truncate">{label}</span>
