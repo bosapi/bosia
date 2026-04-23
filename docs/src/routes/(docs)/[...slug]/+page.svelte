@@ -116,6 +116,15 @@
     let { data }: { data: any } = $props();
 
     const demo = $derived(data.frontmatter?.demo ? demos[data.frontmatter.demo] : null);
+
+    const previewMarker = '<h2 id="preview">Preview</h2>';
+    const splitIndex = $derived(data.html.indexOf(previewMarker));
+    const beforePreview = $derived(
+        splitIndex >= 0 ? data.html.slice(0, splitIndex + previewMarker.length) : data.html
+    );
+    const afterPreview = $derived(
+        splitIndex >= 0 ? data.html.slice(splitIndex + previewMarker.length) : ""
+    );
 </script>
 
 <div class="flex gap-8">
@@ -128,18 +137,25 @@
             {/if}
         </div>
 
-        <!-- Component demo preview -->
-        {#if demo}
+        <!-- Rendered markdown (before preview) -->
+        <div class="prose">
+            {@html beforePreview}
+        </div>
+
+        <!-- Component demo preview (inline at ## Preview heading) -->
+        {#if demo && splitIndex >= 0}
             <ComponentPreview demoCode={data.demoCode}>
                 {@const DemoComponent = demo}
                 <DemoComponent />
             </ComponentPreview>
         {/if}
 
-        <!-- Rendered markdown -->
-        <div class="prose">
-            {@html data.html}
-        </div>
+        <!-- Rendered markdown (after preview) -->
+        {#if afterPreview}
+            <div class="prose">
+                {@html afterPreview}
+            </div>
+        {/if}
     </div>
 
     <!-- Table of Contents (desktop) -->
