@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Component preview renders at `## Preview` heading instead of above all markdown content — split HTML at preview marker so demo appears inline where the heading is
 - Restore previews for components without `## Preview` heading (sidebar, navbar, chart, data-table, icon) — added missing `## Preview` heading to all 5 markdown files; also added top-of-page fallback rendering for any future components missing the heading
+- Component preview no longer clips floating content (popover, dropdown, select, combobox, date picker, hover card, navigation menu) — removed `overflow: hidden` from `.preview-wrapper`, applied border-radius to tab-bar and content containers individually; removed hardcoded heights from 7 demo files
 
 ---
 

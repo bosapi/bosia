@@ -13,7 +13,7 @@
     let fruit = $state("apple");
 </script>
 
-<div class="flex flex-col gap-6 h-72">
+<div class="flex flex-col gap-6">
     <Select bind:value={fruit}>
         <SelectTrigger class="w-[200px]">
             <SelectValue placeholder="Pick a fruit" />

@@ -5,7 +5,7 @@
     import { Input } from "$registry/input";
 </script>
 
-<div class="flex items-start justify-center gap-4 h-64">
+<div class="flex items-center justify-center gap-4">
     <Popover>
         <PopoverTrigger>
             <Button variant="outline">Click</Button>

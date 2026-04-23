@@ -4,7 +4,7 @@
     let date = $state<Date | undefined>(undefined);
 </script>
 
-<div class="flex flex-col items-center gap-4 h-72">
+<div class="flex flex-col items-center gap-4">
     <DatePicker bind:value={date} />
     {#if date}
         <p class="text-sm text-muted-foreground">

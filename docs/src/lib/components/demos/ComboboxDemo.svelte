@@ -13,7 +13,7 @@
     let value = $state<string | undefined>(undefined);
 </script>
 
-<div class="flex h-64 items-start justify-center">
+<div class="flex items-center justify-center">
     <Combobox
         items={frameworks}
         bind:value

@@ -47,7 +47,6 @@
     .preview-wrapper {
         border: 1px solid hsl(var(--border));
         border-radius: 0.5rem;
-        overflow: hidden;
         margin-bottom: 1.5rem;
     }
 
@@ -58,6 +57,9 @@
         border-bottom: 1px solid hsl(var(--border));
         background-color: hsl(var(--muted) / 0.4);
         padding: 0 0.75rem;
+        border-top-left-radius: inherit;
+        border-top-right-radius: inherit;
+        overflow: hidden;
     }
 
     .tab-btn {
@@ -91,9 +93,21 @@
         gap: 1rem;
         padding: 2rem;
         min-height: 80px;
+        border-radius: inherit;
+    }
+
+    .has-tabs .preview-container {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
     }
 
     /* ── Code panel ──────────────────────────────────────────── */
+    .code-container {
+        border-bottom-left-radius: inherit;
+        border-bottom-right-radius: inherit;
+        overflow: hidden;
+    }
+
     .code-container :global(pre.shiki) {
         margin: 0;
         border-radius: 0;

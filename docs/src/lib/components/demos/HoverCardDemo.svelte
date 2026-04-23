@@ -3,7 +3,7 @@
     import { Avatar, AvatarFallback } from "$registry/avatar";
 </script>
 
-<div class="flex items-center justify-center h-64">
+<div class="flex items-center justify-center">
     <HoverCard>
         <HoverCardTrigger href="https://svelte.dev" class="underline underline-offset-4">
             @sveltejs

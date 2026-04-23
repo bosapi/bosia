@@ -9,7 +9,7 @@
     } from "$registry/navigation-menu";
 </script>
 
-<div class="flex items-start justify-start h-64">
+<div class="flex items-center justify-start">
     <NavigationMenu>
         <NavigationMenuList>
             <NavigationMenuItem>
