@@ -40,6 +40,7 @@
     import LabelDemo from "$lib/components/demos/LabelDemo.svelte";
     import RadioGroupDemo from "$lib/components/demos/RadioGroupDemo.svelte";
     import RangeCalendarDemo from "$lib/components/demos/RangeCalendarDemo.svelte";
+    import ScrollAreaDemo from "$lib/components/demos/ScrollAreaDemo.svelte";
     import SelectDemo from "$lib/components/demos/SelectDemo.svelte";
     import SwitchDemo from "$lib/components/demos/SwitchDemo.svelte";
     import TableDemo from "$lib/components/demos/TableDemo.svelte";
@@ -100,6 +101,7 @@
         LabelDemo,
         RadioGroupDemo,
         RangeCalendarDemo,
+        ScrollAreaDemo,
         SelectDemo,
         SwitchDemo,
         TableDemo,

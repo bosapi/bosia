@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `direction` UI component — RTL/LTR context provider; wraps content with `dir` attribute and exposes `useDirection()` for descendant components to read text direction; zero dependencies
 - `kbd` UI component — keyboard shortcut display with keycap styling; `KbdGroup` renders key combinations with "+" separators; zero dependencies
+- `scroll-area` component — scrollable container with custom styled scrollbar, supports `vertical`, `horizontal`, and `both` orientations
 
 ### Changed
 

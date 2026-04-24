@@ -45,6 +45,7 @@
     "ui/progress",
     "ui/radio-group",
     "ui/range-calendar",
+    "ui/scroll-area",
     "ui/select",
     "ui/separator",
     "ui/skeleton",

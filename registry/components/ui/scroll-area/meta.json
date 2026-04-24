@@ -1,0 +1,7 @@
+{
+  "name": "scroll-area",
+  "description": "A scrollable container with a custom styled scrollbar.",
+  "dependencies": [],
+  "files": ["scroll-area.svelte", "index.ts"],
+  "npmDeps": {}
+}
