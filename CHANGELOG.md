@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `scroll-area` component — scrollable container with custom styled scrollbar, supports `vertical`, `horizontal`, and `both` orientations
 - `resizable` component — drag-to-resize panel groups with pointer-based resize, horizontal/vertical layouts, nested group support, and optional grip handle; zero external dependencies
 - `menubar` UI component — horizontal menu bar with multiple dropdown menus; click-to-open, hover-switch between open menus, Escape/click-outside to close; compound component with `MenubarMenu`, `MenubarTrigger`, `MenubarContent`, `MenubarItem`, `MenubarSeparator`, `MenubarLabel`, `MenubarShortcut`, `MenubarSub`, `MenubarSubTrigger`, `MenubarSubContent`; nested sub-menus with hover open/close and fly-out animation; zero dependencies
+- `context-menu` UI component — right-click triggered context menu with fixed positioning at cursor; compound component with `ContextMenu`, `ContextMenuTrigger`, `ContextMenuContent`, `ContextMenuItem`, `ContextMenuSeparator`, `ContextMenuLabel`, `ContextMenuShortcut`, `ContextMenuSub`, `ContextMenuSubTrigger`, `ContextMenuSubContent`; disabled items, keyboard shortcut hints, nested sub-menus with hover delay; zero dependencies
 
 ### Changed
 

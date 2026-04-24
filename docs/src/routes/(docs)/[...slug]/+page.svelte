@@ -17,6 +17,7 @@
     import CarouselDemo from "$lib/components/demos/CarouselDemo.svelte";
     import CommandDemo from "$lib/components/demos/CommandDemo.svelte";
     import ComboboxDemo from "$lib/components/demos/ComboboxDemo.svelte";
+    import ContextMenuDemo from "$lib/components/demos/ContextMenuDemo.svelte";
     import InputDemo from "$lib/components/demos/InputDemo.svelte";
     import InputGroupDemo from "$lib/components/demos/InputGroupDemo.svelte";
     import InputOtpDemo from "$lib/components/demos/InputOtpDemo.svelte";
@@ -79,6 +80,7 @@
         CollapsibleDemo,
         CommandDemo,
         ComboboxDemo,
+        ContextMenuDemo,
         InputDemo,
         InputGroupDemo,
         InputOtpDemo,

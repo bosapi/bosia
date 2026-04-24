@@ -61,6 +61,7 @@ export const sidebar: NavGroup[] = [
                     { label: "Collapsible", slug: "components/ui/collapsible" },
                     { label: "Command", slug: "components/ui/command" },
                     { label: "Combobox", slug: "components/ui/combobox" },
+                    { label: "Context Menu", slug: "components/ui/context-menu" },
                     { label: "Data Table", slug: "components/ui/data-table" },
                     { label: "Date Picker", slug: "components/ui/date-picker" },
                     { label: "Direction", slug: "components/ui/direction" },

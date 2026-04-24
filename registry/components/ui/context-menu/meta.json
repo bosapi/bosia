@@ -1,0 +1,19 @@
+{
+  "name": "context-menu",
+  "description": "A right-click context menu with items, labels, shortcuts, separators, and nested sub-menus.",
+  "dependencies": [],
+  "files": [
+    "context-menu.svelte",
+    "context-menu-trigger.svelte",
+    "context-menu-content.svelte",
+    "context-menu-item.svelte",
+    "context-menu-separator.svelte",
+    "context-menu-label.svelte",
+    "context-menu-shortcut.svelte",
+    "context-menu-sub.svelte",
+    "context-menu-sub-trigger.svelte",
+    "context-menu-sub-content.svelte",
+    "index.ts"
+  ],
+  "npmDeps": {}
+}

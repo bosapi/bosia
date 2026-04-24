@@ -21,6 +21,7 @@
     "ui/collapsible",
     "ui/command",
     "ui/combobox",
+    "ui/context-menu",
     "ui/data-table",
     "ui/date-picker",
     "ui/dialog",
