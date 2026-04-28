@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Bound prefetch cache to 50 entries with LRU eviction — oldest entry evicted when cache is full, preventing unbounded memory growth on pages with many prefetchable links
 - Prefetch cache TTL — entries older than 30s are discarded on consumption and re-fetched on hover/viewport, preventing stale data after long idle
 
+### Fixed
+- Router click handler now respects modifier keys (Cmd/Ctrl/Shift/Alt), non-primary mouse buttons (middle-click), `e.defaultPrevented`, and `rel="external"` — previously hijacked all same-origin anchor clicks, breaking "open in new tab/window"
+
 ---
 
 ## [0.2.1] - 2026-04-26
