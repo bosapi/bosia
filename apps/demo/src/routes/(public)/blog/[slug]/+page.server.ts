@@ -1,4 +1,4 @@
-import type { LoadEvent, MetadataEvent } from "bosia";
+import type { PageServerLoad, PageMetadataLoad } from "./$types";
 
 const posts: Record<string, { title: string; date: string; tags: string[]; content: string }> = {
     "hello-world": {
@@ -33,7 +33,7 @@ The route matcher uses 3-pass priority: exact matches first, then dynamic segmen
     },
 };
 
-export function metadata({ params }: MetadataEvent) {
+export const metadata: PageMetadataLoad = ({ params }) => {
     // In production this would be a DB query for the post
     const post = posts[params.slug] ?? null;
     return {
@@ -45,9 +45,9 @@ export function metadata({ params }: MetadataEvent) {
         // Pass fetched post to load() — avoids duplicate query
         data: { post },
     };
-}
+};
 
-export async function load({ params, parent, metadata }: LoadEvent) {
+export const load = (async ({ params, parent, metadata }) => {
     // parent() gives us data from +layout.server.ts (appName, requestTime)
     const parentData = await parent();
 
@@ -59,4 +59,4 @@ export async function load({ params, parent, metadata }: LoadEvent) {
         slug: params.slug,
         appName: parentData.appName as string,
     };
-}
+}) satisfies PageServerLoad;

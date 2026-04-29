@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.2.4] - 2026-04-30
 
+### Changed
+- Per-route `Params` type generated from URL pattern in `$types.d.ts` — `[slug]` → `{ slug: string }`, static routes → `{}`. New typed helpers exported from `./$types`: `PageServerLoad`, `LayoutServerLoad`, `PageMetadataLoad`, `Action` — pre-bind the per-route `Params` so `event.params.slug` is `string` and `event.params.foo` is a type error. `PageData` / `LayoutData` `params` field switched from `Record<string, string>` to `Params`. Recommended adoption pattern: `export const load = (async ({ params }) => { ... }) satisfies PageServerLoad;` — `satisfies` preserves the body's inferred return type so `PageData` stays narrow.
+
 ### Added
 - Page option `export const trailingSlash` in `+page.server.ts` / `+layout.server.ts` — `"never"` (default) / `"always"` / `"ignore"`. Non-canonical URLs receive a `308 Permanent Redirect` (preserves request method, so form POSTs survive the redirect); root `/` is never modified; API routes (`+server.ts`) are unaffected. Layout setting cascades to children, page wins on conflict. The client router applies the same canonicalization on `navigate()` and on initial mount via `history.replaceState` (no extra history entry). Static prerender filename matches the mode: `"never"` emits `about.html`, `"always"` / `"ignore"` emit `about/index.html`. Resolved at scan time so the client bundle never imports server modules to read the value.
 

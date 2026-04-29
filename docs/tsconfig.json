@@ -9,7 +9,7 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "verbatimModuleSyntax": true,
-    "types": ["bun-types"],
+    "types": ["bun"],
     "lib": ["dom", "dom.iterable", "esnext"],
     "rootDirs": [".", ".bosia/types"],
     "paths": {
