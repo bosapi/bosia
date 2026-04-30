@@ -1,13 +1,13 @@
 {
-  "name": "input-otp",
-  "description": "Accessible one-time password input with copy-paste support.",
-  "dependencies": [],
-  "files": [
-    "input-otp.svelte",
-    "input-otp-group.svelte",
-    "input-otp-slot.svelte",
-    "input-otp-separator.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "input-otp",
+	"description": "Accessible one-time password input with copy-paste support.",
+	"dependencies": [],
+	"files": [
+		"input-otp.svelte",
+		"input-otp-group.svelte",
+		"input-otp-slot.svelte",
+		"input-otp-separator.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

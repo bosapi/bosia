@@ -12,14 +12,14 @@ bun run start   # run production server
 
 ## Routes
 
-| URL | File | Description |
-|-----|------|-------------|
-| `/` | `(public)/+page.svelte` | Home page |
-| `/about` | `(public)/about/+page.svelte` | About page |
-| `/blog` | `(public)/blog/+page.svelte` | Blog listing |
-| `/blog/:slug` | `(public)/blog/[slug]/+page.svelte` | Blog post — fetched via server loader |
-| `/api/hello` | `api/hello/+server.ts` | Multi-method JSON API |
-| `/*` | `(public)/[...catchall]/+page.svelte` | 404 catch-all |
+| URL           | File                                  | Description                           |
+| ------------- | ------------------------------------- | ------------------------------------- |
+| `/`           | `(public)/+page.svelte`               | Home page                             |
+| `/about`      | `(public)/about/+page.svelte`         | About page                            |
+| `/blog`       | `(public)/blog/+page.svelte`          | Blog listing                          |
+| `/blog/:slug` | `(public)/blog/[slug]/+page.svelte`   | Blog post — fetched via server loader |
+| `/api/hello`  | `api/hello/+server.ts`                | Multi-method JSON API                 |
+| `/*`          | `(public)/[...catchall]/+page.svelte` | 404 catch-all                         |
 
 ## Key Files
 

@@ -1,7 +1,7 @@
 {
-  "name": "direction",
-  "description": "A provider component that sets text direction (LTR/RTL) via context.",
-  "dependencies": [],
-  "files": ["direction-provider.svelte", "context.ts", "index.ts"],
-  "npmDeps": {}
+	"name": "direction",
+	"description": "A provider component that sets text direction (LTR/RTL) via context.",
+	"dependencies": [],
+	"files": ["direction-provider.svelte", "context.ts", "index.ts"],
+	"npmDeps": {}
 }

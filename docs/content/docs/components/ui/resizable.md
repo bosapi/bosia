@@ -16,34 +16,38 @@ Drag-to-resize panel groups. Supports horizontal and vertical layouts, nested gr
 
 ### ResizablePaneGroup
 
-| Prop | Type | Default |
-| ---- | ---- | ------- |
+| Prop        | Type                         | Default        |
+| ----------- | ---------------------------- | -------------- |
 | `direction` | `"horizontal" \| "vertical"` | `"horizontal"` |
-| `class` | `string` | `""` |
+| `class`     | `string`                     | `""`           |
 
 ### ResizablePane
 
-| Prop | Type | Default |
-| ---- | ---- | ------- |
-| `class` | `string` | `""` |
+| Prop    | Type     | Default |
+| ------- | -------- | ------- |
+| `class` | `string` | `""`    |
 
 ### ResizableHandle
 
-| Prop | Type | Default |
-| ---- | ---- | ------- |
+| Prop         | Type      | Default |
+| ------------ | --------- | ------- |
 | `withHandle` | `boolean` | `false` |
-| `class` | `string` | `""` |
+| `class`      | `string`  | `""`    |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import { ResizablePaneGroup, ResizablePane, ResizableHandle } from "$lib/components/ui/resizable";
+	import {
+		ResizablePaneGroup,
+		ResizablePane,
+		ResizableHandle,
+	} from "$lib/components/ui/resizable";
 </script>
 
 <ResizablePaneGroup direction="horizontal" class="rounded-lg border">
-  <ResizablePane class="p-6">One</ResizablePane>
-  <ResizableHandle withHandle />
-  <ResizablePane class="p-6">Two</ResizablePane>
+	<ResizablePane class="p-6">One</ResizablePane>
+	<ResizableHandle withHandle />
+	<ResizablePane class="p-6">Two</ResizablePane>
 </ResizablePaneGroup>
 ```

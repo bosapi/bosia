@@ -19,7 +19,7 @@ A form that submits a `POST` to `?/create` with a `title` field. Displays an opt
 
 ```svelte
 <script lang="ts">
-  import { TodoForm } from "$lib/components/todo";
+	import { TodoForm } from "$lib/components/todo";
 </script>
 
 <TodoForm error={form?.error} />

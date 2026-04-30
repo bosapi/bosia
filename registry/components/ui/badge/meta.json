@@ -1,7 +1,7 @@
 {
-  "name": "badge",
-  "description": "A small status badge with multiple variants.",
-  "dependencies": [],
-  "files": ["badge.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "badge",
+	"description": "A small status badge with multiple variants.",
+	"dependencies": [],
+	"files": ["badge.svelte", "index.ts"],
+	"npmDeps": {}
 }

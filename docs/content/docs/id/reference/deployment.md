@@ -58,10 +58,10 @@ Payload data untuk navigasi sisi klien juga di-prerender sebagai file JSON di `d
 
 Bosia mengatur cache header secara otomatis:
 
-| Tipe Aset              | Cache Header                          |
-| ---------------------- | ------------------------------------- |
-| Nama file dengan hash  | `public, max-age=31536000, immutable` |
-| File tanpa hash        | `no-cache`                            |
+| Tipe Aset             | Cache Header                          |
+| --------------------- | ------------------------------------- |
+| Nama file dengan hash | `public, max-age=31536000, immutable` |
+| File tanpa hash       | `no-cache`                            |
 
 ## Graceful Shutdown
 

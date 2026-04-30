@@ -1,15 +1,15 @@
 {
-  "name": "card",
-  "description": "A card component with header, content, and footer slots.",
-  "dependencies": [],
-  "files": [
-    "card.svelte",
-    "card-header.svelte",
-    "card-title.svelte",
-    "card-description.svelte",
-    "card-content.svelte",
-    "card-footer.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "card",
+	"description": "A card component with header, content, and footer slots.",
+	"dependencies": [],
+	"files": [
+		"card.svelte",
+		"card-header.svelte",
+		"card-title.svelte",
+		"card-description.svelte",
+		"card-content.svelte",
+		"card-footer.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

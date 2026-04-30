@@ -1,19 +1,19 @@
 {
-  "name": "item",
-  "description": "A versatile flex container for displaying content with media, title, description, and actions.",
-  "dependencies": [],
-  "files": [
-    "item.svelte",
-    "item-header.svelte",
-    "item-media.svelte",
-    "item-content.svelte",
-    "item-title.svelte",
-    "item-description.svelte",
-    "item-actions.svelte",
-    "item-footer.svelte",
-    "item-group.svelte",
-    "item-separator.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "item",
+	"description": "A versatile flex container for displaying content with media, title, description, and actions.",
+	"dependencies": [],
+	"files": [
+		"item.svelte",
+		"item-header.svelte",
+		"item-media.svelte",
+		"item-content.svelte",
+		"item-title.svelte",
+		"item-description.svelte",
+		"item-actions.svelte",
+		"item-footer.svelte",
+		"item-group.svelte",
+		"item-separator.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

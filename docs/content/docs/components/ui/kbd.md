@@ -18,25 +18,25 @@ Pass `onPress` to bind an actual keyboard shortcut — keys are automatically in
 
 ### Kbd
 
-| Prop             | Type                          | Default |
-| ---------------- | ----------------------------- | ------- |
-| `class`          | `string`                      | `""`    |
-| `onPress`        | `(e: KeyboardEvent) => void`  | —       |
-| `preventDefault` | `boolean`                     | `true`  |
+| Prop             | Type                         | Default |
+| ---------------- | ---------------------------- | ------- |
+| `class`          | `string`                     | `""`    |
+| `onPress`        | `(e: KeyboardEvent) => void` | —       |
+| `preventDefault` | `boolean`                    | `true`  |
 
 ### KbdGroup
 
-| Prop             | Type                          | Default |
-| ---------------- | ----------------------------- | ------- |
-| `class`          | `string`                      | `""`    |
-| `onPress`        | `(e: KeyboardEvent) => void`  | —       |
-| `preventDefault` | `boolean`                     | `true`  |
+| Prop             | Type                         | Default |
+| ---------------- | ---------------------------- | ------- |
+| `class`          | `string`                     | `""`    |
+| `onPress`        | `(e: KeyboardEvent) => void` | —       |
+| `preventDefault` | `boolean`                    | `true`  |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import { Kbd, KbdGroup } from "$lib/components/ui/kbd";
+	import { Kbd, KbdGroup } from "$lib/components/ui/kbd";
 </script>
 
 <Kbd>K</Kbd>
@@ -52,7 +52,7 @@ Pass `onPress` to make the component listen for the displayed key combination. N
 
 ```svelte
 <script lang="ts">
-  import { Kbd, KbdGroup } from "$lib/components/ui/kbd";
+	import { Kbd, KbdGroup } from "$lib/components/ui/kbd";
 </script>
 
 <!-- Single key -->
@@ -60,7 +60,7 @@ Pass `onPress` to make the component listen for the displayed key combination. N
 
 <!-- Combination — fires when Ctrl+K is pressed -->
 <KbdGroup onPress={() => console.log("Ctrl+K!")}>
-  <Kbd>Ctrl</Kbd><Kbd>K</Kbd>
+	<Kbd>Ctrl</Kbd><Kbd>K</Kbd>
 </KbdGroup>
 
 <!-- Display only (no listener) -->

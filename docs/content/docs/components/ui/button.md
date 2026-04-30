@@ -14,19 +14,19 @@ An accessible button with multiple variants and sizes. Renders as `<a>` when `hr
 
 ## Props
 
-| Prop      | Type                                                             | Default     |
-| --------- | ---------------------------------------------------------------- | ----------- |
-| `variant` | `"default"` \| `"destructive"` \| `"outline"` \| `"secondary"` \| `"ghost"` \| `"link"` | `"default"` |
-| `size`    | `"default"` \| `"sm"` \| `"lg"` \| `"icon"`                     | `"default"` |
-| `href`    | `string`                                                         | —           |
-| `disabled`| `boolean`                                                        | `false`     |
-| `type`    | `"button"` \| `"submit"` \| `"reset"`                           | `"button"`  |
+| Prop       | Type                                                                                    | Default     |
+| ---------- | --------------------------------------------------------------------------------------- | ----------- |
+| `variant`  | `"default"` \| `"destructive"` \| `"outline"` \| `"secondary"` \| `"ghost"` \| `"link"` | `"default"` |
+| `size`     | `"default"` \| `"sm"` \| `"lg"` \| `"icon"`                                             | `"default"` |
+| `href`     | `string`                                                                                | —           |
+| `disabled` | `boolean`                                                                               | `false`     |
+| `type`     | `"button"` \| `"submit"` \| `"reset"`                                                   | `"button"`  |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
+	import { Button } from "$lib/components/ui/button";
 </script>
 
 <Button>Default</Button>
@@ -42,6 +42,6 @@ An accessible button with multiple variants and sizes. Renders as `<a>` when `hr
 
 ```svelte
 <form method="POST">
-  <Button type="submit">Save Changes</Button>
+	<Button type="submit">Save Changes</Button>
 </form>
 ```

@@ -27,16 +27,16 @@ Visit [http://localhost:9000](http://localhost:9000) to see the app.
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `bun x bosia dev` | Start dev server with HMR |
-| `bun x bosia build` | Production build |
-| `bun x bosia start` | Start production server |
+| Command               | Description                            |
+| --------------------- | -------------------------------------- |
+| `bun x bosia dev`     | Start dev server with HMR              |
+| `bun x bosia build`   | Production build                       |
+| `bun x bosia start`   | Start production server                |
 | `bun run db:generate` | Generate migration from schema changes |
-| `bun run db:migrate` | Apply pending migrations |
-| `bun run db:push` | Push schema directly (dev shortcut) |
-| `bun run db:studio` | Open Drizzle Studio GUI |
-| `bun run db:seed` | Run pending seed files |
+| `bun run db:migrate`  | Apply pending migrations               |
+| `bun run db:push`     | Push schema directly (dev shortcut)    |
+| `bun run db:studio`   | Open Drizzle Studio GUI                |
+| `bun run db:seed`     | Run pending seed files                 |
 
 ## Project Structure
 

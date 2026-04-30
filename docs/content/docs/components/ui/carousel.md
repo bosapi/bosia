@@ -14,29 +14,29 @@ A carousel built with CSS scroll-snap. Supports horizontal and vertical orientat
 
 ## Sub-components
 
-| Component | Description |
-| --- | --- |
-| `Carousel` | Root — provides context, handles keyboard nav |
-| `CarouselContent` | Scrollable viewport + flex container |
-| `CarouselItem` | Slide wrapper with snap alignment |
-| `CarouselPrevious` | Previous slide button |
-| `CarouselNext` | Next slide button |
+| Component          | Description                                   |
+| ------------------ | --------------------------------------------- |
+| `Carousel`         | Root — provides context, handles keyboard nav |
+| `CarouselContent`  | Scrollable viewport + flex container          |
+| `CarouselItem`     | Slide wrapper with snap alignment             |
+| `CarouselPrevious` | Previous slide button                         |
+| `CarouselNext`     | Next slide button                             |
 
 ## Props
 
 ### Carousel
 
-| Prop | Type | Default |
-| --- | --- | --- |
+| Prop          | Type                         | Default        |
+| ------------- | ---------------------------- | -------------- |
 | `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` |
-| `autoplay` | `boolean \| number` | `false` |
-| `class` | `string` | `""` |
+| `autoplay`    | `boolean \| number`          | `false`        |
+| `class`       | `string`                     | `""`           |
 
 ### CarouselItem
 
-| Prop | Type | Default |
-| --- | --- | --- |
-| `class` | `string` | `""` |
+| Prop    | Type     | Default |
+| ------- | -------- | ------- |
+| `class` | `string` | `""`    |
 
 All sub-components accept `class` and spread `...restProps`.
 
@@ -44,20 +44,23 @@ All sub-components accept `class` and spread `...restProps`.
 
 ```svelte
 <script lang="ts">
-  import {
-    Carousel, CarouselContent, CarouselItem,
-    CarouselPrevious, CarouselNext,
-  } from "$lib/components/ui/carousel";
+	import {
+		Carousel,
+		CarouselContent,
+		CarouselItem,
+		CarouselPrevious,
+		CarouselNext,
+	} from "$lib/components/ui/carousel";
 </script>
 
 <Carousel>
-  <CarouselContent>
-    <CarouselItem>Slide 1</CarouselItem>
-    <CarouselItem>Slide 2</CarouselItem>
-    <CarouselItem>Slide 3</CarouselItem>
-  </CarouselContent>
-  <CarouselPrevious />
-  <CarouselNext />
+	<CarouselContent>
+		<CarouselItem>Slide 1</CarouselItem>
+		<CarouselItem>Slide 2</CarouselItem>
+		<CarouselItem>Slide 3</CarouselItem>
+	</CarouselContent>
+	<CarouselPrevious />
+	<CarouselNext />
 </Carousel>
 ```
 
@@ -65,12 +68,12 @@ All sub-components accept `class` and spread `...restProps`.
 
 ```svelte
 <Carousel orientation="vertical" class="max-h-[300px]">
-  <CarouselContent class="h-[300px]">
-    <CarouselItem>Slide 1</CarouselItem>
-    <CarouselItem>Slide 2</CarouselItem>
-  </CarouselContent>
-  <CarouselPrevious />
-  <CarouselNext />
+	<CarouselContent class="h-[300px]">
+		<CarouselItem>Slide 1</CarouselItem>
+		<CarouselItem>Slide 2</CarouselItem>
+	</CarouselContent>
+	<CarouselPrevious />
+	<CarouselNext />
 </Carousel>
 ```
 
@@ -93,7 +96,7 @@ Pass `autoplay` to auto-advance slides. `true` uses a 4000ms interval, or pass a
 
 ## Keyboard
 
-| Key | Action |
-| --- | --- |
+| Key                        | Action                       |
+| -------------------------- | ---------------------------- |
 | `ArrowLeft` / `ArrowRight` | Previous / Next (horizontal) |
-| `ArrowUp` / `ArrowDown` | Previous / Next (vertical) |
+| `ArrowUp` / `ArrowDown`    | Previous / Next (vertical)   |

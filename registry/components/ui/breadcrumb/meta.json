@@ -1,16 +1,16 @@
 {
-  "name": "breadcrumb",
-  "description": "Displays the path to the current resource using a hierarchy of links.",
-  "dependencies": [],
-  "files": [
-    "breadcrumb.svelte",
-    "breadcrumb-list.svelte",
-    "breadcrumb-item.svelte",
-    "breadcrumb-link.svelte",
-    "breadcrumb-page.svelte",
-    "breadcrumb-separator.svelte",
-    "breadcrumb-ellipsis.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "breadcrumb",
+	"description": "Displays the path to the current resource using a hierarchy of links.",
+	"dependencies": [],
+	"files": [
+		"breadcrumb.svelte",
+		"breadcrumb-list.svelte",
+		"breadcrumb-item.svelte",
+		"breadcrumb-link.svelte",
+		"breadcrumb-page.svelte",
+		"breadcrumb-separator.svelte",
+		"breadcrumb-ellipsis.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

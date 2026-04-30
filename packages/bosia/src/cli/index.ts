@@ -10,43 +10,43 @@
 const [, , command, ...args] = process.argv;
 
 async function main() {
-    switch (command) {
-        case "create": {
-            const { runCreate } = await import("./create.ts");
-            await runCreate(args[0], args.slice(1));
-            break;
-        }
-        case "dev": {
-            const { runDev } = await import("./dev.ts");
-            await runDev();
-            break;
-        }
-        case "build": {
-            const { runBuild } = await import("./build.ts");
-            await runBuild();
-            break;
-        }
-        case "start": {
-            const { runStart } = await import("./start.ts");
-            await runStart();
-            break;
-        }
-        case "add": {
-            const { runAdd } = await import("./add.ts");
-            const addName = args.find((a) => !a.startsWith("--"));
-            const addFlags = args.filter((a) => a.startsWith("--"));
-            await runAdd(addName, addFlags);
-            break;
-        }
-        case "feat": {
-            const { runFeat } = await import("./feat.ts");
-            const featName = args.find((a) => !a.startsWith("--"));
-            const featFlags = args.filter((a) => a.startsWith("--"));
-            await runFeat(featName, featFlags);
-            break;
-        }
-        default: {
-            console.log(`
+	switch (command) {
+		case "create": {
+			const { runCreate } = await import("./create.ts");
+			await runCreate(args[0], args.slice(1));
+			break;
+		}
+		case "dev": {
+			const { runDev } = await import("./dev.ts");
+			await runDev();
+			break;
+		}
+		case "build": {
+			const { runBuild } = await import("./build.ts");
+			await runBuild();
+			break;
+		}
+		case "start": {
+			const { runStart } = await import("./start.ts");
+			await runStart();
+			break;
+		}
+		case "add": {
+			const { runAdd } = await import("./add.ts");
+			const addName = args.find((a) => !a.startsWith("--"));
+			const addFlags = args.filter((a) => a.startsWith("--"));
+			await runAdd(addName, addFlags);
+			break;
+		}
+		case "feat": {
+			const { runFeat } = await import("./feat.ts");
+			const featName = args.find((a) => !a.startsWith("--"));
+			const featFlags = args.filter((a) => a.startsWith("--"));
+			await runFeat(featName, featFlags);
+			break;
+		}
+		default: {
+			console.log(`
 ⬡ Bosia
 
 Usage:
@@ -70,12 +70,12 @@ Examples:
   bosia add shop/cart           → src/lib/components/shop/cart/
   bosia feat login
 `);
-            break;
-        }
-    }
+			break;
+		}
+	}
 }
 
 main().catch((err) => {
-    console.error("❌", err.message);
-    process.exit(1);
+	console.error("❌", err.message);
+	process.exit(1);
 });

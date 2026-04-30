@@ -45,22 +45,22 @@ Preflight `OPTIONS` requests are handled automatically when CORS is configured.
 
 Bosia sets these headers on every response:
 
-| Header                    | Value                              |
-| ------------------------- | ---------------------------------- |
-| `X-Content-Type-Options`  | `nosniff`                          |
-| `X-Frame-Options`         | `SAMEORIGIN`                       |
-| `Referrer-Policy`         | `strict-origin-when-cross-origin`  |
+| Header                   | Value                             |
+| ------------------------ | --------------------------------- |
+| `X-Content-Type-Options` | `nosniff`                         |
+| `X-Frame-Options`        | `SAMEORIGIN`                      |
+| `Referrer-Policy`        | `strict-origin-when-cross-origin` |
 
 ## Cookie Security
 
 Every `cookies.set()` call applies secure defaults automatically — no need to specify them manually:
 
-| Option     | Default  | Description                        |
-| ---------- | -------- | ---------------------------------- |
-| `path`     | `"/"`    | Available to all routes            |
-| `httpOnly` | `true`   | Not accessible via JavaScript      |
-| `secure`   | `true`   | HTTPS only (auto-disabled in dev)  |
-| `sameSite` | `"Lax"`  | Protects against CSRF              |
+| Option     | Default | Description                       |
+| ---------- | ------- | --------------------------------- |
+| `path`     | `"/"`   | Available to all routes           |
+| `httpOnly` | `true`  | Not accessible via JavaScript     |
+| `secure`   | `true`  | HTTPS only (auto-disabled in dev) |
+| `sameSite` | `"Lax"` | Protects against CSRF             |
 
 In **dev mode**, `secure` is automatically set to `false` so cookies work over `http://localhost` without browser rejection.
 
@@ -68,7 +68,7 @@ Set a cookie with just the values you care about — secure defaults are applied
 
 ```ts
 event.cookies.set("session", token, {
-  maxAge: 60 * 60 * 24 * 7, // 7 days
+	maxAge: 60 * 60 * 24 * 7, // 7 days
 });
 // → Set-Cookie: session=...; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Lax
 ```
@@ -78,8 +78,8 @@ To opt out of a default, pass it explicitly:
 ```ts
 // Client-readable cookie (e.g. theme preference)
 event.cookies.set("theme", "dark", {
-  httpOnly: false,
-  maxAge: 60 * 60 * 24 * 365,
+	httpOnly: false,
+	maxAge: 60 * 60 * 24 * 365,
 });
 ```
 

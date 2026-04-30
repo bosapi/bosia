@@ -45,11 +45,11 @@ Request preflight `OPTIONS` ditangani secara otomatis saat CORS dikonfigurasi.
 
 Bosia menyetel header-header ini pada setiap response:
 
-| Header                    | Nilai                              |
-| ------------------------- | ---------------------------------- |
-| `X-Content-Type-Options`  | `nosniff`                          |
-| `X-Frame-Options`         | `SAMEORIGIN`                       |
-| `Referrer-Policy`         | `strict-origin-when-cross-origin`  |
+| Header                   | Nilai                             |
+| ------------------------ | --------------------------------- |
+| `X-Content-Type-Options` | `nosniff`                         |
+| `X-Frame-Options`        | `SAMEORIGIN`                      |
+| `Referrer-Policy`        | `strict-origin-when-cross-origin` |
 
 ## Keamanan Cookie
 
@@ -63,11 +63,11 @@ Setel opsi cookie yang aman:
 
 ```ts
 event.cookies.set("session", token, {
-  path: "/",
-  httpOnly: true,    // not accessible via JavaScript
-  secure: true,      // HTTPS only
-  sameSite: "Lax",   // protects against CSRF
-  maxAge: 60 * 60 * 24 * 7, // 7 days
+	path: "/",
+	httpOnly: true, // not accessible via JavaScript
+	secure: true, // HTTPS only
+	sameSite: "Lax", // protects against CSRF
+	maxAge: 60 * 60 * 24 * 7, // 7 days
 });
 ```
 

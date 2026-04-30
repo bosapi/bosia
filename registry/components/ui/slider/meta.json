@@ -1,7 +1,7 @@
 {
-  "name": "slider",
-  "description": "A slider input for selecting numeric values, supporting single and range modes.",
-  "dependencies": [],
-  "files": ["slider.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "slider",
+	"description": "A slider input for selecting numeric values, supporting single and range modes.",
+	"dependencies": [],
+	"files": ["slider.svelte", "index.ts"],
+	"npmDeps": {}
 }

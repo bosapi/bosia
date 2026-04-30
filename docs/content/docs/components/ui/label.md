@@ -23,13 +23,13 @@ An accessible label that pairs with form controls. Automatically dims when the a
 
 ```svelte
 <script lang="ts">
-  import { Label } from "$lib/components/ui/label";
-  import { Input } from "$lib/components/ui/input";
+	import { Label } from "$lib/components/ui/label";
+	import { Input } from "$lib/components/ui/input";
 </script>
 
 <div class="grid w-full max-w-sm gap-1.5">
-  <Label for="email">Email</Label>
-  <Input type="email" id="email" placeholder="you@example.com" />
+	<Label for="email">Email</Label>
+	<Input type="email" id="email" placeholder="you@example.com" />
 </div>
 ```
 
@@ -39,7 +39,7 @@ When paired with a disabled input using Tailwind's `peer` modifier, the label au
 
 ```svelte
 <div class="grid w-full max-w-sm gap-1.5">
-  <Input type="email" id="email-disabled" disabled class="peer" />
-  <Label for="email-disabled">Email (disabled)</Label>
+	<Input type="email" id="email-disabled" disabled class="peer" />
+	<Label for="email-disabled">Email (disabled)</Label>
 </div>
 ```

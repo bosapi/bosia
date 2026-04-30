@@ -14,24 +14,24 @@ A two-state button built on a native `<button>` with `aria-pressed`, used for to
 
 ## Props
 
-| Prop      | Type                       | Default     |
-| --------- | -------------------------- | ----------- |
-| `pressed` | `boolean`                  | `false`     |
-| `variant` | `"default"` \| `"outline"` | `"default"` |
-| `size`    | `"default"` \| `"sm"` \| `"lg"` | `"default"` |
-| `disabled`| `boolean`                  | `false`     |
-| `class`   | `string`                   | `""`        |
+| Prop       | Type                            | Default     |
+| ---------- | ------------------------------- | ----------- |
+| `pressed`  | `boolean`                       | `false`     |
+| `variant`  | `"default"` \| `"outline"`      | `"default"` |
+| `size`     | `"default"` \| `"sm"` \| `"lg"` | `"default"` |
+| `disabled` | `boolean`                       | `false`     |
+| `class`    | `string`                        | `""`        |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import { Toggle } from "$lib/components/ui/toggle";
-  let bold = $state(false);
+	import { Toggle } from "$lib/components/ui/toggle";
+	let bold = $state(false);
 </script>
 
 <Toggle bind:pressed={bold} aria-label="Toggle bold">
-  <b>B</b>
+	<b>B</b>
 </Toggle>
 ```
 
@@ -39,7 +39,7 @@ A two-state button built on a native `<button>` with `aria-pressed`, used for to
 
 ```svelte
 <Toggle variant="outline" aria-label="Toggle italic">
-  <i>I</i>
+	<i>I</i>
 </Toggle>
 ```
 
@@ -47,8 +47,8 @@ A two-state button built on a native `<button>` with `aria-pressed`, used for to
 
 ```svelte
 <Toggle aria-label="Toggle italic">
-  <i>I</i>
-  Italic
+	<i>I</i>
+	Italic
 </Toggle>
 ```
 

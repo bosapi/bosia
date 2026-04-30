@@ -1,7 +1,7 @@
 {
-  "name": "icon",
-  "description": "An SVG icon component powered by inline Lucide-style icons.",
-  "dependencies": [],
-  "files": ["icon.svelte", "icons.ts", "index.ts"],
-  "npmDeps": {}
+	"name": "icon",
+	"description": "An SVG icon component powered by inline Lucide-style icons.",
+	"dependencies": [],
+	"files": ["icon.svelte", "icons.ts", "index.ts"],
+	"npmDeps": {}
 }

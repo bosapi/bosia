@@ -14,15 +14,15 @@ A small status label with variant styling.
 
 ## Props
 
-| Prop      | Type                                                             | Default     |
-| --------- | ---------------------------------------------------------------- | ----------- |
+| Prop      | Type                                                           | Default     |
+| --------- | -------------------------------------------------------------- | ----------- |
 | `variant` | `"default"` \| `"secondary"` \| `"destructive"` \| `"outline"` | `"default"` |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import { Badge } from "$lib/components/ui/badge";
+	import { Badge } from "$lib/components/ui/badge";
 </script>
 
 <Badge>Active</Badge>

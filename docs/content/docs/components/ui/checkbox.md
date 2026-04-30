@@ -14,22 +14,22 @@ A checkbox built on a native `<button>` with `role="checkbox"`, supporting check
 
 ## Props
 
-| Prop            | Type      | Default     |
-| --------------- | --------- | ----------- |
-| `checked`       | `boolean` | `false`     |
-| `indeterminate` | `boolean` | `false`     |
-| `disabled`      | `boolean` | `false`     |
-| `id`            | `string`  | —           |
-| `name`          | `string`  | —           |
-| `value`         | `string`  | —           |
-| `class`         | `string`  | `""`        |
+| Prop            | Type      | Default |
+| --------------- | --------- | ------- |
+| `checked`       | `boolean` | `false` |
+| `indeterminate` | `boolean` | `false` |
+| `disabled`      | `boolean` | `false` |
+| `id`            | `string`  | —       |
+| `name`          | `string`  | —       |
+| `value`         | `string`  | —       |
+| `class`         | `string`  | `""`    |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import { Checkbox } from "$lib/components/ui/checkbox";
-  let accepted = $state(false);
+	import { Checkbox } from "$lib/components/ui/checkbox";
+	let accepted = $state(false);
 </script>
 
 <Checkbox bind:checked={accepted} />
@@ -39,13 +39,13 @@ A checkbox built on a native `<button>` with `role="checkbox"`, supporting check
 
 ```svelte
 <script lang="ts">
-  import { Checkbox } from "$lib/components/ui/checkbox";
-  import { Label } from "$lib/components/ui/label";
+	import { Checkbox } from "$lib/components/ui/checkbox";
+	import { Label } from "$lib/components/ui/label";
 </script>
 
 <div class="flex items-center gap-2">
-  <Checkbox id="terms" />
-  <Label for="terms">Accept terms and conditions</Label>
+	<Checkbox id="terms" />
+	<Label for="terms">Accept terms and conditions</Label>
 </div>
 ```
 
@@ -69,7 +69,7 @@ When a `name` prop is provided, a hidden `<input type="checkbox">` is rendered f
 
 ```svelte
 <form method="POST">
-  <Checkbox name="newsletter" value="yes" />
-  <button type="submit">Subscribe</button>
+	<Checkbox name="newsletter" value="yes" />
+	<button type="submit">Subscribe</button>
 </form>
 ```

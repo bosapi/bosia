@@ -38,13 +38,13 @@ Renders a `<li>`. Pass through wrapper.
 
 ## PaginationLink Props
 
-| Prop       | Type                                    | Default  |
-| ---------- | --------------------------------------- | -------- |
-| `href`     | `string`                                | `"#"`    |
-| `isActive` | `boolean`                               | `false`  |
-| `disabled` | `boolean`                               | `false`  |
-| `size`     | `"default" \| "sm" \| "lg" \| "icon"`   | `"icon"` |
-| `class`    | `string`                                | `""`     |
+| Prop       | Type                                  | Default  |
+| ---------- | ------------------------------------- | -------- |
+| `href`     | `string`                              | `"#"`    |
+| `isActive` | `boolean`                             | `false`  |
+| `disabled` | `boolean`                             | `false`  |
+| `size`     | `"default" \| "sm" \| "lg" \| "icon"` | `"icon"` |
+| `class`    | `string`                              | `""`     |
 
 Renders an `<a>` styled as a button. When `isActive` is `true`, applies `aria-current="page"` and outline styling; otherwise ghost styling. When `disabled` is `true`, applies `aria-disabled="true"`, `tabindex="-1"`, `pointer-events-none`, and `opacity-50`.
 
@@ -80,40 +80,40 @@ Renders a `<span aria-hidden="true">` with a horizontal ellipsis icon and `sr-on
 
 ```svelte
 <script lang="ts">
-  import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationPrevious,
-    PaginationNext,
-    PaginationEllipsis,
-  } from "$lib/components/ui/pagination";
+	import {
+		Pagination,
+		PaginationContent,
+		PaginationItem,
+		PaginationLink,
+		PaginationPrevious,
+		PaginationNext,
+		PaginationEllipsis,
+	} from "$lib/components/ui/pagination";
 
-  let currentPage = $state(1);
+	let currentPage = $state(1);
 </script>
 
 <Pagination>
-  <PaginationContent>
-    <PaginationItem>
-      <PaginationPrevious href="#" />
-    </PaginationItem>
-    <PaginationItem>
-      <PaginationLink href="#" isActive={currentPage === 1}>1</PaginationLink>
-    </PaginationItem>
-    <PaginationItem>
-      <PaginationLink href="#">2</PaginationLink>
-    </PaginationItem>
-    <PaginationItem>
-      <PaginationLink href="#">3</PaginationLink>
-    </PaginationItem>
-    <PaginationItem>
-      <PaginationEllipsis />
-    </PaginationItem>
-    <PaginationItem>
-      <PaginationNext href="#" />
-    </PaginationItem>
-  </PaginationContent>
+	<PaginationContent>
+		<PaginationItem>
+			<PaginationPrevious href="#" />
+		</PaginationItem>
+		<PaginationItem>
+			<PaginationLink href="#" isActive={currentPage === 1}>1</PaginationLink>
+		</PaginationItem>
+		<PaginationItem>
+			<PaginationLink href="#">2</PaginationLink>
+		</PaginationItem>
+		<PaginationItem>
+			<PaginationLink href="#">3</PaginationLink>
+		</PaginationItem>
+		<PaginationItem>
+			<PaginationEllipsis />
+		</PaginationItem>
+		<PaginationItem>
+			<PaginationNext href="#" />
+		</PaginationItem>
+	</PaginationContent>
 </Pagination>
 ```
 

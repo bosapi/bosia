@@ -11,9 +11,9 @@ Buat kerangka proyek Bosia baru.
 bosia create <name> [--template <template>]
 ```
 
-| Opsi         | Deskripsi                                     |
-| ------------ | --------------------------------------------- |
-| `<name>`     | Nama direktori proyek                         |
+| Opsi         | Deskripsi                                      |
+| ------------ | ---------------------------------------------- |
+| `<name>`     | Nama direktori proyek                          |
 | `--template` | Lewati pemilih template: `default` atau `demo` |
 
 **Template:**

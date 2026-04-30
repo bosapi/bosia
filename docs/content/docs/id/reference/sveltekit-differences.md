@@ -22,21 +22,21 @@ Hal-hal berikut bekerja dengan cara yang sama seperti yang Anda harapkan:
 
 ## Berbeda dari SvelteKit
 
-| Fitur | SvelteKit | Bosia |
-| ----- | --------- | ------ |
-| **Runtime** | Node.js | Bun |
-| **Bundler** | Vite | Bun.build |
-| **Server HTTP** | Dapat dikonfigurasi via adapters | ElysiaJS (bawaan) |
-| **Adapters** | Diperlukan (node, vercel, dll.) | Tidak ada — satu server Bun |
-| **Universal load** | `+page.ts` / `+layout.ts` | Tidak didukung — hanya server loaders |
-| **Stores** | `$app/stores` | Tidak tersedia — gunakan `$props()` |
-| **Navigation** | `$app/navigation` | Router klien bawaan |
-| **Env vars** | `$env/static/public`, dll. | `$env` dengan prefix empat tingkat |
-| **HMR** | Vite HMR (granular) | SSE full-page reload |
-| **Direktori generate** | `.svelte-kit/` | `.bosia/` |
-| **Registry komponen** | Tidak ada | `bosia add` (gaya shadcn) |
-| **Scaffolding fitur** | Tidak ada | `bosia feat` |
-| **Metadata** | Via `<svelte:head>` | Fungsi `metadata()` di `+page.server.ts` |
+| Fitur                  | SvelteKit                        | Bosia                                    |
+| ---------------------- | -------------------------------- | ---------------------------------------- |
+| **Runtime**            | Node.js                          | Bun                                      |
+| **Bundler**            | Vite                             | Bun.build                                |
+| **Server HTTP**        | Dapat dikonfigurasi via adapters | ElysiaJS (bawaan)                        |
+| **Adapters**           | Diperlukan (node, vercel, dll.)  | Tidak ada — satu server Bun              |
+| **Universal load**     | `+page.ts` / `+layout.ts`        | Tidak didukung — hanya server loaders    |
+| **Stores**             | `$app/stores`                    | Tidak tersedia — gunakan `$props()`      |
+| **Navigation**         | `$app/navigation`                | Router klien bawaan                      |
+| **Env vars**           | `$env/static/public`, dll.       | `$env` dengan prefix empat tingkat       |
+| **HMR**                | Vite HMR (granular)              | SSE full-page reload                     |
+| **Direktori generate** | `.svelte-kit/`                   | `.bosia/`                                |
+| **Registry komponen**  | Tidak ada                        | `bosia add` (gaya shadcn)                |
+| **Scaffolding fitur**  | Tidak ada                        | `bosia feat`                             |
+| **Metadata**           | Via `<svelte:head>`              | Fungsi `metadata()` di `+page.server.ts` |
 
 ### Penjelasan Perbedaan Utama
 

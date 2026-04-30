@@ -1,14 +1,14 @@
 {
-  "name": "chart",
-  "description": "SVG line and bar charts with tooltips — zero dependencies, pure Svelte.",
-  "dependencies": [],
-  "files": [
-    "line-chart.svelte",
-    "bar-chart.svelte",
-    "tooltip.svelte",
-    "scale.ts",
-    "format.ts",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "chart",
+	"description": "SVG line and bar charts with tooltips — zero dependencies, pure Svelte.",
+	"dependencies": [],
+	"files": [
+		"line-chart.svelte",
+		"bar-chart.svelte",
+		"tooltip.svelte",
+		"scale.ts",
+		"format.ts",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

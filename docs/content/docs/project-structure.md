@@ -28,22 +28,22 @@ my-app/
 
 ## Special Files
 
-| File                  | Purpose                                          |
-| --------------------- | ------------------------------------------------ |
-| `+page.svelte`        | Page component — renders at the route's URL      |
-| `+layout.svelte`      | Layout — wraps child pages and layouts            |
-| `+page.server.ts`     | Server loader — runs `load()` and `metadata()` on the server |
-| `+layout.server.ts`   | Layout loader — data shared with all child routes |
-| `+server.ts`          | API endpoint — exports HTTP verb functions        |
-| `+error.svelte`       | Error page — renders when a loader throws         |
-| `hooks.server.ts`     | Middleware — intercepts every request              |
-| `app.css`             | Global styles — Tailwind directives and design tokens |
+| File                | Purpose                                                      |
+| ------------------- | ------------------------------------------------------------ |
+| `+page.svelte`      | Page component — renders at the route's URL                  |
+| `+layout.svelte`    | Layout — wraps child pages and layouts                       |
+| `+page.server.ts`   | Server loader — runs `load()` and `metadata()` on the server |
+| `+layout.server.ts` | Layout loader — data shared with all child routes            |
+| `+server.ts`        | API endpoint — exports HTTP verb functions                   |
+| `+error.svelte`     | Error page — renders when a loader throws                    |
+| `hooks.server.ts`   | Middleware — intercepts every request                        |
+| `app.css`           | Global styles — Tailwind directives and design tokens        |
 
 ## Path Aliases
 
-| Alias   | Maps to     | Example                            |
-| ------- | ----------- | ---------------------------------- |
-| `$lib`  | `src/lib/`  | `import { cn } from "$lib/utils"` |
+| Alias  | Maps to    | Example                           |
+| ------ | ---------- | --------------------------------- |
+| `$lib` | `src/lib/` | `import { cn } from "$lib/utils"` |
 
 ## Generated Files
 

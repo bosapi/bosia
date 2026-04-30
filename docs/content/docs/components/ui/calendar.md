@@ -16,15 +16,15 @@ A composable calendar component for single date selection. Built with native JS 
 
 ### Calendar
 
-| Prop | Type | Default |
-| ---- | ---- | ------- |
-| `value` | `Date \| undefined` | `undefined` |
-| `month` | `Date \| undefined` | `undefined` |
-| `min` | `Date \| undefined` | `undefined` |
-| `max` | `Date \| undefined` | `undefined` |
-| `disabled` | `((date: Date) => boolean) \| undefined` | `undefined` |
-| `weekStartsOn` | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6` | `0` |
-| `fixedWeeks` | `boolean` | `false` |
+| Prop           | Type                                     | Default     |
+| -------------- | ---------------------------------------- | ----------- |
+| `value`        | `Date \| undefined`                      | `undefined` |
+| `month`        | `Date \| undefined`                      | `undefined` |
+| `min`          | `Date \| undefined`                      | `undefined` |
+| `max`          | `Date \| undefined`                      | `undefined` |
+| `disabled`     | `((date: Date) => boolean) \| undefined` | `undefined` |
+| `weekStartsOn` | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6`        | `0`         |
+| `fixedWeeks`   | `boolean`                                | `false`     |
 
 - `value` — bindable selected date
 - `month` — bindable controlled viewed month
@@ -44,14 +44,14 @@ A composable calendar component for single date selection. Built with native JS 
 
 ```svelte
 <script lang="ts">
-  import { Calendar, CalendarHeader, CalendarGrid } from "$lib/components/ui/calendar";
+	import { Calendar, CalendarHeader, CalendarGrid } from "$lib/components/ui/calendar";
 
-  let selected = $state<Date | undefined>(undefined);
+	let selected = $state<Date | undefined>(undefined);
 </script>
 
 <Calendar bind:value={selected} class="rounded-md border">
-  <CalendarHeader />
-  <CalendarGrid />
+	<CalendarHeader />
+	<CalendarGrid />
 </Calendar>
 ```
 
@@ -61,15 +61,15 @@ Use `bind:month` to control which month is displayed:
 
 ```svelte
 <script lang="ts">
-  import { Calendar, CalendarHeader, CalendarGrid } from "$lib/components/ui/calendar";
+	import { Calendar, CalendarHeader, CalendarGrid } from "$lib/components/ui/calendar";
 
-  let selected = $state<Date | undefined>(undefined);
-  let month = $state(new Date(2026, 0, 1)); // January 2026
+	let selected = $state<Date | undefined>(undefined);
+	let month = $state(new Date(2026, 0, 1)); // January 2026
 </script>
 
-<Calendar bind:value={selected} bind:month={month} class="rounded-md border">
-  <CalendarHeader />
-  <CalendarGrid />
+<Calendar bind:value={selected} bind:month class="rounded-md border">
+	<CalendarHeader />
+	<CalendarGrid />
 </Calendar>
 ```
 
@@ -77,13 +77,13 @@ Use `bind:month` to control which month is displayed:
 
 ```svelte
 <Calendar
-  bind:value={selected}
-  min={new Date(2026, 0, 1)}
-  max={new Date(2026, 11, 31)}
-  class="rounded-md border"
+	bind:value={selected}
+	min={new Date(2026, 0, 1)}
+	max={new Date(2026, 11, 31)}
+	class="rounded-md border"
 >
-  <CalendarHeader />
-  <CalendarGrid />
+	<CalendarHeader />
+	<CalendarGrid />
 </Calendar>
 ```
 
@@ -93,12 +93,12 @@ Disable weekends:
 
 ```svelte
 <Calendar
-  bind:value={selected}
-  disabled={(date) => date.getDay() === 0 || date.getDay() === 6}
-  class="rounded-md border"
+	bind:value={selected}
+	disabled={(date) => date.getDay() === 0 || date.getDay() === 6}
+	class="rounded-md border"
 >
-  <CalendarHeader />
-  <CalendarGrid />
+	<CalendarHeader />
+	<CalendarGrid />
 </Calendar>
 ```
 
@@ -106,17 +106,17 @@ Disable weekends:
 
 ```svelte
 <Calendar bind:value={selected} weekStartsOn={1} class="rounded-md border">
-  <CalendarHeader />
-  <CalendarGrid />
+	<CalendarHeader />
+	<CalendarGrid />
 </Calendar>
 ```
 
 ## Keyboard Navigation
 
-| Key | Action |
-| --- | ------ |
-| `ArrowLeft` / `ArrowRight` | Previous / next day |
-| `ArrowUp` / `ArrowDown` | Previous / next week |
-| `Home` / `End` | First / last day of week |
-| `PageUp` / `PageDown` | Previous / next month |
-| `Enter` / `Space` | Select focused day |
+| Key                        | Action                   |
+| -------------------------- | ------------------------ |
+| `ArrowLeft` / `ArrowRight` | Previous / next day      |
+| `ArrowUp` / `ArrowDown`    | Previous / next week     |
+| `Home` / `End`             | First / last day of week |
+| `PageUp` / `PageDown`      | Previous / next month    |
+| `Enter` / `Space`          | Select focused day       |

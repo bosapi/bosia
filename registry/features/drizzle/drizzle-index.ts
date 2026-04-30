@@ -5,7 +5,7 @@ import * as schema from "./schemas";
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-    console.warn("⚠️  DATABASE_URL is not set. Database queries will fail.");
+	console.warn("⚠️  DATABASE_URL is not set. Database queries will fail.");
 }
 
 const client = postgres(connectionString || "postgres://localhost/dummy");

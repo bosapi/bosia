@@ -1,56 +1,56 @@
 {
-  "name": "bosia",
-  "version": "0.2.4",
-  "type": "module",
-  "description": "A fast, batteries-included fullstack framework — SSR · Svelte 5 Runes · Bun · ElysiaJS. File-based routing inspired by SvelteKit. No Node.js, no Vite, no adapters.",
-  "keywords": [
-    "bun",
-    "svelte",
-    "ssr",
-    "elysia",
-    "fullstack",
-    "framework"
-  ],
-  "license": "MIT",
-  "author": {
-    "name": "Jekibus",
-    "url": "https://github.com/jekibus"
-  },
-  "homepage": "https://github.com/bosapi/bosia#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bosapi/bosia.git"
-  },
-  "bugs": {
-    "url": "https://github.com/bosapi/bosia/issues"
-  },
-  "files": [
-    "src",
-    "templates",
-    "README.md",
-    "package.json"
-  ],
-  "exports": {
-    ".": "./src/lib/index.ts",
-    "./client": "./src/lib/client.ts"
-  },
-  "bin": {
-    "bosia": "src/cli/index.ts"
-  },
-  "scripts": {
-    "check": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "@clack/prompts": "^1.1.0",
-    "@tailwindcss/cli": "^4.2.1",
-    "bun-plugin-svelte": "^0.0.6",
-    "elysia": "^1.4.26",
-    "svelte": "^5.53.6",
-    "tailwind-merge": "^3.5.0",
-    "tailwindcss": "^4.2.1"
-  }
+	"name": "bosia",
+	"version": "0.2.4",
+	"type": "module",
+	"description": "A fast, batteries-included fullstack framework — SSR · Svelte 5 Runes · Bun · ElysiaJS. File-based routing inspired by SvelteKit. No Node.js, no Vite, no adapters.",
+	"keywords": [
+		"bun",
+		"svelte",
+		"ssr",
+		"elysia",
+		"fullstack",
+		"framework"
+	],
+	"license": "MIT",
+	"author": {
+		"name": "Jekibus",
+		"url": "https://github.com/jekibus"
+	},
+	"homepage": "https://github.com/bosapi/bosia#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bosapi/bosia.git"
+	},
+	"bugs": {
+		"url": "https://github.com/bosapi/bosia/issues"
+	},
+	"files": [
+		"src",
+		"templates",
+		"README.md",
+		"package.json"
+	],
+	"exports": {
+		".": "./src/lib/index.ts",
+		"./client": "./src/lib/client.ts"
+	},
+	"bin": {
+		"bosia": "src/cli/index.ts"
+	},
+	"scripts": {
+		"check": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"@clack/prompts": "^1.1.0",
+		"@tailwindcss/cli": "^4.2.1",
+		"bun-plugin-svelte": "^0.0.6",
+		"elysia": "^1.4.26",
+		"svelte": "^5.53.6",
+		"tailwind-merge": "^3.5.0",
+		"tailwindcss": "^4.2.1"
+	}
 }

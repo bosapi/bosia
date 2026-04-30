@@ -15,10 +15,10 @@ bunx bosia create my-app
 
 Anda akan diminta memilih template:
 
-| Template    | Deskripsi                                                         |
-| ----------- | ----------------------------------------------------------------- |
-| **default** | Starter minimal — halaman utama, halaman about, satu loader       |
-| **demo**    | Fitur lengkap — blog, API routes, form actions, hooks             |
+| Template    | Deskripsi                                                   |
+| ----------- | ----------------------------------------------------------- |
+| **default** | Starter minimal — halaman utama, halaman about, satu loader |
+| **demo**    | Fitur lengkap — blog, API routes, form actions, hooks       |
 
 Untuk melewati prompt:
 
@@ -49,8 +49,7 @@ bun run start
 Buat file baru di `src/routes/hello/+page.svelte`:
 
 ```svelte
-<h1>Hello!</h1>
-<p>This is my first Bosia page.</p>
+<h1>Hello!</h1><p>This is my first Bosia page.</p>
 ```
 
 Kunjungi [http://localhost:9000/hello](http://localhost:9000/hello) — selesai. Tidak perlu konfigurasi, impor, atau pendaftaran. Router berbasis file mendeteksinya secara otomatis.
@@ -63,10 +62,10 @@ Buat `src/routes/hello/+page.server.ts` di samping halaman:
 import type { LoadEvent } from "bosia";
 
 export async function load({ url }: LoadEvent) {
-  return {
-    greeting: `Hello from the server!`,
-    timestamp: Date.now(),
-  };
+	return {
+		greeting: `Hello from the server!`,
+		timestamp: Date.now(),
+	};
 }
 ```
 
@@ -74,11 +73,10 @@ Akses data di halaman Anda:
 
 ```svelte
 <script lang="ts">
-  let { data } = $props();
+	let { data } = $props();
 </script>
 
-<h1>{data.greeting}</h1>
-<p>Rendered at {new Date(data.timestamp).toLocaleString()}</p>
+<h1>{data.greeting}</h1><p>Rendered at {new Date(data.timestamp).toLocaleString()}</p>
 ```
 
 ## Langkah Selanjutnya

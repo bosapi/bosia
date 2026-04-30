@@ -17,8 +17,8 @@ import type { RequestEvent, LoadEvent, Handle, Cookies } from "bosia";
 Gabungkan class Tailwind CSS dengan aman. Menggunakan penggabungan class bawaan dan [tailwind-merge](https://github.com/dcastil/tailwind-merge).
 
 ```ts
-cn("px-4 py-2", "px-6")          // → "py-2 px-6"
-cn("text-red-500", isActive && "text-blue-500")
+cn("px-4 py-2", "px-6"); // → "py-2 px-6"
+cn("text-red-500", isActive && "text-blue-500");
 ```
 
 ### sequence(...handlers)
@@ -36,7 +36,7 @@ Handler dieksekusi dari kiri ke kanan. `resolve` pada setiap handler memanggil h
 Lempar error HTTP dari fungsi `load()`. Merender `+error.svelte` terdekat.
 
 ```ts
-error(404, "Post not found");     // never returns
+error(404, "Post not found"); // never returns
 ```
 
 ### redirect(status, location)
@@ -44,7 +44,7 @@ error(404, "Post not found");     // never returns
 Redirect dari fungsi `load()` atau form action.
 
 ```ts
-redirect(303, "/login");          // never returns
+redirect(303, "/login"); // never returns
 ```
 
 ### fail(status, data)
@@ -63,11 +63,11 @@ Tersedia di rute API (`+server.ts`) dan form actions.
 
 ```ts
 type RequestEvent = {
-  request: Request;
-  url: URL;
-  locals: Record<string, any>;
-  params: Record<string, string>;
-  cookies: Cookies;
+	request: Request;
+	url: URL;
+	locals: Record<string, any>;
+	params: Record<string, string>;
+	cookies: Cookies;
 };
 ```
 
@@ -77,13 +77,13 @@ Tersedia di fungsi `load()` dalam `+page.server.ts` dan `+layout.server.ts`.
 
 ```ts
 type LoadEvent = {
-  url: URL;
-  params: Record<string, string>;
-  locals: Record<string, any>;
-  cookies: Cookies;
-  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-  parent: () => Promise<Record<string, any>>;
-  metadata: Record<string, any> | null;
+	url: URL;
+	params: Record<string, string>;
+	locals: Record<string, any>;
+	cookies: Cookies;
+	fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+	parent: () => Promise<Record<string, any>>;
+	metadata: Record<string, any> | null;
 };
 ```
 
@@ -93,11 +93,11 @@ Tersedia di fungsi `metadata()` dalam `+page.server.ts`.
 
 ```ts
 type MetadataEvent = {
-  params: Record<string, string>;
-  url: URL;
-  locals: Record<string, any>;
-  cookies: Cookies;
-  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+	params: Record<string, string>;
+	url: URL;
+	locals: Record<string, any>;
+	cookies: Cookies;
+	fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 };
 ```
 
@@ -107,10 +107,10 @@ Tipe kembalian untuk fungsi `metadata()`.
 
 ```ts
 type Metadata = {
-  title?: string;
-  description?: string;
-  meta?: Array<{ name?: string; property?: string; content: string }>;
-  data?: Record<string, any>;
+	title?: string;
+	description?: string;
+	meta?: Array<{ name?: string; property?: string; content: string }>;
+	data?: Record<string, any>;
 };
 ```
 
@@ -119,10 +119,7 @@ type Metadata = {
 Tipe fungsi middleware untuk `hooks.server.ts`.
 
 ```ts
-type Handle = (input: {
-  event: RequestEvent;
-  resolve: ResolveFunction;
-}) => MaybePromise<Response>;
+type Handle = (input: { event: RequestEvent; resolve: ResolveFunction }) => MaybePromise<Response>;
 ```
 
 ### Cookies
@@ -131,10 +128,10 @@ Antarmuka baca/tulis cookie yang tersedia di `event.cookies`.
 
 ```ts
 interface Cookies {
-  get(name: string): string | undefined;
-  getAll(): Record<string, string>;
-  set(name: string, value: string, options?: CookieOptions): void;
-  delete(name: string, options?: Pick<CookieOptions, "path" | "domain">): void;
+	get(name: string): string | undefined;
+	getAll(): Record<string, string>;
+	set(name: string, value: string, options?: CookieOptions): void;
+	delete(name: string, options?: Pick<CookieOptions, "path" | "domain">): void;
 }
 ```
 
@@ -142,13 +139,13 @@ interface Cookies {
 
 ```ts
 interface CookieOptions {
-  path?: string;
-  domain?: string;
-  maxAge?: number;       // seconds
-  expires?: Date;
-  httpOnly?: boolean;
-  secure?: boolean;
-  sameSite?: "Strict" | "Lax" | "None";
+	path?: string;
+	domain?: string;
+	maxAge?: number; // seconds
+	expires?: Date;
+	httpOnly?: boolean;
+	secure?: boolean;
+	sameSite?: "Strict" | "Lax" | "None";
 }
 ```
 
@@ -158,7 +155,7 @@ Kelas error yang dilempar oleh `error()`.
 
 ```ts
 class HttpError extends Error {
-  status: number;
+	status: number;
 }
 ```
 
@@ -168,8 +165,8 @@ Kelas redirect yang dilempar oleh `redirect()`.
 
 ```ts
 class Redirect {
-  status: number;
-  location: string;
+	status: number;
+	location: string;
 }
 ```
 
@@ -179,8 +176,8 @@ Dikembalikan oleh `fail()` dalam form actions.
 
 ```ts
 class ActionFailure<T extends Record<string, any>> {
-  status: number;
-  data: T;
+	status: number;
+	data: T;
 }
 ```
 
@@ -188,8 +185,8 @@ class ActionFailure<T extends Record<string, any>> {
 
 ```ts
 interface CsrfConfig {
-  checkOrigin: boolean;
-  allowedOrigins?: string[];
+	checkOrigin: boolean;
+	allowedOrigins?: string[];
 }
 ```
 
@@ -197,20 +194,20 @@ interface CsrfConfig {
 
 ```ts
 interface CorsConfig {
-  allowedOrigins: string[];
-  allowedMethods?: string[];
-  allowedHeaders?: string[];
-  exposedHeaders?: string[];
-  credentials?: boolean;
-  maxAge?: number;
+	allowedOrigins: string[];
+	allowedMethods?: string[];
+	allowedHeaders?: string[];
+	exposedHeaders?: string[];
+	credentials?: boolean;
+	maxAge?: number;
 }
 ```
 
 ## Pola Import
 
-| Import                                    | Sumber                   |
-| ----------------------------------------- | ------------------------ |
-| `import { cn, sequence } from "bosia"`  | Paket framework          |
-| `import { cn } from "$lib/utils"`         | Utilitas proyek          |
-| `import { VAR } from "$env"`             | Variabel lingkungan      |
-| `import type { PageData } from "./$types"` | Tipe yang digenerate   |
+| Import                                     | Sumber               |
+| ------------------------------------------ | -------------------- |
+| `import { cn, sequence } from "bosia"`     | Paket framework      |
+| `import { cn } from "$lib/utils"`          | Utilitas proyek      |
+| `import { VAR } from "$env"`               | Variabel lingkungan  |
+| `import type { PageData } from "./$types"` | Tipe yang digenerate |

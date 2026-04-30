@@ -13,10 +13,10 @@ Export a `metadata` function from `+page.server.ts`:
 import type { MetadataEvent } from "bosia";
 
 export function metadata({ params }: MetadataEvent) {
-  return {
-    title: "About — My App",
-    description: "Learn more about our app.",
-  };
+	return {
+		title: "About — My App",
+		description: "Learn more about our app.",
+	};
 }
 ```
 
@@ -28,16 +28,16 @@ Use the `meta` array to add Open Graph, Twitter Card, or any custom meta tags:
 
 ```ts
 export function metadata({ params }: MetadataEvent) {
-  return {
-    title: "Blog Post",
-    description: "A great blog post.",
-    meta: [
-      { property: "og:title", content: "Blog Post" },
-      { property: "og:description", content: "A great blog post." },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  };
+	return {
+		title: "Blog Post",
+		description: "A great blog post.",
+		meta: [
+			{ property: "og:title", content: "Blog Post" },
+			{ property: "og:description", content: "A great blog post." },
+			{ property: "og:type", content: "article" },
+			{ name: "twitter:card", content: "summary_large_image" },
+		],
+	};
 }
 ```
 
@@ -49,15 +49,15 @@ Set the `<html lang>` attribute and add `<link>` tags for canonical URLs, hrefla
 
 ```ts
 export function metadata() {
-  return {
-    title: "Mon Blog",
-    lang: "fr",
-    link: [
-      { rel: "canonical", href: "https://example.com/blog" },
-      { rel: "alternate", href: "https://example.com/en/blog", hreflang: "en" },
-      { rel: "alternate", href: "https://example.com/fr/blog", hreflang: "fr" },
-    ],
-  };
+	return {
+		title: "Mon Blog",
+		lang: "fr",
+		link: [
+			{ rel: "canonical", href: "https://example.com/blog" },
+			{ rel: "alternate", href: "https://example.com/en/blog", hreflang: "en" },
+			{ rel: "alternate", href: "https://example.com/fr/blog", hreflang: "fr" },
+		],
+	};
 }
 ```
 
@@ -69,20 +69,20 @@ The `data` property lets you share fetched data with `load()`, avoiding duplicat
 import type { MetadataEvent, LoadEvent } from "bosia";
 
 export function metadata({ params }: MetadataEvent) {
-  const post = await db.getPost(params.slug);
-  return {
-    title: `${post.title} — Blog`,
-    description: post.excerpt,
-    meta: [{ property: "og:title", content: post.title }],
-    // Pass to load() — avoids a second DB query
-    data: { post },
-  };
+	const post = await db.getPost(params.slug);
+	return {
+		title: `${post.title} — Blog`,
+		description: post.excerpt,
+		meta: [{ property: "og:title", content: post.title }],
+		// Pass to load() — avoids a second DB query
+		data: { post },
+	};
 }
 
 export async function load({ params, metadata }: LoadEvent) {
-  // Reuse data from metadata(), fall back to fresh query
-  const post = metadata?.post ?? await db.getPost(params.slug);
-  return { post };
+	// Reuse data from metadata(), fall back to fresh query
+	const post = metadata?.post ?? (await db.getPost(params.slug));
+	return { post };
 }
 ```
 
@@ -90,24 +90,24 @@ The `data` object from `metadata()` becomes `event.metadata` in `load()`. If no 
 
 ## MetadataEvent Properties
 
-| Property  | Type                     | Description                          |
-| --------- | ------------------------ | ------------------------------------ |
-| `params`  | `Record<string, string>` | Dynamic route parameters             |
-| `url`     | `URL`                    | The request URL                      |
-| `locals`  | `Record<string, any>`    | Data set by middleware hooks         |
-| `cookies` | `Cookies`                | Read/write cookies                   |
+| Property  | Type                     | Description                                                                                                                            |
+| --------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `params`  | `Record<string, string>` | Dynamic route parameters                                                                                                               |
+| `url`     | `URL`                    | The request URL                                                                                                                        |
+| `locals`  | `Record<string, any>`    | Data set by middleware hooks                                                                                                           |
+| `cookies` | `Cookies`                | Read/write cookies                                                                                                                     |
 | `fetch`   | `Function`               | Fetch helper (cookies forwarded same-origin only — see [Server Loaders → Cookie Forwarding](/guides/server-loaders#cookie-forwarding)) |
 
 ## Metadata Return Type
 
-| Property      | Type                                                         | Description                              |
-| ------------- | ------------------------------------------------------------ | ---------------------------------------- |
-| `title`       | `string`                                                     | Page `<title>` tag                       |
-| `description` | `string`                                                     | `<meta name="description">` tag          |
-| `meta`        | `Array<{ name?: string; property?: string; content: string }>` | Custom meta tags                         |
-| `lang`        | `string`                                                     | `<html lang>` attribute                  |
-| `link`        | `Array<{ rel: string; href: string; hreflang?: string }>`    | `<link>` tags (canonical, hreflang, etc.) |
-| `data`        | `Record<string, any>`                                        | Data passed to `load()` as `event.metadata` |
+| Property      | Type                                                           | Description                                 |
+| ------------- | -------------------------------------------------------------- | ------------------------------------------- |
+| `title`       | `string`                                                       | Page `<title>` tag                          |
+| `description` | `string`                                                       | `<meta name="description">` tag             |
+| `meta`        | `Array<{ name?: string; property?: string; content: string }>` | Custom meta tags                            |
+| `lang`        | `string`                                                       | `<html lang>` attribute                     |
+| `link`        | `Array<{ rel: string; href: string; hreflang?: string }>`      | `<link>` tags (canonical, hreflang, etc.)   |
+| `data`        | `Record<string, any>`                                          | Data passed to `load()` as `event.metadata` |
 
 All properties are optional.
 

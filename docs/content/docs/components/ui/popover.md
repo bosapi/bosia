@@ -16,21 +16,21 @@ A floating panel anchored to a trigger. Supports click (default) and hover modes
 
 ### Popover
 
-| Prop         | Type                        | Default   |
-| ------------ | --------------------------- | --------- |
-| `open`       | `boolean`                   | `false`   |
-| `trigger`    | `"click"` \| `"hover"`     | `"click"` |
-| `closeDelay` | `number`                    | `150`     |
-| `class`      | `string`                    | `""`      |
+| Prop         | Type                   | Default   |
+| ------------ | ---------------------- | --------- |
+| `open`       | `boolean`              | `false`   |
+| `trigger`    | `"click"` \| `"hover"` | `"click"` |
+| `closeDelay` | `number`               | `150`     |
+| `class`      | `string`               | `""`      |
 
 ### PopoverContent
 
-| Prop         | Type                                          | Default    |
-| ------------ | --------------------------------------------- | ---------- |
+| Prop         | Type                                           | Default    |
+| ------------ | ---------------------------------------------- | ---------- |
 | `side`       | `"top"` \| `"right"` \| `"bottom"` \| `"left"` | `"bottom"` |
-| `align`      | `"start"` \| `"center"` \| `"end"`            | `"center"` |
-| `sideOffset` | `number`                                      | `4`        |
-| `class`      | `string`                                      | `""`       |
+| `align`      | `"start"` \| `"center"` \| `"end"`             | `"center"` |
+| `sideOffset` | `number`                                       | `4`        |
+| `class`      | `string`                                       | `""`       |
 
 ## Sub-components
 
@@ -42,30 +42,30 @@ A floating panel anchored to a trigger. Supports click (default) and hover modes
 
 ```svelte
 <script lang="ts">
-  import { Popover, PopoverTrigger, PopoverContent } from "$lib/components/ui/popover";
-  import { Button } from "$lib/components/ui/button";
-  import { Label } from "$lib/components/ui/label";
-  import { Input } from "$lib/components/ui/input";
+	import { Popover, PopoverTrigger, PopoverContent } from "$lib/components/ui/popover";
+	import { Button } from "$lib/components/ui/button";
+	import { Label } from "$lib/components/ui/label";
+	import { Input } from "$lib/components/ui/input";
 </script>
 
 <Popover>
-  <PopoverTrigger>
-    <Button variant="outline">Open popover</Button>
-  </PopoverTrigger>
-  <PopoverContent>
-    <div class="grid gap-4">
-      <div class="space-y-1">
-        <h4 class="font-medium leading-none">Dimensions</h4>
-        <p class="text-sm text-muted-foreground">Set the dimensions for the layer.</p>
-      </div>
-      <div class="grid gap-2">
-        <div class="grid grid-cols-3 items-center gap-4">
-          <Label for="width">Width</Label>
-          <Input id="width" value="100%" class="col-span-2 h-8" />
-        </div>
-      </div>
-    </div>
-  </PopoverContent>
+	<PopoverTrigger>
+		<Button variant="outline">Open popover</Button>
+	</PopoverTrigger>
+	<PopoverContent>
+		<div class="grid gap-4">
+			<div class="space-y-1">
+				<h4 class="font-medium leading-none">Dimensions</h4>
+				<p class="text-sm text-muted-foreground">Set the dimensions for the layer.</p>
+			</div>
+			<div class="grid gap-2">
+				<div class="grid grid-cols-3 items-center gap-4">
+					<Label for="width">Width</Label>
+					<Input id="width" value="100%" class="col-span-2 h-8" />
+				</div>
+			</div>
+		</div>
+	</PopoverContent>
 </Popover>
 ```
 
@@ -90,10 +90,10 @@ Set `trigger="hover"` to open the popover on mouse enter. The popover stays open
 
 ```svelte
 <Popover trigger="hover" closeDelay={200}>
-  <PopoverTrigger>
-    <Button variant="outline">Hover me</Button>
-  </PopoverTrigger>
-  <PopoverContent>Tooltip-style content</PopoverContent>
+	<PopoverTrigger>
+		<Button variant="outline">Hover me</Button>
+	</PopoverTrigger>
+	<PopoverContent>Tooltip-style content</PopoverContent>
 </Popover>
 ```
 
@@ -101,14 +101,14 @@ Set `trigger="hover"` to open the popover on mouse enter. The popover stays open
 
 ```svelte
 <script lang="ts">
-  let open = $state(false);
+	let open = $state(false);
 </script>
 
 <Popover bind:open>
-  <PopoverTrigger>
-    <Button variant="outline">Toggle</Button>
-  </PopoverTrigger>
-  <PopoverContent>Content</PopoverContent>
+	<PopoverTrigger>
+		<Button variant="outline">Toggle</Button>
+	</PopoverTrigger>
+	<PopoverContent>Content</PopoverContent>
 </Popover>
 
 <p>Popover is {open ? "open" : "closed"}</p>

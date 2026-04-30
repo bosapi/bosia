@@ -17,8 +17,8 @@ import type { RequestEvent, LoadEvent, Handle, Cookies } from "bosia";
 Merge Tailwind CSS classes safely. Uses built-in class merging and [tailwind-merge](https://github.com/dcastil/tailwind-merge).
 
 ```ts
-cn("px-4 py-2", "px-6")          // → "py-2 px-6"
-cn("text-red-500", isActive && "text-blue-500")
+cn("px-4 py-2", "px-6"); // → "py-2 px-6"
+cn("text-red-500", isActive && "text-blue-500");
 ```
 
 ### sequence(...handlers)
@@ -36,7 +36,7 @@ Handlers execute left-to-right. Each handler's `resolve` calls the next.
 Throw an HTTP error from a `load()` function. Renders the nearest `+error.svelte`.
 
 ```ts
-error(404, "Post not found");     // never returns
+error(404, "Post not found"); // never returns
 ```
 
 ### redirect(status, location, options?)
@@ -44,7 +44,7 @@ error(404, "Post not found");     // never returns
 Redirect from a `load()` function or form action.
 
 ```ts
-redirect(303, "/login");          // never returns
+redirect(303, "/login"); // never returns
 ```
 
 **Open redirect protection:** By default, `redirect()` only allows relative paths and same-origin URLs. External URLs, protocol-relative URLs (`//evil.com`), and dangerous schemes (`javascript:`, `data:`) are rejected with a descriptive error.
@@ -53,7 +53,7 @@ To redirect to an external URL (e.g., an OAuth provider), pass `{ allowExternal:
 
 ```ts
 redirect(303, "https://oauth.provider.com/authorize?...", {
-  allowExternal: true,
+	allowExternal: true,
 });
 ```
 
@@ -73,11 +73,11 @@ Available in API routes (`+server.ts`) and form actions.
 
 ```ts
 type RequestEvent = {
-  request: Request;
-  url: URL;
-  locals: Record<string, any>;
-  params: Record<string, string>;
-  cookies: Cookies;
+	request: Request;
+	url: URL;
+	locals: Record<string, any>;
+	params: Record<string, string>;
+	cookies: Cookies;
 };
 ```
 
@@ -87,13 +87,13 @@ Available in `load()` functions in `+page.server.ts` and `+layout.server.ts`.
 
 ```ts
 type LoadEvent = {
-  url: URL;
-  params: Record<string, string>;
-  locals: Record<string, any>;
-  cookies: Cookies;
-  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-  parent: () => Promise<Record<string, any>>;
-  metadata: Record<string, any> | null;
+	url: URL;
+	params: Record<string, string>;
+	locals: Record<string, any>;
+	cookies: Cookies;
+	fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+	parent: () => Promise<Record<string, any>>;
+	metadata: Record<string, any> | null;
 };
 ```
 
@@ -103,11 +103,11 @@ Available in `metadata()` functions in `+page.server.ts`.
 
 ```ts
 type MetadataEvent = {
-  params: Record<string, string>;
-  url: URL;
-  locals: Record<string, any>;
-  cookies: Cookies;
-  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+	params: Record<string, string>;
+	url: URL;
+	locals: Record<string, any>;
+	cookies: Cookies;
+	fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 };
 ```
 
@@ -117,10 +117,10 @@ Return type for `metadata()` functions.
 
 ```ts
 type Metadata = {
-  title?: string;
-  description?: string;
-  meta?: Array<{ name?: string; property?: string; content: string }>;
-  data?: Record<string, any>;
+	title?: string;
+	description?: string;
+	meta?: Array<{ name?: string; property?: string; content: string }>;
+	data?: Record<string, any>;
 };
 ```
 
@@ -129,10 +129,7 @@ type Metadata = {
 Middleware function type for `hooks.server.ts`.
 
 ```ts
-type Handle = (input: {
-  event: RequestEvent;
-  resolve: ResolveFunction;
-}) => MaybePromise<Response>;
+type Handle = (input: { event: RequestEvent; resolve: ResolveFunction }) => MaybePromise<Response>;
 ```
 
 ### Cookies
@@ -141,10 +138,10 @@ Cookie read/write interface available on `event.cookies`.
 
 ```ts
 interface Cookies {
-  get(name: string): string | undefined;
-  getAll(): Record<string, string>;
-  set(name: string, value: string, options?: CookieOptions): void;
-  delete(name: string, options?: Pick<CookieOptions, "path" | "domain">): void;
+	get(name: string): string | undefined;
+	getAll(): Record<string, string>;
+	set(name: string, value: string, options?: CookieOptions): void;
+	delete(name: string, options?: Pick<CookieOptions, "path" | "domain">): void;
 }
 ```
 
@@ -152,13 +149,13 @@ interface Cookies {
 
 ```ts
 interface CookieOptions {
-  path?: string;
-  domain?: string;
-  maxAge?: number;       // seconds
-  expires?: Date;
-  httpOnly?: boolean;
-  secure?: boolean;
-  sameSite?: "Strict" | "Lax" | "None";
+	path?: string;
+	domain?: string;
+	maxAge?: number; // seconds
+	expires?: Date;
+	httpOnly?: boolean;
+	secure?: boolean;
+	sameSite?: "Strict" | "Lax" | "None";
 }
 ```
 
@@ -168,7 +165,7 @@ Error class thrown by `error()`.
 
 ```ts
 class HttpError extends Error {
-  status: number;
+	status: number;
 }
 ```
 
@@ -178,8 +175,8 @@ Redirect class thrown by `redirect()`. Validates the location at construction ti
 
 ```ts
 class Redirect {
-  status: number;
-  location: string;
+	status: number;
+	location: string;
 }
 ```
 
@@ -187,8 +184,8 @@ class Redirect {
 
 ```ts
 interface RedirectOptions {
-  /** Allow redirects to external origins. */
-  allowExternal?: boolean;
+	/** Allow redirects to external origins. */
+	allowExternal?: boolean;
 }
 ```
 
@@ -198,8 +195,8 @@ Returned by `fail()` in form actions.
 
 ```ts
 class ActionFailure<T extends Record<string, any>> {
-  status: number;
-  data: T;
+	status: number;
+	data: T;
 }
 ```
 
@@ -207,8 +204,8 @@ class ActionFailure<T extends Record<string, any>> {
 
 ```ts
 interface CsrfConfig {
-  checkOrigin: boolean;
-  allowedOrigins?: string[];
+	checkOrigin: boolean;
+	allowedOrigins?: string[];
 }
 ```
 
@@ -216,20 +213,20 @@ interface CsrfConfig {
 
 ```ts
 interface CorsConfig {
-  allowedOrigins: string[];
-  allowedMethods?: string[];
-  allowedHeaders?: string[];
-  exposedHeaders?: string[];
-  credentials?: boolean;
-  maxAge?: number;
+	allowedOrigins: string[];
+	allowedMethods?: string[];
+	allowedHeaders?: string[];
+	exposedHeaders?: string[];
+	credentials?: boolean;
+	maxAge?: number;
 }
 ```
 
 ## Import Patterns
 
-| Import                                    | Source           |
-| ----------------------------------------- | ---------------- |
-| `import { cn, sequence } from "bosia"`  | Framework package |
-| `import { cn } from "$lib/utils"`         | Project utility   |
-| `import { VAR } from "$env"`             | Environment vars  |
-| `import type { PageData } from "./$types"` | Generated types  |
+| Import                                     | Source            |
+| ------------------------------------------ | ----------------- |
+| `import { cn, sequence } from "bosia"`     | Framework package |
+| `import { cn } from "$lib/utils"`          | Project utility   |
+| `import { VAR } from "$env"`               | Environment vars  |
+| `import type { PageData } from "./$types"` | Generated types   |

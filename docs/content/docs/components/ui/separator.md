@@ -14,15 +14,15 @@ A horizontal or vertical divider line.
 
 ## Props
 
-| Prop          | Type                              | Default        |
-| ------------- | --------------------------------- | -------------- |
-| `orientation` | `"horizontal"` \| `"vertical"`   | `"horizontal"` |
+| Prop          | Type                           | Default        |
+| ------------- | ------------------------------ | -------------- |
+| `orientation` | `"horizontal"` \| `"vertical"` | `"horizontal"` |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import { Separator } from "$lib/components/ui/separator";
+	import { Separator } from "$lib/components/ui/separator";
 </script>
 
 <p>Above</p>
@@ -34,8 +34,8 @@ A horizontal or vertical divider line.
 
 ```svelte
 <div class="flex h-8 items-center gap-4">
-  <span>Left</span>
-  <Separator orientation="vertical" />
-  <span>Right</span>
+	<span>Left</span>
+	<Separator orientation="vertical" />
+	<span>Right</span>
 </div>
 ```

@@ -1,12 +1,12 @@
 {
-  "name": "hover-card",
-  "description": "A hover-triggered floating content panel for rich previews.",
-  "dependencies": [],
-  "files": [
-    "hover-card.svelte",
-    "hover-card-trigger.svelte",
-    "hover-card-content.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "hover-card",
+	"description": "A hover-triggered floating content panel for rich previews.",
+	"dependencies": [],
+	"files": [
+		"hover-card.svelte",
+		"hover-card-trigger.svelte",
+		"hover-card-content.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

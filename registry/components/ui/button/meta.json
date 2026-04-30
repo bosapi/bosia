@@ -1,7 +1,7 @@
 {
-  "name": "button",
-  "description": "An accessible button component with multiple variants and sizes.",
-  "dependencies": [],
-  "files": ["button.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "button",
+	"description": "An accessible button component with multiple variants and sizes.",
+	"dependencies": [],
+	"files": ["button.svelte", "index.ts"],
+	"npmDeps": {}
 }

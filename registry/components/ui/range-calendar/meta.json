@@ -1,12 +1,12 @@
 {
-  "name": "range-calendar",
-  "description": "A date range selection calendar with start/end selection, hover preview, and keyboard navigation.",
-  "dependencies": ["ui/calendar"],
-  "files": [
-    "range-calendar.svelte",
-    "range-calendar-grid.svelte",
-    "range-calendar-day.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "range-calendar",
+	"description": "A date range selection calendar with start/end selection, hover preview, and keyboard navigation.",
+	"dependencies": ["ui/calendar"],
+	"files": [
+		"range-calendar.svelte",
+		"range-calendar-grid.svelte",
+		"range-calendar-day.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

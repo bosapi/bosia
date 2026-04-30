@@ -1,47 +1,47 @@
 {
-  "name": "drizzle",
-  "description": "Adds PostgreSQL + Drizzle ORM — DB connection, schema aggregator, migration dir, and seed runner.",
-  "components": [],
-  "files": [
-    {
-      "src": "drizzle-index.ts",
-      "target": "src/features/drizzle/index.ts",
-      "strategy": "skip-if-exists"
-    },
-    {
-      "src": "drizzle-schemas.ts",
-      "target": "src/features/drizzle/schemas.ts",
-      "strategy": "skip-if-exists"
-    },
-    {
-      "src": "migrations-gitkeep",
-      "target": "src/features/drizzle/migrations/.gitkeep",
-      "strategy": "skip-if-exists"
-    },
-    {
-      "src": "seed-runner.ts",
-      "target": "src/features/drizzle/seeds/runner.ts",
-      "strategy": "skip-if-exists"
-    },
-    {
-      "src": "drizzle.config.ts",
-      "target": "drizzle.config.ts",
-      "strategy": "skip-if-exists"
-    }
-  ],
-  "npmDeps": {
-    "drizzle-orm": "^0.44.0",
-    "postgres": "^3.4.5"
-  },
-  "npmDevDeps": {
-    "drizzle-kit": "^0.31.0"
-  },
-  "scripts": {
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:seed": "bun run src/features/drizzle/seeds/runner.ts"
-  },
-  "envVars": {
-    "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/myapp"
-  }
+	"name": "drizzle",
+	"description": "Adds PostgreSQL + Drizzle ORM — DB connection, schema aggregator, migration dir, and seed runner.",
+	"components": [],
+	"files": [
+		{
+			"src": "drizzle-index.ts",
+			"target": "src/features/drizzle/index.ts",
+			"strategy": "skip-if-exists"
+		},
+		{
+			"src": "drizzle-schemas.ts",
+			"target": "src/features/drizzle/schemas.ts",
+			"strategy": "skip-if-exists"
+		},
+		{
+			"src": "migrations-gitkeep",
+			"target": "src/features/drizzle/migrations/.gitkeep",
+			"strategy": "skip-if-exists"
+		},
+		{
+			"src": "seed-runner.ts",
+			"target": "src/features/drizzle/seeds/runner.ts",
+			"strategy": "skip-if-exists"
+		},
+		{
+			"src": "drizzle.config.ts",
+			"target": "drizzle.config.ts",
+			"strategy": "skip-if-exists"
+		}
+	],
+	"npmDeps": {
+		"drizzle-orm": "^0.44.0",
+		"postgres": "^3.4.5"
+	},
+	"npmDevDeps": {
+		"drizzle-kit": "^0.31.0"
+	},
+	"scripts": {
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:seed": "bun run src/features/drizzle/seeds/runner.ts"
+	},
+	"envVars": {
+		"DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/myapp"
+	}
 }

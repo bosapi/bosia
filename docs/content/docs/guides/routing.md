@@ -30,8 +30,8 @@ Access the matched value via `params`:
 ```ts
 // +page.server.ts
 export async function load({ params }: LoadEvent) {
-  const post = await getPost(params.slug);
-  return { post };
+	const post = await getPost(params.slug);
+	return { post };
 }
 ```
 
@@ -77,17 +77,17 @@ When multiple routes could match a URL, Bosia resolves them in order:
 ```svelte
 <!-- src/routes/+layout.svelte -->
 <script lang="ts">
-  import "../app.css";
-  let { children, data } = $props();
+	import "../app.css";
+	let { children, data } = $props();
 </script>
 
 <nav>
-  <a href="/">Home</a>
-  <a href="/about">About</a>
+	<a href="/">Home</a>
+	<a href="/about">About</a>
 </nav>
 
 <main>
-  {@render children()}
+	{@render children()}
 </main>
 ```
 
@@ -102,10 +102,10 @@ Pair a layout with `+layout.server.ts` to load data:
 import type { LoadEvent } from "bosia";
 
 export async function load({ locals }: LoadEvent) {
-  return {
-    appName: "My App",
-    user: locals.user,
-  };
+	return {
+		appName: "My App",
+		user: locals.user,
+	};
 }
 ```
 
@@ -118,11 +118,10 @@ Create `+error.svelte` to handle errors thrown by loaders:
 ```svelte
 <!-- src/routes/+error.svelte -->
 <script lang="ts">
-  let { error } = $props();
+	let { error } = $props();
 </script>
 
-<h1>{error.status}</h1>
-<p>{error.message}</p>
+<h1>{error.status}</h1><p>{error.message}</p>
 ```
 
 The error page receives the `HttpError` thrown by `error()` in a loader. Place it at the route level where you want to catch errors — it catches errors from all child routes.
@@ -133,21 +132,21 @@ Toggle rendering behavior per page by exporting flags from `+page.server.ts`:
 
 ```ts
 // src/routes/dashboard/+page.server.ts
-export const ssr = false;                // skip server render, ship shell + hydrate on client
-export const csr = false;                // skip client hydration, server-rendered HTML only
-export const prerender = true;           // build to static HTML at `bosia build`
-export const trailingSlash = "never";    // canonicalize URL form: "never" | "always" | "ignore"
+export const ssr = false; // skip server render, ship shell + hydrate on client
+export const csr = false; // skip client hydration, server-rendered HTML only
+export const prerender = true; // build to static HTML at `bosia build`
+export const trailingSlash = "never"; // canonicalize URL form: "never" | "always" | "ignore"
 ```
 
 - `ssr = false` — server `load()` still runs and its result is injected as page data; the client hydrates and renders. Use for pages with browser-only deps (`window`, charts, third-party widgets) or auth-gated views where SSR adds latency without SEO value.
 - `csr = false` — no JS shipped for the page. Static HTML only.
 - `prerender = true` — captured at build time. For dynamic routes, also export `entries()` returning the param values to prerender.
 - `trailingSlash` — canonicalize the URL form. Defaults to `"never"`.
-  - `"never"` (default) — `/about/` → 308 → `/about`. Static export emits `about.html`.
-  - `"always"` — `/about` → 308 → `/about/`. Static export emits `about/index.html`.
-  - `"ignore"` — accept both forms with no redirect. Discouraged for SEO; useful when behind a CDN that already canonicalizes.
-  - Set on `+layout.server.ts` to cascade to all child pages; child page wins on conflict.
-  - 308 (permanent) preserves the request method, so form `POST`s submitted to the wrong slash still reach the action.
-  - Root `/` is never modified. API routes (`+server.ts`) are unaffected.
+    - `"never"` (default) — `/about/` → 308 → `/about`. Static export emits `about.html`.
+    - `"always"` — `/about` → 308 → `/about/`. Static export emits `about/index.html`.
+    - `"ignore"` — accept both forms with no redirect. Discouraged for SEO; useful when behind a CDN that already canonicalizes.
+    - Set on `+layout.server.ts` to cascade to all child pages; child page wins on conflict.
+    - 308 (permanent) preserves the request method, so form `POST`s submitted to the wrong slash still reach the action.
+    - Root `/` is never modified. API routes (`+server.ts`) are unaffected.
 
 `ssr = false` together with `csr = false` would render nothing and is overridden to `csr = true` (with a dev warning). `ssr = false` together with `prerender = true` is contradictory; the route is skipped during prerender.

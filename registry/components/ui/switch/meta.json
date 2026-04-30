@@ -1,7 +1,7 @@
 {
-  "name": "switch",
-  "description": "A toggle switch control for on/off states.",
-  "dependencies": [],
-  "files": ["switch.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "switch",
+	"description": "A toggle switch control for on/off states.",
+	"dependencies": [],
+	"files": ["switch.svelte", "index.ts"],
+	"npmDeps": {}
 }

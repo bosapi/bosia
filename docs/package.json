@@ -1,23 +1,23 @@
 {
-  "name": "docs",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "sync": "bun run sync-docs.ts",
-    "dev": "bun run sync && bun run ../packages/bosia/src/core/dev.ts",
-    "build": "bun run sync && NODE_ENV=production bun run ../packages/bosia/src/core/build.ts && bun run scripts/post-build.ts",
-    "start": "bun run ../packages/bosia/src/cli/index.ts start"
-  },
-  "dependencies": {
-    "bosia": "workspace:*",
-    "gray-matter": "^4.0.3",
-    "marked": "^15.0.0",
-    "shiki": "^4.0.2",
-    "svelte": "^5.20.0",
-    "tailwind-merge": "^3.5.0"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^5"
-  }
+	"name": "docs",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"sync": "bun run sync-docs.ts",
+		"dev": "bun run sync && bun run ../packages/bosia/src/core/dev.ts",
+		"build": "bun run sync && NODE_ENV=production bun run ../packages/bosia/src/core/build.ts && bun run scripts/post-build.ts",
+		"start": "bun run ../packages/bosia/src/cli/index.ts start"
+	},
+	"dependencies": {
+		"bosia": "workspace:*",
+		"gray-matter": "^4.0.3",
+		"marked": "^15.0.0",
+		"shiki": "^4.0.2",
+		"svelte": "^5.20.0",
+		"tailwind-merge": "^3.5.0"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"typescript": "^5"
+	}
 }

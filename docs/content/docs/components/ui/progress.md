@@ -26,7 +26,7 @@ Passing `null` (or omitting `value`) leaves `aria-valuenow` unset, signaling an 
 
 ```svelte
 <script lang="ts">
-  import { Progress } from "$lib/components/ui/progress";
+	import { Progress } from "$lib/components/ui/progress";
 </script>
 
 <Progress value={33} />
@@ -38,14 +38,14 @@ Animate progress as work completes by updating a reactive `$state` value.
 
 ```svelte
 <script lang="ts">
-  import { Progress } from "$lib/components/ui/progress";
+	import { Progress } from "$lib/components/ui/progress";
 
-  let value = $state(13);
+	let value = $state(13);
 
-  $effect(() => {
-    const timer = setTimeout(() => (value = 66), 500);
-    return () => clearTimeout(timer);
-  });
+	$effect(() => {
+		const timer = setTimeout(() => (value = 66), 500);
+		return () => clearTimeout(timer);
+	});
 </script>
 
 <Progress {value} class="w-[60%]" />

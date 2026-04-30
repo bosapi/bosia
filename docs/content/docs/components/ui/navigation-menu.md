@@ -16,12 +16,12 @@ A compound horizontal navigation menu where each item can reveal a popover of re
 
 ### NavigationMenu
 
-| Prop         | Type               | Default |
-| ------------ | ------------------ | ------- |
-| `value`      | `string \| null`   | `null`  |
-| `openDelay`  | `number`           | `150`   |
-| `closeDelay` | `number`           | `200`   |
-| `class`      | `string`           | `""`    |
+| Prop         | Type             | Default |
+| ------------ | ---------------- | ------- |
+| `value`      | `string \| null` | `null`  |
+| `openDelay`  | `number`         | `150`   |
+| `closeDelay` | `number`         | `200`   |
+| `class`      | `string`         | `""`    |
 
 ## Sub-components
 
@@ -36,45 +36,45 @@ A compound horizontal navigation menu where each item can reveal a popover of re
 
 ```svelte
 <script lang="ts">
-  import {
-    NavigationMenu,
-    NavigationMenuList,
-    NavigationMenuItem,
-    NavigationMenuTrigger,
-    NavigationMenuContent,
-    NavigationMenuLink,
-  } from "$lib/components/ui/navigation-menu";
+	import {
+		NavigationMenu,
+		NavigationMenuList,
+		NavigationMenuItem,
+		NavigationMenuTrigger,
+		NavigationMenuContent,
+		NavigationMenuLink,
+	} from "$lib/components/ui/navigation-menu";
 </script>
 
 <NavigationMenu>
-  <NavigationMenuList>
-    <NavigationMenuItem>
-      <NavigationMenuTrigger>Getting Started</NavigationMenuTrigger>
-      <NavigationMenuContent>
-        <ul class="grid w-[420px] gap-3">
-          <li>
-            <NavigationMenuLink href="/getting-started">
-              Introduction
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink href="/project-structure">
-              Project Structure
-            </NavigationMenuLink>
-          </li>
-        </ul>
-      </NavigationMenuContent>
-    </NavigationMenuItem>
+	<NavigationMenuList>
+		<NavigationMenuItem>
+			<NavigationMenuTrigger>Getting Started</NavigationMenuTrigger>
+			<NavigationMenuContent>
+				<ul class="grid w-[420px] gap-3">
+					<li>
+						<NavigationMenuLink href="/getting-started">
+							Introduction
+						</NavigationMenuLink>
+					</li>
+					<li>
+						<NavigationMenuLink href="/project-structure">
+							Project Structure
+						</NavigationMenuLink>
+					</li>
+				</ul>
+			</NavigationMenuContent>
+		</NavigationMenuItem>
 
-    <NavigationMenuItem>
-      <NavigationMenuLink
-        href="/docs"
-        class="inline-flex h-9 items-center rounded-md px-4 py-2 text-sm font-medium hover:bg-accent"
-      >
-        Docs
-      </NavigationMenuLink>
-    </NavigationMenuItem>
-  </NavigationMenuList>
+		<NavigationMenuItem>
+			<NavigationMenuLink
+				href="/docs"
+				class="inline-flex h-9 items-center rounded-md px-4 py-2 text-sm font-medium hover:bg-accent"
+			>
+				Docs
+			</NavigationMenuLink>
+		</NavigationMenuItem>
+	</NavigationMenuList>
 </NavigationMenu>
 ```
 
@@ -86,7 +86,7 @@ Switching between already-open items is always instant — users expect snappy h
 
 ```svelte
 <NavigationMenu openDelay={200} closeDelay={150}>
-  <!-- ... -->
+	<!-- ... -->
 </NavigationMenu>
 ```
 
@@ -96,11 +96,11 @@ Bind `value` to track or set the currently open item id.
 
 ```svelte
 <script lang="ts">
-  let value = $state<string | null>(null);
+	let value = $state<string | null>(null);
 </script>
 
 <NavigationMenu bind:value>
-  <!-- ... -->
+	<!-- ... -->
 </NavigationMenu>
 
 <p>Open item: {value ?? "none"}</p>
@@ -108,8 +108,8 @@ Bind `value` to track or set the currently open item id.
 
 ## Keyboard
 
-| Key          | Action                                                           |
-| ------------ | ---------------------------------------------------------------- |
-| `Tab`        | Move focus to the next trigger or link                           |
-| `ArrowDown`  | On a trigger, opens the panel and focuses the first link inside  |
-| `Escape`     | Closes the open panel and returns focus to its trigger           |
+| Key         | Action                                                          |
+| ----------- | --------------------------------------------------------------- |
+| `Tab`       | Move focus to the next trigger or link                          |
+| `ArrowDown` | On a trigger, opens the panel and focuses the first link inside |
+| `Escape`    | Closes the open panel and returns focus to its trigger          |

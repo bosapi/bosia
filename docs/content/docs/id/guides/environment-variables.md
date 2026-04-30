@@ -18,12 +18,12 @@ Variabel lingkungan sistem selalu memiliki prioritas tertinggi — file `.env` t
 
 Nama variabel mengontrol di mana dan kapan variabel tersebut tersedia:
 
-| Prefix            | Client | Server | Waktu      | Contoh                     |
-| ----------------- | ------ | ------ | ---------- | -------------------------- |
-| `PUBLIC_STATIC_`  | Ya     | Ya     | Build-time | `PUBLIC_STATIC_APP_NAME`   |
-| `PUBLIC_`         | Ya     | Ya     | Runtime    | `PUBLIC_API_URL`           |
-| `STATIC_`         | Tidak  | Ya     | Build-time | `STATIC_BUILD_ID`          |
-| *(tanpa prefix)*  | Tidak  | Ya     | Runtime    | `DATABASE_URL`             |
+| Prefix           | Client | Server | Waktu      | Contoh                   |
+| ---------------- | ------ | ------ | ---------- | ------------------------ |
+| `PUBLIC_STATIC_` | Ya     | Ya     | Build-time | `PUBLIC_STATIC_APP_NAME` |
+| `PUBLIC_`        | Ya     | Ya     | Runtime    | `PUBLIC_API_URL`         |
+| `STATIC_`        | Tidak  | Ya     | Build-time | `STATIC_BUILD_ID`        |
+| _(tanpa prefix)_ | Tidak  | Ya     | Runtime    | `DATABASE_URL`           |
 
 - Variabel **Build-time** disematkan saat `bosia build` — mengubahnya memerlukan build ulang
 - Variabel **Runtime** dibaca dari `process.env` pada setiap request
@@ -43,21 +43,21 @@ Hanya variabel yang dideklarasikan dalam file `.env` Anda yang tersedia melalui 
 
 Variabel-variabel ini dicadangkan oleh Bosia dan mengontrol perilaku framework:
 
-| Variabel                | Default   | Deskripsi                                                    |
-| ----------------------- | --------- | ------------------------------------------------------------ |
-| `PORT`                  | `9000`    | Port server                                                  |
-| `NODE_ENV`              | —         | `development` atau `production`                              |
-| `BODY_SIZE_LIMIT`       | `512K`    | Ukuran maksimal body request (mendukung K, M, G, Infinity)   |
-| `LOAD_TIMEOUT`          | —         | Timeout untuk `load()` dalam ms                              |
-| `METADATA_TIMEOUT`      | —         | Timeout untuk `metadata()` dalam ms                         |
-| `PRERENDER_TIMEOUT`     | —         | Timeout untuk fetch prerender dalam ms                       |
-| `CSRF_ALLOWED_ORIGINS`  | —         | Origin yang diizinkan untuk CSRF, dipisahkan koma            |
-| `CORS_ALLOWED_ORIGINS`  | —         | Origin yang diizinkan untuk CORS, dipisahkan koma            |
-| `CORS_ALLOWED_METHODS`  | —         | Method yang diizinkan, dipisahkan koma                       |
-| `CORS_ALLOWED_HEADERS`  | —         | Header yang diizinkan, dipisahkan koma                       |
-| `CORS_EXPOSED_HEADERS`  | —         | Header yang diekspos, dipisahkan koma                        |
-| `CORS_CREDENTIALS`      | `false`   | Setel ke `"true"` untuk mengizinkan credentials              |
-| `CORS_MAX_AGE`          | `86400`   | Durasi cache preflight dalam detik                           |
+| Variabel               | Default | Deskripsi                                                  |
+| ---------------------- | ------- | ---------------------------------------------------------- |
+| `PORT`                 | `9000`  | Port server                                                |
+| `NODE_ENV`             | —       | `development` atau `production`                            |
+| `BODY_SIZE_LIMIT`      | `512K`  | Ukuran maksimal body request (mendukung K, M, G, Infinity) |
+| `LOAD_TIMEOUT`         | —       | Timeout untuk `load()` dalam ms                            |
+| `METADATA_TIMEOUT`     | —       | Timeout untuk `metadata()` dalam ms                        |
+| `PRERENDER_TIMEOUT`    | —       | Timeout untuk fetch prerender dalam ms                     |
+| `CSRF_ALLOWED_ORIGINS` | —       | Origin yang diizinkan untuk CSRF, dipisahkan koma          |
+| `CORS_ALLOWED_ORIGINS` | —       | Origin yang diizinkan untuk CORS, dipisahkan koma          |
+| `CORS_ALLOWED_METHODS` | —       | Method yang diizinkan, dipisahkan koma                     |
+| `CORS_ALLOWED_HEADERS` | —       | Header yang diizinkan, dipisahkan koma                     |
+| `CORS_EXPOSED_HEADERS` | —       | Header yang diekspos, dipisahkan koma                      |
+| `CORS_CREDENTIALS`     | `false` | Setel ke `"true"` untuk mengizinkan credentials            |
+| `CORS_MAX_AGE`         | `86400` | Durasi cache preflight dalam detik                         |
 
 Variabel framework diakses melalui `process.env` secara langsung, bukan melalui `$env`.
 

@@ -26,7 +26,7 @@ All additional attributes are forwarded to the root `<svg>`.
 
 ```svelte
 <script lang="ts">
-  import { Spinner } from "$lib/components/ui/spinner";
+	import { Spinner } from "$lib/components/ui/spinner";
 </script>
 
 <Spinner />
@@ -58,13 +58,13 @@ Combine with a disabled `Button` to show a loading state.
 
 ```svelte
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
-  import { Spinner } from "$lib/components/ui/spinner";
+	import { Button } from "$lib/components/ui/button";
+	import { Spinner } from "$lib/components/ui/spinner";
 </script>
 
 <Button disabled class="gap-2">
-  <Spinner aria-hidden="true" />
-  Loading...
+	<Spinner aria-hidden="true" />
+	Loading...
 </Button>
 ```
 

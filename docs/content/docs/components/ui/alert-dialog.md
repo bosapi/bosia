@@ -54,31 +54,37 @@ A modal dialog that interrupts the user with important content and expects a res
 
 ```svelte
 <script lang="ts">
-  import {
-    AlertDialog, AlertDialogTrigger, AlertDialogContent,
-    AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,
-    AlertDialogFooter, AlertDialogAction, AlertDialogCancel
-  } from "$lib/components/ui/alert-dialog";
-  import { Button } from "$lib/components/ui/button";
+	import {
+		AlertDialog,
+		AlertDialogTrigger,
+		AlertDialogContent,
+		AlertDialogHeader,
+		AlertDialogTitle,
+		AlertDialogDescription,
+		AlertDialogFooter,
+		AlertDialogAction,
+		AlertDialogCancel,
+	} from "$lib/components/ui/alert-dialog";
+	import { Button } from "$lib/components/ui/button";
 </script>
 
 <AlertDialog>
-  <AlertDialogTrigger>
-    <Button variant="outline">Delete Account</Button>
-  </AlertDialogTrigger>
-  <AlertDialogContent>
-    <AlertDialogHeader>
-      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-      <AlertDialogDescription>
-        This action cannot be undone. This will permanently delete your
-        account and remove your data from our servers.
-      </AlertDialogDescription>
-    </AlertDialogHeader>
-    <AlertDialogFooter>
-      <AlertDialogCancel>Cancel</AlertDialogCancel>
-      <AlertDialogAction>Continue</AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
+	<AlertDialogTrigger>
+		<Button variant="outline">Delete Account</Button>
+	</AlertDialogTrigger>
+	<AlertDialogContent>
+		<AlertDialogHeader>
+			<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+			<AlertDialogDescription>
+				This action cannot be undone. This will permanently delete your account and remove
+				your data from our servers.
+			</AlertDialogDescription>
+		</AlertDialogHeader>
+		<AlertDialogFooter>
+			<AlertDialogCancel>Cancel</AlertDialogCancel>
+			<AlertDialogAction>Continue</AlertDialogAction>
+		</AlertDialogFooter>
+	</AlertDialogContent>
 </AlertDialog>
 ```
 
@@ -86,22 +92,22 @@ A modal dialog that interrupts the user with important content and expects a res
 
 ```svelte
 <script lang="ts">
-  let open = $state(false);
+	let open = $state(false);
 </script>
 
 <AlertDialog bind:open>
-  <AlertDialogTrigger>
-    <Button>Show Alert</Button>
-  </AlertDialogTrigger>
-  <AlertDialogContent>
-    <AlertDialogHeader>
-      <AlertDialogTitle>Confirm Action</AlertDialogTitle>
-    </AlertDialogHeader>
-    <AlertDialogFooter>
-      <AlertDialogCancel>Cancel</AlertDialogCancel>
-      <AlertDialogAction>OK</AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
+	<AlertDialogTrigger>
+		<Button>Show Alert</Button>
+	</AlertDialogTrigger>
+	<AlertDialogContent>
+		<AlertDialogHeader>
+			<AlertDialogTitle>Confirm Action</AlertDialogTitle>
+		</AlertDialogHeader>
+		<AlertDialogFooter>
+			<AlertDialogCancel>Cancel</AlertDialogCancel>
+			<AlertDialogAction>OK</AlertDialogAction>
+		</AlertDialogFooter>
+	</AlertDialogContent>
 </AlertDialog>
 
 <p>Dialog is {open ? "open" : "closed"}</p>

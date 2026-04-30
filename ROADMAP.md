@@ -15,6 +15,7 @@
 <summary>Click to expand completed items</summary>
 
 ### Core Framework
+
 - [x] 🔴 SSR with Svelte 5 Runes (`$props`, `$state`)
 - [x] 🔴 File-based routing (`+page.svelte`, `+layout.svelte`, `+server.ts`)
 - [x] 🟠 Dynamic routes (`[param]`) and catch-all routes (`[...rest]`)
@@ -23,6 +24,7 @@
 - [x] 🟠 Error pages — `+error.svelte`
 
 ### Data Loading
+
 - [x] 🔴 Plain `export async function load()` pattern (no wrapper)
 - [x] 🟠 `$types` codegen — auto-generated `PageData`, `PageProps`, `LayoutData`, `LayoutProps`
 - [x] 🟠 `parent()` data threading in layouts
@@ -30,6 +32,7 @@
 - [x] 🟠 Form actions (SvelteKit-style)
 
 ### Server
+
 - [x] 🔴 ElysiaJS HTTP server
 - [x] 🟡 Gzip compression
 - [x] 🟡 Static file caching (Cache-Control headers)
@@ -46,6 +49,7 @@
 - [x] 🟡 Concurrent build guard in dev — prevent overlapping builds when rapid file changes trigger `buildAndRestart()` while a build is already running
 
 ### Security
+
 - [x] 🔴 XSS escaping in HTML templates — sanitize `JSON.stringify()` output in `<script>` tags
 - [x] 🔴 SSRF validation on `/__bosia/data/` — validate route path segment
 - [x] 🔴 CSRF protection — Origin/Referer header validation for state-changing requests
@@ -61,6 +65,7 @@
 - [x] 🟡 Cookie RFC 6265 validation — validate names against HTTP token spec; use `encodeURIComponent` only for values
 
 ### Client
+
 - [x] 🔴 Client-side hydration
 - [x] 🔴 SPA router (client-side navigation)
 - [x] 🟡 Navigation progress bar
@@ -71,6 +76,7 @@
 - [x] 🟡 Use `insertAdjacentHTML` for head injection — prevents re-parsing `<head>`, avoiding duplicate stylesheets and script re-execution
 
 ### Build & Tooling
+
 - [x] 🔴 Bun build pipeline (client + server bundles)
 - [x] 🟠 Manifest generation (`dist/manifest.json`)
 - [x] 🟠 Static route prerendering (`export const prerender = true`)
@@ -86,9 +92,11 @@
 - [x] 🟡 `.env` parser escape sequence support — handle `\n`, `\"`, etc. in quoted values
 
 ### Routing
+
 - [x] 🟠 Dynamic route prerendering with `entries()` export — enumerate dynamic route params for static prerendering
 
 ### CLI
+
 - [x] 🔴 `bosia dev` — dev server with file watching
 - [x] 🔴 `bosia build` — production build
 - [x] 🔴 `bosia start` — production server
@@ -100,6 +108,7 @@
 - [x] 🟡 `bosia feat` overwrite prompt — asks before replacing existing files
 
 ### Templates & Features
+
 - [x] 🟠 `todo` template (formerly `drizzle`) — PostgreSQL + Drizzle ORM with full CRUD todo demo
 - [x] 🟠 `drizzle` feature — `bosia feat drizzle` scaffolds DB connection, schema aggregator, migrations dir, seed runner
 - [x] 🟠 `todo` feature — `bosia feat todo` scaffolds todo schema, repository, service, routes, components, and seed data
@@ -107,11 +116,13 @@
 - [x] 🟡 Registry as single source of truth — `bosia create --template todo` installs features from registry via `template.json` instead of duplicating files
 
 ### Hooks & Middleware
+
 - [x] 🟠 `hooks.server.ts` with `Handle` interface
 - [x] 🟡 `sequence()` helper for composing middleware
 - [x] 🟠 `RequestEvent` — `request`, `params`, `url`, `cookies`, `locals`
 
 ### Docs & Ecosystem
+
 - [x] 🟠 Documentation site (Astro Starlight) — 14 pages
 - [x] 🟡 Indonesian (Bahasa Indonesia) translation with Starlight i18n
 - [x] 🟡 Deployment guides (Docker, Railway, Fly.io)
@@ -126,6 +137,7 @@
 - [x] 🟡 `robots.txt` and `sitemap.xml` generation for docs site
 
 ### v0.1.0
+
 - [x] 🟡 Rename framework from `bosbun` to `bosia`
 - [x] ⚪ Dead code cleanup (`renderSSR`, `buildHtmlShell`, unexported internals)
 - [x] 🟡 `splitCsvEnv` helper for CSRF/CORS origin parsing
@@ -139,6 +151,7 @@
 > Stability, security, and performance improvements for production workloads.
 
 ### Security
+
 - [x] Cookie secure defaults — default `HttpOnly; Secure; SameSite=Lax` on `cookies.set()` with opt-out
 - [x] Auto-detect `Cache-Control` on `/__bosia/data/` — `private, no-cache` when cookies accessed; `public, max-age=0, must-revalidate` otherwise
 - [x] 🔴 `load()` `fetch` cookie scoping — `makeFetch` now forwards the `Cookie` header only to same-origin requests or origins in the `INTERNAL_HOSTS` allowlist; third-party hosts get no cookie. User-supplied `init.headers.cookie` is preserved
@@ -152,11 +165,13 @@
 - [x] ⚪ Validate `CORS_MAX_AGE` env — reject non-numeric values instead of producing `NaN` header
 
 ### Performance
+
 - [x] 🟠 Parallelize client + server builds — run both `Bun.build()` calls with `Promise.all()` instead of sequentially (~500-1000ms savings)
 - [x] 🟠 Parallelize Tailwind CSS with builds — run Tailwind CLI concurrently with client+server builds (~500-800ms savings); ensure output exists before manifest step
 - [x] 🟡 Convert `sequence()` middleware recursion to loop — `apply(i+1, e)` pattern risks stack overflow with many handlers; use iterative approach
 
 ### Server Reliability
+
 - [ ] 🟠 Stream backpressure handling — check `controller.desiredSize` to prevent memory buildup on slow/disconnected clients
 - [ ] 🟠 Streaming SSR error recovery — render proper error page instead of bare `<p>Internal Server Error</p>` when `render()` throws mid-stream
 - [ ] 🟠 `renderPageWithFormData` loader error handling — currently does not catch `HttpError`/`Redirect` thrown from `loadRouteData()` after a successful form action; let them surface as proper redirect/error responses instead of crashing the request
@@ -164,17 +179,20 @@
 - [ ] 🟡 Fix `buildAndRestart` recursive tail call — replace recursion with `while` loop to prevent stack growth under rapid file changes
 
 ### Client
+
 - [x] 🟡 Bound prefetch cache size — `prefetchCache` grows unbounded between navigations; add LRU eviction (max ~50 entries)
 - [x] 🟡 Prefetch cache TTL — stale prefetch data served after long idle; discard entries older than 30s on `consumePrefetch()`
 - [x] 🟠 Router click handler must respect modifier/middle clicks — `router.svelte.ts` currently SPA-navigates on Cmd/Ctrl/Shift/Alt+click and middle-click, breaking "open in new tab/window". Bail when `e.button !== 0`, any modifier key is held, `e.defaultPrevented`, or anchor has `rel="external"`
 
 ### Build
+
 - [ ] 🟡 Fail build on tsconfig.json corruption — don't silently continue with degraded config
 - [x] 🟡 `compress()` threshold uses character count not byte count — `body.length` on a UTF-8 string under-counts multi-byte content; switch to `Buffer.byteLength` or `TextEncoder().encode(...).length` before threshold check
 - [x] 🟡 `.env` parser inline-comment stripping — `KEY="value" # note` currently keeps ` # note` as part of the value; strip trailing comment after the closing quote
 - [x] ⚪ Tune gzip compression threshold — raised to 2KB (`GZIP_MIN_BYTES = 2048`); small responses fit in single TCP packet, gzip overhead outweighs savings below this size
 
 ### DX
+
 - [ ] 🟠 Dev proxy must forward `X-Forwarded-Host` / `X-Forwarded-Proto` to the inner app server — without them the inner CSRF check derives `expectedOrigin = http://localhost:APP_PORT` while the browser's `Origin` is `http://localhost:DEV_PORT`, causing same-origin POST/form actions to 403 in dev
 - [ ] 🟡 Stale env cleanup in dev — reset removed `.env` vars on hot-reload
 
@@ -185,30 +203,38 @@
 > New capabilities and developer experience improvements.
 
 ### Data Loading
+
 - [ ] 🟠 `depends()` and `invalidate()` — selective data reloading
 - [ ] 🟡 `setHeaders()` in load functions — set response headers from loaders
 
 ### Navigation
+
 - [ ] 🟠 `beforeNavigate` / `afterNavigate` lifecycle hooks
 - [ ] 🟠 Scroll restoration and snapshot support (`export const snapshot`)
 
 ### Routing
+
 - [ ] 🟠 Layout reset (`+layout@.svelte` or `+page@.svelte`)
 - [ ] 🟠 Route-level `+error.svelte` — per-layout error boundaries instead of global-only
 - [x] 🟡 Page option: `ssr` toggle (`export const ssr = false`)
 - [x] 🟡 Page option: `trailingSlash` configuration
 
 ### Forms
+
 - [x] 🟠 `use:enhance` progressive enhancement — client-side fetch submission with automatic form state management (like SvelteKit)
 
 ### Types
+
 - [x] 🟠 Typed route params — generate `{ slug: string }` from `[slug]` instead of `Record<string, string>`
 - [ ] 🟡 Error page types in generated `$types.d.ts`
 
 ### Server
+
 - [ ] 🟡 Structured logging with request correlation IDs
 
 ### DX
+
+- [x] 🟡 Prettier formatting — root config + scripts (`format`, `format:check`); all 3 templates ship matching `.prettierrc.json` so scaffolded projects format-on-create. No lint, no pre-commit hook
 - [ ] 🟡 Cache route scanning in dev mode — skip `fs.readdirSync()` re-scan when changed file is not a route file (`+page`/`+layout`/`+server`/`+error`)
 - [ ] 🟡 Remove hardcoded 200ms SSE delay — poll `/_health` instead of `Bun.sleep(200)` before broadcasting reload
 - [ ] 🟡 Smarter dev rebuild triggers — filter watcher by extension; skip rebuilds for `.md`, test files, and non-source changes
@@ -222,6 +248,7 @@
 - [ ] 🟡 Production sourcemaps — external source maps for debuggable production errors
 
 ### Performance (at scale)
+
 - [x] 🟠 Request deduplication — deduplicate concurrent identical GET requests to same route; share in-flight loader promise instead of running twice. Scope dedup key by route+params (exclude user-specific loaders)
 - [ ] 🔴 Dedup key cross-user data leak — `dedupKey()` only fingerprints the `Authorization` header and a literal `authorization` cookie. Apps using session cookies under any other name (`sid`, `session`, `connect.sid`, `__Secure-next-auth.session-token`, etc.) collide across users — User B receives the loader result computed for User A's cookies. Also: cookies written by the deduped loader land only on the first request's `CookieJar`; concurrent waiters lose their `Set-Cookie` headers. Fix: hash the entire `Cookie` header (or disable dedup when any cookie is present), and replay outgoing cookies onto every waiting jar
 - [ ] 🟡 Trie-based route matcher — replace linear O(n) route scan with radix trie for O(k) matching (k = URL segments). Matters when route count exceeds ~100
@@ -234,6 +261,7 @@
 > Per-file install strategies so features can safely contribute to shared files.
 
 ### CLI / Feat
+
 - [x] 🟠 `bosia feat` per-file strategies — `meta.json` `files: FileEntry[]` with `strategy` field: `write` (default), `skip-if-exists`, `append-line`, `append-block`, `merge-json`. Replaces all-or-nothing replace prompt for shared files like `src/features/drizzle/schemas.ts`
 - [ ] 🟡 Document `meta.json` schema and strategies in `docs/` (CLI / `bosia feat` page)
 - [ ] 🟡 `bosia feat <name> --dry-run` — preview file actions (write/skip/append/merge) without touching disk
@@ -249,12 +277,14 @@
 > Built-in testing powered by `bun test`. See [TEST_PLAN.md](backup/TEST_PLAN.md) for full details.
 
 ### CLI
+
 - [ ] 🟠 `bosia test` command — wraps `bun test` with framework-aware defaults
 - [ ] 🟡 Auto-load `.env.test` (fallback `.env`) before running tests
 - [ ] 🟡 Set `BOSIA_ENV=test` automatically
 - [ ] 🟡 Pass through flags (`--watch`, `--coverage`, `--bail`, `--timeout`, etc.)
 
 ### Test Utilities (`bosia/testing`)
+
 - [ ] 🟠 `createRequestEvent()` — mock factory for testing `+server.ts` handlers and hooks
 - [ ] 🟠 `createLoadEvent()` — mock factory for testing `load()` functions
 - [ ] 🟡 `createMetadataEvent()` — mock factory for testing `metadata()` functions

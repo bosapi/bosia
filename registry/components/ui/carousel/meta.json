@@ -1,14 +1,14 @@
 {
-  "name": "carousel",
-  "description": "A carousel component with slide navigation, keyboard support, and snap scrolling.",
-  "dependencies": ["ui/button"],
-  "files": [
-    "carousel.svelte",
-    "carousel-content.svelte",
-    "carousel-item.svelte",
-    "carousel-previous.svelte",
-    "carousel-next.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "carousel",
+	"description": "A carousel component with slide navigation, keyboard support, and snap scrolling.",
+	"dependencies": ["ui/button"],
+	"files": [
+		"carousel.svelte",
+		"carousel-content.svelte",
+		"carousel-item.svelte",
+		"carousel-previous.svelte",
+		"carousel-next.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

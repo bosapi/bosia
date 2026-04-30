@@ -14,14 +14,14 @@ A group of toggle buttons for toolbar-style interactions. Supports single select
 
 ## ToggleGroup Props
 
-| Prop       | Type                             | Default     |
-| ---------- | -------------------------------- | ----------- |
+| Prop       | Type                            | Default     |
+| ---------- | ------------------------------- | ----------- |
 | `type`     | `"single"` \| `"multiple"`      | `"single"`  |
 | `value`    | `string` \| `string[]`          | `""` / `[]` |
 | `variant`  | `"default"` \| `"outline"`      | `"default"` |
 | `size`     | `"default"` \| `"sm"` \| `"lg"` | `"default"` |
-| `disabled` | `boolean`                        | `false`     |
-| `class`    | `string`                         | `""`        |
+| `disabled` | `boolean`                       | `false`     |
+| `class`    | `string`                        | `""`        |
 
 ## ToggleGroupItem Props
 
@@ -35,14 +35,14 @@ A group of toggle buttons for toolbar-style interactions. Supports single select
 
 ```svelte
 <script lang="ts">
-  import { ToggleGroup, ToggleGroupItem } from "$lib/components/ui/toggle-group";
-  let value = $state("bold");
+	import { ToggleGroup, ToggleGroupItem } from "$lib/components/ui/toggle-group";
+	let value = $state("bold");
 </script>
 
 <ToggleGroup type="single" bind:value aria-label="Text formatting">
-  <ToggleGroupItem value="bold" aria-label="Bold"><b>B</b></ToggleGroupItem>
-  <ToggleGroupItem value="italic" aria-label="Italic"><i>I</i></ToggleGroupItem>
-  <ToggleGroupItem value="underline" aria-label="Underline"><u>U</u></ToggleGroupItem>
+	<ToggleGroupItem value="bold" aria-label="Bold"><b>B</b></ToggleGroupItem>
+	<ToggleGroupItem value="italic" aria-label="Italic"><i>I</i></ToggleGroupItem>
+	<ToggleGroupItem value="underline" aria-label="Underline"><u>U</u></ToggleGroupItem>
 </ToggleGroup>
 ```
 
@@ -50,14 +50,14 @@ A group of toggle buttons for toolbar-style interactions. Supports single select
 
 ```svelte
 <script lang="ts">
-  import { ToggleGroup, ToggleGroupItem } from "$lib/components/ui/toggle-group";
-  let value = $state(["bold", "italic"]);
+	import { ToggleGroup, ToggleGroupItem } from "$lib/components/ui/toggle-group";
+	let value = $state(["bold", "italic"]);
 </script>
 
 <ToggleGroup type="multiple" bind:value aria-label="Text formatting">
-  <ToggleGroupItem value="bold" aria-label="Bold"><b>B</b></ToggleGroupItem>
-  <ToggleGroupItem value="italic" aria-label="Italic"><i>I</i></ToggleGroupItem>
-  <ToggleGroupItem value="underline" aria-label="Underline"><u>U</u></ToggleGroupItem>
+	<ToggleGroupItem value="bold" aria-label="Bold"><b>B</b></ToggleGroupItem>
+	<ToggleGroupItem value="italic" aria-label="Italic"><i>I</i></ToggleGroupItem>
+	<ToggleGroupItem value="underline" aria-label="Underline"><u>U</u></ToggleGroupItem>
 </ToggleGroup>
 ```
 
@@ -65,9 +65,9 @@ A group of toggle buttons for toolbar-style interactions. Supports single select
 
 ```svelte
 <ToggleGroup type="single" variant="outline" aria-label="Alignment">
-  <ToggleGroupItem value="left">Left</ToggleGroupItem>
-  <ToggleGroupItem value="center">Center</ToggleGroupItem>
-  <ToggleGroupItem value="right">Right</ToggleGroupItem>
+	<ToggleGroupItem value="left">Left</ToggleGroupItem>
+	<ToggleGroupItem value="center">Center</ToggleGroupItem>
+	<ToggleGroupItem value="right">Right</ToggleGroupItem>
 </ToggleGroup>
 ```
 
@@ -83,7 +83,7 @@ A group of toggle buttons for toolbar-style interactions. Supports single select
 
 ```svelte
 <ToggleGroup type="single" disabled>
-  <ToggleGroupItem value="bold"><b>B</b></ToggleGroupItem>
-  <ToggleGroupItem value="italic"><i>I</i></ToggleGroupItem>
+	<ToggleGroupItem value="bold"><b>B</b></ToggleGroupItem>
+	<ToggleGroupItem value="italic"><i>I</i></ToggleGroupItem>
 </ToggleGroup>
 ```

@@ -48,7 +48,7 @@ Fetch data on the server before rendering:
 import type { LoadEvent } from "bosia";
 
 export async function load({ params }: LoadEvent) {
-    return { post: await getPost(params.slug) };
+	return { post: await getPost(params.slug) };
 }
 ```
 
@@ -57,7 +57,7 @@ export async function load({ params }: LoadEvent) {
 ```typescript
 // src/routes/api/hello/+server.ts
 export function GET() {
-    return Response.json({ message: "hello" });
+	return Response.json({ message: "hello" });
 }
 ```
 
@@ -79,8 +79,8 @@ src/routes/
 
 ```svelte
 <div class="bg-background text-foreground">
-  <p class="text-muted-foreground">Muted text</p>
-  <button class="bg-primary text-primary-foreground">Click</button>
+	<p class="text-muted-foreground">Muted text</p>
+	<button class="bg-primary text-primary-foreground">Click</button>
 </div>
 ```
 
@@ -92,7 +92,7 @@ Dark mode is supported via the `.dark` class on any parent element.
 import { cn } from "$lib/utils";
 
 // Merges Tailwind classes safely
-cn("px-4 py-2", isActive && "bg-primary")
+cn("px-4 py-2", isActive && "bg-primary");
 ```
 
 ## Learn More

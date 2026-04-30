@@ -13,8 +13,8 @@ Export a `load` function from `+page.server.ts`:
 import type { LoadEvent } from "bosia";
 
 export async function load({ params, url, locals, cookies }: LoadEvent) {
-  const post = await db.getPost(params.slug);
-  return { post };
+	const post = await db.getPost(params.slug);
+	return { post };
 }
 ```
 
@@ -22,11 +22,10 @@ The returned object becomes the `data` prop in `+page.svelte`:
 
 ```svelte
 <script lang="ts">
-  let { data } = $props();
+	let { data } = $props();
 </script>
 
-<h1>{data.post.title}</h1>
-<p>{data.post.content}</p>
+<h1>{data.post.title}</h1><p>{data.post.content}</p>
 ```
 
 ## Layout Loaders
@@ -38,10 +37,10 @@ The returned object becomes the `data` prop in `+page.svelte`:
 import type { LoadEvent } from "bosia";
 
 export async function load({ locals }: LoadEvent) {
-  return {
-    appName: "Bosia Demo",
-    requestTime: locals.requestTime,
-  };
+	return {
+		appName: "Bosia Demo",
+		requestTime: locals.requestTime,
+	};
 }
 ```
 
@@ -54,13 +53,13 @@ Child loaders can access data from parent layout loaders:
 import type { LoadEvent } from "bosia";
 
 export async function load({ params, parent }: LoadEvent) {
-  const parentData = await parent();
-  const post = await db.getPost(params.slug);
+	const parentData = await parent();
+	const post = await db.getPost(params.slug);
 
-  return {
-    post,
-    appName: parentData.appName, // from root layout loader
-  };
+	return {
+		post,
+		appName: parentData.appName, // from root layout loader
+	};
 }
 ```
 
@@ -74,23 +73,21 @@ Export a `metadata` function to set page title and meta tags:
 import type { MetadataEvent, LoadEvent } from "bosia";
 
 export function metadata({ params }: MetadataEvent) {
-  const post = getPost(params.slug);
-  return {
-    title: `${post.title} — My Blog`,
-    description: `A blog post about ${params.slug}`,
-    meta: [
-      { property: "og:title", content: post.title },
-    ],
-    // Pass data to load() — avoids duplicate queries
-    data: { post },
-  };
+	const post = getPost(params.slug);
+	return {
+		title: `${post.title} — My Blog`,
+		description: `A blog post about ${params.slug}`,
+		meta: [{ property: "og:title", content: post.title }],
+		// Pass data to load() — avoids duplicate queries
+		data: { post },
+	};
 }
 
 export async function load({ params, parent, metadata }: LoadEvent) {
-  const parentData = await parent();
-  // Reuse data from metadata() — no duplicate DB query
-  const post = metadata?.post ?? getPost(params.slug);
-  return { post, appName: parentData.appName };
+	const parentData = await parent();
+	// Reuse data from metadata() — no duplicate DB query
+	const post = metadata?.post ?? getPost(params.slug);
+	return { post, appName: parentData.appName };
 }
 ```
 
@@ -100,15 +97,15 @@ For the full guide on `metadata()` — including Open Graph tags, language/link 
 
 ## LoadEvent Properties
 
-| Property   | Type                     | Description                              |
-| ---------- | ------------------------ | ---------------------------------------- |
-| `url`      | `URL`                    | The request URL                          |
-| `params`   | `Record<string, string>` | Dynamic route parameters                 |
-| `locals`   | `Record<string, any>`    | Data set by middleware hooks             |
-| `cookies`  | `Cookies`                | Read/write cookies                       |
+| Property   | Type                     | Description                                       |
+| ---------- | ------------------------ | ------------------------------------------------- |
+| `url`      | `URL`                    | The request URL                                   |
+| `params`   | `Record<string, string>` | Dynamic route parameters                          |
+| `locals`   | `Record<string, any>`    | Data set by middleware hooks                      |
+| `cookies`  | `Cookies`                | Read/write cookies                                |
 | `fetch`    | `Function`               | Fetch helper (cookies forwarded same-origin only) |
-| `parent`   | `() => Promise<Record>`  | Data from parent layout loaders          |
-| `metadata` | `Record \| null`         | Data passed from `metadata()` function   |
+| `parent`   | `() => Promise<Record>`  | Data from parent layout loaders                   |
+| `metadata` | `Record \| null`         | Data passed from `metadata()` function            |
 
 ## Cookie Forwarding
 
@@ -120,7 +117,7 @@ const me = await fetch("/api/me");
 
 // Third-party → NO cookie sent. Pass auth explicitly.
 const weather = await fetch("https://api.weather.com/v1/now", {
-  headers: { Authorization: `Bearer ${process.env.WEATHER_API_KEY}` },
+	headers: { Authorization: `Bearer ${process.env.WEATHER_API_KEY}` },
 });
 ```
 
@@ -141,17 +138,17 @@ Throw errors from loaders to show the error page:
 import { error, redirect } from "bosia";
 
 export async function load({ params }: LoadEvent) {
-  const post = await db.getPost(params.slug);
+	const post = await db.getPost(params.slug);
 
-  if (!post) {
-    error(404, "Post not found");
-  }
+	if (!post) {
+		error(404, "Post not found");
+	}
 
-  if (post.isPrivate) {
-    redirect(303, "/login");
-  }
+	if (post.isPrivate) {
+		redirect(303, "/login");
+	}
 
-  return { post };
+	return { post };
 }
 ```
 
@@ -159,7 +156,7 @@ Redirects are validated to prevent open redirect attacks — only relative paths
 
 ```ts
 redirect(303, "https://oauth.provider.com/authorize", {
-  allowExternal: true,
+	allowExternal: true,
 });
 ```
 
@@ -175,15 +172,15 @@ This means public pages (e.g. blog posts) are safely cacheable by CDNs, while au
 ```ts
 // Public page — no cookies read, response is cache-friendly
 export async function load({ params }: LoadEvent) {
-  const post = await db.getPost(params.slug);
-  return { post };
+	const post = await db.getPost(params.slug);
+	return { post };
 }
 
 // Authenticated page — cookies.get() triggers private caching
 export async function load({ cookies, locals }: LoadEvent) {
-  const session = cookies.get("session_id");
-  const dashboard = await getDashboard(session);
-  return { dashboard };
+	const session = cookies.get("session_id");
+	const dashboard = await getDashboard(session);
+	return { dashboard };
 }
 ```
 
@@ -225,7 +222,7 @@ Dedup applies **only** to the `/__bosia/data/` endpoint (client-side navigation 
 
 Loaders have configurable timeouts to prevent hung responses:
 
-| Env Variable         | Default | Description                  |
-| -------------------- | ------- | ---------------------------- |
-| `LOAD_TIMEOUT`       | —       | Timeout for `load()` in ms   |
-| `METADATA_TIMEOUT`   | —       | Timeout for `metadata()` in ms |
+| Env Variable       | Default | Description                    |
+| ------------------ | ------- | ------------------------------ |
+| `LOAD_TIMEOUT`     | —       | Timeout for `load()` in ms     |
+| `METADATA_TIMEOUT` | —       | Timeout for `metadata()` in ms |

@@ -6,10 +6,10 @@ import { getDeclaredEnvKeys } from "./env.ts";
 // Cached at startup; server restarts on rebuild in dev anyway.
 
 export const distManifest: { js: string[]; css: string[]; entry: string } = (() => {
-    const p = "./dist/manifest.json";
-    return existsSync(p)
-        ? JSON.parse(readFileSync(p, "utf-8"))
-        : { js: [], css: [], entry: "hydrate.js" };
+	const p = "./dist/manifest.json";
+	return existsSync(p)
+		? JSON.parse(readFileSync(p, "utf-8"))
+		: { js: [], css: [], entry: "hydrate.js" };
 })();
 
 export const isDev = process.env.NODE_ENV !== "production";
@@ -19,21 +19,21 @@ const cacheBust = isDev ? `?v=${Date.now()}` : "";
 
 /** Escapes JSON for safe embedding inside <script> tags. Prevents XSS via </script> injection. */
 export function safeJsonStringify(data: unknown): string {
-    const map: Record<string, string> = {
-        "<": "\\u003c",
-        ">": "\\u003e",
-        "&": "\\u0026",
-        "\u2028": "\\u2028",
-        "\u2029": "\\u2029",
-    };
-    let json: string;
-    try {
-        json = JSON.stringify(data);
-    } catch {
-        console.error("safeJsonStringify: failed to serialize data (circular reference?)");
-        json = "null";
-    }
-    return json.replace(/[<>&\u2028\u2029]/g, c => map[c]);
+	const map: Record<string, string> = {
+		"<": "\\u003c",
+		">": "\\u003e",
+		"&": "\\u0026",
+		"\u2028": "\\u2028",
+		"\u2029": "\\u2029",
+	};
+	let json: string;
+	try {
+		json = JSON.stringify(data);
+	} catch {
+		console.error("safeJsonStringify: failed to serialize data (circular reference?)");
+		json = "null";
+	}
+	return json.replace(/[<>&\u2028\u2029]/g, (c) => map[c]);
 }
 
 // ─── Public Env Injection ─────────────────────────────────
@@ -44,59 +44,59 @@ export function safeJsonStringify(data: unknown): string {
  * that happen to start with PUBLIC_.
  */
 function getPublicDynamicEnv(): Record<string, string> {
-    const declared = getDeclaredEnvKeys();
-    const result: Record<string, string> = {};
-    for (const key of declared) {
-        if (key.startsWith("PUBLIC_") && !key.startsWith("PUBLIC_STATIC_")) {
-            const value = process.env[key];
-            if (value !== undefined) result[key] = value;
-        }
-    }
-    return result;
+	const declared = getDeclaredEnvKeys();
+	const result: Record<string, string> = {};
+	for (const key of declared) {
+		if (key.startsWith("PUBLIC_") && !key.startsWith("PUBLIC_STATIC_")) {
+			const value = process.env[key];
+			if (value !== undefined) result[key] = value;
+		}
+	}
+	return result;
 }
 
 // ─── Lang Validation ──────────────────────────────────────
 
 const LANG_RE = /^[a-zA-Z0-9-]{1,35}$/;
 function safeLang(lang?: string): string {
-    return lang && LANG_RE.test(lang) ? lang : "en";
+	return lang && LANG_RE.test(lang) ? lang : "en";
 }
 
 // ─── HTML Builder ─────────────────────────────────────────
 
 export function buildHtml(
-    body: string,
-    head: string,
-    pageData: any,
-    layoutData: any[],
-    csr = true,
-    formData: any = null,
-    lang?: string,
-    ssr = true,
+	body: string,
+	head: string,
+	pageData: any,
+	layoutData: any[],
+	csr = true,
+	formData: any = null,
+	lang?: string,
+	ssr = true,
 ): string {
-    const cssLinks = (distManifest.css ?? [])
-        .map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
-        .join("\n  ");
+	const cssLinks = (distManifest.css ?? [])
+		.map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
+		.join("\n  ");
 
-    const fallbackTitle = head.includes("<title>") ? "" : "<title>Bosia App</title>";
+	const fallbackTitle = head.includes("<title>") ? "" : "<title>Bosia App</title>";
 
-    const publicEnv = getPublicDynamicEnv();
-    const envScript = Object.keys(publicEnv).length > 0
-        ? `\n  <script>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`
-        : "";
+	const publicEnv = getPublicDynamicEnv();
+	const envScript =
+		Object.keys(publicEnv).length > 0
+			? `\n  <script>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`
+			: "";
 
-    const formScript = formData != null
-        ? `window.__BOSIA_FORM_DATA__=${safeJsonStringify(formData)};`
-        : "";
-    const ssrFlag = ssr ? "" : "window.__BOSIA_SSR__=false;";
+	const formScript =
+		formData != null ? `window.__BOSIA_FORM_DATA__=${safeJsonStringify(formData)};` : "";
+	const ssrFlag = ssr ? "" : "window.__BOSIA_SSR__=false;";
 
-    const scripts = csr
-        ? `${envScript}\n  <script>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formScript}</script>\n  <script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
-        : isDev
-            ? `\n  <script>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
-            : "";
+	const scripts = csr
+		? `${envScript}\n  <script>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formScript}</script>\n  <script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
+		: isDev
+			? `\n  <script>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
+			: "";
 
-    return `<!DOCTYPE html>
+	return `<!DOCTYPE html>
 <html lang="${safeLang(lang)}">
 <head>
   <meta charset="UTF-8">
@@ -122,118 +122,157 @@ const _shellOpenCache = new Map<string, string>();
 
 /** Chunk 1: everything from <!DOCTYPE> through CSS/modulepreload links (head still open) */
 export function buildHtmlShellOpen(lang?: string): string {
-    const key = safeLang(lang);
-    const cached = _shellOpenCache.get(key);
-    if (cached) return cached;
-    const cssLinks = (distManifest.css ?? [])
-        .map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
-        .join("\n  ");
-    const result = `<!DOCTYPE html>\n<html lang="${key}">\n<head>\n` +
-        `  <meta charset="UTF-8">\n` +
-        `  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n` +
-        `  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n` +
-        `  ${cssLinks}\n` +
-        `  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
-        `  <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>\n` +
-        `  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`;
-    _shellOpenCache.set(key, result);
-    return result;
+	const key = safeLang(lang);
+	const cached = _shellOpenCache.get(key);
+	if (cached) return cached;
+	const cssLinks = (distManifest.css ?? [])
+		.map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
+		.join("\n  ");
+	const result =
+		`<!DOCTYPE html>\n<html lang="${key}">\n<head>\n` +
+		`  <meta charset="UTF-8">\n` +
+		`  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n` +
+		`  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n` +
+		`  ${cssLinks}\n` +
+		`  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
+		`  <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>\n` +
+		`  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`;
+	_shellOpenCache.set(key, result);
+	return result;
 }
 
-const SPINNER = `<div id="__bs__"><style>` +
-    `:root{--bosia-loading-color:#f73b27}` +
-    `#__bs__{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}` +
-    `#__bs__ i{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:var(--bosia-loading-color);` +
-    `border-radius:50%;animation:__bs__ .8s linear infinite}` +
-    `@keyframes __bs__{to{transform:rotate(360deg)}}</style><i></i></div>`;
+const SPINNER =
+	`<div id="__bs__"><style>` +
+	`:root{--bosia-loading-color:#f73b27}` +
+	`#__bs__{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}` +
+	`#__bs__ i{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:var(--bosia-loading-color);` +
+	`border-radius:50%;animation:__bs__ .8s linear infinite}` +
+	`@keyframes __bs__{to{transform:rotate(360deg)}}</style><i></i></div>`;
 
 /** Chunk 2: metadata tags + close </head> + open <body> + spinner */
 export function buildMetadataChunk(metadata: Metadata | null): string {
-    let out = "\n";
-    if (metadata) {
-        if (metadata.title) out += `  <title>${escapeHtml(metadata.title)}</title>\n`;
-        if (metadata.description) {
-            out += `  <meta name="description" content="${escapeAttr(metadata.description)}">\n`;
-        }
-        if (metadata.meta) {
-            for (const m of metadata.meta) {
-                const attrs = m.name ? `name="${escapeAttr(m.name)}"` : `property="${escapeAttr(m.property ?? "")}"`;
-                out += `  <meta ${attrs} content="${escapeAttr(m.content)}">\n`;
-            }
-        }
-        if (metadata.link) {
-            for (const l of metadata.link) {
-                let attrs = `rel="${escapeAttr(l.rel)}" href="${escapeAttr(l.href)}"`;
-                if (l.hreflang) attrs += ` hreflang="${escapeAttr(l.hreflang)}"`;
-                out += `  <link ${attrs}>\n`;
-            }
-        }
-    } else {
-        out += `  <title>Bosia App</title>\n`;
-    }
-    out += `</head>\n<body>\n${SPINNER}`;
-    return out;
+	let out = "\n";
+	if (metadata) {
+		if (metadata.title) out += `  <title>${escapeHtml(metadata.title)}</title>\n`;
+		if (metadata.description) {
+			out += `  <meta name="description" content="${escapeAttr(metadata.description)}">\n`;
+		}
+		if (metadata.meta) {
+			for (const m of metadata.meta) {
+				const attrs = m.name
+					? `name="${escapeAttr(m.name)}"`
+					: `property="${escapeAttr(m.property ?? "")}"`;
+				out += `  <meta ${attrs} content="${escapeAttr(m.content)}">\n`;
+			}
+		}
+		if (metadata.link) {
+			for (const l of metadata.link) {
+				let attrs = `rel="${escapeAttr(l.rel)}" href="${escapeAttr(l.href)}"`;
+				if (l.hreflang) attrs += ` hreflang="${escapeAttr(l.hreflang)}"`;
+				out += `  <link ${attrs}>\n`;
+			}
+		}
+	} else {
+		out += `  <title>Bosia App</title>\n`;
+	}
+	out += `</head>\n<body>\n${SPINNER}`;
+	return out;
 }
 
 function escapeHtml(s: string): string {
-    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function escapeAttr(s: string): string {
-    return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+	return s
+		.replace(/&/g, "&amp;")
+		.replace(/"/g, "&quot;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;");
 }
 
 export function buildHtmlTail(
-    body: string,
-    head: string,
-    pageData: any,
-    layoutData: any[],
-    csr: boolean,
-    formData: any = null,
-    ssr = true,
+	body: string,
+	head: string,
+	pageData: any,
+	layoutData: any[],
+	csr: boolean,
+	formData: any = null,
+	ssr = true,
 ): string {
-    let out = `<script>document.getElementById('__bs__').remove()</script>`;
-    out += `\n<div id="app">${body}</div>`;
-    if (head) out += `\n<script>document.head.insertAdjacentHTML('beforeend',${safeJsonStringify(head)})</script>`;
-    if (csr) {
-        const publicEnv = getPublicDynamicEnv();
-        if (Object.keys(publicEnv).length > 0) {
-            out += `\n<script>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`;
-        }
-        const formInject = formData != null ? `window.__BOSIA_FORM_DATA__=${safeJsonStringify(formData)};` : "";
-        const ssrFlag = ssr ? "" : "window.__BOSIA_SSR__=false;";
-        out += `\n<script>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};` +
-               `window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formInject}</script>`;
-        out += `\n<script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`;
-    } else if (isDev) {
-        out += `\n<script>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;
-    }
-    out += `\n</body>\n</html>`;
-    return out;
+	let out = `<script>document.getElementById('__bs__').remove()</script>`;
+	out += `\n<div id="app">${body}</div>`;
+	if (head)
+		out += `\n<script>document.head.insertAdjacentHTML('beforeend',${safeJsonStringify(head)})</script>`;
+	if (csr) {
+		const publicEnv = getPublicDynamicEnv();
+		if (Object.keys(publicEnv).length > 0) {
+			out += `\n<script>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`;
+		}
+		const formInject =
+			formData != null ? `window.__BOSIA_FORM_DATA__=${safeJsonStringify(formData)};` : "";
+		const ssrFlag = ssr ? "" : "window.__BOSIA_SSR__=false;";
+		out +=
+			`\n<script>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};` +
+			`window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formInject}</script>`;
+		out += `\n<script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`;
+	} else if (isDev) {
+		out += `\n<script>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;
+	}
+	out += `\n</body>\n</html>`;
+	return out;
 }
 
 // ─── Gzip Compression ────────────────────────────────────
 
 const GZIP_MIN_BYTES = 2048;
 
-export function compress(body: string, contentType: string, req: Request, status = 200, extraHeaders?: Record<string, string>): Response {
-    const headers: Record<string, string> = { "Content-Type": contentType, "Vary": "Accept-Encoding", ...extraHeaders };
-    const accept = req.headers.get("accept-encoding") ?? "";
-    const bytes = new TextEncoder().encode(body);
-    // Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
-    // responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
-    if (!isDev && bytes.length > GZIP_MIN_BYTES && accept.includes("gzip")) {
-        return new Response(Bun.gzipSync(bytes), { status, headers: { ...headers, "Content-Encoding": "gzip" } });
-    }
-    return new Response(bytes, { status, headers });
+export function compress(
+	body: string,
+	contentType: string,
+	req: Request,
+	status = 200,
+	extraHeaders?: Record<string, string>,
+): Response {
+	const headers: Record<string, string> = {
+		"Content-Type": contentType,
+		Vary: "Accept-Encoding",
+		...extraHeaders,
+	};
+	const accept = req.headers.get("accept-encoding") ?? "";
+	const bytes = new TextEncoder().encode(body);
+	// Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
+	// responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
+	if (!isDev && bytes.length > GZIP_MIN_BYTES && accept.includes("gzip")) {
+		return new Response(Bun.gzipSync(bytes), {
+			status,
+			headers: { ...headers, "Content-Encoding": "gzip" },
+		});
+	}
+	return new Response(bytes, { status, headers });
 }
 
 // ─── Static File Detection ────────────────────────────────
 
-const STATIC_EXTS = new Set([".ico", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".css", ".js", ".woff", ".woff2", ".ttf", ".xml", ".txt"]);
+const STATIC_EXTS = new Set([
+	".ico",
+	".png",
+	".jpg",
+	".jpeg",
+	".gif",
+	".webp",
+	".svg",
+	".css",
+	".js",
+	".woff",
+	".woff2",
+	".ttf",
+	".xml",
+	".txt",
+]);
 
 export function isStaticPath(path: string): boolean {
-    if (path.startsWith("/dist/") || path.startsWith("/__bosia/")) return true;
-    const dot = path.lastIndexOf(".");
-    return dot !== -1 && STATIC_EXTS.has(path.slice(dot));
+	if (path.startsWith("/dist/") || path.startsWith("/__bosia/")) return true;
+	const dot = path.lastIndexOf(".");
+	return dot !== -1 && STATIC_EXTS.has(path.slice(dot));
 }

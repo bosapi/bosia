@@ -44,38 +44,38 @@ A compound component for switching between mutually exclusive sections of conten
 
 ```svelte
 <script lang="ts">
-  import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs";
-  let value = $state("account");
+	import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs";
+	let value = $state("account");
 </script>
 
 <Tabs bind:value>
-  <TabsList>
-    <TabsTrigger value="account">Account</TabsTrigger>
-    <TabsTrigger value="password">Password</TabsTrigger>
-  </TabsList>
-  <TabsContent value="account">Account settings go here.</TabsContent>
-  <TabsContent value="password">Password settings go here.</TabsContent>
+	<TabsList>
+		<TabsTrigger value="account">Account</TabsTrigger>
+		<TabsTrigger value="password">Password</TabsTrigger>
+	</TabsList>
+	<TabsContent value="account">Account settings go here.</TabsContent>
+	<TabsContent value="password">Password settings go here.</TabsContent>
 </Tabs>
 ```
 
 ## Keyboard Navigation
 
-| Key                         | Action                           |
-| --------------------------- | -------------------------------- |
-| `ArrowRight` / `ArrowDown`  | Focus and activate the next tab  |
-| `ArrowLeft` / `ArrowUp`     | Focus and activate the previous tab |
-| `Home`                      | Focus and activate the first tab |
-| `End`                       | Focus and activate the last tab  |
+| Key                        | Action                              |
+| -------------------------- | ----------------------------------- |
+| `ArrowRight` / `ArrowDown` | Focus and activate the next tab     |
+| `ArrowLeft` / `ArrowUp`    | Focus and activate the previous tab |
+| `Home`                     | Focus and activate the first tab    |
+| `End`                      | Focus and activate the last tab     |
 
 ## Disabled Trigger
 
 ```svelte
 <Tabs value="a">
-  <TabsList>
-    <TabsTrigger value="a">Active</TabsTrigger>
-    <TabsTrigger value="b" disabled>Disabled</TabsTrigger>
-  </TabsList>
-  <TabsContent value="a">Panel A</TabsContent>
-  <TabsContent value="b">Panel B</TabsContent>
+	<TabsList>
+		<TabsTrigger value="a">Active</TabsTrigger>
+		<TabsTrigger value="b" disabled>Disabled</TabsTrigger>
+	</TabsList>
+	<TabsContent value="a">Panel A</TabsContent>
+	<TabsContent value="b">Panel B</TabsContent>
 </Tabs>
 ```

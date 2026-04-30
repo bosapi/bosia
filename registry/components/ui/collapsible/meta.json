@@ -1,7 +1,12 @@
 {
-  "name": "collapsible",
-  "description": "An interactive component which expands/collapses a panel.",
-  "dependencies": [],
-  "files": ["collapsible.svelte", "collapsible-trigger.svelte", "collapsible-content.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "collapsible",
+	"description": "An interactive component which expands/collapses a panel.",
+	"dependencies": [],
+	"files": [
+		"collapsible.svelte",
+		"collapsible-trigger.svelte",
+		"collapsible-content.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

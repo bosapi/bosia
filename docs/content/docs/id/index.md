@@ -28,10 +28,10 @@ Buka [http://localhost:9000](http://localhost:9000) dan mulai membangun.
 
 ## Tech Stack
 
-| Lapisan    | Teknologi        |
-| ---------- | ---------------- |
-| Runtime    | Bun              |
-| HTTP       | ElysiaJS         |
-| UI         | Svelte 5 (Runes) |
-| CSS        | Tailwind CSS v4  |
-| Bundler    | Bun.build        |
+| Lapisan | Teknologi        |
+| ------- | ---------------- |
+| Runtime | Bun              |
+| HTTP    | ElysiaJS         |
+| UI      | Svelte 5 (Runes) |
+| CSS     | Tailwind CSS v4  |
+| Bundler | Bun.build        |

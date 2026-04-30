@@ -13,8 +13,8 @@ Ekspor fungsi `load` dari `+page.server.ts`:
 import type { LoadEvent } from "bosia";
 
 export async function load({ params, url, locals, cookies }: LoadEvent) {
-  const post = await db.getPost(params.slug);
-  return { post };
+	const post = await db.getPost(params.slug);
+	return { post };
 }
 ```
 
@@ -22,11 +22,10 @@ Objek yang dikembalikan menjadi prop `data` di `+page.svelte`:
 
 ```svelte
 <script lang="ts">
-  let { data } = $props();
+	let { data } = $props();
 </script>
 
-<h1>{data.post.title}</h1>
-<p>{data.post.content}</p>
+<h1>{data.post.title}</h1><p>{data.post.content}</p>
 ```
 
 ## Loader Layout
@@ -38,10 +37,10 @@ Objek yang dikembalikan menjadi prop `data` di `+page.svelte`:
 import type { LoadEvent } from "bosia";
 
 export async function load({ locals }: LoadEvent) {
-  return {
-    appName: "Bosia Demo",
-    requestTime: locals.requestTime,
-  };
+	return {
+		appName: "Bosia Demo",
+		requestTime: locals.requestTime,
+	};
 }
 ```
 
@@ -54,13 +53,13 @@ Loader anak dapat mengakses data dari loader layout induknya:
 import type { LoadEvent } from "bosia";
 
 export async function load({ params, parent }: LoadEvent) {
-  const parentData = await parent();
-  const post = await db.getPost(params.slug);
+	const parentData = await parent();
+	const post = await db.getPost(params.slug);
 
-  return {
-    post,
-    appName: parentData.appName, // from root layout loader
-  };
+	return {
+		post,
+		appName: parentData.appName, // from root layout loader
+	};
 }
 ```
 
@@ -74,23 +73,21 @@ Ekspor fungsi `metadata` untuk mengatur judul halaman dan meta tag:
 import type { MetadataEvent, LoadEvent } from "bosia";
 
 export function metadata({ params }: MetadataEvent) {
-  const post = getPost(params.slug);
-  return {
-    title: `${post.title} — My Blog`,
-    description: `A blog post about ${params.slug}`,
-    meta: [
-      { property: "og:title", content: post.title },
-    ],
-    // Pass data to load() — avoids duplicate queries
-    data: { post },
-  };
+	const post = getPost(params.slug);
+	return {
+		title: `${post.title} — My Blog`,
+		description: `A blog post about ${params.slug}`,
+		meta: [{ property: "og:title", content: post.title }],
+		// Pass data to load() — avoids duplicate queries
+		data: { post },
+	};
 }
 
 export async function load({ params, parent, metadata }: LoadEvent) {
-  const parentData = await parent();
-  // Reuse data from metadata() — no duplicate DB query
-  const post = metadata?.post ?? getPost(params.slug);
-  return { post, appName: parentData.appName };
+	const parentData = await parent();
+	// Reuse data from metadata() — no duplicate DB query
+	const post = metadata?.post ?? getPost(params.slug);
+	return { post, appName: parentData.appName };
 }
 ```
 
@@ -98,14 +95,14 @@ Properti `data` pada nilai kembalian `metadata()` diteruskan ke `load()` sebagai
 
 ## Properti LoadEvent
 
-| Properti   | Tipe                     | Deskripsi                                    |
-| ---------- | ------------------------ | -------------------------------------------- |
-| `url`      | `URL`                    | URL request                                  |
-| `params`   | `Record<string, string>` | Parameter route dinamis                      |
-| `locals`   | `Record<string, any>`    | Data yang disetel oleh middleware hooks      |
-| `cookies`  | `Cookies`                | Membaca/menulis cookies                      |
-| `fetch`    | `Function`               | Fetch yang sadar sesi (meneruskan cookies)   |
-| `parent`   | `() => Promise<Record>`  | Data dari loader layout induk                |
+| Properti   | Tipe                     | Deskripsi                                     |
+| ---------- | ------------------------ | --------------------------------------------- |
+| `url`      | `URL`                    | URL request                                   |
+| `params`   | `Record<string, string>` | Parameter route dinamis                       |
+| `locals`   | `Record<string, any>`    | Data yang disetel oleh middleware hooks       |
+| `cookies`  | `Cookies`                | Membaca/menulis cookies                       |
+| `fetch`    | `Function`               | Fetch yang sadar sesi (meneruskan cookies)    |
+| `parent`   | `() => Promise<Record>`  | Data dari loader layout induk                 |
 | `metadata` | `Record \| null`         | Data yang diteruskan dari fungsi `metadata()` |
 
 ## Penanganan Error
@@ -116,17 +113,17 @@ Lempar error dari loader untuk menampilkan halaman error:
 import { error, redirect } from "bosia";
 
 export async function load({ params }: LoadEvent) {
-  const post = await db.getPost(params.slug);
+	const post = await db.getPost(params.slug);
 
-  if (!post) {
-    error(404, "Post not found");
-  }
+	if (!post) {
+		error(404, "Post not found");
+	}
 
-  if (post.isPrivate) {
-    redirect(303, "/login");
-  }
+	if (post.isPrivate) {
+		redirect(303, "/login");
+	}
 
-  return { post };
+	return { post };
 }
 ```
 
@@ -166,7 +163,7 @@ Dedup hanya berlaku untuk endpoint `/__bosia/data/` (pengambilan data navigasi s
 
 Loader memiliki timeout yang dapat dikonfigurasi untuk mencegah response yang tergantung:
 
-| Variabel Env         | Default | Deskripsi                        |
-| -------------------- | ------- | -------------------------------- |
-| `LOAD_TIMEOUT`       | —       | Timeout untuk `load()` dalam ms  |
-| `METADATA_TIMEOUT`   | —       | Timeout untuk `metadata()` dalam ms |
+| Variabel Env       | Default | Deskripsi                           |
+| ------------------ | ------- | ----------------------------------- |
+| `LOAD_TIMEOUT`     | —       | Timeout untuk `load()` dalam ms     |
+| `METADATA_TIMEOUT` | —       | Timeout untuk `metadata()` dalam ms |

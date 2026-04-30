@@ -1,7 +1,7 @@
 {
-  "name": "input",
-  "description": "A styled text input component.",
-  "dependencies": [],
-  "files": ["input.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "input",
+	"description": "A styled text input component.",
+	"dependencies": [],
+	"files": ["input.svelte", "index.ts"],
+	"npmDeps": {}
 }

@@ -1,7 +1,7 @@
 {
-  "name": "kbd",
-  "description": "Displays keyboard shortcut keys with a keycap style.",
-  "dependencies": [],
-  "files": ["kbd.svelte", "kbd-group.svelte", "shortcut.ts", "index.ts"],
-  "npmDeps": {}
+	"name": "kbd",
+	"description": "Displays keyboard shortcut keys with a keycap style.",
+	"dependencies": [],
+	"files": ["kbd.svelte", "kbd-group.svelte", "shortcut.ts", "index.ts"],
+	"npmDeps": {}
 }

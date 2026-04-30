@@ -1,10 +1,7 @@
 {
-  "name": "form",
-  "description": "A form wrapper that manages validation state and feeds errors into Field components via context.",
-  "dependencies": ["ui/field"],
-  "files": [
-    "form.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "form",
+	"description": "A form wrapper that manages validation state and feeds errors into Field components via context.",
+	"dependencies": ["ui/field"],
+	"files": ["form.svelte", "index.ts"],
+	"npmDeps": {}
 }

@@ -34,32 +34,32 @@ bun run start
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Runtime | [Bun](https://bun.sh) |
-| HTTP Server | [ElysiaJS](https://elysiajs.com) |
-| UI | [Svelte 5](https://svelte.dev) (Runes) |
-| CSS | [Tailwind CSS v4](https://tailwindcss.com) |
-| Bundler | Bun.build |
+| Layer       | Technology                                 |
+| ----------- | ------------------------------------------ |
+| Runtime     | [Bun](https://bun.sh)                      |
+| HTTP Server | [ElysiaJS](https://elysiajs.com)           |
+| UI          | [Svelte 5](https://svelte.dev) (Runes)     |
+| CSS         | [Tailwind CSS v4](https://tailwindcss.com) |
+| Bundler     | Bun.build                                  |
 
 ## Routing Conventions
 
 Files in `src/routes/` map to URLs automatically.
 
-| File | Purpose |
-|------|---------|
-| `+page.svelte` | Page component |
-| `+layout.svelte` | Layout that wraps child pages |
-| `+page.server.ts` | Server loader for a page |
-| `+layout.server.ts` | Server loader for a layout |
-| `+server.ts` | API endpoint (export HTTP verbs) |
+| File                | Purpose                          |
+| ------------------- | -------------------------------- |
+| `+page.svelte`      | Page component                   |
+| `+layout.svelte`    | Layout that wraps child pages    |
+| `+page.server.ts`   | Server loader for a page         |
+| `+layout.server.ts` | Server loader for a layout       |
+| `+server.ts`        | API endpoint (export HTTP verbs) |
 
 ### Dynamic Routes
 
-| Pattern | Matches |
-|---------|---------|
-| `[param]` | `/blog/hello` → `params.param = "hello"` |
-| `[...rest]` | `/a/b/c` → `params.rest = "a/b/c"` |
+| Pattern     | Matches                                  |
+| ----------- | ---------------------------------------- |
+| `[param]`   | `/blog/hello` → `params.param = "hello"` |
+| `[...rest]` | `/a/b/c` → `params.rest = "a/b/c"`       |
 
 ### Route Groups
 
@@ -81,10 +81,10 @@ src/routes/
 import type { LoadEvent } from "bosia";
 
 export async function load({ params, url, locals, fetch, parent }: LoadEvent) {
-    const parentData = await parent(); // data from layout loaders above
-    return {
-        post: await getPost(params.slug),
-    };
+	const parentData = await parent(); // data from layout loaders above
+	return {
+		post: await getPost(params.slug),
+	};
 }
 ```
 
@@ -92,8 +92,8 @@ Data returned is passed as the `data` prop to `+page.svelte`:
 
 ```svelte
 <script lang="ts">
-    let { data } = $props();
-    // data.post, data.params ...
+	let { data } = $props();
+	// data.post, data.params ...
 </script>
 ```
 
@@ -106,12 +106,12 @@ Export named HTTP verb functions from `+server.ts`:
 import type { RequestEvent } from "bosia";
 
 export function GET({ params, url, locals }: RequestEvent) {
-    return Response.json({ items: [] });
+	return Response.json({ items: [] });
 }
 
 export async function POST({ request }: RequestEvent) {
-    const body = await request.json();
-    return Response.json({ created: body }, { status: 201 });
+	const body = await request.json();
+	return Response.json({ created: body }, { status: 201 });
 }
 ```
 
@@ -124,14 +124,14 @@ import { sequence } from "bosia";
 import type { Handle } from "bosia";
 
 const authHandle: Handle = async ({ event, resolve }) => {
-    event.locals.user = await getUser(event.request);
-    return resolve(event);
+	event.locals.user = await getUser(event.request);
+	return resolve(event);
 };
 
 const loggingHandle: Handle = async ({ event, resolve }) => {
-    const res = await resolve(event);
-    console.log(`${event.request.method} ${event.url.pathname} ${res.status}`);
-    return res;
+	const res = await resolve(event);
+	console.log(`${event.request.method} ${event.url.pathname} ${res.status}`);
+	return res;
 };
 
 export const handle = sequence(authHandle, loggingHandle);
@@ -146,13 +146,13 @@ import { cn, sequence } from "bosia";
 import type { RequestEvent, LoadEvent, Handle } from "bosia";
 ```
 
-| Export | Description |
-|--------|-------------|
-| `cn(...classes)` | Tailwind class merge utility (built-in class merging + tailwind-merge) |
-| `sequence(...handlers)` | Compose multiple `Handle` middleware functions |
-| `RequestEvent` | Type for API route and hook handlers |
-| `LoadEvent` | Type for `load()` in `+page.server.ts` / `+layout.server.ts` |
-| `Handle` | Type for a middleware function in `hooks.server.ts` |
+| Export                  | Description                                                            |
+| ----------------------- | ---------------------------------------------------------------------- |
+| `cn(...classes)`        | Tailwind class merge utility (built-in class merging + tailwind-merge) |
+| `sequence(...handlers)` | Compose multiple `Handle` middleware functions                         |
+| `RequestEvent`          | Type for API route and hook handlers                                   |
+| `LoadEvent`             | Type for `load()` in `+page.server.ts` / `+layout.server.ts`           |
+| `Handle`                | Type for a middleware function in `hooks.server.ts`                    |
 
 ## Path Alias
 

@@ -1,10 +1,7 @@
 {
-  "name": "date-picker",
-  "description": "A date picker built on Popover + Calendar.",
-  "dependencies": ["ui/popover", "ui/calendar"],
-  "files": [
-    "date-picker.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "date-picker",
+	"description": "A date picker built on Popover + Calendar.",
+	"dependencies": ["ui/popover", "ui/calendar"],
+	"files": ["date-picker.svelte", "index.ts"],
+	"npmDeps": {}
 }

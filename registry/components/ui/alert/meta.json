@@ -1,12 +1,7 @@
 {
-  "name": "alert",
-  "description": "An alert component for displaying important messages with default and destructive variants.",
-  "dependencies": [],
-  "files": [
-    "alert.svelte",
-    "alert-title.svelte",
-    "alert-description.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "alert",
+	"description": "An alert component for displaying important messages with default and destructive variants.",
+	"dependencies": [],
+	"files": ["alert.svelte", "alert-title.svelte", "alert-description.svelte", "index.ts"],
+	"npmDeps": {}
 }

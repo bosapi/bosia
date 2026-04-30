@@ -29,32 +29,35 @@ A right-click triggered menu that appears at the cursor position. Supports items
 
 ```svelte
 <script lang="ts">
-  import {
-    ContextMenu, ContextMenuTrigger,
-    ContextMenuContent, ContextMenuItem,
-    ContextMenuSeparator, ContextMenuLabel,
-    ContextMenuShortcut
-  } from "$lib/components/ui/context-menu";
+	import {
+		ContextMenu,
+		ContextMenuTrigger,
+		ContextMenuContent,
+		ContextMenuItem,
+		ContextMenuSeparator,
+		ContextMenuLabel,
+		ContextMenuShortcut,
+	} from "$lib/components/ui/context-menu";
 </script>
 
 <ContextMenu>
-  <ContextMenuTrigger>
-    <div class="h-36 w-72 border border-dashed rounded-md flex items-center justify-center">
-      Right click here
-    </div>
-  </ContextMenuTrigger>
-  <ContextMenuContent>
-    <ContextMenuLabel>Actions</ContextMenuLabel>
-    <ContextMenuSeparator />
-    <ContextMenuItem onclick={() => console.log("back")}>
-      Back
-      <ContextMenuShortcut>⌘[</ContextMenuShortcut>
-    </ContextMenuItem>
-    <ContextMenuItem onclick={() => console.log("reload")}>
-      Reload
-      <ContextMenuShortcut>⌘R</ContextMenuShortcut>
-    </ContextMenuItem>
-  </ContextMenuContent>
+	<ContextMenuTrigger>
+		<div class="h-36 w-72 border border-dashed rounded-md flex items-center justify-center">
+			Right click here
+		</div>
+	</ContextMenuTrigger>
+	<ContextMenuContent>
+		<ContextMenuLabel>Actions</ContextMenuLabel>
+		<ContextMenuSeparator />
+		<ContextMenuItem onclick={() => console.log("back")}>
+			Back
+			<ContextMenuShortcut>⌘[</ContextMenuShortcut>
+		</ContextMenuItem>
+		<ContextMenuItem onclick={() => console.log("reload")}>
+			Reload
+			<ContextMenuShortcut>⌘R</ContextMenuShortcut>
+		</ContextMenuItem>
+	</ContextMenuContent>
 </ContextMenu>
 ```
 
@@ -62,37 +65,38 @@ A right-click triggered menu that appears at the cursor position. Supports items
 
 ```svelte
 <script lang="ts">
-  import {
-    ContextMenu, ContextMenuTrigger,
-    ContextMenuContent, ContextMenuItem,
-    ContextMenuSub, ContextMenuSubTrigger,
-    ContextMenuSubContent
-  } from "$lib/components/ui/context-menu";
+	import {
+		ContextMenu,
+		ContextMenuTrigger,
+		ContextMenuContent,
+		ContextMenuItem,
+		ContextMenuSub,
+		ContextMenuSubTrigger,
+		ContextMenuSubContent,
+	} from "$lib/components/ui/context-menu";
 </script>
 
 <ContextMenu>
-  <ContextMenuTrigger>
-    <div class="h-36 w-72 border border-dashed rounded-md flex items-center justify-center">
-      Right click here
-    </div>
-  </ContextMenuTrigger>
-  <ContextMenuContent>
-    <ContextMenuItem>Back</ContextMenuItem>
-    <ContextMenuSub>
-      <ContextMenuSubTrigger>More Tools</ContextMenuSubTrigger>
-      <ContextMenuSubContent>
-        <ContextMenuItem>Save Page As...</ContextMenuItem>
-        <ContextMenuItem>Developer Tools</ContextMenuItem>
-      </ContextMenuSubContent>
-    </ContextMenuSub>
-  </ContextMenuContent>
+	<ContextMenuTrigger>
+		<div class="h-36 w-72 border border-dashed rounded-md flex items-center justify-center">
+			Right click here
+		</div>
+	</ContextMenuTrigger>
+	<ContextMenuContent>
+		<ContextMenuItem>Back</ContextMenuItem>
+		<ContextMenuSub>
+			<ContextMenuSubTrigger>More Tools</ContextMenuSubTrigger>
+			<ContextMenuSubContent>
+				<ContextMenuItem>Save Page As...</ContextMenuItem>
+				<ContextMenuItem>Developer Tools</ContextMenuItem>
+			</ContextMenuSubContent>
+		</ContextMenuSub>
+	</ContextMenuContent>
 </ContextMenu>
 ```
 
 ## Disabled Items
 
 ```svelte
-<ContextMenuItem disabled>
-  Forward
-</ContextMenuItem>
+<ContextMenuItem disabled>Forward</ContextMenuItem>
 ```

@@ -14,9 +14,9 @@ A context provider that sets `dir` on a wrapper element and exposes the current 
 
 ## Props
 
-| Prop        | Type                   | Default |
-| ----------- | ---------------------- | ------- |
-| `direction` | `"ltr"` \| `"rtl"`    | `"ltr"` |
+| Prop        | Type               | Default |
+| ----------- | ------------------ | ------- |
+| `direction` | `"ltr"` \| `"rtl"` | `"ltr"` |
 
 ## Usage
 
@@ -26,11 +26,11 @@ Wrap your content with `DirectionProvider`:
 
 ```svelte
 <script lang="ts">
-  import { DirectionProvider } from "$lib/components/ui/direction";
+	import { DirectionProvider } from "$lib/components/ui/direction";
 </script>
 
 <DirectionProvider direction="rtl">
-  <p>This content flows right-to-left.</p>
+	<p>This content flows right-to-left.</p>
 </DirectionProvider>
 ```
 
@@ -40,9 +40,9 @@ Use `useDirection()` to read the current direction from context:
 
 ```svelte
 <script lang="ts">
-  import { useDirection } from "$lib/components/ui/direction";
+	import { useDirection } from "$lib/components/ui/direction";
 
-  const dir = useDirection(); // "ltr" | "rtl"
+	const dir = useDirection(); // "ltr" | "rtl"
 </script>
 
 <p>Current direction: {dir}</p>

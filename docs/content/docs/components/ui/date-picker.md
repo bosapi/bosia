@@ -14,28 +14,28 @@ Convenience wrapper that composes `Popover` + `Calendar` into a single date pick
 
 ## Props
 
-| Prop | Type | Default |
-| ---- | ---- | ------- |
-| `value` | `Date \| undefined` (bindable) | `undefined` |
-| `placeholder` | `string` | `"Pick a date"` |
-| `min` | `Date \| undefined` | `undefined` |
-| `max` | `Date \| undefined` | `undefined` |
-| `disabled` | `((date: Date) => boolean) \| undefined` | `undefined` |
-| `weekStartsOn` | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6` | `0` |
-| `fixedWeeks` | `boolean` | `false` |
-| `buttonDisabled` | `boolean` | `false` |
-| `formatDate` | `(date: Date) => string` | `toLocaleDateString` |
-| `contentClass` | `string` | `""` |
-| `trigger` | `Snippet<[Date \| undefined]>` | default button |
-| `class` | `string` | `""` (trigger button) |
+| Prop             | Type                                     | Default               |
+| ---------------- | ---------------------------------------- | --------------------- |
+| `value`          | `Date \| undefined` (bindable)           | `undefined`           |
+| `placeholder`    | `string`                                 | `"Pick a date"`       |
+| `min`            | `Date \| undefined`                      | `undefined`           |
+| `max`            | `Date \| undefined`                      | `undefined`           |
+| `disabled`       | `((date: Date) => boolean) \| undefined` | `undefined`           |
+| `weekStartsOn`   | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6`        | `0`                   |
+| `fixedWeeks`     | `boolean`                                | `false`               |
+| `buttonDisabled` | `boolean`                                | `false`               |
+| `formatDate`     | `(date: Date) => string`                 | `toLocaleDateString`  |
+| `contentClass`   | `string`                                 | `""`                  |
+| `trigger`        | `Snippet<[Date \| undefined]>`           | default button        |
+| `class`          | `string`                                 | `""` (trigger button) |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import { DatePicker } from "$lib/components/ui/date-picker";
+	import { DatePicker } from "$lib/components/ui/date-picker";
 
-  let date = $state<Date | undefined>(undefined);
+	let date = $state<Date | undefined>(undefined);
 </script>
 
 <DatePicker bind:value={date} />
@@ -44,20 +44,13 @@ Convenience wrapper that composes `Popover` + `Calendar` into a single date pick
 ## With Constraints
 
 ```svelte
-<DatePicker
-  bind:value={date}
-  min={new Date(2026, 0, 1)}
-  max={new Date(2026, 11, 31)}
-/>
+<DatePicker bind:value={date} min={new Date(2026, 0, 1)} max={new Date(2026, 11, 31)} />
 ```
 
 ## Custom Format
 
 ```svelte
-<DatePicker
-  bind:value={date}
-  formatDate={(d) => d.toISOString().split("T")[0]}
-/>
+<DatePicker bind:value={date} formatDate={(d) => d.toISOString().split("T")[0]} />
 ```
 
 ## Custom Trigger
@@ -66,9 +59,9 @@ Use the `trigger` snippet to fully customize the trigger content:
 
 ```svelte
 <DatePicker bind:value={date}>
-  {#snippet trigger(value)}
-    <span>{value ? value.toLocaleDateString() : "Choose a date..."}</span>
-  {/snippet}
+	{#snippet trigger(value)}
+		<span>{value ? value.toLocaleDateString() : "Choose a date..."}</span>
+	{/snippet}
 </DatePicker>
 ```
 
@@ -77,10 +70,7 @@ Use the `trigger` snippet to fully customize the trigger content:
 Disable weekends:
 
 ```svelte
-<DatePicker
-  bind:value={date}
-  disabled={(d) => d.getDay() === 0 || d.getDay() === 6}
-/>
+<DatePicker bind:value={date} disabled={(d) => d.getDay() === 0 || d.getDay() === 6} />
 ```
 
 ## Behavior
@@ -95,13 +85,13 @@ Disable weekends:
 
 ```svelte
 <Popover>
-  <PopoverTrigger>...</PopoverTrigger>
-  <PopoverContent class="w-auto p-0">
-    <Calendar>
-      <CalendarHeader />
-      <CalendarGrid />
-    </Calendar>
-  </PopoverContent>
+	<PopoverTrigger>...</PopoverTrigger>
+	<PopoverContent class="w-auto p-0">
+		<Calendar>
+			<CalendarHeader />
+			<CalendarGrid />
+		</Calendar>
+	</PopoverContent>
 </Popover>
 ```
 

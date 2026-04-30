@@ -24,24 +24,28 @@ All sub-components (`CardHeader`, `CardTitle`, `CardDescription`, `CardContent`,
 
 ```svelte
 <script lang="ts">
-  import {
-    Card, CardHeader, CardTitle,
-    CardDescription, CardContent, CardFooter
-  } from "$lib/components/ui/card";
-  import { Button } from "$lib/components/ui/button";
+	import {
+		Card,
+		CardHeader,
+		CardTitle,
+		CardDescription,
+		CardContent,
+		CardFooter,
+	} from "$lib/components/ui/card";
+	import { Button } from "$lib/components/ui/button";
 </script>
 
 <Card>
-  <CardHeader>
-    <CardTitle>Welcome</CardTitle>
-    <CardDescription>Get started with Bosia</CardDescription>
-  </CardHeader>
-  <CardContent>
-    <p>Your content here.</p>
-  </CardContent>
-  <CardFooter>
-    <Button>Continue</Button>
-  </CardFooter>
+	<CardHeader>
+		<CardTitle>Welcome</CardTitle>
+		<CardDescription>Get started with Bosia</CardDescription>
+	</CardHeader>
+	<CardContent>
+		<p>Your content here.</p>
+	</CardContent>
+	<CardFooter>
+		<Button>Continue</Button>
+	</CardFooter>
 </Card>
 ```
 
@@ -51,6 +55,6 @@ All sub-components are optional:
 
 ```svelte
 <Card class="p-6">
-  <p>Simple content card.</p>
+	<p>Simple content card.</p>
 </Card>
 ```

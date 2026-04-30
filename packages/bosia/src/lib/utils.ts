@@ -2,45 +2,59 @@ import { twMerge } from "tailwind-merge";
 
 type ClassDictionary = Record<string, any>;
 type ClassArray = ClassValue[];
-type ClassValue = ClassArray | ClassDictionary | string | number | bigint | null | boolean | undefined;
+type ClassValue =
+	| ClassArray
+	| ClassDictionary
+	| string
+	| number
+	| bigint
+	| null
+	| boolean
+	| undefined;
 
 function clsx(...inputs: ClassValue[]): string {
-    let str = '';
-    for (const input of inputs) {
-        if (!input) continue;
-        if (typeof input === 'string' || typeof input === 'number') {
-            str && (str += ' ');
-            str += input;
-        } else if (Array.isArray(input)) {
-            const inner = clsx(...input);
-            if (inner) { str && (str += ' '); str += inner; }
-        } else if (typeof input === 'object') {
-            for (const k in input) {
-                if ((input as ClassDictionary)[k]) { str && (str += ' '); str += k; }
-            }
-        }
-    }
-    return str;
+	let str = "";
+	for (const input of inputs) {
+		if (!input) continue;
+		if (typeof input === "string" || typeof input === "number") {
+			str && (str += " ");
+			str += input;
+		} else if (Array.isArray(input)) {
+			const inner = clsx(...input);
+			if (inner) {
+				str && (str += " ");
+				str += inner;
+			}
+		} else if (typeof input === "object") {
+			for (const k in input) {
+				if ((input as ClassDictionary)[k]) {
+					str && (str += " ");
+					str += k;
+				}
+			}
+		}
+	}
+	return str;
 }
 
 export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
+	return twMerge(clsx(inputs));
 }
 
 export function getServerTime() {
-    const now = new Date();
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	const now = new Date();
+	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    // Get timezone offset in minutes and convert to ±HH:MM format
-    const offsetMinutes = -now.getTimezoneOffset();
-    const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
-    const offsetMins = Math.abs(offsetMinutes) % 60;
-    const sign = offsetMinutes >= 0 ? '+' : '-';
-    const offsetStr = `${sign}${String(offsetHours).padStart(2, '0')}:${String(offsetMins).padStart(2, '0')}`;
+	// Get timezone offset in minutes and convert to ±HH:MM format
+	const offsetMinutes = -now.getTimezoneOffset();
+	const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+	const offsetMins = Math.abs(offsetMinutes) % 60;
+	const sign = offsetMinutes >= 0 ? "+" : "-";
+	const offsetStr = `${sign}${String(offsetHours).padStart(2, "0")}:${String(offsetMins).padStart(2, "0")}`;
 
-    // Convert UTC time to local time by adding the offset
-    const localTime = new Date(now.getTime() + offsetMinutes * 60 * 1000);
-    const timestamp = localTime.toISOString().slice(0, -1) + offsetStr;
+	// Convert UTC time to local time by adding the offset
+	const localTime = new Date(now.getTime() + offsetMinutes * 60 * 1000);
+	const timestamp = localTime.toISOString().slice(0, -1) + offsetStr;
 
-    return { timestamp, timezone: timeZone };
+	return { timestamp, timezone: timeZone };
 }

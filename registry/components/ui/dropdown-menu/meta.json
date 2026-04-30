@@ -1,14 +1,14 @@
 {
-  "name": "dropdown-menu",
-  "description": "A context-managed dropdown menu with trigger, content, items, and separator.",
-  "dependencies": [],
-  "files": [
-    "dropdown-menu.svelte",
-    "dropdown-menu-trigger.svelte",
-    "dropdown-menu-content.svelte",
-    "dropdown-menu-item.svelte",
-    "dropdown-menu-separator.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "dropdown-menu",
+	"description": "A context-managed dropdown menu with trigger, content, items, and separator.",
+	"dependencies": [],
+	"files": [
+		"dropdown-menu.svelte",
+		"dropdown-menu-trigger.svelte",
+		"dropdown-menu-content.svelte",
+		"dropdown-menu-item.svelte",
+		"dropdown-menu-separator.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

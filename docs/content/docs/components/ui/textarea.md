@@ -26,8 +26,8 @@ A multi-line text input with bindable value and auto-growing height.
 
 ```svelte
 <script lang="ts">
-  import { Textarea } from "$lib/components/ui/textarea";
-  let message = $state("");
+	import { Textarea } from "$lib/components/ui/textarea";
+	let message = $state("");
 </script>
 
 <Textarea bind:value={message} placeholder="Type your message..." />

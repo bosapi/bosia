@@ -14,13 +14,13 @@ A compound select component built on `role="combobox"` / `role="listbox"` with k
 
 ## Select Props
 
-| Prop       | Type      | Default     |
-| ---------- | --------- | ----------- |
+| Prop       | Type      | Default                |
+| ---------- | --------- | ---------------------- |
 | `value`    | `string`  | `undefined` (bindable) |
-| `name`     | `string`  | —           |
-| `disabled` | `boolean` | `false`     |
-| `required` | `boolean` | `false`     |
-| `class`    | `string`  | `""`        |
+| `name`     | `string`  | —                      |
+| `disabled` | `boolean` | `false`                |
+| `required` | `boolean` | `false`                |
+| `class`    | `string`  | `""`                   |
 
 ## SelectTrigger Props
 
@@ -37,41 +37,44 @@ A compound select component built on `role="combobox"` / `role="listbox"` with k
 
 ## SelectContent Props
 
-| Prop    | Type                             | Default   |
-| ------- | -------------------------------- | --------- |
+| Prop    | Type                               | Default   |
+| ------- | ---------------------------------- | --------- |
 | `align` | `"start"` \| `"end"` \| `"center"` | `"start"` |
-| `class` | `string`                         | `""`      |
+| `class` | `string`                           | `""`      |
 
 ## SelectItem Props
 
-| Prop       | Type      | Default     |
-| ---------- | --------- | ----------- |
-| `value`    | `string`  | required    |
-| `label`    | `string`  | —           |
-| `disabled` | `boolean` | `false`     |
-| `class`    | `string`  | `""`        |
+| Prop       | Type      | Default  |
+| ---------- | --------- | -------- |
+| `value`    | `string`  | required |
+| `label`    | `string`  | —        |
+| `disabled` | `boolean` | `false`  |
+| `class`    | `string`  | `""`     |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import {
-    Select, SelectTrigger, SelectValue,
-    SelectContent, SelectItem,
-  } from "$lib/components/ui/select";
+	import {
+		Select,
+		SelectTrigger,
+		SelectValue,
+		SelectContent,
+		SelectItem,
+	} from "$lib/components/ui/select";
 
-  let value = $state("apple");
+	let value = $state("apple");
 </script>
 
 <Select bind:value>
-  <SelectTrigger class="w-[200px]">
-    <SelectValue placeholder="Pick a fruit" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="apple" label="Apple" />
-    <SelectItem value="banana" label="Banana" />
-    <SelectItem value="mango" label="Mango" />
-  </SelectContent>
+	<SelectTrigger class="w-[200px]">
+		<SelectValue placeholder="Pick a fruit" />
+	</SelectTrigger>
+	<SelectContent>
+		<SelectItem value="apple" label="Apple" />
+		<SelectItem value="banana" label="Banana" />
+		<SelectItem value="mango" label="Mango" />
+	</SelectContent>
 </Select>
 ```
 
@@ -81,16 +84,16 @@ Use `SelectGroup` and `SelectLabel` to organize items into sections.
 
 ```svelte
 <SelectContent>
-  <SelectGroup>
-    <SelectLabel>Fruits</SelectLabel>
-    <SelectItem value="apple" label="Apple" />
-    <SelectItem value="banana" label="Banana" />
-  </SelectGroup>
-  <SelectSeparator />
-  <SelectGroup>
-    <SelectLabel>Vegetables</SelectLabel>
-    <SelectItem value="carrot" label="Carrot" />
-  </SelectGroup>
+	<SelectGroup>
+		<SelectLabel>Fruits</SelectLabel>
+		<SelectItem value="apple" label="Apple" />
+		<SelectItem value="banana" label="Banana" />
+	</SelectGroup>
+	<SelectSeparator />
+	<SelectGroup>
+		<SelectLabel>Vegetables</SelectLabel>
+		<SelectItem value="carrot" label="Carrot" />
+	</SelectGroup>
 </SelectContent>
 ```
 
@@ -101,18 +104,18 @@ Disable the entire select or individual items.
 ```svelte
 <!-- Disable the whole select -->
 <Select disabled value="apple">
-  <SelectTrigger class="w-[200px]">
-    <SelectValue />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="apple" label="Apple" />
-  </SelectContent>
+	<SelectTrigger class="w-[200px]">
+		<SelectValue />
+	</SelectTrigger>
+	<SelectContent>
+		<SelectItem value="apple" label="Apple" />
+	</SelectContent>
 </Select>
 
 <!-- Disable one item -->
 <SelectContent>
-  <SelectItem value="apple" label="Apple" />
-  <SelectItem value="banana" label="Banana" disabled />
+	<SelectItem value="apple" label="Apple" />
+	<SelectItem value="banana" label="Banana" disabled />
 </SelectContent>
 ```
 
@@ -122,23 +125,23 @@ When a `name` prop is provided, a hidden `<input>` is rendered for native form s
 
 ```svelte
 <form method="POST">
-  <Select name="fruit" value="apple">
-    <SelectTrigger class="w-[200px]">
-      <SelectValue />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="apple" label="Apple" />
-      <SelectItem value="banana" label="Banana" />
-    </SelectContent>
-  </Select>
-  <button type="submit">Submit</button>
+	<Select name="fruit" value="apple">
+		<SelectTrigger class="w-[200px]">
+			<SelectValue />
+		</SelectTrigger>
+		<SelectContent>
+			<SelectItem value="apple" label="Apple" />
+			<SelectItem value="banana" label="Banana" />
+		</SelectContent>
+	</Select>
+	<button type="submit">Submit</button>
 </form>
 ```
 
 ## Keyboard Navigation
 
-| Key | Action |
-| --- | ------ |
+| Key                     | Action                   |
+| ----------------------- | ------------------------ |
 | `ArrowDown` / `ArrowUp` | Move focus between items |
-| `Enter` / `Space` | Select the focused item |
-| `Escape` | Close the dropdown |
+| `Enter` / `Space`       | Select the focused item  |
+| `Escape`                | Close the dropdown       |

@@ -14,69 +14,69 @@ Input OTP renders a row of character cells that feel like separate boxes but beh
 
 ## Sub-components
 
-| Component | Purpose |
-|---|---|
-| `InputOTP` | Root container with a hidden `<input>` overlay that owns focus, caret, and selection. |
-| `InputOTPGroup` | Visual grouping for a sequence of slots. |
-| `InputOTPSlot` | Single character cell bound to an `index` into the current value. |
-| `InputOTPSeparator` | Visual divider between groups (defaults to a minus glyph). |
+| Component           | Purpose                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| `InputOTP`          | Root container with a hidden `<input>` overlay that owns focus, caret, and selection. |
+| `InputOTPGroup`     | Visual grouping for a sequence of slots.                                              |
+| `InputOTPSlot`      | Single character cell bound to an `index` into the current value.                     |
+| `InputOTPSeparator` | Visual divider between groups (defaults to a minus glyph).                            |
 
 ## Props
 
 ### InputOTP
 
-| Prop | Type | Default |
-|---|---|---|
-| `value` | `string` (bindable) | `""` |
-| `maxlength` | `number` | `6` |
-| `pattern` | `RegExp` | `undefined` |
-| `disabled` | `boolean` | `false` |
-| `name` | `string` | `undefined` |
-| `id` | `string` | `undefined` |
-| `autocomplete` | `string` | `"one-time-code"` |
-| `inputmode` | `"numeric" \| "text" \| ...` | `"numeric"` |
-| `onComplete` | `(value: string) => void` | `undefined` |
-| `class` | `string` | `""` |
-| `containerClass` | `string` | `""` |
+| Prop             | Type                         | Default           |
+| ---------------- | ---------------------------- | ----------------- |
+| `value`          | `string` (bindable)          | `""`              |
+| `maxlength`      | `number`                     | `6`               |
+| `pattern`        | `RegExp`                     | `undefined`       |
+| `disabled`       | `boolean`                    | `false`           |
+| `name`           | `string`                     | `undefined`       |
+| `id`             | `string`                     | `undefined`       |
+| `autocomplete`   | `string`                     | `"one-time-code"` |
+| `inputmode`      | `"numeric" \| "text" \| ...` | `"numeric"`       |
+| `onComplete`     | `(value: string) => void`    | `undefined`       |
+| `class`          | `string`                     | `""`              |
+| `containerClass` | `string`                     | `""`              |
 
 ### InputOTPSlot
 
-| Prop | Type | Default |
-|---|---|---|
+| Prop    | Type     | Default      |
+| ------- | -------- | ------------ |
 | `index` | `number` | — (required) |
-| `class` | `string` | `""` |
+| `class` | `string` | `""`         |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-    InputOTPSeparator,
-  } from "$lib/components/ui/input-otp";
+	import {
+		InputOTP,
+		InputOTPGroup,
+		InputOTPSlot,
+		InputOTPSeparator,
+	} from "$lib/components/ui/input-otp";
 
-  let value = $state("");
+	let value = $state("");
 </script>
 
 <InputOTP
-  bind:value
-  maxlength={6}
-  pattern={/^\d*$/}
-  onComplete={(code) => console.log("submit", code)}
+	bind:value
+	maxlength={6}
+	pattern={/^\d*$/}
+	onComplete={(code) => console.log("submit", code)}
 >
-  <InputOTPGroup>
-    <InputOTPSlot index={0} />
-    <InputOTPSlot index={1} />
-    <InputOTPSlot index={2} />
-  </InputOTPGroup>
-  <InputOTPSeparator />
-  <InputOTPGroup>
-    <InputOTPSlot index={3} />
-    <InputOTPSlot index={4} />
-    <InputOTPSlot index={5} />
-  </InputOTPGroup>
+	<InputOTPGroup>
+		<InputOTPSlot index={0} />
+		<InputOTPSlot index={1} />
+		<InputOTPSlot index={2} />
+	</InputOTPGroup>
+	<InputOTPSeparator />
+	<InputOTPGroup>
+		<InputOTPSlot index={3} />
+		<InputOTPSlot index={4} />
+		<InputOTPSlot index={5} />
+	</InputOTPGroup>
 </InputOTP>
 ```
 

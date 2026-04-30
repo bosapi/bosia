@@ -19,7 +19,7 @@ Add the `<Toaster />` component to your root layout so toasts can render from an
 ```svelte
 <!-- src/routes/+layout.svelte -->
 <script lang="ts">
-  import { Toaster } from "$lib/components/ui/sonner";
+	import { Toaster } from "$lib/components/ui/sonner";
 </script>
 
 <Toaster />
@@ -31,28 +31,26 @@ Add the `<Toaster />` component to your root layout so toasts can render from an
 
 ### Toaster
 
-| Prop         | Type                                                                 | Default          |
-| ------------ | -------------------------------------------------------------------- | ---------------- |
-| `position`   | `"top-left"` \| `"top-right"` \| `"bottom-left"` \| `"bottom-right"` \| `"top-center"` \| `"bottom-center"` | `"bottom-right"` |
-| `class`      | `string`                                                             | `""`             |
+| Prop       | Type                                                                                                        | Default          |
+| ---------- | ----------------------------------------------------------------------------------------------------------- | ---------------- |
+| `position` | `"top-left"` \| `"top-right"` \| `"bottom-left"` \| `"bottom-right"` \| `"top-center"` \| `"bottom-center"` | `"bottom-right"` |
+| `class`    | `string`                                                                                                    | `""`             |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import { toast } from "$lib/components/ui/sonner";
+	import { toast } from "$lib/components/ui/sonner";
 </script>
 
-<button onclick={() => toast("Hello world!")}>
-  Show Toast
-</button>
+<button onclick={() => toast("Hello world!")}> Show Toast </button>
 ```
 
 ## Variants
 
 ```svelte
 <script lang="ts">
-  import { toast } from "$lib/components/ui/sonner";
+	import { toast } from "$lib/components/ui/sonner";
 </script>
 
 <button onclick={() => toast("Default toast")}>Default</button>
@@ -65,10 +63,13 @@ Add the `<Toaster />` component to your root layout so toasts can render from an
 ## With Description
 
 ```svelte
-<button onclick={() => toast("Event created", {
-  description: "Monday, January 3rd at 6:00pm",
-})}>
-  Show Toast
+<button
+	onclick={() =>
+		toast("Event created", {
+			description: "Monday, January 3rd at 6:00pm",
+		})}
+>
+	Show Toast
 </button>
 ```
 
@@ -76,10 +77,10 @@ Add the `<Toaster />` component to your root layout so toasts can render from an
 
 ```svelte
 <script lang="ts">
-  import { toast } from "$lib/components/ui/sonner";
+	import { toast } from "$lib/components/ui/sonner";
 
-  const id = toast("Processing...");
-  // Later:
-  toast.dismiss(id);
+	const id = toast("Processing...");
+	// Later:
+	toast.dismiss(id);
 </script>
 ```

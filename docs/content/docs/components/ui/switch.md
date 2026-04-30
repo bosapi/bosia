@@ -27,8 +27,8 @@ A toggle switch built on a native `<button>` with `role="switch"`, featuring a p
 
 ```svelte
 <script lang="ts">
-  import { Switch } from "$lib/components/ui/switch";
-  let enabled = $state(false);
+	import { Switch } from "$lib/components/ui/switch";
+	let enabled = $state(false);
 </script>
 
 <Switch bind:checked={enabled} />
@@ -38,13 +38,13 @@ A toggle switch built on a native `<button>` with `role="switch"`, featuring a p
 
 ```svelte
 <script lang="ts">
-  import { Switch } from "$lib/components/ui/switch";
-  import { Label } from "$lib/components/ui/label";
+	import { Switch } from "$lib/components/ui/switch";
+	import { Label } from "$lib/components/ui/label";
 </script>
 
 <div class="flex items-center gap-2">
-  <Switch id="airplane" />
-  <Label for="airplane">Airplane Mode</Label>
+	<Switch id="airplane" />
+	<Label for="airplane">Airplane Mode</Label>
 </div>
 ```
 
@@ -60,7 +60,7 @@ When a `name` prop is provided, a hidden `<input type="checkbox">` is rendered f
 
 ```svelte
 <form method="POST">
-  <Switch name="notifications" value="yes" />
-  <button type="submit">Save</button>
+	<Switch name="notifications" value="yes" />
+	<button type="submit">Save</button>
 </form>
 ```

@@ -42,20 +42,18 @@ Renders conditionally when open. Has `role="region"` and `aria-labelledby` point
 
 ```svelte
 <script lang="ts">
-  import {
-    Collapsible,
-    CollapsibleTrigger,
-    CollapsibleContent,
-  } from "$lib/components/ui/collapsible";
+	import {
+		Collapsible,
+		CollapsibleTrigger,
+		CollapsibleContent,
+	} from "$lib/components/ui/collapsible";
 
-  let open = $state(false);
+	let open = $state(false);
 </script>
 
 <Collapsible bind:open>
-  <CollapsibleTrigger>Toggle</CollapsibleTrigger>
-  <CollapsibleContent>
-    Hidden content revealed on toggle.
-  </CollapsibleContent>
+	<CollapsibleTrigger>Toggle</CollapsibleTrigger>
+	<CollapsibleContent>Hidden content revealed on toggle.</CollapsibleContent>
 </Collapsible>
 ```
 
@@ -63,20 +61,18 @@ Renders conditionally when open. Has `role="region"` and `aria-labelledby` point
 
 ```svelte
 <Collapsible disabled>
-  <CollapsibleTrigger>Cannot toggle</CollapsibleTrigger>
-  <CollapsibleContent>
-    This content is never shown.
-  </CollapsibleContent>
+	<CollapsibleTrigger>Cannot toggle</CollapsibleTrigger>
+	<CollapsibleContent>This content is never shown.</CollapsibleContent>
 </Collapsible>
 ```
 
 ## Accessibility
 
-| Attribute          | Element | Value                          |
-| ------------------ | ------- | ------------------------------ |
-| `aria-expanded`    | Trigger | `true` / `false`               |
-| `aria-controls`    | Trigger | Points to content `id`         |
-| `role="region"`    | Content | Landmark for screen readers    |
-| `aria-labelledby`  | Content | Points to trigger `id`         |
-| `data-state`       | All     | `"open"` / `"closed"`          |
-| `data-disabled`    | Root/Trigger | Present when disabled      |
+| Attribute         | Element      | Value                       |
+| ----------------- | ------------ | --------------------------- |
+| `aria-expanded`   | Trigger      | `true` / `false`            |
+| `aria-controls`   | Trigger      | Points to content `id`      |
+| `role="region"`   | Content      | Landmark for screen readers |
+| `aria-labelledby` | Content      | Points to trigger `id`      |
+| `data-state`      | All          | `"open"` / `"closed"`       |
+| `data-disabled`   | Root/Trigger | Present when disabled       |

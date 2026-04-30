@@ -14,19 +14,19 @@ Augments native scroll behavior with a custom-styled scrollbar.
 
 ## Props
 
-| Prop | Type | Default |
-| ---- | ---- | ------- |
+| Prop          | Type                                   | Default      |
+| ------------- | -------------------------------------- | ------------ |
 | `orientation` | `"vertical" \| "horizontal" \| "both"` | `"vertical"` |
-| `class` | `string` | `""` |
+| `class`       | `string`                               | `""`         |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import { ScrollArea } from "$lib/components/ui/scroll-area";
+	import { ScrollArea } from "$lib/components/ui/scroll-area";
 </script>
 
 <ScrollArea class="h-48">
-  <!-- content -->
+	<!-- content -->
 </ScrollArea>
 ```

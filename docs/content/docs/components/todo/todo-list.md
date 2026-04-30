@@ -19,10 +19,10 @@ Renders a list of todos using `TodoItem`, with an empty state and a completion c
 
 ```svelte
 <script lang="ts">
-  import { TodoList } from "$lib/components/todo";
-  import type { Todo } from "$lib/features/todo/types";
+	import { TodoList } from "$lib/components/todo";
+	import type { Todo } from "$lib/features/todo/types";
 
-  let { todos }: { todos: Todo[] } = $props();
+	let { todos }: { todos: Todo[] } = $props();
 </script>
 
 <TodoList {todos} />

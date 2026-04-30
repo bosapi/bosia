@@ -1,7 +1,7 @@
 {
-  "name": "spinner",
-  "description": "An animated loading indicator.",
-  "dependencies": [],
-  "files": ["spinner.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "spinner",
+	"description": "An animated loading indicator.",
+	"dependencies": [],
+	"files": ["spinner.svelte", "index.ts"],
+	"npmDeps": {}
 }

@@ -11,9 +11,9 @@ Scaffold a new Bosia project.
 bosia create <name> [--template <template>]
 ```
 
-| Option       | Description                              |
-| ------------ | ---------------------------------------- |
-| `<name>`     | Project directory name                   |
+| Option       | Description                                   |
+| ------------ | --------------------------------------------- |
+| `<name>`     | Project directory name                        |
 | `--template` | Skip the picker: `default`, `demo`, or `todo` |
 
 **Templates:**

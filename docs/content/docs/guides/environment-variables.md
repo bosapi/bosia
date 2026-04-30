@@ -18,12 +18,12 @@ System environment variables always take highest precedence — `.env` files nev
 
 Variable names control where and when they're available:
 
-| Prefix            | Client | Server | Timing     | Example                    |
-| ----------------- | ------ | ------ | ---------- | -------------------------- |
-| `PUBLIC_STATIC_`  | Yes    | Yes    | Build-time | `PUBLIC_STATIC_APP_NAME`   |
-| `PUBLIC_`         | Yes    | Yes    | Runtime    | `PUBLIC_API_URL`           |
-| `STATIC_`         | No     | Yes    | Build-time | `STATIC_BUILD_ID`          |
-| *(no prefix)*     | No     | Yes    | Runtime    | `DATABASE_URL`             |
+| Prefix           | Client | Server | Timing     | Example                  |
+| ---------------- | ------ | ------ | ---------- | ------------------------ |
+| `PUBLIC_STATIC_` | Yes    | Yes    | Build-time | `PUBLIC_STATIC_APP_NAME` |
+| `PUBLIC_`        | Yes    | Yes    | Runtime    | `PUBLIC_API_URL`         |
+| `STATIC_`        | No     | Yes    | Build-time | `STATIC_BUILD_ID`        |
+| _(no prefix)_    | No     | Yes    | Runtime    | `DATABASE_URL`           |
 
 - **Build-time** variables are inlined during `bosia build` — changing them requires a rebuild
 - **Runtime** variables are read from `process.env` on each request
@@ -43,21 +43,21 @@ Only variables declared in your `.env` files are available through this import. 
 
 These variables are reserved by Bosia and control framework behavior:
 
-| Variable                | Default   | Description                                      |
-| ----------------------- | --------- | ------------------------------------------------ |
-| `PORT`                  | `9000`    | Server port                                      |
-| `NODE_ENV`              | —         | `development` or `production`                    |
-| `BODY_SIZE_LIMIT`       | `512K`    | Max request body size (supports K, M, G, Infinity) |
-| `LOAD_TIMEOUT`          | —         | Timeout for `load()` in ms                       |
-| `METADATA_TIMEOUT`      | —         | Timeout for `metadata()` in ms                   |
-| `PRERENDER_TIMEOUT`     | —         | Timeout for prerender fetch in ms                |
-| `CSRF_ALLOWED_ORIGINS`  | —         | Comma-separated allowed origins for CSRF         |
-| `CORS_ALLOWED_ORIGINS`  | —         | Comma-separated allowed origins for CORS         |
-| `CORS_ALLOWED_METHODS`  | —         | Comma-separated allowed methods                  |
-| `CORS_ALLOWED_HEADERS`  | —         | Comma-separated allowed headers                  |
-| `CORS_EXPOSED_HEADERS`  | —         | Comma-separated exposed headers                  |
-| `CORS_CREDENTIALS`      | `false`   | Set to `"true"` to allow credentials             |
-| `CORS_MAX_AGE`          | `86400`   | Preflight cache duration in seconds              |
+| Variable               | Default | Description                                        |
+| ---------------------- | ------- | -------------------------------------------------- |
+| `PORT`                 | `9000`  | Server port                                        |
+| `NODE_ENV`             | —       | `development` or `production`                      |
+| `BODY_SIZE_LIMIT`      | `512K`  | Max request body size (supports K, M, G, Infinity) |
+| `LOAD_TIMEOUT`         | —       | Timeout for `load()` in ms                         |
+| `METADATA_TIMEOUT`     | —       | Timeout for `metadata()` in ms                     |
+| `PRERENDER_TIMEOUT`    | —       | Timeout for prerender fetch in ms                  |
+| `CSRF_ALLOWED_ORIGINS` | —       | Comma-separated allowed origins for CSRF           |
+| `CORS_ALLOWED_ORIGINS` | —       | Comma-separated allowed origins for CORS           |
+| `CORS_ALLOWED_METHODS` | —       | Comma-separated allowed methods                    |
+| `CORS_ALLOWED_HEADERS` | —       | Comma-separated allowed headers                    |
+| `CORS_EXPOSED_HEADERS` | —       | Comma-separated exposed headers                    |
+| `CORS_CREDENTIALS`     | `false` | Set to `"true"` to allow credentials               |
+| `CORS_MAX_AGE`         | `86400` | Preflight cache duration in seconds                |
 
 Framework variables are accessed via `process.env` directly, not through `$env`.
 

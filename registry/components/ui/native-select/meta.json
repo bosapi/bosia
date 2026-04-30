@@ -1,7 +1,12 @@
 {
-  "name": "native-select",
-  "description": "A styled native HTML select component.",
-  "dependencies": [],
-  "files": ["native-select.svelte", "native-select-option.svelte", "native-select-optgroup.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "native-select",
+	"description": "A styled native HTML select component.",
+	"dependencies": [],
+	"files": [
+		"native-select.svelte",
+		"native-select-option.svelte",
+		"native-select-optgroup.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

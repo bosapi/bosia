@@ -5,206 +5,206 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: hsl(var(--sidebar, var(--background)));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground, var(--foreground)));
+	--color-background: hsl(var(--background));
+	--color-foreground: hsl(var(--foreground));
+	--color-card: hsl(var(--card));
+	--color-card-foreground: hsl(var(--card-foreground));
+	--color-popover: hsl(var(--popover));
+	--color-popover-foreground: hsl(var(--popover-foreground));
+	--color-primary: hsl(var(--primary));
+	--color-primary-foreground: hsl(var(--primary-foreground));
+	--color-secondary: hsl(var(--secondary));
+	--color-secondary-foreground: hsl(var(--secondary-foreground));
+	--color-muted: hsl(var(--muted));
+	--color-muted-foreground: hsl(var(--muted-foreground));
+	--color-accent: hsl(var(--accent));
+	--color-accent-foreground: hsl(var(--accent-foreground));
+	--color-destructive: hsl(var(--destructive));
+	--color-destructive-foreground: hsl(var(--destructive-foreground));
+	--color-border: hsl(var(--border));
+	--color-input: hsl(var(--input));
+	--color-ring: hsl(var(--ring));
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--color-sidebar: hsl(var(--sidebar, var(--background)));
+	--color-sidebar-foreground: hsl(var(--sidebar-foreground, var(--foreground)));
 }
 
 /* ─── Light Theme (Default) ─────────────────────────────── */
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
-  --radius: 0.5rem;
+	--background: 0 0% 100%;
+	--foreground: 222.2 84% 4.9%;
+	--card: 0 0% 100%;
+	--card-foreground: 222.2 84% 4.9%;
+	--popover: 0 0% 100%;
+	--popover-foreground: 222.2 84% 4.9%;
+	--primary: 222.2 47.4% 11.2%;
+	--primary-foreground: 210 40% 98%;
+	--secondary: 210 40% 96.1%;
+	--secondary-foreground: 222.2 47.4% 11.2%;
+	--muted: 210 40% 96.1%;
+	--muted-foreground: 215.4 16.3% 46.9%;
+	--accent: 210 40% 96.1%;
+	--accent-foreground: 222.2 47.4% 11.2%;
+	--destructive: 0 84.2% 60.2%;
+	--destructive-foreground: 210 40% 98%;
+	--border: 214.3 31.8% 91.4%;
+	--input: 214.3 31.8% 91.4%;
+	--ring: 222.2 84% 4.9%;
+	--radius: 0.5rem;
 }
 
 /* ─── Dark Theme ─────────────────────────────────────────── */
 
 .dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 212.7 26.8% 83.9%;
+	--background: 222.2 84% 4.9%;
+	--foreground: 210 40% 98%;
+	--card: 222.2 84% 4.9%;
+	--card-foreground: 210 40% 98%;
+	--popover: 222.2 84% 4.9%;
+	--popover-foreground: 210 40% 98%;
+	--primary: 210 40% 98%;
+	--primary-foreground: 222.2 47.4% 11.2%;
+	--secondary: 217.2 32.6% 17.5%;
+	--secondary-foreground: 210 40% 98%;
+	--muted: 217.2 32.6% 17.5%;
+	--muted-foreground: 215 20.2% 65.1%;
+	--accent: 217.2 32.6% 17.5%;
+	--accent-foreground: 210 40% 98%;
+	--destructive: 0 62.8% 30.6%;
+	--destructive-foreground: 210 40% 98%;
+	--border: 217.2 32.6% 17.5%;
+	--input: 217.2 32.6% 17.5%;
+	--ring: 212.7 26.8% 83.9%;
 }
 
 /* ─── Base Styles ────────────────────────────────────────── */
 
 @layer base {
-  * {
-    border-color: theme(--color-border);
-  }
+	* {
+		border-color: theme(--color-border);
+	}
 
-  body {
-    background-color: theme(--color-background);
-    color: theme(--color-foreground);
-    font-family:
-      "Inter",
-      system-ui,
-      -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      Roboto,
-      "Helvetica Neue",
-      Arial,
-      sans-serif;
-  }
+	body {
+		background-color: theme(--color-background);
+		color: theme(--color-foreground);
+		font-family:
+			"Inter",
+			system-ui,
+			-apple-system,
+			BlinkMacSystemFont,
+			"Segoe UI",
+			Roboto,
+			"Helvetica Neue",
+			Arial,
+			sans-serif;
+	}
 }
 
 /* ─── Prose Styles (Rendered Markdown) ───────────────────── */
 
 .prose {
-  line-height: 1.75;
-  color: hsl(var(--foreground));
+	line-height: 1.75;
+	color: hsl(var(--foreground));
 }
 
 .prose h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-top: 0;
-  margin-bottom: 1rem;
-  line-height: 1.2;
+	font-size: 2rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 1rem;
+	line-height: 1.2;
 }
 
 .prose h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.3rem;
-  border-bottom: 1px solid hsl(var(--border));
-  line-height: 1.3;
+	font-size: 1.5rem;
+	font-weight: 600;
+	margin-top: 2rem;
+	margin-bottom: 0.75rem;
+	padding-bottom: 0.3rem;
+	border-bottom: 1px solid hsl(var(--border));
+	line-height: 1.3;
 }
 
 .prose h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-  line-height: 1.4;
+	font-size: 1.25rem;
+	font-weight: 600;
+	margin-top: 1.5rem;
+	margin-bottom: 0.5rem;
+	line-height: 1.4;
 }
 
 .prose h4 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-top: 1.25rem;
-  margin-bottom: 0.5rem;
+	font-size: 1.1rem;
+	font-weight: 600;
+	margin-top: 1.25rem;
+	margin-bottom: 0.5rem;
 }
 
 .prose p {
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
+	margin-top: 0.75rem;
+	margin-bottom: 0.75rem;
 }
 
 .prose a {
-  color: hsl(var(--primary));
-  text-decoration: underline;
-  text-underline-offset: 2px;
+	color: hsl(var(--primary));
+	text-decoration: underline;
+	text-underline-offset: 2px;
 }
 
 .prose a:hover {
-  opacity: 0.8;
+	opacity: 0.8;
 }
 
 .prose strong {
-  font-weight: 600;
+	font-weight: 600;
 }
 
 .prose ul {
-  list-style-type: disc;
-  padding-left: 1.5rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+	list-style-type: disc;
+	padding-left: 1.5rem;
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
 }
 
 .prose ol {
-  list-style-type: decimal;
-  padding-left: 1.5rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+	list-style-type: decimal;
+	padding-left: 1.5rem;
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
 }
 
 .prose li {
-  margin-top: 0.25rem;
-  margin-bottom: 0.25rem;
+	margin-top: 0.25rem;
+	margin-bottom: 0.25rem;
 }
 
 .prose li > ul,
 .prose li > ol {
-  margin-top: 0.25rem;
-  margin-bottom: 0.25rem;
+	margin-top: 0.25rem;
+	margin-bottom: 0.25rem;
 }
 
 .prose code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.875em;
-  background-color: hsl(var(--muted));
-  padding: 0.15rem 0.35rem;
-  border-radius: 0.25rem;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	font-size: 0.875em;
+	background-color: hsl(var(--muted));
+	padding: 0.15rem 0.35rem;
+	border-radius: 0.25rem;
 }
 
 .prose pre {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  overflow-x: auto;
-  font-size: 0.875rem;
-  line-height: 1.6;
-  background-color: hsl(var(--muted));
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+	padding: 1rem;
+	border-radius: 0.5rem;
+	overflow-x: auto;
+	font-size: 0.875rem;
+	line-height: 1.6;
+	background-color: hsl(var(--muted));
 }
 
 /* ─── Shiki Dual-Theme ────────────────────────────────────── */
@@ -214,213 +214,213 @@
 
 /* Light mode token colours (background comes from .prose pre) */
 .shiki span {
-  color: var(--shiki-light);
-  font-style: var(--shiki-light-font-style);
-  font-weight: var(--shiki-light-font-weight);
-  text-decoration: var(--shiki-light-text-decoration);
+	color: var(--shiki-light);
+	font-style: var(--shiki-light-font-style);
+	font-weight: var(--shiki-light-font-weight);
+	text-decoration: var(--shiki-light-text-decoration);
 }
 
 /* Dark mode: override both background and token colours */
 .dark .shiki {
-  background-color: var(--shiki-dark-bg);
+	background-color: var(--shiki-dark-bg);
 }
 
 .dark .shiki span {
-  color: var(--shiki-dark);
-  font-style: var(--shiki-dark-font-style);
-  font-weight: var(--shiki-dark-font-weight);
-  text-decoration: var(--shiki-dark-text-decoration);
+	color: var(--shiki-dark);
+	font-style: var(--shiki-dark-font-style);
+	font-weight: var(--shiki-dark-font-weight);
+	text-decoration: var(--shiki-dark-text-decoration);
 }
 
 .prose pre code {
-  background: none;
-  padding: 0;
-  font-size: inherit;
-  color: inherit;
+	background: none;
+	padding: 0;
+	font-size: inherit;
+	color: inherit;
 }
 
 .prose table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
+	width: 100%;
+	border-collapse: collapse;
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+	font-size: 0.875rem;
 }
 
 .prose th {
-  text-align: left;
-  font-weight: 600;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 2px solid hsl(var(--border));
+	text-align: left;
+	font-weight: 600;
+	padding: 0.5rem 0.75rem;
+	border-bottom: 2px solid hsl(var(--border));
 }
 
 .prose td {
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid hsl(var(--border));
+	padding: 0.5rem 0.75rem;
+	border-bottom: 1px solid hsl(var(--border));
 }
 
 .prose tr:last-child td {
-  border-bottom: none;
+	border-bottom: none;
 }
 
 .prose blockquote {
-  border-left: 3px solid hsl(var(--border));
-  padding-left: 1rem;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  color: hsl(var(--muted-foreground));
-  font-style: italic;
+	border-left: 3px solid hsl(var(--border));
+	padding-left: 1rem;
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+	color: hsl(var(--muted-foreground));
+	font-style: italic;
 }
 
 .prose hr {
-  border: none;
-  border-top: 1px solid hsl(var(--border));
-  margin-top: 2rem;
-  margin-bottom: 2rem;
+	border: none;
+	border-top: 1px solid hsl(var(--border));
+	margin-top: 2rem;
+	margin-bottom: 2rem;
 }
 
 .prose img {
-  max-width: 100%;
-  border-radius: 0.5rem;
+	max-width: 100%;
+	border-radius: 0.5rem;
 }
 
 /* Heading anchors */
 .prose h2[id],
 .prose h3[id],
 .prose h4[id] {
-  scroll-margin-top: 5rem;
+	scroll-margin-top: 5rem;
 }
 
 /* ─── Component Preview ──────────────────────────────────── */
 
 .bosia-preview {
-  --radius: 0.5rem;
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
+	--radius: 0.5rem;
+	--background: 0 0% 100%;
+	--foreground: 222.2 84% 4.9%;
+	--card: 0 0% 100%;
+	--card-foreground: 222.2 84% 4.9%;
+	--popover: 0 0% 100%;
+	--popover-foreground: 222.2 84% 4.9%;
+	--primary: 222.2 47.4% 11.2%;
+	--primary-foreground: 210 40% 98%;
+	--secondary: 210 40% 96.1%;
+	--secondary-foreground: 222.2 47.4% 11.2%;
+	--muted: 210 40% 96.1%;
+	--muted-foreground: 215.4 16.3% 46.9%;
+	--accent: 210 40% 96.1%;
+	--accent-foreground: 222.2 47.4% 11.2%;
+	--destructive: 0 84.2% 60.2%;
+	--destructive-foreground: 210 40% 98%;
+	--border: 214.3 31.8% 91.4%;
+	--input: 214.3 31.8% 91.4%;
+	--ring: 222.2 84% 4.9%;
 
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(222.2 84% 4.9%);
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222.2 84% 4.9%);
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222.2 84% 4.9%);
-  --color-primary: hsl(222.2 47.4% 11.2%);
-  --color-primary-foreground: hsl(210 40% 98%);
-  --color-secondary: hsl(210 40% 96.1%);
-  --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
-  --color-muted: hsl(210 40% 96.1%);
-  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
-  --color-accent: hsl(210 40% 96.1%);
-  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(210 40% 98%);
-  --color-border: hsl(214.3 31.8% 91.4%);
-  --color-input: hsl(214.3 31.8% 91.4%);
-  --color-ring: hsl(222.2 84% 4.9%);
+	--color-background: hsl(0 0% 100%);
+	--color-foreground: hsl(222.2 84% 4.9%);
+	--color-card: hsl(0 0% 100%);
+	--color-card-foreground: hsl(222.2 84% 4.9%);
+	--color-popover: hsl(0 0% 100%);
+	--color-popover-foreground: hsl(222.2 84% 4.9%);
+	--color-primary: hsl(222.2 47.4% 11.2%);
+	--color-primary-foreground: hsl(210 40% 98%);
+	--color-secondary: hsl(210 40% 96.1%);
+	--color-secondary-foreground: hsl(222.2 47.4% 11.2%);
+	--color-muted: hsl(210 40% 96.1%);
+	--color-muted-foreground: hsl(215.4 16.3% 46.9%);
+	--color-accent: hsl(210 40% 96.1%);
+	--color-accent-foreground: hsl(222.2 47.4% 11.2%);
+	--color-destructive: hsl(0 84.2% 60.2%);
+	--color-destructive-foreground: hsl(210 40% 98%);
+	--color-border: hsl(214.3 31.8% 91.4%);
+	--color-input: hsl(214.3 31.8% 91.4%);
+	--color-ring: hsl(222.2 84% 4.9%);
 
-  color: var(--color-foreground);
-  background-color: var(--color-background);
-  line-height: 1.5;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+	color: var(--color-foreground);
+	background-color: var(--color-background);
+	line-height: 1.5;
+	font-family: ui-sans-serif, system-ui, sans-serif;
 }
 
 .dark .bosia-preview {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 212.7 26.8% 83.9%;
+	--background: 222.2 84% 4.9%;
+	--foreground: 210 40% 98%;
+	--card: 222.2 84% 4.9%;
+	--card-foreground: 210 40% 98%;
+	--popover: 222.2 84% 4.9%;
+	--popover-foreground: 210 40% 98%;
+	--primary: 210 40% 98%;
+	--primary-foreground: 222.2 47.4% 11.2%;
+	--secondary: 217.2 32.6% 17.5%;
+	--secondary-foreground: 210 40% 98%;
+	--muted: 217.2 32.6% 17.5%;
+	--muted-foreground: 215 20.2% 65.1%;
+	--accent: 217.2 32.6% 17.5%;
+	--accent-foreground: 210 40% 98%;
+	--destructive: 0 62.8% 30.6%;
+	--destructive-foreground: 210 40% 98%;
+	--border: 217.2 32.6% 17.5%;
+	--input: 217.2 32.6% 17.5%;
+	--ring: 212.7 26.8% 83.9%;
 
-  --color-background: hsl(222.2 84% 4.9%);
-  --color-foreground: hsl(210 40% 98%);
-  --color-card: hsl(222.2 84% 4.9%);
-  --color-card-foreground: hsl(210 40% 98%);
-  --color-popover: hsl(222.2 84% 4.9%);
-  --color-popover-foreground: hsl(210 40% 98%);
-  --color-primary: hsl(210 40% 98%);
-  --color-primary-foreground: hsl(222.2 47.4% 11.2%);
-  --color-secondary: hsl(217.2 32.6% 17.5%);
-  --color-secondary-foreground: hsl(210 40% 98%);
-  --color-muted: hsl(217.2 32.6% 17.5%);
-  --color-muted-foreground: hsl(215 20.2% 65.1%);
-  --color-accent: hsl(217.2 32.6% 17.5%);
-  --color-accent-foreground: hsl(210 40% 98%);
-  --color-destructive: hsl(0 62.8% 30.6%);
-  --color-destructive-foreground: hsl(210 40% 98%);
-  --color-border: hsl(217.2 32.6% 17.5%);
-  --color-input: hsl(217.2 32.6% 17.5%);
-  --color-ring: hsl(212.7 26.8% 83.9%);
+	--color-background: hsl(222.2 84% 4.9%);
+	--color-foreground: hsl(210 40% 98%);
+	--color-card: hsl(222.2 84% 4.9%);
+	--color-card-foreground: hsl(210 40% 98%);
+	--color-popover: hsl(222.2 84% 4.9%);
+	--color-popover-foreground: hsl(210 40% 98%);
+	--color-primary: hsl(210 40% 98%);
+	--color-primary-foreground: hsl(222.2 47.4% 11.2%);
+	--color-secondary: hsl(217.2 32.6% 17.5%);
+	--color-secondary-foreground: hsl(210 40% 98%);
+	--color-muted: hsl(217.2 32.6% 17.5%);
+	--color-muted-foreground: hsl(215 20.2% 65.1%);
+	--color-accent: hsl(217.2 32.6% 17.5%);
+	--color-accent-foreground: hsl(210 40% 98%);
+	--color-destructive: hsl(0 62.8% 30.6%);
+	--color-destructive-foreground: hsl(210 40% 98%);
+	--color-border: hsl(217.2 32.6% 17.5%);
+	--color-input: hsl(217.2 32.6% 17.5%);
+	--color-ring: hsl(212.7 26.8% 83.9%);
 }
 
 /* Scoped preflight for component previews */
 @layer base {
-  :where(.bosia-preview) *,
-  :where(.bosia-preview) *::before,
-  :where(.bosia-preview) *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    border: 0 solid;
-    border-color: var(--color-border);
-  }
+	:where(.bosia-preview) *,
+	:where(.bosia-preview) *::before,
+	:where(.bosia-preview) *::after {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+		border: 0 solid;
+		border-color: var(--color-border);
+	}
 
-  :where(.bosia-preview) button,
-  :where(.bosia-preview) input,
-  :where(.bosia-preview) select,
-  :where(.bosia-preview) textarea {
-    font: inherit;
-    color: inherit;
-    background-color: transparent;
-  }
+	:where(.bosia-preview) button,
+	:where(.bosia-preview) input,
+	:where(.bosia-preview) select,
+	:where(.bosia-preview) textarea {
+		font: inherit;
+		color: inherit;
+		background-color: transparent;
+	}
 
-  :where(.bosia-preview) a {
-    color: inherit;
-    text-decoration: inherit;
-  }
+	:where(.bosia-preview) a {
+		color: inherit;
+		text-decoration: inherit;
+	}
 
-  :where(.bosia-preview) ol,
-  :where(.bosia-preview) ul {
-    list-style: none;
-  }
+	:where(.bosia-preview) ol,
+	:where(.bosia-preview) ul {
+		list-style: none;
+	}
 
-  :where(.bosia-preview) img,
-  :where(.bosia-preview) svg {
-    display: block;
-    vertical-align: middle;
-  }
+	:where(.bosia-preview) img,
+	:where(.bosia-preview) svg {
+		display: block;
+		vertical-align: middle;
+	}
 
-  :where(.bosia-preview) button {
-    appearance: button;
-  }
+	:where(.bosia-preview) button {
+		appearance: button;
+	}
 }

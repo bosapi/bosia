@@ -16,15 +16,15 @@ A composable calendar for selecting date ranges. Built on top of the `calendar` 
 
 ### RangeCalendar
 
-| Prop | Type | Default |
-| ---- | ---- | ------- |
-| `value` | `{ start?: Date; end?: Date }` | `{ start: undefined, end: undefined }` |
-| `month` | `Date \| undefined` | `undefined` |
-| `min` | `Date \| undefined` | `undefined` |
-| `max` | `Date \| undefined` | `undefined` |
-| `disabled` | `((date: Date) => boolean) \| undefined` | `undefined` |
-| `weekStartsOn` | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6` | `0` |
-| `fixedWeeks` | `boolean` | `false` |
+| Prop           | Type                                     | Default                                |
+| -------------- | ---------------------------------------- | -------------------------------------- |
+| `value`        | `{ start?: Date; end?: Date }`           | `{ start: undefined, end: undefined }` |
+| `month`        | `Date \| undefined`                      | `undefined`                            |
+| `min`          | `Date \| undefined`                      | `undefined`                            |
+| `max`          | `Date \| undefined`                      | `undefined`                            |
+| `disabled`     | `((date: Date) => boolean) \| undefined` | `undefined`                            |
+| `weekStartsOn` | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6`        | `0`                                    |
+| `fixedWeeks`   | `boolean`                                | `false`                                |
 
 - `value` — bindable range object with `start` and `end` dates
 - `month` — bindable controlled viewed month
@@ -53,15 +53,15 @@ While selecting (start set, no end), hovering shows a **preview range** with lig
 
 ```svelte
 <script lang="ts">
-  import { RangeCalendar, RangeCalendarGrid } from "$lib/components/ui/range-calendar";
-  import { CalendarHeader } from "$lib/components/ui/calendar";
+	import { RangeCalendar, RangeCalendarGrid } from "$lib/components/ui/range-calendar";
+	import { CalendarHeader } from "$lib/components/ui/calendar";
 
-  let value = $state<{ start?: Date; end?: Date }>({ start: undefined, end: undefined });
+	let value = $state<{ start?: Date; end?: Date }>({ start: undefined, end: undefined });
 </script>
 
 <RangeCalendar bind:value class="rounded-md border">
-  <CalendarHeader />
-  <RangeCalendarGrid />
+	<CalendarHeader />
+	<RangeCalendarGrid />
 </RangeCalendar>
 ```
 
@@ -69,13 +69,13 @@ While selecting (start set, no end), hovering shows a **preview range** with lig
 
 ```svelte
 <RangeCalendar
-  bind:value
-  min={new Date(2026, 0, 1)}
-  max={new Date(2026, 11, 31)}
-  class="rounded-md border"
+	bind:value
+	min={new Date(2026, 0, 1)}
+	max={new Date(2026, 11, 31)}
+	class="rounded-md border"
 >
-  <CalendarHeader />
-  <RangeCalendarGrid />
+	<CalendarHeader />
+	<RangeCalendarGrid />
 </RangeCalendar>
 ```
 
@@ -83,21 +83,21 @@ While selecting (start set, no end), hovering shows a **preview range** with lig
 
 ```svelte
 <RangeCalendar
-  bind:value
-  disabled={(date) => date.getDay() === 0 || date.getDay() === 6}
-  class="rounded-md border"
+	bind:value
+	disabled={(date) => date.getDay() === 0 || date.getDay() === 6}
+	class="rounded-md border"
 >
-  <CalendarHeader />
-  <RangeCalendarGrid />
+	<CalendarHeader />
+	<RangeCalendarGrid />
 </RangeCalendar>
 ```
 
 ## Keyboard Navigation
 
-| Key | Action |
-| --- | ------ |
-| `ArrowLeft` / `ArrowRight` | Previous / next day |
-| `ArrowUp` / `ArrowDown` | Previous / next week |
-| `Home` / `End` | First / last day of week |
-| `PageUp` / `PageDown` | Previous / next month |
-| `Enter` / `Space` | Select focused day |
+| Key                        | Action                   |
+| -------------------------- | ------------------------ |
+| `ArrowLeft` / `ArrowRight` | Previous / next day      |
+| `ArrowUp` / `ArrowDown`    | Previous / next week     |
+| `Home` / `End`             | First / last day of week |
+| `PageUp` / `PageDown`      | Previous / next month    |
+| `Enter` / `Space`          | Select focused day       |

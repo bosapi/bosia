@@ -1,15 +1,15 @@
 {
-  "name": "empty",
-  "description": "An empty state component with icon, title, description, and action slots.",
-  "dependencies": [],
-  "files": [
-    "empty.svelte",
-    "empty-header.svelte",
-    "empty-media.svelte",
-    "empty-title.svelte",
-    "empty-description.svelte",
-    "empty-content.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "empty",
+	"description": "An empty state component with icon, title, description, and action slots.",
+	"dependencies": [],
+	"files": [
+		"empty.svelte",
+		"empty-header.svelte",
+		"empty-media.svelte",
+		"empty-title.svelte",
+		"empty-description.svelte",
+		"empty-content.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

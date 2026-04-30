@@ -16,22 +16,22 @@ A context-managed tooltip with trigger and content. Shows on hover or focus afte
 
 ### Tooltip
 
-| Prop             | Type      | Default |
-| ---------------- | --------- | ------- |
-| `open`           | `boolean` | `false` |
-| `delayDuration`  | `number`  | `700`   |
-| `class`          | `string`  | `""`    |
+| Prop            | Type      | Default |
+| --------------- | --------- | ------- |
+| `open`          | `boolean` | `false` |
+| `delayDuration` | `number`  | `700`   |
+| `class`         | `string`  | `""`    |
 
 `open` is bindable with `bind:open`.
 
 ### TooltipContent
 
-| Prop          | Type                                         | Default    |
-| ------------- | -------------------------------------------- | ---------- |
-| `side`        | `"top"` \| `"right"` \| `"bottom"` \| `"left"` | `"top"`    |
-| `align`       | `"start"` \| `"center"` \| `"end"`           | `"center"` |
-| `sideOffset`  | `number`                                     | `4`        |
-| `class`       | `string`                                     | `""`       |
+| Prop         | Type                                           | Default    |
+| ------------ | ---------------------------------------------- | ---------- |
+| `side`       | `"top"` \| `"right"` \| `"bottom"` \| `"left"` | `"top"`    |
+| `align`      | `"start"` \| `"center"` \| `"end"`             | `"center"` |
+| `sideOffset` | `number`                                       | `4`        |
+| `class`      | `string`                                       | `""`       |
 
 ## Sub-components
 
@@ -43,19 +43,15 @@ A context-managed tooltip with trigger and content. Shows on hover or focus afte
 
 ```svelte
 <script lang="ts">
-  import {
-    Tooltip,
-    TooltipTrigger,
-    TooltipContent,
-  } from "$lib/components/ui/tooltip";
-  import { Button } from "$lib/components/ui/button";
+	import { Tooltip, TooltipTrigger, TooltipContent } from "$lib/components/ui/tooltip";
+	import { Button } from "$lib/components/ui/button";
 </script>
 
 <Tooltip>
-  <TooltipTrigger>
-    <Button variant="outline">Hover me</Button>
-  </TooltipTrigger>
-  <TooltipContent>Add to library</TooltipContent>
+	<TooltipTrigger>
+		<Button variant="outline">Hover me</Button>
+	</TooltipTrigger>
+	<TooltipContent>Add to library</TooltipContent>
 </Tooltip>
 ```
 
@@ -73,14 +69,14 @@ A context-managed tooltip with trigger and content. Shows on hover or focus afte
 ```svelte
 <!-- Show instantly -->
 <Tooltip delayDuration={0}>
-  <TooltipTrigger>...</TooltipTrigger>
-  <TooltipContent>No delay</TooltipContent>
+	<TooltipTrigger>...</TooltipTrigger>
+	<TooltipContent>No delay</TooltipContent>
 </Tooltip>
 
 <!-- Longer delay -->
 <Tooltip delayDuration={1500}>
-  <TooltipTrigger>...</TooltipTrigger>
-  <TooltipContent>Shows after 1.5s</TooltipContent>
+	<TooltipTrigger>...</TooltipTrigger>
+	<TooltipContent>Shows after 1.5s</TooltipContent>
 </Tooltip>
 ```
 
@@ -88,12 +84,12 @@ A context-managed tooltip with trigger and content. Shows on hover or focus afte
 
 ```svelte
 <script lang="ts">
-  let open = $state(false);
+	let open = $state(false);
 </script>
 
 <Tooltip bind:open>
-  <TooltipTrigger>...</TooltipTrigger>
-  <TooltipContent>Controlled</TooltipContent>
+	<TooltipTrigger>...</TooltipTrigger>
+	<TooltipContent>Controlled</TooltipContent>
 </Tooltip>
 
 <p>Tooltip is {open ? "visible" : "hidden"}</p>

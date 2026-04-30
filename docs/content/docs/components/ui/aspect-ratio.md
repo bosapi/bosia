@@ -22,15 +22,11 @@ Displays content within a desired ratio using the CSS padding-bottom technique.
 
 ```svelte
 <script lang="ts">
-  import { AspectRatio } from "$lib/components/ui/aspect-ratio";
+	import { AspectRatio } from "$lib/components/ui/aspect-ratio";
 </script>
 
 <AspectRatio ratio={16 / 9} class="overflow-hidden rounded-lg bg-muted">
-  <img
-    src="/my-image.jpg"
-    alt="Landscape"
-    class="h-full w-full object-cover"
-  />
+	<img src="/my-image.jpg" alt="Landscape" class="h-full w-full object-cover" />
 </AspectRatio>
 ```
 
@@ -38,8 +34,6 @@ Displays content within a desired ratio using the CSS padding-bottom technique.
 
 ```svelte
 <AspectRatio ratio={1} class="overflow-hidden rounded-lg bg-muted">
-  <div class="flex h-full w-full items-center justify-center">
-    Square content
-  </div>
+	<div class="flex h-full w-full items-center justify-center">Square content</div>
 </AspectRatio>
 ```

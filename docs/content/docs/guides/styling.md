@@ -13,11 +13,11 @@ Your global styles live in `src/app.css`:
 @import "tailwindcss";
 
 @theme {
-  --color-background: oklch(1 0 0);
-  --color-foreground: oklch(0.145 0 0);
-  --color-primary: oklch(0.205 0.064 286.3);
-  --color-primary-foreground: oklch(0.985 0 0);
-  /* ... more tokens */
+	--color-background: oklch(1 0 0);
+	--color-foreground: oklch(0.145 0 0);
+	--color-primary: oklch(0.205 0.064 286.3);
+	--color-primary-foreground: oklch(0.985 0 0);
+	/* ... more tokens */
 }
 ```
 
@@ -25,28 +25,26 @@ Your global styles live in `src/app.css`:
 
 The default template includes **shadcn-inspired semantic tokens** for a consistent design system:
 
-| Token          | Usage                          |
-| -------------- | ------------------------------ |
-| `background`   | Page background                |
-| `foreground`   | Default text color             |
-| `primary`      | Buttons, links, accents        |
-| `secondary`    | Secondary actions              |
-| `muted`        | Subtle backgrounds, disabled   |
-| `accent`       | Hover states, highlights       |
-| `destructive`  | Delete buttons, errors         |
-| `card`         | Card backgrounds               |
-| `border`       | Border colors                  |
-| `input`        | Input borders                  |
-| `ring`         | Focus rings                    |
+| Token         | Usage                        |
+| ------------- | ---------------------------- |
+| `background`  | Page background              |
+| `foreground`  | Default text color           |
+| `primary`     | Buttons, links, accents      |
+| `secondary`   | Secondary actions            |
+| `muted`       | Subtle backgrounds, disabled |
+| `accent`      | Hover states, highlights     |
+| `destructive` | Delete buttons, errors       |
+| `card`        | Card backgrounds             |
+| `border`      | Border colors                |
+| `input`       | Input borders                |
+| `ring`        | Focus rings                  |
 
 Use them with Tailwind classes:
 
 ```svelte
 <div class="bg-background text-foreground">
-  <button class="bg-primary text-primary-foreground rounded-md px-4 py-2">
-    Click me
-  </button>
-  <p class="text-muted-foreground">Subtle text</p>
+	<button class="bg-primary text-primary-foreground rounded-md px-4 py-2"> Click me </button>
+	<p class="text-muted-foreground">Subtle text</p>
 </div>
 ```
 
@@ -56,9 +54,9 @@ Dark mode is activated by adding the `.dark` class to a parent element. All desi
 
 ```css
 .dark {
-  --color-background: oklch(0.145 0 0);
-  --color-foreground: oklch(0.985 0 0);
-  /* ... dark variants */
+	--color-background: oklch(0.145 0 0);
+	--color-foreground: oklch(0.985 0 0);
+	/* ... dark variants */
 }
 ```
 
@@ -66,12 +64,12 @@ Toggle it in your layout:
 
 ```svelte
 <script>
-  let dark = $state(false);
+	let dark = $state(false);
 </script>
 
 <div class={dark ? "dark" : ""}>
-  <button onclick={() => dark = !dark}>Toggle theme</button>
-  <slot />
+	<button onclick={() => (dark = !dark)}>Toggle theme</button>
+	<slot />
 </div>
 ```
 
@@ -94,11 +92,11 @@ This is especially useful when building reusable components that accept a `class
 
 ```svelte
 <script lang="ts">
-  import { cn } from "$lib/utils";
-  let { class: className, ...props } = $props();
+	import { cn } from "$lib/utils";
+	let { class: className, ...props } = $props();
 </script>
 
 <button class={cn("bg-primary text-white rounded px-4 py-2", className)} {...props}>
-  <slot />
+	<slot />
 </button>
 ```

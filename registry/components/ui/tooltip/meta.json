@@ -1,12 +1,7 @@
 {
-  "name": "tooltip",
-  "description": "A popup that displays information related to an element on hover or focus.",
-  "dependencies": [],
-  "files": [
-    "tooltip.svelte",
-    "tooltip-trigger.svelte",
-    "tooltip-content.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "tooltip",
+	"description": "A popup that displays information related to an element on hover or focus.",
+	"dependencies": [],
+	"files": ["tooltip.svelte", "tooltip-trigger.svelte", "tooltip-content.svelte", "index.ts"],
+	"npmDeps": {}
 }

@@ -1,7 +1,7 @@
 {
-  "name": "avatar",
-  "description": "An avatar component with image and fallback slots.",
-  "dependencies": [],
-  "files": ["avatar.svelte", "avatar-fallback.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "avatar",
+	"description": "An avatar component with image and fallback slots.",
+	"dependencies": [],
+	"files": ["avatar.svelte", "avatar-fallback.svelte", "index.ts"],
+	"npmDeps": {}
 }

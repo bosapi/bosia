@@ -16,17 +16,15 @@ const isInstalledAsDep = parentDir.endsWith("node_modules");
 const HOISTED_NM = isInstalledAsDep ? parentDir : null;
 
 /** NODE_PATH value covering both nested and hoisted dependency locations */
-export const BOSIA_NODE_PATH = HOISTED_NM
-    ? [NESTED_NM, HOISTED_NM].join(":")
-    : NESTED_NM;
+export const BOSIA_NODE_PATH = HOISTED_NM ? [NESTED_NM, HOISTED_NM].join(":") : NESTED_NM;
 
 /** Find a binary from bosia's dependencies (handles hoisting) */
 export function resolveBosiaBin(name: string): string {
-    const nested = join(NESTED_NM, ".bin", name);
-    if (existsSync(nested)) return nested;
-    if (HOISTED_NM) {
-        const hoisted = join(HOISTED_NM, ".bin", name);
-        if (existsSync(hoisted)) return hoisted;
-    }
-    return nested; // fallback — will produce a clear ENOENT
+	const nested = join(NESTED_NM, ".bin", name);
+	if (existsSync(nested)) return nested;
+	if (HOISTED_NM) {
+		const hoisted = join(HOISTED_NM, ".bin", name);
+		if (existsSync(hoisted)) return hoisted;
+	}
+	return nested; // fallback — will produce a clear ENOENT
 }

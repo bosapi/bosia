@@ -1,17 +1,17 @@
 {
-  "name": "select",
-  "description": "A dropdown select component for single-value selection with groups, labels, and keyboard navigation.",
-  "dependencies": [],
-  "files": [
-    "select.svelte",
-    "select-trigger.svelte",
-    "select-value.svelte",
-    "select-content.svelte",
-    "select-item.svelte",
-    "select-group.svelte",
-    "select-label.svelte",
-    "select-separator.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "select",
+	"description": "A dropdown select component for single-value selection with groups, labels, and keyboard navigation.",
+	"dependencies": [],
+	"files": [
+		"select.svelte",
+		"select-trigger.svelte",
+		"select-value.svelte",
+		"select-content.svelte",
+		"select-item.svelte",
+		"select-group.svelte",
+		"select-label.svelte",
+		"select-separator.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

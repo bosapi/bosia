@@ -16,10 +16,10 @@ A horizontal menu bar with multiple dropdown menus. Click to open a menu, then h
 
 ### MenubarContent
 
-| Prop    | Type                                   | Default   |
-| ------- | -------------------------------------- | --------- |
-| `align` | `"start"` \| `"end"` \| `"center"`    | `"start"` |
-| `class` | `string`                               | `""`      |
+| Prop    | Type                               | Default   |
+| ------- | ---------------------------------- | --------- |
+| `align` | `"start"` \| `"end"` \| `"center"` | `"start"` |
+| `class` | `string`                           | `""`      |
 
 ## Sub-components
 
@@ -39,34 +39,41 @@ A horizontal menu bar with multiple dropdown menus. Click to open a menu, then h
 
 ```svelte
 <script lang="ts">
-  import {
-    Menubar, MenubarMenu, MenubarTrigger,
-    MenubarContent, MenubarItem,
-    MenubarSeparator, MenubarLabel, MenubarShortcut,
-    MenubarSub, MenubarSubTrigger, MenubarSubContent
-  } from "$lib/components/ui/menubar";
+	import {
+		Menubar,
+		MenubarMenu,
+		MenubarTrigger,
+		MenubarContent,
+		MenubarItem,
+		MenubarSeparator,
+		MenubarLabel,
+		MenubarShortcut,
+		MenubarSub,
+		MenubarSubTrigger,
+		MenubarSubContent,
+	} from "$lib/components/ui/menubar";
 </script>
 
 <Menubar>
-  <MenubarMenu>
-    <MenubarTrigger>File</MenubarTrigger>
-    <MenubarContent>
-      <MenubarItem>
-        New File
-        <MenubarShortcut>⌘N</MenubarShortcut>
-      </MenubarItem>
-      <MenubarSeparator />
-      <MenubarItem>Save</MenubarItem>
-    </MenubarContent>
-  </MenubarMenu>
+	<MenubarMenu>
+		<MenubarTrigger>File</MenubarTrigger>
+		<MenubarContent>
+			<MenubarItem>
+				New File
+				<MenubarShortcut>⌘N</MenubarShortcut>
+			</MenubarItem>
+			<MenubarSeparator />
+			<MenubarItem>Save</MenubarItem>
+		</MenubarContent>
+	</MenubarMenu>
 
-  <MenubarMenu>
-    <MenubarTrigger>Edit</MenubarTrigger>
-    <MenubarContent>
-      <MenubarLabel>Actions</MenubarLabel>
-      <MenubarItem>Undo</MenubarItem>
-      <MenubarItem>Redo</MenubarItem>
-    </MenubarContent>
-  </MenubarMenu>
+	<MenubarMenu>
+		<MenubarTrigger>Edit</MenubarTrigger>
+		<MenubarContent>
+			<MenubarLabel>Actions</MenubarLabel>
+			<MenubarItem>Undo</MenubarItem>
+			<MenubarItem>Redo</MenubarItem>
+		</MenubarContent>
+	</MenubarMenu>
 </Menubar>
 ```

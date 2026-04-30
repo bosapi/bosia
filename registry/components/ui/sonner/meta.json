@@ -1,7 +1,7 @@
 {
-  "name": "sonner",
-  "description": "An opinionated toast notification component.",
-  "dependencies": [],
-  "files": ["toast.svelte.ts", "sonner.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "sonner",
+	"description": "An opinionated toast notification component.",
+	"dependencies": [],
+	"files": ["toast.svelte.ts", "sonner.svelte", "index.ts"],
+	"npmDeps": {}
 }

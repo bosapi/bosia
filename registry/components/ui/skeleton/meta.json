@@ -1,7 +1,7 @@
 {
-  "name": "skeleton",
-  "description": "A placeholder used to show a loading state.",
-  "dependencies": [],
-  "files": ["skeleton.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "skeleton",
+	"description": "A placeholder used to show a loading state.",
+	"dependencies": [],
+	"files": ["skeleton.svelte", "index.ts"],
+	"npmDeps": {}
 }

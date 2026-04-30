@@ -1,7 +1,7 @@
 {
-  "name": "checkbox",
-  "description": "A checkbox control for toggling options on and off.",
-  "dependencies": [],
-  "files": ["checkbox.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "checkbox",
+	"description": "A checkbox control for toggling options on and off.",
+	"dependencies": [],
+	"files": ["checkbox.svelte", "index.ts"],
+	"npmDeps": {}
 }

@@ -1,25 +1,25 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "allowJs": true,
-    "skipLibCheck": true,
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "verbatimModuleSyntax": true,
-    "types": ["bun"],
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "rootDirs": [".", ".bosia/types"],
-    "paths": {
-      "$lib": ["./src/lib"],
-      "$lib/components/ui/*": ["../registry/components/ui/*"],
-      "$lib/*": ["./src/lib/*"],
-      "$registry": ["../registry/components/ui"],
-      "$registry/*": ["../registry/components/ui/*"]
-    }
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"allowJs": true,
+		"skipLibCheck": true,
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
+		"verbatimModuleSyntax": true,
+		"types": ["bun"],
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"rootDirs": [".", ".bosia/types"],
+		"paths": {
+			"$lib": ["./src/lib"],
+			"$lib/components/ui/*": ["../registry/components/ui/*"],
+			"$lib/*": ["./src/lib/*"],
+			"$registry": ["../registry/components/ui"],
+			"$registry/*": ["../registry/components/ui/*"]
+		}
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"]
 }

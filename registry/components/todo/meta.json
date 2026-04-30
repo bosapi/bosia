@@ -1,7 +1,7 @@
 {
-  "name": "todo",
-  "description": "Todo list components — form, item, and list with CRUD form actions.",
-  "dependencies": ["todo/todo-form", "todo/todo-item", "todo/todo-list"],
-  "files": ["index.ts"],
-  "npmDeps": {}
+	"name": "todo",
+	"description": "Todo list components — form, item, and list with CRUD form actions.",
+	"dependencies": ["todo/todo-form", "todo/todo-item", "todo/todo-list"],
+	"files": ["index.ts"],
+	"npmDeps": {}
 }

@@ -41,14 +41,14 @@ A styled wrapper around the native HTML `<select>` element. Uses `appearance-non
 
 ```svelte
 <script lang="ts">
-  import { NativeSelect, NativeSelectOption } from "$lib/components/ui/native-select";
-  let color = $state("red");
+	import { NativeSelect, NativeSelectOption } from "$lib/components/ui/native-select";
+	let color = $state("red");
 </script>
 
 <NativeSelect bind:value={color}>
-  <NativeSelectOption value="red">Red</NativeSelectOption>
-  <NativeSelectOption value="green">Green</NativeSelectOption>
-  <NativeSelectOption value="blue">Blue</NativeSelectOption>
+	<NativeSelectOption value="red">Red</NativeSelectOption>
+	<NativeSelectOption value="green">Green</NativeSelectOption>
+	<NativeSelectOption value="blue">Blue</NativeSelectOption>
 </NativeSelect>
 ```
 
@@ -56,22 +56,22 @@ A styled wrapper around the native HTML `<select>` element. Uses `appearance-non
 
 ```svelte
 <script lang="ts">
-  import {
-    NativeSelect,
-    NativeSelectOption,
-    NativeSelectOptGroup,
-  } from "$lib/components/ui/native-select";
-  let vehicle = $state("");
+	import {
+		NativeSelect,
+		NativeSelectOption,
+		NativeSelectOptGroup,
+	} from "$lib/components/ui/native-select";
+	let vehicle = $state("");
 </script>
 
 <NativeSelect bind:value={vehicle}>
-  <NativeSelectOptGroup label="Cars">
-    <NativeSelectOption value="sedan">Sedan</NativeSelectOption>
-    <NativeSelectOption value="suv">SUV</NativeSelectOption>
-  </NativeSelectOptGroup>
-  <NativeSelectOptGroup label="Bikes">
-    <NativeSelectOption value="road">Road Bike</NativeSelectOption>
-    <NativeSelectOption value="mountain">Mountain Bike</NativeSelectOption>
-  </NativeSelectOptGroup>
+	<NativeSelectOptGroup label="Cars">
+		<NativeSelectOption value="sedan">Sedan</NativeSelectOption>
+		<NativeSelectOption value="suv">SUV</NativeSelectOption>
+	</NativeSelectOptGroup>
+	<NativeSelectOptGroup label="Bikes">
+		<NativeSelectOption value="road">Road Bike</NativeSelectOption>
+		<NativeSelectOption value="mountain">Mountain Bike</NativeSelectOption>
+	</NativeSelectOptGroup>
 </NativeSelect>
 ```

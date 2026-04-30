@@ -14,23 +14,23 @@ Button Group merges adjacent buttons into a single visual unit by collapsing the
 
 ## Props
 
-| Prop | Type | Default |
-|---|---|---|
+| Prop          | Type                         | Default        |
+| ------------- | ---------------------------- | -------------- |
 | `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` |
-| `class` | `string` | `""` |
+| `class`       | `string`                     | `""`           |
 
 ## Usage
 
 ```svelte
 <script lang="ts">
-  import { ButtonGroup } from "$lib/components/ui/button-group";
-  import { Button } from "$lib/components/ui/button";
+	import { ButtonGroup } from "$lib/components/ui/button-group";
+	import { Button } from "$lib/components/ui/button";
 </script>
 
 <ButtonGroup aria-label="Actions">
-  <Button variant="outline">Save</Button>
-  <Button variant="outline">Edit</Button>
-  <Button variant="outline">Delete</Button>
+	<Button variant="outline">Save</Button>
+	<Button variant="outline">Edit</Button>
+	<Button variant="outline">Delete</Button>
 </ButtonGroup>
 ```
 
@@ -40,9 +40,9 @@ Stack buttons vertically using `orientation="vertical"`.
 
 ```svelte
 <ButtonGroup orientation="vertical" aria-label="Navigation">
-  <Button variant="outline">Profile</Button>
-  <Button variant="outline">Settings</Button>
-  <Button variant="outline">Logout</Button>
+	<Button variant="outline">Profile</Button>
+	<Button variant="outline">Settings</Button>
+	<Button variant="outline">Logout</Button>
 </ButtonGroup>
 ```
 
@@ -52,15 +52,15 @@ Works with icon-sized buttons for compact toolbars.
 
 ```svelte
 <ButtonGroup aria-label="Text alignment">
-  <Button variant="outline" size="icon" aria-label="Align left">
-    <AlignLeftIcon class="size-4" />
-  </Button>
-  <Button variant="outline" size="icon" aria-label="Align center">
-    <AlignCenterIcon class="size-4" />
-  </Button>
-  <Button variant="outline" size="icon" aria-label="Align right">
-    <AlignRightIcon class="size-4" />
-  </Button>
+	<Button variant="outline" size="icon" aria-label="Align left">
+		<AlignLeftIcon class="size-4" />
+	</Button>
+	<Button variant="outline" size="icon" aria-label="Align center">
+		<AlignCenterIcon class="size-4" />
+	</Button>
+	<Button variant="outline" size="icon" aria-label="Align right">
+		<AlignRightIcon class="size-4" />
+	</Button>
 </ButtonGroup>
 ```
 

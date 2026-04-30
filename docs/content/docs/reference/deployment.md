@@ -58,10 +58,10 @@ Data payloads for client-side navigation are also prerendered as JSON files at `
 
 Bosia sets cache headers automatically:
 
-| Asset Type        | Cache Header                          |
-| ----------------- | ------------------------------------- |
-| Hashed filenames  | `public, max-age=31536000, immutable` |
-| Non-hashed files  | `no-cache`                            |
+| Asset Type       | Cache Header                          |
+| ---------------- | ------------------------------------- |
+| Hashed filenames | `public, max-age=31536000, immutable` |
+| Non-hashed files | `no-cache`                            |
 
 ## Graceful Shutdown
 

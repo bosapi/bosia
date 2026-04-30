@@ -1,17 +1,13 @@
 <script lang="ts">
-    import { cn } from "$lib/utils.ts";
+	import { cn } from "$lib/utils.ts";
 
-    let {
-        class: className = "",
-        ...restProps
-    }: {
-        class?: string;
-        [key: string]: any;
-    } = $props();
+	let {
+		class: className = "",
+		...restProps
+	}: {
+		class?: string;
+		[key: string]: any;
+	} = $props();
 </script>
 
-<div
-    class={cn("-mx-1 my-1 h-px bg-border", className)}
-    role="separator"
-    {...restProps}
-></div>
+<div class={cn("-mx-1 my-1 h-px bg-border", className)} role="separator" {...restProps}></div>

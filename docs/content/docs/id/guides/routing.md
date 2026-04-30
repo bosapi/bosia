@@ -30,8 +30,8 @@ Akses nilai yang cocok melalui `params`:
 ```ts
 // +page.server.ts
 export async function load({ params }: LoadEvent) {
-  const post = await getPost(params.slug);
-  return { post };
+	const post = await getPost(params.slug);
+	return { post };
 }
 ```
 
@@ -77,17 +77,17 @@ Ketika beberapa route bisa cocok dengan URL, Bosia menyelesaikannya secara berur
 ```svelte
 <!-- src/routes/+layout.svelte -->
 <script lang="ts">
-  import "../app.css";
-  let { children, data } = $props();
+	import "../app.css";
+	let { children, data } = $props();
 </script>
 
 <nav>
-  <a href="/">Home</a>
-  <a href="/about">About</a>
+	<a href="/">Home</a>
+	<a href="/about">About</a>
 </nav>
 
 <main>
-  {@render children()}
+	{@render children()}
 </main>
 ```
 
@@ -102,10 +102,10 @@ Pasangkan layout dengan `+layout.server.ts` untuk memuat data:
 import type { LoadEvent } from "bosia";
 
 export async function load({ locals }: LoadEvent) {
-  return {
-    appName: "My App",
-    user: locals.user,
-  };
+	return {
+		appName: "My App",
+		user: locals.user,
+	};
 }
 ```
 
@@ -118,11 +118,10 @@ Buat `+error.svelte` untuk menangani error yang dilempar oleh loader:
 ```svelte
 <!-- src/routes/+error.svelte -->
 <script lang="ts">
-  let { error } = $props();
+	let { error } = $props();
 </script>
 
-<h1>{error.status}</h1>
-<p>{error.message}</p>
+<h1>{error.status}</h1><p>{error.message}</p>
 ```
 
 Halaman error menerima `HttpError` yang dilempar oleh `error()` di dalam loader. Tempatkan halaman error pada level route di mana Anda ingin menangkap error — halaman ini menangkap error dari semua route anak.
@@ -133,9 +132,9 @@ Atur perilaku rendering per halaman dengan mengekspor flag dari `+page.server.ts
 
 ```ts
 // src/routes/dashboard/+page.server.ts
-export const ssr = false;        // lewati server render, kirim shell + hydrate di client
-export const csr = false;        // lewati hydration client, hanya HTML server-rendered
-export const prerender = true;   // build ke HTML statis saat `bosia build`
+export const ssr = false; // lewati server render, kirim shell + hydrate di client
+export const csr = false; // lewati hydration client, hanya HTML server-rendered
+export const prerender = true; // build ke HTML statis saat `bosia build`
 ```
 
 - `ssr = false` — server `load()` tetap berjalan dan hasilnya diinjeksi sebagai page data; client melakukan hydrate dan render. Cocok untuk halaman dengan dependensi khusus browser (`window`, chart, widget pihak ketiga) atau halaman auth-gated di mana SSR menambah latensi tanpa nilai SEO.

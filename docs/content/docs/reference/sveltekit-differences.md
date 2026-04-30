@@ -22,21 +22,21 @@ These work the same way you'd expect:
 
 ## Different from SvelteKit
 
-| Feature | SvelteKit | Bosia |
-| ------- | --------- | ------ |
-| **Runtime** | Node.js | Bun |
-| **Bundler** | Vite | Bun.build |
-| **HTTP server** | Configurable via adapters | ElysiaJS (built-in) |
-| **Adapters** | Required (node, vercel, etc.) | None — single Bun server |
-| **Universal load** | `+page.ts` / `+layout.ts` | Not supported — server loaders only |
-| **Stores** | `$app/stores` | Not available — use `$props()` |
-| **Navigation** | `$app/navigation` | Built-in client router |
-| **Env vars** | `$env/static/public`, etc. | `$env` with four-tier prefix |
-| **HMR** | Vite HMR (granular) | SSE full-page reload |
-| **Generated dir** | `.svelte-kit/` | `.bosia/` |
-| **Component registry** | None | `bosia add` (shadcn-style) |
-| **Feature scaffolding** | None | `bosia feat` |
-| **Metadata** | Via `<svelte:head>` | `metadata()` function in `+page.server.ts` |
+| Feature                 | SvelteKit                     | Bosia                                      |
+| ----------------------- | ----------------------------- | ------------------------------------------ |
+| **Runtime**             | Node.js                       | Bun                                        |
+| **Bundler**             | Vite                          | Bun.build                                  |
+| **HTTP server**         | Configurable via adapters     | ElysiaJS (built-in)                        |
+| **Adapters**            | Required (node, vercel, etc.) | None — single Bun server                   |
+| **Universal load**      | `+page.ts` / `+layout.ts`     | Not supported — server loaders only        |
+| **Stores**              | `$app/stores`                 | Not available — use `$props()`             |
+| **Navigation**          | `$app/navigation`             | Built-in client router                     |
+| **Env vars**            | `$env/static/public`, etc.    | `$env` with four-tier prefix               |
+| **HMR**                 | Vite HMR (granular)           | SSE full-page reload                       |
+| **Generated dir**       | `.svelte-kit/`                | `.bosia/`                                  |
+| **Component registry**  | None                          | `bosia add` (shadcn-style)                 |
+| **Feature scaffolding** | None                          | `bosia feat`                               |
+| **Metadata**            | Via `<svelte:head>`           | `metadata()` function in `+page.server.ts` |
 
 ### Key Differences Explained
 

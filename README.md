@@ -63,13 +63,13 @@ See [Getting Started](docs/src/content/docs/getting-started.md) for a full walkt
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Runtime | [Bun](https://bun.sh) |
-| HTTP Server | [ElysiaJS](https://elysiajs.com) |
-| UI | [Svelte 5](https://svelte.dev) (Runes) |
-| CSS | [Tailwind CSS v4](https://tailwindcss.com) |
-| Bundler | Bun.build |
+| Layer       | Technology                                 |
+| ----------- | ------------------------------------------ |
+| Runtime     | [Bun](https://bun.sh)                      |
+| HTTP Server | [ElysiaJS](https://elysiajs.com)           |
+| UI          | [Svelte 5](https://svelte.dev) (Runes)     |
+| CSS         | [Tailwind CSS v4](https://tailwindcss.com) |
+| Bundler     | Bun.build                                  |
 
 ## Monorepo Development
 

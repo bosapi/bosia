@@ -40,7 +40,7 @@ Import from the component's barrel export:
 
 ```svelte
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
+	import { Button } from "$lib/components/ui/button";
 </script>
 
 <Button variant="outline" size="sm">Click me</Button>
@@ -48,32 +48,33 @@ Import from the component's barrel export:
 
 ## Available Components
 
-| Component                                          | Description                                      |
-| -------------------------------------------------- | ------------------------------------------------ |
+| Component | Description |
+| --------- | ----------- |
+
 ### UI
 
-| Component                                              | Description                                      |
-| ------------------------------------------------------ | ------------------------------------------------ |
-| [Avatar](/components/ui/avatar/)                       | Image avatar with fallback                       |
-| [Badge](/components/ui/badge/)                         | Small status label                               |
-| [Button](/components/ui/button/)                       | Accessible button with variants and sizes        |
-| [Card](/components/ui/card/)                           | Composable card with header, content, footer     |
-| [Chart](/components/ui/chart/)                         | SVG line and bar charts with tooltips            |
-| [Data Table](/components/ui/data-table/)               | Table with sorting, filtering, pagination        |
-| [Dropdown Menu](/components/ui/dropdown-menu/)         | Context-managed dropdown                         |
-| [Icon](/components/ui/icon/)                           | Inline SVG icons (Lucide-style)                  |
-| [Input](/components/ui/input/)                         | Styled text input with bindable value            |
-| [Navbar](/components/ui/navbar/)                       | Responsive navbar with mobile menu and theme toggle |
-| [Separator](/components/ui/separator/)                 | Horizontal or vertical divider                   |
-| [Sidebar](/components/ui/sidebar/)                     | Composable sidebar with collapsible icon mode    |
+| Component                                      | Description                                         |
+| ---------------------------------------------- | --------------------------------------------------- |
+| [Avatar](/components/ui/avatar/)               | Image avatar with fallback                          |
+| [Badge](/components/ui/badge/)                 | Small status label                                  |
+| [Button](/components/ui/button/)               | Accessible button with variants and sizes           |
+| [Card](/components/ui/card/)                   | Composable card with header, content, footer        |
+| [Chart](/components/ui/chart/)                 | SVG line and bar charts with tooltips               |
+| [Data Table](/components/ui/data-table/)       | Table with sorting, filtering, pagination           |
+| [Dropdown Menu](/components/ui/dropdown-menu/) | Context-managed dropdown                            |
+| [Icon](/components/ui/icon/)                   | Inline SVG icons (Lucide-style)                     |
+| [Input](/components/ui/input/)                 | Styled text input with bindable value               |
+| [Navbar](/components/ui/navbar/)               | Responsive navbar with mobile menu and theme toggle |
+| [Separator](/components/ui/separator/)         | Horizontal or vertical divider                      |
+| [Sidebar](/components/ui/sidebar/)             | Composable sidebar with collapsible icon mode       |
 
 ### Todo
 
-| Component                                              | Description                                      |
-| ------------------------------------------------------ | ------------------------------------------------ |
-| [Todo Form](/components/todo/todo-form/)               | Form for creating new todo items                 |
-| [Todo Item](/components/todo/todo-item/)               | Single todo with toggle, edit, and delete        |
-| [Todo List](/components/todo/todo-list/)               | List of todos with completion stats              |
+| Component                                | Description                               |
+| ---------------------------------------- | ----------------------------------------- |
+| [Todo Form](/components/todo/todo-form/) | Form for creating new todo items          |
+| [Todo Item](/components/todo/todo-item/) | Single todo with toggle, edit, and delete |
+| [Todo List](/components/todo/todo-list/) | List of todos with completion stats       |
 
 ## Customization
 

@@ -8,14 +8,14 @@ export { sequence } from "../core/hooks.ts";
 export { error, redirect, fail } from "../core/errors.ts";
 export type { HttpError, Redirect, RedirectOptions, ActionFailure } from "../core/errors.ts";
 export type {
-    RequestEvent,
-    LoadEvent,
-    MetadataEvent,
-    Metadata,
-    Handle,
-    ResolveFunction,
-    Cookies,
-    CookieOptions,
+	RequestEvent,
+	LoadEvent,
+	MetadataEvent,
+	Metadata,
+	Handle,
+	ResolveFunction,
+	Cookies,
+	CookieOptions,
 } from "../core/hooks.ts";
 export type { CsrfConfig } from "../core/csrf.ts";
 export type { CorsConfig } from "../core/cors.ts";

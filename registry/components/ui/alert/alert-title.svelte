@@ -1,21 +1,18 @@
 <script lang="ts">
-    import { cn } from "$lib/utils.ts";
-    import type { Snippet } from "svelte";
+	import { cn } from "$lib/utils.ts";
+	import type { Snippet } from "svelte";
 
-    let {
-        class: className = "",
-        children,
-        ...restProps
-    }: {
-        class?: string;
-        children?: Snippet;
-        [key: string]: any;
-    } = $props();
+	let {
+		class: className = "",
+		children,
+		...restProps
+	}: {
+		class?: string;
+		children?: Snippet;
+		[key: string]: any;
+	} = $props();
 </script>
 
-<h5
-    class={cn("mb-1 font-medium leading-none tracking-tight", className)}
-    {...restProps}
->
-    {@render children?.()}
+<h5 class={cn("mb-1 font-medium leading-none tracking-tight", className)} {...restProps}>
+	{@render children?.()}
 </h5>

@@ -16,10 +16,10 @@ A context-managed dropdown with trigger, content, items, and separator. Handles 
 
 ### DropdownMenuContent
 
-| Prop    | Type                                    | Default |
-| ------- | --------------------------------------- | ------- |
-| `align` | `"start"` \| `"end"` \| `"center"`     | `"end"` |
-| `class` | `string`                                | `""`    |
+| Prop    | Type                               | Default |
+| ------- | ---------------------------------- | ------- |
+| `align` | `"start"` \| `"end"` \| `"center"` | `"end"` |
+| `class` | `string`                           | `""`    |
 
 ## Sub-components
 
@@ -33,30 +33,26 @@ A context-managed dropdown with trigger, content, items, and separator. Handles 
 
 ```svelte
 <script lang="ts">
-  import {
-    DropdownMenu, DropdownMenuTrigger,
-    DropdownMenuContent, DropdownMenuItem,
-    DropdownMenuSeparator
-  } from "$lib/components/ui/dropdown-menu";
-  import { Button } from "$lib/components/ui/button";
+	import {
+		DropdownMenu,
+		DropdownMenuTrigger,
+		DropdownMenuContent,
+		DropdownMenuItem,
+		DropdownMenuSeparator,
+	} from "$lib/components/ui/dropdown-menu";
+	import { Button } from "$lib/components/ui/button";
 </script>
 
 <DropdownMenu>
-  <DropdownMenuTrigger>
-    <Button variant="outline">Options</Button>
-  </DropdownMenuTrigger>
-  <DropdownMenuContent>
-    <DropdownMenuItem onclick={() => console.log("edit")}>
-      Edit
-    </DropdownMenuItem>
-    <DropdownMenuItem onclick={() => console.log("copy")}>
-      Copy
-    </DropdownMenuItem>
-    <DropdownMenuSeparator />
-    <DropdownMenuItem onclick={() => console.log("delete")}>
-      Delete
-    </DropdownMenuItem>
-  </DropdownMenuContent>
+	<DropdownMenuTrigger>
+		<Button variant="outline">Options</Button>
+	</DropdownMenuTrigger>
+	<DropdownMenuContent>
+		<DropdownMenuItem onclick={() => console.log("edit")}>Edit</DropdownMenuItem>
+		<DropdownMenuItem onclick={() => console.log("copy")}>Copy</DropdownMenuItem>
+		<DropdownMenuSeparator />
+		<DropdownMenuItem onclick={() => console.log("delete")}>Delete</DropdownMenuItem>
+	</DropdownMenuContent>
 </DropdownMenu>
 ```
 
@@ -74,12 +70,10 @@ A context-managed dropdown with trigger, content, items, and separator. Handles 
 
 ```svelte
 <script lang="ts">
-  let open = $state(false);
+	let open = $state(false);
 </script>
 
-<DropdownMenu bind:open>
-  ...
-</DropdownMenu>
+<DropdownMenu bind:open>...</DropdownMenu>
 
 <p>Menu is {open ? "open" : "closed"}</p>
 ```

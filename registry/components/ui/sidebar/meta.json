@@ -1,19 +1,19 @@
 {
-  "name": "sidebar",
-  "description": "A composable sidebar with header, content, groups, menus, and collapsible icon mode.",
-  "dependencies": [],
-  "files": [
-    "sidebar.svelte",
-    "sidebar-header.svelte",
-    "sidebar-content.svelte",
-    "sidebar-footer.svelte",
-    "sidebar-group.svelte",
-    "sidebar-menu.svelte",
-    "sidebar-menu-item.svelte",
-    "sidebar-popover.svelte",
-    "sidebar-trigger.svelte",
-    "context.ts",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "sidebar",
+	"description": "A composable sidebar with header, content, groups, menus, and collapsible icon mode.",
+	"dependencies": [],
+	"files": [
+		"sidebar.svelte",
+		"sidebar-header.svelte",
+		"sidebar-content.svelte",
+		"sidebar-footer.svelte",
+		"sidebar-group.svelte",
+		"sidebar-menu.svelte",
+		"sidebar-menu-item.svelte",
+		"sidebar-popover.svelte",
+		"sidebar-trigger.svelte",
+		"context.ts",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

@@ -1,10 +1,7 @@
 {
-  "name": "combobox",
-  "description": "A searchable select built on Popover + Command.",
-  "dependencies": ["ui/popover", "ui/command"],
-  "files": [
-    "combobox.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "combobox",
+	"description": "A searchable select built on Popover + Command.",
+	"dependencies": ["ui/popover", "ui/command"],
+	"files": ["combobox.svelte", "index.ts"],
+	"npmDeps": {}
 }

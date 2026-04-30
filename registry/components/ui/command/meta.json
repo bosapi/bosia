@@ -1,17 +1,17 @@
 {
-  "name": "command",
-  "description": "A filterable command palette primitive with keyboard navigation, groups, and shortcuts.",
-  "dependencies": [],
-  "files": [
-    "command.svelte",
-    "command-input.svelte",
-    "command-list.svelte",
-    "command-empty.svelte",
-    "command-group.svelte",
-    "command-item.svelte",
-    "command-separator.svelte",
-    "command-shortcut.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "command",
+	"description": "A filterable command palette primitive with keyboard navigation, groups, and shortcuts.",
+	"dependencies": [],
+	"files": [
+		"command.svelte",
+		"command-input.svelte",
+		"command-list.svelte",
+		"command-empty.svelte",
+		"command-group.svelte",
+		"command-item.svelte",
+		"command-separator.svelte",
+		"command-shortcut.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

@@ -21,10 +21,10 @@ The `Todo` type is defined in the todo feature (`src/features/todo/types.ts`).
 
 ```svelte
 <script lang="ts">
-  import { TodoItem } from "$lib/components/todo";
-  import type { Todo } from "$lib/features/todo/types";
+	import { TodoItem } from "$lib/components/todo";
+	import type { Todo } from "$lib/features/todo/types";
 
-  let { todo }: { todo: Todo } = $props();
+	let { todo }: { todo: Todo } = $props();
 </script>
 
 <TodoItem {todo} />

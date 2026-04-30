@@ -15,11 +15,11 @@ bunx bosia create my-app
 
 You'll be prompted to pick a template:
 
-| Template    | Description                                        |
-| ----------- | -------------------------------------------------- |
-| **default** | Minimal starter — home page, about page, one loader |
+| Template    | Description                                           |
+| ----------- | ----------------------------------------------------- |
+| **default** | Minimal starter — home page, about page, one loader   |
 | **demo**    | Full-featured — blog, API routes, form actions, hooks |
-| **todo**    | Todo app with PostgreSQL + Drizzle ORM              |
+| **todo**    | Todo app with PostgreSQL + Drizzle ORM                |
 
 To skip the prompt:
 
@@ -50,8 +50,7 @@ bun run start
 Create a new file at `src/routes/hello/+page.svelte`:
 
 ```svelte
-<h1>Hello!</h1>
-<p>This is my first Bosia page.</p>
+<h1>Hello!</h1><p>This is my first Bosia page.</p>
 ```
 
 Visit [http://localhost:9000/hello](http://localhost:9000/hello) — that's it. No config, no imports, no registration. The file-based router picks it up automatically.
@@ -64,10 +63,10 @@ Create `src/routes/hello/+page.server.ts` alongside the page:
 import type { LoadEvent } from "bosia";
 
 export async function load({ url }: LoadEvent) {
-  return {
-    greeting: `Hello from the server!`,
-    timestamp: Date.now(),
-  };
+	return {
+		greeting: `Hello from the server!`,
+		timestamp: Date.now(),
+	};
 }
 ```
 
@@ -75,11 +74,10 @@ Access the data in your page:
 
 ```svelte
 <script lang="ts">
-  let { data } = $props();
+	let { data } = $props();
 </script>
 
-<h1>{data.greeting}</h1>
-<p>Rendered at {new Date(data.timestamp).toLocaleString()}</p>
+<h1>{data.greeting}</h1><p>Rendered at {new Date(data.timestamp).toLocaleString()}</p>
 ```
 
 ## Next Steps

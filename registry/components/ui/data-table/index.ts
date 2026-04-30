@@ -5,12 +5,12 @@ export { default as DataTablePagination } from "./data-table-pagination.svelte";
 export { default as DataTableEmpty } from "./data-table-empty.svelte";
 export { renderSnippet, renderComponent } from "./render.ts";
 export type {
-    ColumnDef,
-    FilterDef,
-    SortState,
-    PaginationState,
-    TableState,
-    CellContext,
-    HeaderContext,
-    RenderDescriptor,
+	ColumnDef,
+	FilterDef,
+	SortState,
+	PaginationState,
+	TableState,
+	CellContext,
+	HeaderContext,
+	RenderDescriptor,
 } from "./types.ts";

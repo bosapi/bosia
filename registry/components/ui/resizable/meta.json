@@ -1,7 +1,12 @@
 {
-  "name": "resizable",
-  "description": "Accessible resizable panel groups and layouts with drag support.",
-  "dependencies": [],
-  "files": ["resizable-pane-group.svelte", "resizable-pane.svelte", "resizable-handle.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "resizable",
+	"description": "Accessible resizable panel groups and layouts with drag support.",
+	"dependencies": [],
+	"files": [
+		"resizable-pane-group.svelte",
+		"resizable-pane.svelte",
+		"resizable-handle.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

@@ -14,15 +14,15 @@ Buat file `+server.ts` dan ekspor fungsi kata kerja HTTP yang diberi nama:
 import type { RequestEvent } from "bosia";
 
 export function GET({ params, locals }: RequestEvent) {
-  return Response.json({
-    message: "Hello from Bosia API!",
-    user: locals.user,
-  });
+	return Response.json({
+		message: "Hello from Bosia API!",
+		user: locals.user,
+	});
 }
 
 export async function POST({ request }: RequestEvent) {
-  const body = await request.json().catch(() => ({}));
-  return Response.json({ received: body });
+	const body = await request.json().catch(() => ({}));
+	return Response.json({ received: body });
 }
 ```
 
@@ -32,13 +32,13 @@ Ekspor yang didukung: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`.
 
 Setiap handler menerima sebuah `RequestEvent`:
 
-| Properti  | Tipe                     | Deskripsi                              |
-| --------- | ------------------------ | -------------------------------------- |
-| `request` | `Request`                | Objek Web API Request mentah           |
-| `url`     | `URL`                    | URL request yang telah diurai          |
-| `params`  | `Record<string, string>` | Parameter route dinamis                |
+| Properti  | Tipe                     | Deskripsi                               |
+| --------- | ------------------------ | --------------------------------------- |
+| `request` | `Request`                | Objek Web API Request mentah            |
+| `url`     | `URL`                    | URL request yang telah diurai           |
+| `params`  | `Record<string, string>` | Parameter route dinamis                 |
 | `locals`  | `Record<string, any>`    | Data yang disetel oleh middleware hooks |
-| `cookies` | `Cookies`                | Membaca/menulis cookies                |
+| `cookies` | `Cookies`                | Membaca/menulis cookies                 |
 
 ## Mengembalikan Response
 
@@ -56,8 +56,8 @@ return new Response("Hello", { status: 200 });
 
 // Custom headers
 return new Response(null, {
-  status: 204,
-  headers: { "X-Custom": "value" },
+	status: 204,
+	headers: { "X-Custom": "value" },
 });
 ```
 
@@ -71,11 +71,11 @@ src/routes/api/users/[id]/+server.ts  →  /api/users/123
 
 ```ts
 export function GET({ params }: RequestEvent) {
-  return Response.json({ userId: params.id });
+	return Response.json({ userId: params.id });
 }
 
 export function DELETE({ params }: RequestEvent) {
-  return Response.json({ deleted: params.id });
+	return Response.json({ deleted: params.id });
 }
 ```
 
@@ -89,9 +89,9 @@ Data yang disetel di `hooks.server.ts` tersedia di setiap handler API:
 
 ```ts
 export function GET({ locals }: RequestEvent) {
-  if (!locals.user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return Response.json({ user: locals.user });
+	if (!locals.user) {
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
+	}
+	return Response.json({ user: locals.user });
 }
 ```

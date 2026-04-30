@@ -1,20 +1,20 @@
 {
-  "name": "menubar",
-  "description": "A horizontal menu bar with multiple dropdown menus, supporting hover-switch between open menus.",
-  "dependencies": [],
-  "files": [
-    "menubar.svelte",
-    "menubar-menu.svelte",
-    "menubar-trigger.svelte",
-    "menubar-content.svelte",
-    "menubar-item.svelte",
-    "menubar-separator.svelte",
-    "menubar-label.svelte",
-    "menubar-shortcut.svelte",
-    "menubar-sub.svelte",
-    "menubar-sub-trigger.svelte",
-    "menubar-sub-content.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "menubar",
+	"description": "A horizontal menu bar with multiple dropdown menus, supporting hover-switch between open menus.",
+	"dependencies": [],
+	"files": [
+		"menubar.svelte",
+		"menubar-menu.svelte",
+		"menubar-trigger.svelte",
+		"menubar-content.svelte",
+		"menubar-item.svelte",
+		"menubar-separator.svelte",
+		"menubar-label.svelte",
+		"menubar-shortcut.svelte",
+		"menubar-sub.svelte",
+		"menubar-sub-trigger.svelte",
+		"menubar-sub-content.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

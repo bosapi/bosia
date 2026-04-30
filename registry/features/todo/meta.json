@@ -1,54 +1,54 @@
 {
-  "name": "todo",
-  "description": "Full-stack todo feature — schema, repository, service, types, routes, components, and seed data.",
-  "features": ["drizzle"],
-  "components": ["todo"],
-  "files": [
-    {
-      "src": "todo.table.ts",
-      "target": "src/features/todo/schemas/todo.table.ts"
-    },
-    {
-      "src": "types.ts",
-      "target": "src/features/todo/types.ts"
-    },
-    {
-      "src": "todo.repository.ts",
-      "target": "src/features/todo/todo.repository.ts"
-    },
-    {
-      "src": "todo.service.ts",
-      "target": "src/features/todo/todo.service.ts"
-    },
-    {
-      "src": "todo-index.ts",
-      "target": "src/features/todo/index.ts"
-    },
-    {
-      "src": "schemas.ts",
-      "target": "src/features/drizzle/schemas.ts",
-      "strategy": "append-line"
-    },
-    {
-      "src": "seed-todos.ts",
-      "target": "src/features/drizzle/seeds/001_initial_todos.ts"
-    },
-    {
-      "src": "page.server.ts",
-      "target": "src/routes/todos/+page.server.ts"
-    },
-    {
-      "src": "page.svelte",
-      "target": "src/routes/todos/+page.svelte"
-    },
-    {
-      "src": "api-todos-server.ts",
-      "target": "src/routes/api/todos/+server.ts"
-    },
-    {
-      "src": "api-todos-id-server.ts",
-      "target": "src/routes/api/todos/[id]/+server.ts"
-    }
-  ],
-  "npmDeps": {}
+	"name": "todo",
+	"description": "Full-stack todo feature — schema, repository, service, types, routes, components, and seed data.",
+	"features": ["drizzle"],
+	"components": ["todo"],
+	"files": [
+		{
+			"src": "todo.table.ts",
+			"target": "src/features/todo/schemas/todo.table.ts"
+		},
+		{
+			"src": "types.ts",
+			"target": "src/features/todo/types.ts"
+		},
+		{
+			"src": "todo.repository.ts",
+			"target": "src/features/todo/todo.repository.ts"
+		},
+		{
+			"src": "todo.service.ts",
+			"target": "src/features/todo/todo.service.ts"
+		},
+		{
+			"src": "todo-index.ts",
+			"target": "src/features/todo/index.ts"
+		},
+		{
+			"src": "schemas.ts",
+			"target": "src/features/drizzle/schemas.ts",
+			"strategy": "append-line"
+		},
+		{
+			"src": "seed-todos.ts",
+			"target": "src/features/drizzle/seeds/001_initial_todos.ts"
+		},
+		{
+			"src": "page.server.ts",
+			"target": "src/routes/todos/+page.server.ts"
+		},
+		{
+			"src": "page.svelte",
+			"target": "src/routes/todos/+page.svelte"
+		},
+		{
+			"src": "api-todos-server.ts",
+			"target": "src/routes/api/todos/+server.ts"
+		},
+		{
+			"src": "api-todos-id-server.ts",
+			"target": "src/routes/api/todos/[id]/+server.ts"
+		}
+	],
+	"npmDeps": {}
 }

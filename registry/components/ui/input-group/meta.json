@@ -1,15 +1,15 @@
 {
-  "name": "input-group",
-  "description": "A composite input container for combining inputs with addons, buttons, and text.",
-  "dependencies": [],
-  "files": [
-    "input-group.svelte",
-    "input-group-input.svelte",
-    "input-group-textarea.svelte",
-    "input-group-addon.svelte",
-    "input-group-button.svelte",
-    "input-group-text.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "input-group",
+	"description": "A composite input container for combining inputs with addons, buttons, and text.",
+	"dependencies": [],
+	"files": [
+		"input-group.svelte",
+		"input-group-input.svelte",
+		"input-group-textarea.svelte",
+		"input-group-addon.svelte",
+		"input-group-button.svelte",
+		"input-group-text.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

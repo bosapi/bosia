@@ -1,59 +1,59 @@
 name: Publish to npm
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "packages/bosia/package.json"
+    push:
+        branches: [main]
+        paths:
+            - "packages/bosia/package.json"
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
+    publish:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Check version
-        id: version
-        run: |
-          VERSION=$(jq -r '.version' packages/bosia/package.json)
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            - name: Check version
+              id: version
+              run: |
+                  VERSION=$(jq -r '.version' packages/bosia/package.json)
+                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          # Check if this version is already published
-          if npm view "bosia@$VERSION" version 2>/dev/null; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Version $VERSION already published — skipping"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
+                  # Check if this version is already published
+                  if npm view "bosia@$VERSION" version 2>/dev/null; then
+                    echo "skip=true" >> "$GITHUB_OUTPUT"
+                    echo "Version $VERSION already published — skipping"
+                  else
+                    echo "skip=false" >> "$GITHUB_OUTPUT"
+                  fi
 
-          # Determine tag: prerelease → next, stable → latest
-          if [[ "$VERSION" =~ -(rc|beta|alpha) ]]; then
-            echo "tag=next" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=latest" >> "$GITHUB_OUTPUT"
-          fi
+                  # Determine tag: prerelease → next, stable → latest
+                  if [[ "$VERSION" =~ -(rc|beta|alpha) ]]; then
+                    echo "tag=next" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "tag=latest" >> "$GITHUB_OUTPUT"
+                  fi
 
-      - name: Setup npm auth
-        if: steps.version.outputs.skip == 'false'
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+            - name: Setup npm auth
+              if: steps.version.outputs.skip == 'false'
+              run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      - name: Publish
-        if: steps.version.outputs.skip == 'false'
-        run: |
-          echo "Publishing bosia@${{ steps.version.outputs.version }} with tag ${{ steps.version.outputs.tag }}"
-          npm publish --tag "${{ steps.version.outputs.tag }}" --access public
-        working-directory: packages/bosia
+            - name: Publish
+              if: steps.version.outputs.skip == 'false'
+              run: |
+                  echo "Publishing bosia@${{ steps.version.outputs.version }} with tag ${{ steps.version.outputs.tag }}"
+                  npm publish --tag "${{ steps.version.outputs.tag }}" --access public
+              working-directory: packages/bosia
 
-      - name: Create GitHub Release
-        if: steps.version.outputs.skip == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="v${{ steps.version.outputs.version }}"
-          if [ "${{ steps.version.outputs.tag }}" = "next" ]; then
-            gh release create "$VERSION" --title "$VERSION" --generate-notes --prerelease
-          else
-            gh release create "$VERSION" --title "$VERSION" --generate-notes
-          fi
+            - name: Create GitHub Release
+              if: steps.version.outputs.skip == 'false'
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  VERSION="v${{ steps.version.outputs.version }}"
+                  if [ "${{ steps.version.outputs.tag }}" = "next" ]; then
+                    gh release create "$VERSION" --title "$VERSION" --generate-notes --prerelease
+                  else
+                    gh release create "$VERSION" --title "$VERSION" --generate-notes
+                  fi

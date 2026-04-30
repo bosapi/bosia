@@ -1,7 +1,7 @@
 {
-  "name": "textarea",
-  "description": "A styled multi-line text input component.",
-  "dependencies": [],
-  "files": ["textarea.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "textarea",
+	"description": "A styled multi-line text input component.",
+	"dependencies": [],
+	"files": ["textarea.svelte", "index.ts"],
+	"npmDeps": {}
 }

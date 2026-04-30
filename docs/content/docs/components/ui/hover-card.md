@@ -32,12 +32,12 @@ A hover-triggered floating panel for showing rich previews (user cards, link pre
 
 ### HoverCardContent
 
-| Prop         | Type                                          | Default    |
-| ------------ | --------------------------------------------- | ---------- |
+| Prop         | Type                                           | Default    |
+| ------------ | ---------------------------------------------- | ---------- |
 | `side`       | `"top"` \| `"right"` \| `"bottom"` \| `"left"` | `"bottom"` |
-| `align`      | `"start"` \| `"center"` \| `"end"`            | `"center"` |
-| `sideOffset` | `number`                                      | `4`        |
-| `class`      | `string`                                      | `""`       |
+| `align`      | `"start"` \| `"center"` \| `"end"`             | `"center"` |
+| `sideOffset` | `number`                                       | `4`        |
+| `class`      | `string`                                       | `""`       |
 
 ## Sub-components
 
@@ -49,23 +49,23 @@ A hover-triggered floating panel for showing rich previews (user cards, link pre
 
 ```svelte
 <script lang="ts">
-  import { HoverCard, HoverCardTrigger, HoverCardContent } from "$lib/components/ui/hover-card";
-  import { Avatar, AvatarFallback } from "$lib/components/ui/avatar";
+	import { HoverCard, HoverCardTrigger, HoverCardContent } from "$lib/components/ui/hover-card";
+	import { Avatar, AvatarFallback } from "$lib/components/ui/avatar";
 </script>
 
 <HoverCard>
-  <HoverCardTrigger href="https://svelte.dev">@sveltejs</HoverCardTrigger>
-  <HoverCardContent class="w-80">
-    <div class="flex justify-between gap-4">
-      <Avatar src="https://github.com/sveltejs.png" alt="@sveltejs">
-        <AvatarFallback>SV</AvatarFallback>
-      </Avatar>
-      <div class="space-y-1">
-        <h4 class="text-sm font-semibold">@sveltejs</h4>
-        <p class="text-sm">Cybernetically enhanced web apps.</p>
-      </div>
-    </div>
-  </HoverCardContent>
+	<HoverCardTrigger href="https://svelte.dev">@sveltejs</HoverCardTrigger>
+	<HoverCardContent class="w-80">
+		<div class="flex justify-between gap-4">
+			<Avatar src="https://github.com/sveltejs.png" alt="@sveltejs">
+				<AvatarFallback>SV</AvatarFallback>
+			</Avatar>
+			<div class="space-y-1">
+				<h4 class="text-sm font-semibold">@sveltejs</h4>
+				<p class="text-sm">Cybernetically enhanced web apps.</p>
+			</div>
+		</div>
+	</HoverCardContent>
 </HoverCard>
 ```
 
@@ -85,8 +85,8 @@ Tune how quickly the card appears and disappears on hover.
 
 ```svelte
 <HoverCard openDelay={200} closeDelay={100}>
-  <HoverCardTrigger href="/profile">Profile</HoverCardTrigger>
-  <HoverCardContent>Quick preview</HoverCardContent>
+	<HoverCardTrigger href="/profile">Profile</HoverCardTrigger>
+	<HoverCardContent>Quick preview</HoverCardContent>
 </HoverCard>
 ```
 
@@ -94,12 +94,12 @@ Tune how quickly the card appears and disappears on hover.
 
 ```svelte
 <script lang="ts">
-  let open = $state(false);
+	let open = $state(false);
 </script>
 
 <HoverCard bind:open>
-  <HoverCardTrigger href="#">Hover me</HoverCardTrigger>
-  <HoverCardContent>Content</HoverCardContent>
+	<HoverCardTrigger href="#">Hover me</HoverCardTrigger>
+	<HoverCardContent>Content</HoverCardContent>
 </HoverCard>
 
 <p>Card is {open ? "open" : "closed"}</p>

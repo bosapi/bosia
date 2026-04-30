@@ -16,13 +16,13 @@ A responsive navigation bar with desktop link row, mobile hamburger menu, dark m
 
 ```svelte
 <script lang="ts">
-  import { Navbar } from "$lib/components/ui/navbar";
+	import { Navbar } from "$lib/components/ui/navbar";
 
-  const links = [
-    { label: "Home", href: "/" },
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Settings", href: "/settings" },
-  ];
+	const links = [
+		{ label: "Home", href: "/" },
+		{ label: "Dashboard", href: "/dashboard" },
+		{ label: "Settings", href: "/settings" },
+	];
 </script>
 
 <Navbar {links} currentPath="/" />
@@ -30,12 +30,12 @@ A responsive navigation bar with desktop link row, mobile hamburger menu, dark m
 
 ## Props
 
-| Prop          | Type                                                  | Default     |
-| ------------- | ----------------------------------------------------- | ----------- |
-| `brand`       | `string`                                              | `"Bosia"`   |
-| `version`     | `string`                                              | `""`        |
-| `links`       | `{ label: string; href: string }[]`                   | `[]`        |
-| `currentPath` | `string`                                              | `"/"`       |
+| Prop          | Type                                                                 | Default     |
+| ------------- | -------------------------------------------------------------------- | ----------- |
+| `brand`       | `string`                                                             | `"Bosia"`   |
+| `version`     | `string`                                                             | `""`        |
+| `links`       | `{ label: string; href: string }[]`                                  | `[]`        |
+| `currentPath` | `string`                                                             | `"/"`       |
 | `user`        | `{ name: string; email: string; initials: string; avatar?: string }` | `undefined` |
 
 ## With User Avatar
@@ -44,9 +44,9 @@ When `user` is provided, a dropdown menu appears with Profile, Settings, and Log
 
 ```svelte
 <Navbar
-  {links}
-  currentPath="/"
-  user={{ name: "Alice", email: "alice@bosia.dev", initials: "A", avatar: "/favicon.svg" }}
+	{links}
+	currentPath="/"
+	user={{ name: "Alice", email: "alice@bosia.dev", initials: "A", avatar: "/favicon.svg" }}
 />
 ```
 
@@ -62,9 +62,7 @@ Use the children slot to add custom actions (e.g., a notification bell) to the r
 
 ```svelte
 <Navbar {links} currentPath="/">
-  <Button variant="ghost" size="icon" aria-label="Notifications">
-    🔔
-  </Button>
+	<Button variant="ghost" size="icon" aria-label="Notifications">🔔</Button>
 </Navbar>
 ```
 
@@ -78,7 +76,7 @@ Use the children slot to add custom actions (e.g., a notification bell) to the r
 
 ```svelte
 <script lang="ts">
-  import { NavbarLink } from "$lib/components/ui/navbar";
+	import { NavbarLink } from "$lib/components/ui/navbar";
 </script>
 
 <NavbarLink href="/about" label="About" active={false} />

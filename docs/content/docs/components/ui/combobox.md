@@ -14,16 +14,16 @@ Convenience wrapper that composes `Popover` + `Command` into a single searchable
 
 ## Props
 
-| Prop | Type | Default |
-| ---- | ---- | ------- |
-| `items` | `{ value: string; label: string; keywords?: string[]; disabled?: boolean }[]` | `[]` |
-| `value` | `string \| undefined` (bindable) | `undefined` |
-| `placeholder` | `string` | `"Select item..."` |
-| `searchPlaceholder` | `string` | `"Search..."` |
-| `emptyText` | `string` | `"No results found."` |
-| `disabled` | `boolean` | `false` |
-| `class` | `string` | `""` (trigger button) |
-| `contentClass` | `string` | `""` (popover content) |
+| Prop                | Type                                                                          | Default                |
+| ------------------- | ----------------------------------------------------------------------------- | ---------------------- |
+| `items`             | `{ value: string; label: string; keywords?: string[]; disabled?: boolean }[]` | `[]`                   |
+| `value`             | `string \| undefined` (bindable)                                              | `undefined`            |
+| `placeholder`       | `string`                                                                      | `"Select item..."`     |
+| `searchPlaceholder` | `string`                                                                      | `"Search..."`          |
+| `emptyText`         | `string`                                                                      | `"No results found."`  |
+| `disabled`          | `boolean`                                                                     | `false`                |
+| `class`             | `string`                                                                      | `""` (trigger button)  |
+| `contentClass`      | `string`                                                                      | `""` (popover content) |
 
 `keywords` extend the search match for an item; `disabled` items are not selectable.
 
@@ -31,28 +31,28 @@ Convenience wrapper that composes `Popover` + `Command` into a single searchable
 
 ```svelte
 <script lang="ts">
-  import { Combobox } from "$lib/components/ui/combobox";
+	import { Combobox } from "$lib/components/ui/combobox";
 
-  const frameworks = [
-    { value: "next", label: "Next.js", keywords: ["react"] },
-    { value: "sveltekit", label: "SvelteKit", keywords: ["svelte"] },
-    { value: "nuxt", label: "Nuxt", keywords: ["vue"] },
-    { value: "remix", label: "Remix", keywords: ["react"] },
-    { value: "astro", label: "Astro" },
-    { value: "bosia", label: "Bosia", keywords: ["svelte", "bun"] },
-  ];
+	const frameworks = [
+		{ value: "next", label: "Next.js", keywords: ["react"] },
+		{ value: "sveltekit", label: "SvelteKit", keywords: ["svelte"] },
+		{ value: "nuxt", label: "Nuxt", keywords: ["vue"] },
+		{ value: "remix", label: "Remix", keywords: ["react"] },
+		{ value: "astro", label: "Astro" },
+		{ value: "bosia", label: "Bosia", keywords: ["svelte", "bun"] },
+	];
 
-  let value = $state<string | undefined>(undefined);
+	let value = $state<string | undefined>(undefined);
 </script>
 
 <Combobox
-  items={frameworks}
-  bind:value
-  placeholder="Select framework..."
-  searchPlaceholder="Search framework..."
-  emptyText="No framework found."
-  class="w-[220px]"
-  contentClass="w-[220px] p-0"
+	items={frameworks}
+	bind:value
+	placeholder="Select framework..."
+	searchPlaceholder="Search framework..."
+	emptyText="No framework found."
+	class="w-[220px]"
+	contentClass="w-[220px] p-0"
 />
 ```
 
@@ -69,19 +69,19 @@ Convenience wrapper that composes `Popover` + `Command` into a single searchable
 
 ```svelte
 <Popover>
-  <PopoverTrigger>...</PopoverTrigger>
-  <PopoverContent>
-    <Command>
-      <CommandInput />
-      <CommandList>
-        <CommandEmpty />
-        <CommandGroup>
-          <CommandItem />
-          ...
-        </CommandGroup>
-      </CommandList>
-    </Command>
-  </PopoverContent>
+	<PopoverTrigger>...</PopoverTrigger>
+	<PopoverContent>
+		<Command>
+			<CommandInput />
+			<CommandList>
+				<CommandEmpty />
+				<CommandGroup>
+					<CommandItem />
+					...
+				</CommandGroup>
+			</CommandList>
+		</Command>
+	</PopoverContent>
 </Popover>
 ```
 

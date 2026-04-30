@@ -1,15 +1,15 @@
 {
-  "name": "navigation-menu",
-  "description": "Horizontal top-level navigation with hover/focus-triggered popover panels.",
-  "dependencies": [],
-  "files": [
-    "navigation-menu.svelte",
-    "navigation-menu-list.svelte",
-    "navigation-menu-item.svelte",
-    "navigation-menu-trigger.svelte",
-    "navigation-menu-content.svelte",
-    "navigation-menu-link.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "navigation-menu",
+	"description": "Horizontal top-level navigation with hover/focus-triggered popover panels.",
+	"dependencies": [],
+	"files": [
+		"navigation-menu.svelte",
+		"navigation-menu-list.svelte",
+		"navigation-menu-item.svelte",
+		"navigation-menu-trigger.svelte",
+		"navigation-menu-content.svelte",
+		"navigation-menu-link.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

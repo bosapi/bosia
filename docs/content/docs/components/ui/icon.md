@@ -23,7 +23,7 @@ bosia add icon
 
 ```svelte
 <script lang="ts">
-  import { Icon } from "$lib/components/ui/icon";
+	import { Icon } from "$lib/components/ui/icon";
 </script>
 
 <Icon name="home" />
@@ -35,12 +35,12 @@ bosia add icon
 
 ```svelte
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
-  import { Icon } from "$lib/components/ui/icon";
+	import { Button } from "$lib/components/ui/button";
+	import { Icon } from "$lib/components/ui/icon";
 </script>
 
 <Button variant="ghost" size="icon">
-  <Icon name="menu" />
+	<Icon name="menu" />
 </Button>
 ```
 
@@ -56,8 +56,8 @@ Open `icons.ts` and add entries from [lucide.dev](https://lucide.dev/icons):
 ```ts
 // icons.ts
 export const icons = {
-    // ... existing icons
-    "my-icon": `<path d="M..." /><circle cx="12" cy="12" r="3"/>`,
+	// ... existing icons
+	"my-icon": `<path d="M..." /><circle cx="12" cy="12" r="3"/>`,
 };
 ```
 

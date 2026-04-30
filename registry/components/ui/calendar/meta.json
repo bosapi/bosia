@@ -1,13 +1,13 @@
 {
-  "name": "calendar",
-  "description": "A date selection calendar with month/year navigation, keyboard support, and min/max date constraints.",
-  "dependencies": [],
-  "files": [
-    "calendar.svelte",
-    "calendar-header.svelte",
-    "calendar-grid.svelte",
-    "calendar-day.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "calendar",
+	"description": "A date selection calendar with month/year navigation, keyboard support, and min/max date constraints.",
+	"dependencies": [],
+	"files": [
+		"calendar.svelte",
+		"calendar-header.svelte",
+		"calendar-grid.svelte",
+		"calendar-day.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

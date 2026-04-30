@@ -1,7 +1,7 @@
 {
-  "name": "toggle-group",
-  "description": "A group of toggle buttons where one or more can be active.",
-  "dependencies": [],
-  "files": ["toggle-group.svelte", "toggle-group-item.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "toggle-group",
+	"description": "A group of toggle buttons where one or more can be active.",
+	"dependencies": [],
+	"files": ["toggle-group.svelte", "toggle-group-item.svelte", "index.ts"],
+	"npmDeps": {}
 }

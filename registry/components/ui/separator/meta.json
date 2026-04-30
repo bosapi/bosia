@@ -1,7 +1,7 @@
 {
-  "name": "separator",
-  "description": "A horizontal or vertical divider line.",
-  "dependencies": [],
-  "files": ["separator.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "separator",
+	"description": "A horizontal or vertical divider line.",
+	"dependencies": [],
+	"files": ["separator.svelte", "index.ts"],
+	"npmDeps": {}
 }

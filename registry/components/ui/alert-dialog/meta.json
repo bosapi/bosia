@@ -1,18 +1,18 @@
 {
-  "name": "alert-dialog",
-  "description": "A modal alert dialog that interrupts the user with important content and requires an explicit response.",
-  "dependencies": [],
-  "files": [
-    "alert-dialog.svelte",
-    "alert-dialog-content.svelte",
-    "alert-dialog-trigger.svelte",
-    "alert-dialog-action.svelte",
-    "alert-dialog-cancel.svelte",
-    "alert-dialog-header.svelte",
-    "alert-dialog-title.svelte",
-    "alert-dialog-description.svelte",
-    "alert-dialog-footer.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "alert-dialog",
+	"description": "A modal alert dialog that interrupts the user with important content and requires an explicit response.",
+	"dependencies": [],
+	"files": [
+		"alert-dialog.svelte",
+		"alert-dialog-content.svelte",
+		"alert-dialog-trigger.svelte",
+		"alert-dialog-action.svelte",
+		"alert-dialog-cancel.svelte",
+		"alert-dialog-header.svelte",
+		"alert-dialog-title.svelte",
+		"alert-dialog-description.svelte",
+		"alert-dialog-footer.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

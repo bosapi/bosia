@@ -27,20 +27,24 @@ const envVars = loadEnv(envMode);
 const classifiedEnv = classifyEnvVars(envVars);
 
 // 0b. Clean all generated output first
-try { rmSync("./dist",   { recursive: true, force: true }); } catch { }
-try { rmSync("./.bosia", { recursive: true, force: true }); } catch { }
+try {
+	rmSync("./dist", { recursive: true, force: true });
+} catch {}
+try {
+	rmSync("./.bosia", { recursive: true, force: true });
+} catch {}
 
 // 1. Scan routes
 const manifest = scanRoutes();
 console.log(`📂 Found ${manifest.pages.length} page route(s):`);
 for (const r of manifest.pages) {
-    console.log(`   ${r.pattern} → ${r.page}${r.pageServer ? " (server)" : ""}`);
+	console.log(`   ${r.pattern} → ${r.page}${r.pageServer ? " (server)" : ""}`);
 }
 if (manifest.apis.length > 0) {
-    console.log(`📡 Found ${manifest.apis.length} API route(s):`);
-    for (const r of manifest.apis) {
-        console.log(`   ${r.pattern} → ${r.server}`);
-    }
+	console.log(`📡 Found ${manifest.apis.length} API route(s):`);
+	for (const r of manifest.apis) {
+		console.log(`   ${r.pattern} → ${r.server}`);
+	}
 }
 
 // 2. Generate .bosia/routes.ts (single file replaces all old code generators)
@@ -58,12 +62,19 @@ generateEnvModules(classifiedEnv);
 // 3. Start Tailwind CSS (async — runs concurrently with client+server builds)
 const tailwindBin = resolveBosiaBin("tailwindcss");
 const tailwindProc = Bun.spawn(
-    [tailwindBin, "-i", "./src/app.css", "-o", "./public/bosia-tw.css", ...(isProduction ? ["--minify"] : [])],
-    {
-        cwd: process.cwd(),
-        env: { ...process.env, NODE_PATH: BOSIA_NODE_PATH },
-        stderr: "pipe",
-    },
+	[
+		tailwindBin,
+		"-i",
+		"./src/app.css",
+		"-o",
+		"./public/bosia-tw.css",
+		...(isProduction ? ["--minify"] : []),
+	],
+	{
+		cwd: process.cwd(),
+		env: { ...process.env, NODE_PATH: BOSIA_NODE_PATH },
+		stderr: "pipe",
+	},
 );
 const tailwindPromise = tailwindProc.exited;
 
@@ -74,85 +85,90 @@ const serverPlugin = makeBosiaPlugin("bun");
 // Build-time defines: inline PUBLIC_STATIC_* and STATIC_* vars
 const staticDefines: Record<string, string> = {};
 for (const [key, value] of Object.entries(classifiedEnv.publicStatic)) {
-    staticDefines[`import.meta.env.${key}`] = JSON.stringify(value);
+	staticDefines[`import.meta.env.${key}`] = JSON.stringify(value);
 }
 for (const [key, value] of Object.entries(classifiedEnv.privateStatic)) {
-    staticDefines[`import.meta.env.${key}`] = JSON.stringify(value);
+	staticDefines[`import.meta.env.${key}`] = JSON.stringify(value);
 }
 
 // 5. Build Tailwind + client + server bundles in parallel
 console.log("\n📦 Building Tailwind + client + server...");
 const clientPromise = Bun.build({
-    entrypoints: [join(CORE_DIR, "client", "hydrate.ts")],
-    outdir: "./dist/client",
-    target: "browser",
-    splitting: true,
-    naming: { chunk: "[name]-[hash].[ext]" },
-    minify: isProduction,
-    define: {
-        "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "development"),
-        ...staticDefines,
-    },
-    plugins: [clientPlugin, SveltePlugin()],
+	entrypoints: [join(CORE_DIR, "client", "hydrate.ts")],
+	outdir: "./dist/client",
+	target: "browser",
+	splitting: true,
+	naming: { chunk: "[name]-[hash].[ext]" },
+	minify: isProduction,
+	define: {
+		"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "development"),
+		...staticDefines,
+	},
+	plugins: [clientPlugin, SveltePlugin()],
 });
 
 const serverPromise = Bun.build({
-    entrypoints: [join(CORE_DIR, "server.ts")],
-    outdir: "./dist/server",
-    target: "bun",
-    splitting: true,
-    naming: { entry: "index.[ext]", chunk: "[name]-[hash].[ext]" },
-    minify: isProduction,
-    external: ["elysia"],
-    plugins: [serverPlugin, SveltePlugin()],
+	entrypoints: [join(CORE_DIR, "server.ts")],
+	outdir: "./dist/server",
+	target: "bun",
+	splitting: true,
+	naming: { entry: "index.[ext]", chunk: "[name]-[hash].[ext]" },
+	minify: isProduction,
+	external: ["elysia"],
+	plugins: [serverPlugin, SveltePlugin()],
 });
 
 const [tailwindExitCode, clientResult, serverResult] = await Promise.all([
-    tailwindPromise,
-    clientPromise,
-    serverPromise,
+	tailwindPromise,
+	clientPromise,
+	serverPromise,
 ]);
 
 if (tailwindExitCode !== 0) {
-    const stderr = await new Response(tailwindProc.stderr).text();
-    console.error("❌ Tailwind CSS build failed:\n" + stderr);
-    process.exit(1);
+	const stderr = await new Response(tailwindProc.stderr).text();
+	console.error("❌ Tailwind CSS build failed:\n" + stderr);
+	process.exit(1);
 }
 console.log("✅ Tailwind CSS built: public/bosia-tw.css");
 
 if (!clientResult.success) {
-    console.error("❌ Client build failed:");
-    for (const msg of clientResult.logs) console.error(msg);
-    process.exit(1);
+	console.error("❌ Client build failed:");
+	for (const msg of clientResult.logs) console.error(msg);
+	process.exit(1);
 }
 
 if (!serverResult.success) {
-    console.error("❌ Server build failed:");
-    for (const msg of serverResult.logs) console.error(msg);
-    process.exit(1);
+	console.error("❌ Server build failed:");
+	for (const msg of serverResult.logs) console.error(msg);
+	process.exit(1);
 }
 
 // 6. Collect output files for dist/manifest.json
 const jsFiles: string[] = [];
 const cssFiles: string[] = [];
 for (const output of clientResult.outputs) {
-    const rel = relative("./dist/client", output.path);
-    if (output.path.endsWith(".js")) jsFiles.push(rel);
-    if (output.path.endsWith(".css")) cssFiles.push(rel);
+	const rel = relative("./dist/client", output.path);
+	if (output.path.endsWith(".js")) jsFiles.push(rel);
+	if (output.path.endsWith(".css")) cssFiles.push(rel);
 }
 
 // Entry is always "index.js" due to naming: { entry: "index.[ext]" }
-const serverEntry = serverResult.outputs
-    .find(o => o.path.endsWith("index.js"))
-    ?.path.split("/").pop() ?? "index.js";
+const serverEntry =
+	serverResult.outputs
+		.find((o) => o.path.endsWith("index.js"))
+		?.path.split("/")
+		.pop() ?? "index.js";
 
 // 8. Write dist/manifest.json
 mkdirSync("./dist", { recursive: true });
 const distManifest = {
-    js: jsFiles,
-    css: cssFiles,
-    entry: jsFiles.find(f => f === "hydrate.js") ?? jsFiles.find(f => f.startsWith("hydrate")) ?? "hydrate.js",
-    serverEntry,
+	js: jsFiles,
+	css: cssFiles,
+	entry:
+		jsFiles.find((f) => f === "hydrate.js") ??
+		jsFiles.find((f) => f.startsWith("hydrate")) ??
+		"hydrate.js",
+	serverEntry,
 };
 writeFileSync("./dist/manifest.json", JSON.stringify(distManifest, null, 2));
 console.log(`✅ Client bundle: ${jsFiles.join(", ")}`);

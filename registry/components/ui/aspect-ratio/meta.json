@@ -1,7 +1,7 @@
 {
-  "name": "aspect-ratio",
-  "description": "Displays content within a desired ratio.",
-  "dependencies": [],
-  "files": ["aspect-ratio.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "aspect-ratio",
+	"description": "Displays content within a desired ratio.",
+	"dependencies": [],
+	"files": ["aspect-ratio.svelte", "index.ts"],
+	"npmDeps": {}
 }

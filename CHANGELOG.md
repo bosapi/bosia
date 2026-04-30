@@ -9,9 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.2.4] - 2026-04-30
 
 ### Changed
+
 - Per-route `Params` type generated from URL pattern in `$types.d.ts` — `[slug]` → `{ slug: string }`, static routes → `{}`. New typed helpers exported from `./$types`: `PageServerLoad`, `LayoutServerLoad`, `PageMetadataLoad`, `Action` — pre-bind the per-route `Params` so `event.params.slug` is `string` and `event.params.foo` is a type error. `PageData` / `LayoutData` `params` field switched from `Record<string, string>` to `Params`. Recommended adoption pattern: `export const load = (async ({ params }) => { ... }) satisfies PageServerLoad;` — `satisfies` preserves the body's inferred return type so `PageData` stays narrow.
 
 ### Added
+
+- Prettier formatting across the monorepo and scaffolded templates. Root `.prettierrc.json` (tabs, `tabWidth: 4`, double quotes, `trailingComma: "all"`, `printWidth: 100`, `prettier-plugin-svelte`) plus `bun run format` / `bun run format:check` scripts. Each of the three templates (`default`, `demo`, `todo`) ships its own copy of the same config and scripts so a fresh `bosia create` project lands on identical formatting out of the box. One-shot reformat applied to all existing source. No pre-commit hook, no lint — formatting only. **Note:** when changing prettier config, update all four locations (root + 3 templates).
 - Page option `export const trailingSlash` in `+page.server.ts` / `+layout.server.ts` — `"never"` (default) / `"always"` / `"ignore"`. Non-canonical URLs receive a `308 Permanent Redirect` (preserves request method, so form POSTs survive the redirect); root `/` is never modified; API routes (`+server.ts`) are unaffected. Layout setting cascades to children, page wins on conflict. The client router applies the same canonicalization on `navigate()` and on initial mount via `history.replaceState` (no extra history entry). Static prerender filename matches the mode: `"never"` emits `about.html`, `"always"` / `"ignore"` emit `about/index.html`. Resolved at scan time so the client bundle never imports server modules to read the value.
 
 ---
@@ -19,24 +22,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.2.3] - 2026-04-29
 
 ### Added
+
 - `bosia feat` per-file install strategies — `meta.json` `files` is now an array of `{ src, target, strategy?, marker? }` entries (replacing the parallel `files` + `targets` arrays). Strategies:
-  - `write` (default) — overwrite, prompt in interactive mode
-  - `skip-if-exists` — bootstrap-once: never replace user's copy (used for `drizzle.config.ts`, `src/features/drizzle/index.ts`, etc.)
-  - `append-line` — idempotent line append for barrel/aggregator files; dedupes by trimmed line. Used by `todo` to register `export * from "../todo/schemas/todo.table";` in `src/features/drizzle/schemas.ts` without clobbering other features' re-exports
-  - `append-block` — marker-delimited block (`// >>> bosia:<feat>:<marker>` … `// <<<`); replaces by id on re-install. Comment delimiters auto-detected by extension (`.ts/.js` → `//`, `.svelte/.html` → `<!-- -->`, `.css` → `/* */`)
-  - `merge-json` — deep-merge JSON, preserving existing keys; arrays concat-deduped by JSON identity
-  Fixes the prior all-or-nothing prompt: features that contribute to shared files (drizzle schema barrel, future hooks/middleware injection) no longer force users to choose between losing their customizations or running with missing registrations
+    - `write` (default) — overwrite, prompt in interactive mode
+    - `skip-if-exists` — bootstrap-once: never replace user's copy (used for `drizzle.config.ts`, `src/features/drizzle/index.ts`, etc.)
+    - `append-line` — idempotent line append for barrel/aggregator files; dedupes by trimmed line. Used by `todo` to register `export * from "../todo/schemas/todo.table";` in `src/features/drizzle/schemas.ts` without clobbering other features' re-exports
+    - `append-block` — marker-delimited block (`// >>> bosia:<feat>:<marker>` … `// <<<`); replaces by id on re-install. Comment delimiters auto-detected by extension (`.ts/.js` → `//`, `.svelte/.html` → `<!-- -->`, `.css` → `/* */`)
+    - `merge-json` — deep-merge JSON, preserving existing keys; arrays concat-deduped by JSON identity
+      Fixes the prior all-or-nothing prompt: features that contribute to shared files (drizzle schema barrel, future hooks/middleware injection) no longer force users to choose between losing their customizations or running with missing registrations
 - `use:enhance` Svelte action — progressive enhancement for `<form method="POST">`. Intercepts submission, POSTs via `fetch` with `x-bosia-action: 1`, updates the `form` prop reactively, and re-fetches loader data — all without a page reload. Falls back to the existing full-reload flow when JS is disabled. Server returns a typed `ActionResult` JSON shape (`success` / `failure` / `redirect` / `error`); `error` results populate `form.error` for inline rendering rather than swapping to the global error page. Optional `SubmitFunction` callback mirrors SvelteKit's API for cancellation, custom result handling, and `update({ reset, invalidateAll })`. Import via `bosia/client` — kept on a separate subpath so client-only modules (router, virtual `bosia:routes`) aren't pulled into server-side `+page.server.ts` imports.
 - Page option `export const ssr = false` in `+page.server.ts` — skips server rendering at request time and ships an empty `<div id="app"></div>` shell with hydration scripts. Server `load()` still runs and its data is injected as `__BOSIA_PAGE_DATA__`, so the client renders with data on hydration. Use for pages with browser-only deps (`window`, charts, third-party widgets) or auth-gated dashboards where SSR adds latency without SEO value. Combining with `csr=false` is overridden to `csr=true` (renders nothing otherwise; dev-mode warning); combining with `prerender=true` is contradictory and the route is skipped during build with a warning.
 
 ### Security
+
 - Validate `lang` attribute in SSR HTML shell against an RFC 5646 allowlist (`/^[a-zA-Z0-9-]{1,35}$/`); invalid values fall back to `"en"`. Prevents attribute-injection XSS when a user `metadata()` derives `lang` from URL/headers, and bounds `_shellOpenCache` to valid tags so attacker-controlled `lang` values can no longer poison the cache for memory-exhaustion DoS
 - Validate `CORS_MAX_AGE` env at startup — non-numeric, negative, or decimal values now throw a clear error instead of producing `Access-Control-Max-Age: NaN` (which silently disables CORS preflight caching in all browsers). Empty or unset values continue to use the 86400s default.
 
 ### Changed
+
 - `compress()` gzip threshold raised from 1KB to 2KB — small responses fit in single TCP packet, gzip overhead outweighs savings below this size
 
 ### Fixed
+
 - `compress()` gzip threshold now measured in UTF-8 bytes, not JS string length — multi-byte content (CJK, emoji) just over 1KB was previously sent uncompressed
 - `.env` parser now strips inline comments — `KEY="value" # note` correctly stores `value`; `KEY=foo # note` stores `foo`; `#` inside quotes remains literal; `foo#bar` (no preceding whitespace) is preserved unchanged
 
@@ -45,13 +52,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.2.2] - 2026-04-28
 
 ### Security
+
 - Scope `load()` / `metadata()` `fetch` cookie forwarding to same-origin requests — previously the user's `Cookie` header was attached to every outbound URL including third-party hosts, leaking the session token. Cookies are now sent only to same-origin or `INTERNAL_HOSTS`-allowlisted origins. **Behavior change:** `load()` calls to external APIs no longer auto-forward cookies; pass `Authorization` or `init.headers.cookie` explicitly. Set `INTERNAL_HOSTS=https://api.example.com,http://users-svc:8080` to allowlist cross-origin internal services that share the session
 
 ### Changed
+
 - Bound prefetch cache to 50 entries with LRU eviction — oldest entry evicted when cache is full, preventing unbounded memory growth on pages with many prefetchable links
 - Prefetch cache TTL — entries older than 30s are discarded on consumption and re-fetched on hover/viewport, preventing stale data after long idle
 
 ### Fixed
+
 - Router click handler now respects modifier keys (Cmd/Ctrl/Shift/Alt), non-primary mouse buttons (middle-click), `e.defaultPrevented`, and `rel="external"` — previously hijacked all same-origin anchor clicks, breaking "open in new tab/window"
 
 ---
@@ -59,6 +69,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.2.1] - 2026-04-26
 
 ### Changed
+
 - Pre-compile route patterns to `RegExp` at startup — `findMatch()` uses `regex.exec()` instead of splitting strings on every request; falls back to legacy matching for uncompiled routes (backward compat)
 
 ---
@@ -66,9 +77,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.2.0] - 2026-04-25
 
 ### Added
+
 - Request deduplication for `/__bosia/data/` endpoint — concurrent identical GET requests share a single in-flight loader promise instead of running the loader multiple times; auto-cleans on settle, no TTL needed
 
 ### Changed
+
 - Parallelize client and server `Bun.build()` calls for ~500-1000ms faster builds
 - Parallelize Tailwind CSS build with client+server bundles for ~500-800ms faster builds
 - Convert `sequence()` middleware from recursion to iterative loop to prevent stack overflow with many handlers
@@ -513,9 +526,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **`load()` function** — Plain `export async function load({ params, cookies })` pattern (no wrapper needed)
 - **`$types` codegen** — Auto-generated `.bosbun/types/src/routes/**/$types.d.ts` per route directory
-  - `PageData`, `PageProps` for pages
-  - `LayoutData`, `LayoutProps` for layouts
-  - `import type { PageData } from './$types'` resolves transparently via `tsconfig.json` `rootDirs`
+    - `PageData`, `PageProps` for pages
+    - `LayoutData`, `LayoutProps` for layouts
+    - `import type { PageData } from './$types'` resolves transparently via `tsconfig.json` `rootDirs`
 
 #### Server
 
@@ -524,8 +537,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Static file caching** — Cache-Control headers for assets
 - **`/_health` endpoint** — Returns `{ status: "ok", timestamp }` for health checks
 - **Cookie support** — `Cookies` interface on `RequestEvent` and `LoadEvent`
-  - `cookies.get(name)` / `cookies.set(name, value, options)` / `cookies.delete(name)`
-  - `Set-Cookie` headers applied automatically in response
+    - `cookies.get(name)` / `cookies.set(name, value, options)` / `cookies.delete(name)`
+    - `Set-Cookie` headers applied automatically in response
 
 #### Client
 

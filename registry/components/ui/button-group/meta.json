@@ -1,7 +1,7 @@
 {
-  "name": "button-group",
-  "description": "A container that visually groups multiple buttons into a single connected unit.",
-  "dependencies": [],
-  "files": ["button-group.svelte", "index.ts"],
-  "npmDeps": {}
+	"name": "button-group",
+	"description": "A container that visually groups multiple buttons into a single connected unit.",
+	"dependencies": [],
+	"files": ["button-group.svelte", "index.ts"],
+	"npmDeps": {}
 }

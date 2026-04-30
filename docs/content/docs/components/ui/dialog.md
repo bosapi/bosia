@@ -42,32 +42,35 @@ A modal dialog that overlays the page with a backdrop, traps focus, locks body s
 
 ```svelte
 <script lang="ts">
-  import {
-    Dialog, DialogTrigger, DialogContent,
-    DialogHeader, DialogTitle, DialogDescription,
-    DialogFooter, DialogClose
-  } from "$lib/components/ui/dialog";
-  import { Button } from "$lib/components/ui/button";
+	import {
+		Dialog,
+		DialogTrigger,
+		DialogContent,
+		DialogHeader,
+		DialogTitle,
+		DialogDescription,
+		DialogFooter,
+		DialogClose,
+	} from "$lib/components/ui/dialog";
+	import { Button } from "$lib/components/ui/button";
 </script>
 
 <Dialog>
-  <DialogTrigger>
-    <Button variant="outline">Open Dialog</Button>
-  </DialogTrigger>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Are you sure?</DialogTitle>
-      <DialogDescription>
-        This action cannot be undone.
-      </DialogDescription>
-    </DialogHeader>
-    <DialogFooter>
-      <DialogClose>
-        <Button variant="outline">Cancel</Button>
-      </DialogClose>
-      <Button>Confirm</Button>
-    </DialogFooter>
-  </DialogContent>
+	<DialogTrigger>
+		<Button variant="outline">Open Dialog</Button>
+	</DialogTrigger>
+	<DialogContent>
+		<DialogHeader>
+			<DialogTitle>Are you sure?</DialogTitle>
+			<DialogDescription>This action cannot be undone.</DialogDescription>
+		</DialogHeader>
+		<DialogFooter>
+			<DialogClose>
+				<Button variant="outline">Cancel</Button>
+			</DialogClose>
+			<Button>Confirm</Button>
+		</DialogFooter>
+	</DialogContent>
 </Dialog>
 ```
 
@@ -75,19 +78,19 @@ A modal dialog that overlays the page with a backdrop, traps focus, locks body s
 
 ```svelte
 <script lang="ts">
-  let open = $state(false);
+	let open = $state(false);
 </script>
 
 <Dialog bind:open>
-  <DialogTrigger>
-    <Button>Open</Button>
-  </DialogTrigger>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Controlled Dialog</DialogTitle>
-    </DialogHeader>
-    <p>You can control this dialog programmatically.</p>
-  </DialogContent>
+	<DialogTrigger>
+		<Button>Open</Button>
+	</DialogTrigger>
+	<DialogContent>
+		<DialogHeader>
+			<DialogTitle>Controlled Dialog</DialogTitle>
+		</DialogHeader>
+		<p>You can control this dialog programmatically.</p>
+	</DialogContent>
 </Dialog>
 
 <p>Dialog is {open ? "open" : "closed"}</p>
@@ -97,7 +100,7 @@ A modal dialog that overlays the page with a backdrop, traps focus, locks body s
 
 ```svelte
 <DialogContent closeOnBackdropClick={false}>
-  <!-- Only closes via Escape key or DialogClose button -->
+	<!-- Only closes via Escape key or DialogClose button -->
 </DialogContent>
 ```
 

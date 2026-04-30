@@ -1,17 +1,17 @@
 {
-  "name": "dialog",
-  "description": "A modal dialog overlay with focus trap, scroll lock, and accessible markup.",
-  "dependencies": [],
-  "files": [
-    "dialog.svelte",
-    "dialog-content.svelte",
-    "dialog-trigger.svelte",
-    "dialog-close.svelte",
-    "dialog-header.svelte",
-    "dialog-title.svelte",
-    "dialog-description.svelte",
-    "dialog-footer.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "dialog",
+	"description": "A modal dialog overlay with focus trap, scroll lock, and accessible markup.",
+	"dependencies": [],
+	"files": [
+		"dialog.svelte",
+		"dialog-content.svelte",
+		"dialog-trigger.svelte",
+		"dialog-close.svelte",
+		"dialog-header.svelte",
+		"dialog-title.svelte",
+		"dialog-description.svelte",
+		"dialog-footer.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }

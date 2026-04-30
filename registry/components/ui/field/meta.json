@@ -1,14 +1,14 @@
 {
-  "name": "field",
-  "description": "A form field wrapper that auto-wires accessibility attributes (id, aria-describedby, aria-invalid) via Svelte context.",
-  "dependencies": ["ui/label"],
-  "files": [
-    "field.svelte",
-    "field-label.svelte",
-    "field-control.svelte",
-    "field-description.svelte",
-    "field-error.svelte",
-    "index.ts"
-  ],
-  "npmDeps": {}
+	"name": "field",
+	"description": "A form field wrapper that auto-wires accessibility attributes (id, aria-describedby, aria-invalid) via Svelte context.",
+	"dependencies": ["ui/label"],
+	"files": [
+		"field.svelte",
+		"field-label.svelte",
+		"field-control.svelte",
+		"field-description.svelte",
+		"field-error.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
 }
