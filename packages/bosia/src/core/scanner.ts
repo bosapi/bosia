@@ -64,7 +64,7 @@ export function scanRoutes(): RouteManifest {
 				path: layoutServerPath,
 				depth: currentLayouts.length - 1,
 			});
-			const ts = readTrailingSlash(layoutServerPath);
+			const ts = readTrailingSlash(join(ROUTES_DIR, layoutServerPath));
 			if (ts) currentTrailingSlash = ts;
 		}
 
@@ -82,7 +82,9 @@ export function scanRoutes(): RouteManifest {
 				? join(dir, "+page.server.ts")
 				: null;
 
-			const pageTs = pageServerFile ? readTrailingSlash(pageServerFile) : null;
+			const pageTs = pageServerFile
+				? readTrailingSlash(join(ROUTES_DIR, pageServerFile))
+				: null;
 			const effectiveTs: TrailingSlash = pageTs ?? currentTrailingSlash;
 
 			pages.push({

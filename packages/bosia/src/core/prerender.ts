@@ -15,6 +15,46 @@ interface PrerenderTarget {
 	trailingSlash: TrailingSlash;
 }
 
+// ─── Pure helpers (exported for tests) ────────────────────
+
+/**
+ * Substitute `[param]` and `[...rest]` placeholders in a route pattern with
+ * concrete values from an `entries()` record.
+ */
+export function substituteParams(pattern: string, entry: Record<string, string>): string {
+	let resolved = pattern;
+	for (const [key, value] of Object.entries(entry)) {
+		resolved = resolved.replace(`[...${key}]`, value);
+		resolved = resolved.replace(`[${key}]`, value);
+	}
+	return resolved;
+}
+
+/**
+ * Canonical URL to fetch during prerender, based on trailing-slash mode.
+ * Avoids hitting the server's 308 redirect mid-prerender.
+ */
+export function canonicalRouteFor(routePath: string, ts: TrailingSlash): string {
+	if (routePath === "/") return "/";
+	if (ts === "always") return routePath.endsWith("/") ? routePath : routePath + "/";
+	return routePath.replace(/\/$/, "");
+}
+
+/**
+ * Output HTML filename for a prerendered route. Strategy follows trailing-slash
+ * mode so static hosts serve the right file on direct URL hits.
+ */
+export function prerenderOutPath(routePath: string, ts: TrailingSlash): string {
+	if (routePath === "/") return "./dist/prerendered/index.html";
+	if (ts === "never") return `./dist/prerendered${routePath.replace(/\/$/, "")}.html`;
+	return `./dist/prerendered${routePath.replace(/\/$/, "")}/index.html`;
+}
+
+/** Data-payload filename for a prerendered route — matches client `dataUrl()`. */
+export function prerenderDataPath(routePath: string): string {
+	return routePath === "/" ? "/index.json" : `${routePath.replace(/\/$/, "")}.json`;
+}
+
 async function detectPrerenderRoutes(manifest: RouteManifest): Promise<PrerenderTarget[]> {
 	const targets: PrerenderTarget[] = [];
 	for (const route of manifest.pages) {
@@ -43,14 +83,10 @@ async function detectPrerenderRoutes(manifest: RouteManifest): Promise<Prerender
 				}
 				const entryList: Record<string, string>[] = await mod.entries();
 				for (const entry of entryList) {
-					let resolved = route.pattern;
-					for (const [key, value] of Object.entries(entry)) {
-						// [...slug] → value (rest param)
-						resolved = resolved.replace(`[...${key}]`, value);
-						// [param] → value
-						resolved = resolved.replace(`[${key}]`, value);
-					}
-					targets.push({ path: resolved, trailingSlash: ts });
+					targets.push({
+						path: substituteParams(route.pattern, entry),
+						trailingSlash: ts,
+					});
 				}
 			} catch (err) {
 				console.error(`   ❌ Failed to resolve entries() for ${route.pattern}:`, err);
@@ -107,14 +143,7 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 	for (const { path: routePath, trailingSlash: ts } of targets) {
 		try {
 			// Hit the canonical URL so the server doesn't 308 us mid-prerender
-			const canonicalRoute =
-				routePath === "/"
-					? "/"
-					: ts === "always"
-						? routePath.endsWith("/")
-							? routePath
-							: routePath + "/"
-						: routePath.replace(/\/$/, "");
+			const canonicalRoute = canonicalRouteFor(routePath, ts);
 
 			const res = await fetch(`${base}${canonicalRoute}`, {
 				signal: AbortSignal.timeout(PRERENDER_TIMEOUT),
@@ -126,18 +155,12 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 			//   always → about/index.html  (canonical /about/, static host serves /about/ → about/index.html)
 			//   ignore → about/index.html  (single emit; both URLs resolve via server canonicalize=off)
 			//   root   → index.html
-			const outPath =
-				routePath === "/"
-					? "./dist/prerendered/index.html"
-					: ts === "never"
-						? `./dist/prerendered${routePath.replace(/\/$/, "")}.html`
-						: `./dist/prerendered${routePath.replace(/\/$/, "")}/index.html`;
+			const outPath = prerenderOutPath(routePath, ts);
 			mkdirSync(outPath.substring(0, outPath.lastIndexOf("/")), { recursive: true });
 			writeFileSync(outPath, html);
 
 			// Also prerender the data payload (filename matches dataUrl() — strips trailing slash)
-			const dataPath =
-				routePath === "/" ? "/index.json" : `${routePath.replace(/\/$/, "")}.json`;
+			const dataPath = prerenderDataPath(routePath);
 			const dataRes = await fetch(`${base}/__bosia/data${dataPath}`, {
 				signal: AbortSignal.timeout(PRERENDER_TIMEOUT),
 			});
