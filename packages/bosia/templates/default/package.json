@@ -1,20 +1,24 @@
 {
-  "name": "{{PROJECT_NAME}}",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "bosia dev",
-    "build": "bosia build",
-    "start": "bosia start",
-    "check": "tsc --noEmit"
-  },
-  "dependencies": {
-    "bosia": "^{{BOSIA_VERSION}}",
-    "svelte": "^5.20.0",
-    "tailwind-merge": "^3.5.0"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^5"
-  }
+	"name": "{{PROJECT_NAME}}",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "bosia dev",
+		"build": "bosia build",
+		"start": "bosia start",
+		"check": "tsc --noEmit",
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
+	},
+	"dependencies": {
+		"bosia": "^{{BOSIA_VERSION}}",
+		"svelte": "^5.20.0",
+		"tailwind-merge": "^3.5.0"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"prettier": "^3.3.0",
+		"prettier-plugin-svelte": "^3.2.0",
+		"typescript": "^5"
+	}
 }

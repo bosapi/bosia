@@ -1,0 +1,11 @@
+node_modules
+dist
+.bun
+build
+**/.bosia
+**/.svelte-kit
+apps/*/dist
+packages/*/dist
+docs/dist
+bun.lock
+*.lockb

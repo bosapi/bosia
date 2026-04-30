@@ -1,13 +1,19 @@
 {
-  "name": "bosia-monorepo",
-  "private": true,
-  "workspaces": [
-    "packages/*",
-    "apps/*",
-    "docs"
-  ],
-  "scripts": {
-    "publish": "npm publish --workspace packages/bosia --access public",
-    "publish:dry": "npm publish --workspace packages/bosia --dry-run"
-  }
+	"name": "bosia-monorepo",
+	"private": true,
+	"workspaces": [
+		"packages/*",
+		"apps/*",
+		"docs"
+	],
+	"scripts": {
+		"publish": "npm publish --workspace packages/bosia --access public",
+		"publish:dry": "npm publish --workspace packages/bosia --dry-run",
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
+	},
+	"devDependencies": {
+		"prettier": "^3.3.0",
+		"prettier-plugin-svelte": "^3.2.0"
+	}
 }
