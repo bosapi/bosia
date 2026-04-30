@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.3.1] - 2026-05-01
+
+### Fixed
+
+- Stale env cleanup in dev — removed/renamed `.env` keys no longer linger in `process.env` until the user manually restarts. Previously `loadEnv()` only adds keys (never deletes), so deleting `FOO=bar` from `.env` left `process.env.FOO === "bar"` for the rest of the session. The dev server now snapshots the pure shell env at startup (before any `.env` load), watches `.env` / `.env.local` / `.env.development` / `.env.development.local` non-recursively in cwd, and on change resets `process.env` to the snapshot, clears the `_declaredKeys` set (so removed `PUBLIC_*` keys stop leaking to the client via `html.ts`), re-runs `loadEnv()`, and reuses the existing debounced `scheduleBuild()` so the child app server respawns with fresh env. The "system env wins over `.env`" precedence is preserved (snapshot is restored first, then `.env` files merged on top with the existing `if (!(key in process.env))` guard). Source-file edits are unaffected — only `.env*` writes trigger the reload path. `loadEnv("development")` moved from `cli/dev.ts` into `core/dev.ts` so the snapshot is taken in the same process that owns the watcher (the previous CLI-side load polluted the parent's env before the child even started).
+
+---
+
 ## [0.3.0] - 2026-04-30
 
 ### Added

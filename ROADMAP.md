@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.3.0**
+> Current version: **0.3.1**
 
 ---
 
@@ -194,7 +194,7 @@
 ### DX
 
 - [ ] 🟠 Dev proxy must forward `X-Forwarded-Host` / `X-Forwarded-Proto` to the inner app server — without them the inner CSRF check derives `expectedOrigin = http://localhost:APP_PORT` while the browser's `Origin` is `http://localhost:DEV_PORT`, causing same-origin POST/form actions to 403 in dev
-- [ ] 🟡 Stale env cleanup in dev — reset removed `.env` vars on hot-reload
+- [x] 🟡 Stale env cleanup in dev — reset removed `.env` vars on hot-reload
 
 ---
 

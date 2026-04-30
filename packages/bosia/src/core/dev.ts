@@ -1,6 +1,23 @@
 import { spawn, type Subprocess } from "bun";
 import { watch } from "fs";
 import { join } from "path";
+import { loadEnv, resetDeclaredKeys } from "./env.ts";
+
+// Snapshot pure shell env BEFORE any loadEnv call pollutes process.env.
+// On `.env*` change we restore from this snapshot, then re-run loadEnv,
+// so removed/renamed keys no longer linger in the dev process.
+const SHELL_ENV_SNAPSHOT: Record<string, string | undefined> = { ...process.env };
+
+loadEnv("development");
+
+function reloadEnv() {
+	for (const k of Object.keys(process.env)) delete process.env[k];
+	for (const [k, v] of Object.entries(SHELL_ENV_SNAPSHOT)) {
+		if (v !== undefined) process.env[k] = v;
+	}
+	resetDeclaredKeys();
+	loadEnv("development");
+}
 
 console.log("⬡ Bosia dev server starting...\n");
 
@@ -231,6 +248,20 @@ watch(join(process.cwd(), "src"), { recursive: true }, (_event, filename) => {
 	const abs = join(process.cwd(), "src", filename);
 	if (isGenerated(abs)) return;
 	console.log(`[watch] changed: ${filename}`);
+	scheduleBuild();
+});
+
+// ─── .env Watcher ─────────────────────────────────────────
+// Reset to shell-env snapshot and re-run loadEnv so removed/renamed
+// keys don't linger across hot-reloads. The respawn at startAppServer
+// already spreads `...process.env`, so the child picks up the fresh state.
+
+const ENV_FILES = new Set([".env", ".env.local", ".env.development", ".env.development.local"]);
+
+watch(process.cwd(), { recursive: false }, (_event, filename) => {
+	if (!filename || !ENV_FILES.has(filename)) return;
+	console.log(`[watch] env changed: ${filename}`);
+	reloadEnv();
 	scheduleBuild();
 });
 

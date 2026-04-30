@@ -175,6 +175,11 @@ export function getDeclaredEnvKeys(): ReadonlySet<string> {
 	return _declaredKeys;
 }
 
+/** Clear the declared-keys set. Call before re-running `loadEnv` on hot-reload so removed PUBLIC_* keys stop leaking to the client. */
+export function resetDeclaredKeys(): void {
+	_declaredKeys.clear();
+}
+
 // ─── Classifier ──────────────────────────────────────────
 
 export interface ClassifiedEnv {
