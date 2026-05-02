@@ -655,8 +655,8 @@ async function shutdown() {
 		console.log("✅ All requests drained");
 	}
 
-	app.stop().then(() => process.exit(0));
-	setTimeout(() => process.exit(1), 5_000);
+	app.stop(true).then(() => process.exit(0));
+	setTimeout(() => process.exit(1), 2_000);
 }
 
 process.on("SIGTERM", shutdown);

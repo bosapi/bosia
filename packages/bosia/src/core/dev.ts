@@ -265,3 +265,24 @@ watch(process.cwd(), { recursive: false }, (_event, filename) => {
 });
 
 console.log("👀 Watching src/ for changes...\n");
+
+// ─── Shutdown ─────────────────────────────────────────────
+// Own SIGINT/SIGTERM so we can cleanly stop the child app server.
+// Without this, the terminal's ^C reaches both processes; the parent
+// exits instantly while the child blocks in `app.stop()`, requiring
+// a second ^C.
+
+let shuttingDown = false;
+async function shutdown() {
+	if (shuttingDown) process.exit(130);
+	shuttingDown = true;
+	intentionalKill = true;
+	if (appProcess) {
+		appProcess.kill("SIGTERM");
+		await Promise.race([appProcess.exited, Bun.sleep(2_500)]);
+	}
+	process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
