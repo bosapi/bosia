@@ -126,6 +126,19 @@ export function makeBosiaPlugin(target: "browser" | "bun" = "bun") {
 				path: "tailwindcss",
 				namespace: "bosia-empty-css",
 			}));
+			// app.css is processed by Tailwind CLI into public/bosia-tw.css and
+			// loaded via <link> tag in HTML. User layouts often `import "../app.css"`
+			// for IDE/Tailwind tooling — bundle as JS no-op so Bun doesn't emit a
+			// CSS chunk per dynamic-imported route (identical content → output
+			// collision under splitting:true).
+			build.onResolve({ filter: /(?:^|.*\/)app\.css$/ }, () => ({
+				path: "app.css",
+				namespace: "bosia-empty-app-css",
+			}));
+			build.onLoad({ filter: /.*/, namespace: "bosia-empty-app-css" }, () => ({
+				contents: "",
+				loader: "js",
+			}));
 			build.onLoad({ filter: /.*/, namespace: "bosia-empty-css" }, () => ({
 				contents: "",
 				loader: "css",

@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.4.2**
+> Current version: **0.4.4**
 
 ---
 
@@ -412,6 +412,15 @@
 - [x] 🟠 Ship `.gitignore` with `bun x bosia create` — npm pack strips `.gitignore`, so templates store it as `_gitignore` and `copyDir` restores the dotfile name on copy
 - [x] 🟡 Ignore generated Tailwind output `public/bosia-tw.css` in template `.prettierignore` and `.gitignore` (default, demo, todo) so `bun run check` succeeds on a clean scaffold
 - [x] 🟡 `bun run check:templates` — packs via `bun pm pack`, extracts the tarball, and asserts each `templates/*` still has the expected files (no install, no scaffold) so this class of regression fails locally before publishing
+
+---
+
+## v0.4.4 — Build CSS collision hotfix ✅ (shipped 2026-05-09)
+
+> Republish of 0.4.3 with a missed regression in the Svelte build path fixed.
+
+- [x] 🔴 Restore `app.css` → JS no-op resolve in `core/plugin.ts`. Without it, every dynamic-imported route chunk that transitively reaches `app.css` produces an identical CSS sidecar (`+page-<hash>.css`) and Bun fails the build with `Multiple files share the same output path`. Tailwind CLI continues to emit the real stylesheet at `public/bosia-tw.css` (loaded via `<link>`); the bundler never needs the source CSS
+- [x] 🟡 Regression test `packages/bosia/test/svelte-build.test.ts` — 12 dummy routes + shared app.css; fails without the no-op, passes with it
 
 ---
 

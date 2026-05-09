@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.4.4] - 2026-05-09
+
+### Fixed
+
+- Production builds for apps with many routes that share a common `app.css` (via the root layout) no longer fail with `Multiple files share the same output path` errors. The bundler now treats `app.css` as a JS no-op so Bun does not emit duplicate CSS chunks per route. Tailwind CLI still produces the real stylesheet at `public/bosia-tw.css` as before.
+
+---
+
 ## [0.4.3] - 2026-05-09
 
 ### Changed
