@@ -315,12 +315,14 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		}
 	}
 
+	// Resolve the page route once; reuse for trailing-slash, form-action, and SSR phases.
+	const pageMatch = findMatch(serverRoutes, path);
+
 	// Trailing-slash canonicalization — 308 preserves method (form POSTs included)
-	const canonicalMatch = findMatch(serverRoutes, path);
-	if (canonicalMatch) {
+	if (pageMatch) {
 		const canonical = canonicalPathname(
 			path,
-			(canonicalMatch.route as any).trailingSlash ?? "never",
+			(pageMatch.route as any).trailingSlash ?? "never",
 		);
 		if (canonical !== null) {
 			return new Response(null, {
@@ -332,7 +334,6 @@ async function resolve(event: RequestEvent): Promise<Response> {
 
 	// Form actions — POST to page routes with `actions` export
 	if (method === "POST") {
-		const pageMatch = findMatch(serverRoutes, path);
 		if (pageMatch?.route.pageServer) {
 			// `use:enhance` sets this header — return JSON instead of re-rendering HTML
 			const isEnhanced = request.headers.get("x-bosia-action") === "1";
@@ -421,6 +422,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 							cookies,
 							result.data,
 							result.status,
+							pageMatch,
 						);
 					}
 
@@ -439,6 +441,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 						cookies,
 						result ?? null,
 						200,
+						pageMatch,
 					);
 				}
 			} catch (err) {
@@ -478,7 +481,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 	}
 
 	// SSR pages (+page.svelte) — streaming by default
-	const streamResponse = await renderSSRStream(url, locals, request, cookies);
+	const streamResponse = await renderSSRStream(url, locals, request, cookies, pageMatch);
 	if (!streamResponse) return renderErrorPage(404, "Not Found", url, request);
 	return streamResponse;
 }
@@ -659,18 +662,12 @@ for (const plugin of plugins) {
 
 app = app
 	// Static files are served by resolve() with path traversal protection and security headers
-	// API routes must intercept all HTTP methods before the GET catch-all
-	.onBeforeHandle(async ({ request }) => {
-		const url = new URL(request.url);
-		if (!findMatch(apiRoutes, url.pathname)) return; // not an API route
-		return handleRequest(request, url);
-	})
 	// SSR pages
 	.get("*", ({ request }: { request: Request }) => {
 		const url = new URL(request.url);
 		return handleRequest(request, url);
 	})
-	// Non-GET catch-alls so onBeforeHandle fires for API routes on other methods
+	// Non-GET catch-alls route every method through handleRequest()
 	.post("*", ({ request }: { request: Request }) => {
 		const url = new URL(request.url);
 		return handleRequest(request, url);

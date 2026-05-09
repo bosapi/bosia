@@ -43,7 +43,7 @@ export function safeJsonStringify(data: unknown): string {
  * Only exposes keys tracked by loadEnv() — never leaks system env vars
  * that happen to start with PUBLIC_.
  */
-function getPublicDynamicEnv(): Record<string, string> {
+const _publicDynamicEnv: Record<string, string> = (() => {
 	const declared = getDeclaredEnvKeys();
 	const result: Record<string, string> = {};
 	for (const key of declared) {
@@ -53,6 +53,9 @@ function getPublicDynamicEnv(): Record<string, string> {
 		}
 	}
 	return result;
+})();
+function getPublicDynamicEnv(): Record<string, string> {
+	return _publicDynamicEnv;
 }
 
 // ─── Lang Validation ──────────────────────────────────────

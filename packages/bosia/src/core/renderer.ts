@@ -2,6 +2,7 @@ import { render } from "svelte/server";
 
 import { findMatch } from "./matcher.ts";
 import { serverRoutes, errorPage } from "bosia:routes";
+import type { RouteMatch } from "./types.ts";
 import type { Cookies } from "./hooks.ts";
 import { HttpError, Redirect } from "./errors.ts";
 import { pickErrorPage, type ErrorOrigin } from "./errorMatch.ts";
@@ -166,30 +167,33 @@ export async function loadRouteData(
 	req: Request,
 	cookies: Cookies,
 	metadataData: Record<string, any> | null = null,
+	match?: RouteMatch<(typeof serverRoutes)[number]> | null,
 ) {
-	const match = findMatch(serverRoutes, url.pathname);
+	match ??= findMatch(serverRoutes, url.pathname);
 	if (!match) return null;
 
 	const { route, params } = match;
 	const fetch = makeFetch(req, url);
 	const layoutData: Record<string, any>[] = [];
+	let parentData: Record<string, any> = {};
 
 	// Run layout server loaders root → leaf, each gets parent() data
 	for (const ls of route.layoutServers) {
 		try {
 			const mod = await ls.loader();
 			if (typeof mod.load === "function") {
-				const parent = async () => {
-					const merged: Record<string, any> = {};
-					for (let d = 0; d < ls.depth; d++) Object.assign(merged, layoutData[d] ?? {});
-					return merged;
-				};
-				layoutData[ls.depth] =
+				// Snapshot per layer so loaders cannot mutate the shared accumulator,
+				// preserving the same isolation semantics as the previous merge-on-call code.
+				const snapshot = { ...parentData };
+				const parent = async () => snapshot;
+				const result =
 					(await withTimeout(
 						mod.load({ params, url, locals, cookies, parent, fetch, metadata: null }),
 						LOAD_TIMEOUT,
 						`layout load (depth=${ls.depth}, ${url.pathname})`,
 					)) ?? {};
+				layoutData[ls.depth] = result;
+				parentData = { ...parentData, ...result };
 			}
 		} catch (err) {
 			if (err instanceof Redirect) throw err;
@@ -215,11 +219,8 @@ export async function loadRouteData(
 			if (mod.csr === false) csr = false;
 			if (mod.ssr === false) ssr = false;
 			if (typeof mod.load === "function") {
-				const parent = async () => {
-					const merged: Record<string, any> = {};
-					for (const d of layoutData) if (d) Object.assign(merged, d);
-					return merged;
-				};
+				const snapshot = { ...parentData };
+				const parent = async () => snapshot;
 				pageData =
 					(await withTimeout(
 						mod.load({
@@ -289,8 +290,9 @@ export async function renderSSRStream(
 	locals: Record<string, any>,
 	req: Request,
 	cookies: Cookies,
+	match?: RouteMatch<(typeof serverRoutes)[number]> | null,
 ): Promise<Response | null> {
-	const match = findMatch(serverRoutes, url.pathname);
+	match ??= findMatch(serverRoutes, url.pathname);
 	if (!match) return null;
 
 	const { route, params } = match;
@@ -321,7 +323,7 @@ export async function renderSSRStream(
 
 	try {
 		[data, pageMod, layoutMods] = await Promise.all([
-			loadRouteData(url, locals, req, cookies, metadataData),
+			loadRouteData(url, locals, req, cookies, metadataData, match),
 			route.pageModule(),
 			Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
 		]);
@@ -469,15 +471,16 @@ export async function renderPageWithFormData(
 	cookies: Cookies,
 	formData: any,
 	status: number,
+	match?: RouteMatch<(typeof serverRoutes)[number]> | null,
 ): Promise<Response> {
-	const match = findMatch(serverRoutes, url.pathname);
+	match ??= findMatch(serverRoutes, url.pathname);
 	if (!match) return renderErrorPage(404, "Not Found", url, req);
 
 	const { route } = match;
 
 	// Load components + data in parallel
 	const [data, pageMod, layoutMods] = await Promise.all([
-		loadRouteData(url, locals, req, cookies),
+		loadRouteData(url, locals, req, cookies, null, match),
 		route.pageModule(),
 		Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
 	]);
