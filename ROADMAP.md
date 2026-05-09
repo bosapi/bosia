@@ -470,6 +470,40 @@
 
 ---
 
+## v0.7.0 — CSS Pipeline Overhaul
+
+> Replace the `app.css` no-op workaround with a proper CSS dedup pipeline. Single global stylesheet doesn't scale: large apps need per-route CSS chunks, component-scoped styles, and code-split delivery.
+
+### Problem
+
+- Tailwind CLI runs separately from Bun build → bundler has no view of CSS module graph
+- Bun's `splitting: true` emits one CSS sidecar per chunk that imports a shared CSS file → collision when N routes transitively import `app.css`
+- Current fix (`plugin.ts` intercepts `app.css` → empty JS module) ships ALL utilities in one `public/bosia-tw.css` regardless of which route uses them
+- Doesn't scale: 100+ route apps load every utility on every page; can't lazy-load route-specific CSS; can't tree-shake unused per-route styles
+
+### Goals
+
+- [ ] 🟠 CSS module graph dedup — bundler tracks every CSS import, identical content emitted once, referenced by N entries (Vite-style)
+- [ ] 🟠 Per-route CSS chunks — each route ships only the CSS it actually uses, loaded via `<link>` injected at SSR
+- [ ] 🟠 Drop `app.css` no-op interception in `core/plugin.ts` once dedup lands
+- [ ] 🟡 Component `<style>` blocks: continue with `css: "injected"` (already scoped + deduped via `cssHash`)
+- [ ] 🟡 Tailwind into bundler hot path — port `@tailwindcss/vite` shape to Bun plugin API so utilities are scanned + emitted as part of the build, not a parallel CLI step
+
+### Approach Options
+
+1. **Wait on Bun upstream** — file/track issue for CSS chunk dedup under `splitting: true`. Lowest effort, unbounded timeline.
+2. **Custom Bun plugin** — own CSS pipeline in `core/cssPipeline.ts`: intercept all `.css` imports, hash contents, emit one shared chunk per unique source, track route → chunk mapping, inject `<link>` tags via `render.head` per request.
+3. **Static layout import workaround** — make root `+layout.svelte` a static import (not dynamic) in `routes.client.ts`. Collapses `app.css` into entry chunk → no per-route duplication. Cheapest fix, but loses dynamic layout chains.
+
+### Acceptance
+
+- [ ] Builds with 100+ routes succeed without the `app.css` no-op
+- [ ] Each route ships ≤ what it imports (verified by inspecting `dist/client/*.css` sizes)
+- [ ] Component `<style>` still scoped via `cssHash`
+- [ ] No regression in `test/svelte-build.test.ts` (CSS collision regression test)
+
+---
+
 ## Not Planned
 
 Intentional omissions — out of scope for the framework:
