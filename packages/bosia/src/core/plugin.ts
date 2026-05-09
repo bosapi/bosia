@@ -1,6 +1,5 @@
-import { join, dirname, basename } from "path";
+import { join, dirname } from "path";
 import { existsSync } from "fs";
-import { compile } from "svelte/compiler";
 
 // ─── Bun Build Plugin ─────────────────────────────────────
 // Resolves:
@@ -127,79 +126,10 @@ export function makeBosiaPlugin(target: "browser" | "bun" = "bun") {
 				path: "tailwindcss",
 				namespace: "bosia-empty-css",
 			}));
-			// app.css is processed by Tailwind CLI into public/bosia-tw.css and
-			// loaded via <link> tag in HTML — skip bundling as JS no-op to avoid
-			// Bun emitting identical CSS sidecars per dynamic-imported chunk
-			// (output collision when many chunks share the same empty CSS dep).
-			build.onResolve({ filter: /(?:^|.*\/)app\.css$/ }, () => ({
-				path: "app.css",
-				namespace: "bosia-empty-app-css",
-			}));
-			build.onLoad({ filter: /.*/, namespace: "bosia-empty-app-css" }, () => ({
-				contents: "",
-				loader: "js",
-			}));
 			build.onLoad({ filter: /.*/, namespace: "bosia-empty-css" }, () => ({
 				contents: "",
 				loader: "css",
 			}));
-
-			// ─── Svelte CSS dedup ─────────────────────────────
-			// bun-plugin-svelte (css: "external") creates virtual CSS modules at
-			//   bun-svelte:<basename>-<hash>-style.css
-			// With splitting:true, Bun emits a CSS chunk per dynamic import that
-			// shares the same CSS → output path collision.
-			//
-			// Fix: extract CSS ourselves during .svelte compilation, then redirect
-			// every bun-svelte: module to a unique _svelte/<uid> path so Bun never
-			// sees two chunks competing for the same output file.  The redirected
-			// file uses loader "js" (runtime <style> injection) so Bun creates no
-			// CSS chunks at all.
-			const svelteCssByUid = new Map<string, string>();
-			const svelteHash = (s: string) => Bun.hash(s, 5381).toString(36);
-
-			if (target === "browser") {
-				build.onLoad({ filter: /\.svelte$/ }, async (args) => {
-					const src = await Bun.file(args.path).text();
-					const result = compile(src, {
-						generate: "client",
-						css: "external",
-						filename: args.path,
-						cssHash({ css }: { css: string }) {
-							return `svelte-${svelteHash(css)}`;
-						},
-					});
-					if (result.css?.code) {
-						const uid = `${basename(args.path)}-${svelteHash(args.path)}-style.css`;
-						const prev = svelteCssByUid.get(uid);
-						svelteCssByUid.set(
-							uid,
-							prev ? prev + "\n" + result.css.code : result.css.code,
-						);
-					}
-					// Let bun-plugin-svelte handle the real compilation
-					return undefined;
-				});
-			}
-
-			build.onResolve({ filter: /^bun-svelte:/ }, (args) => {
-				const file = args.path.slice("bun-svelte:".length);
-				return {
-					path: "_svelte/" + file,
-					namespace: "bosia-svelte",
-				};
-			});
-
-			build.onLoad({ filter: /.*/, namespace: "bosia-svelte" }, (args) => {
-				const file = args.path.slice("_svelte/".length);
-				const css = svelteCssByUid.get(file);
-				return {
-					contents: css
-						? `var s=document.createElement('style');s.textContent=${JSON.stringify(css)};document.head.appendChild(s);`
-						: "",
-					loader: "js",
-				};
-			});
 		},
 	};
 }

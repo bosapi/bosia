@@ -415,6 +415,27 @@
 
 ---
 
+## v0.4.3 — Request pipeline perf ✅ (shipped 2026-05-09)
+
+> Cut redundant work from the per-request hot path.
+
+### Done
+
+- [x] 🟠 Resolve page route once per request and thread through `renderSSRStream` / `renderPageWithFormData` / form-action handler
+- [x] 🟡 Cache `getPublicDynamicEnv()` at module scope
+- [x] 🟠 Linear `parent()` data merging in layout loaders — O(d²) → O(d) with per-layer snapshot
+- [x] 🟡 Drop redundant `onBeforeHandle` apiRoutes scan; non-GET catch-alls already cover every method
+- [x] 🟠 Inline Svelte compile, drop `bun-plugin-svelte` — own `.svelte` / `.svelte.[tj]s` `onLoad` with `css: "injected"` (browser) / `css: "external"` (server). Eliminates the dynamic-import CSS-sidecar collision at the root and removes the double-compile workaround in `core/plugin.ts`
+
+### Open
+
+- [ ] 🟠 **Truly progressive SSR streaming** — `renderSSRStream` is currently blocking before first byte (load → render → enqueue prebuilt chunks). Blocked on `depends()` / `invalidate()` (v0.2.1) and the trie-based matcher (v0.2.2)
+- [ ] 🟡 **Reduce `safeJsonStringify` cost on large loader payloads** — guidance, not a `trusted` opt-out flag. Server-loader data routinely carries user-generated DB content; removing the XSS escape per payload is unsafe. Document "keep loader data lean" and consider one combined regex pass over the embedded JSON-script block
+
+> Reference: `backup/PERFORM_ISSUES.md` (full request-pipeline review, 2026-05-08).
+
+---
+
 ## v0.5.0 — Full Plugin Lifecycle
 
 > Complete the plugin surface; uninstall + virtual modules.

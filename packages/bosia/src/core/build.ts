@@ -1,4 +1,3 @@
-import { SveltePlugin } from "bun-plugin-svelte";
 import { writeFileSync, rmSync, mkdirSync } from "fs";
 import { join, relative } from "path";
 
@@ -6,6 +5,7 @@ import { scanRoutes } from "./scanner.ts";
 import { generateRoutesFile } from "./routeFile.ts";
 import { generateRouteTypes, ensureRootDirs } from "./routeTypes.ts";
 import { makeBosiaPlugin } from "./plugin.ts";
+import { makeBosiaSvelteCompiler } from "./svelteCompiler.ts";
 import { prerenderStaticRoutes, generateStaticSite } from "./prerender.ts";
 import { loadEnv, classifyEnvVars } from "./env.ts";
 import { generateEnvModules } from "./envCodegen.ts";
@@ -134,7 +134,7 @@ const clientPromise = Bun.build({
 		"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "development"),
 		...staticDefines,
 	},
-	plugins: [clientPlugin, ...userClientBunPlugins, SveltePlugin()],
+	plugins: [clientPlugin, ...userClientBunPlugins, makeBosiaSvelteCompiler("browser")],
 });
 
 const serverPromise = Bun.build({
@@ -145,7 +145,7 @@ const serverPromise = Bun.build({
 	naming: { entry: "index.[ext]", chunk: "[name]-[hash].[ext]" },
 	minify: isProduction,
 	external: ["elysia"],
-	plugins: [serverPlugin, ...userServerBunPlugins, SveltePlugin()],
+	plugins: [serverPlugin, ...userServerBunPlugins, makeBosiaSvelteCompiler("bun")],
 });
 
 const [tailwindExitCode, clientResult, serverResult] = await Promise.all([

@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.4.3] - 2026-05-09
+
+### Changed
+
+- Bosia now resolves each page route only once per request, instead of looking it up three or four times. Page loads, form submissions, and trailing-slash redirects are all slightly faster.
+- Layout data merging is now linear in the number of layouts. Apps with deeply nested layouts will see a small speed-up on every page load.
+- The list of public environment variables (those starting with `PUBLIC_`) is now built once when the server starts, instead of being recomputed on every response.
+
+### Fixed
+
+- Production builds with many Svelte components no longer fail with duplicate CSS output errors. Bosia now compiles Svelte files itself with inline style injection, avoiding the upstream bug.
+
+### Removed
+
+- An internal pre-handler that double-checked API routes on every request has been removed. It was redundant — every HTTP method already routes through the same handler.
+- `bun-plugin-svelte` is no longer a dependency.
+
+---
+
 ## [0.4.2] - 2026-05-07
 
 ### Fixed
