@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.4.4**
+> Current version: **0.4.5**
 
 ---
 
@@ -442,6 +442,35 @@
 - [ ] 🟡 **Reduce `safeJsonStringify` cost on large loader payloads** — guidance, not a `trusted` opt-out flag. Server-loader data routinely carries user-generated DB content; removing the XSS escape per payload is unsafe. Document "keep loader data lean" and consider one combined regex pass over the embedded JSON-script block
 
 > Reference: `backup/PERFORM_ISSUES.md` (full request-pipeline review, 2026-05-08).
+
+---
+
+## v0.4.5 — Blocks & Themes Registry
+
+> Two new registry kinds: **Blocks** (composed UI sections) and **Themes** (token sets). Closes the design-quality gap for LLM-generated apps (Bosapi) and hand-coders alike. Primitives stay unchanged.
+
+### CLI
+
+- [x] 🟠 `bun x bosia@latest add block <category>/<name>` — install a block to `src/lib/blocks/<path>/`
+- [x] 🟠 `bun x bosia@latest add theme <name>` — install a theme to `src/lib/themes/<name>.css`, patch `app.css` import
+- [x] 🟡 Extend CLI dispatcher (`packages/bosia/src/cli/index.ts`) for `add block`/`add theme` sub-args
+- [x] 🟡 Refactor `add.ts` — parameterize destination root; `RegistryIndex` gains `blocks: string[]`, `themes: string[]`
+- [x] 🟡 `block.ts` handler — recursive primitive deps via `addComponent()`, optional font `@import` merge into `app.css`
+- [x] 🟡 `theme.ts` handler — copy `tokens.css`, swap `@import` in `app.css` (one-active-theme), font `@import` merge
+
+### Registry content
+
+- [x] 🟠 Extend `registry/index.json` with `blocks` and `themes` arrays
+- [x] 🟠 `registry/themes/neutral/` — extracted from current `apps/demo/src/app.css` `@theme` block
+- [x] 🟠 `registry/themes/editorial/` — warm cream palette + Instrument Serif display
+- [x] 🟠 `registry/blocks/cards/feature-editorial/` — first block; matches Open Design reference (eyebrow numeral, serif title, tight leading, circular CTA)
+- [x] 🟡 Refactor `apps/demo/src/app.css` to `@import "./lib/themes/neutral.css"` (visually unchanged)
+
+### Docs
+
+- [x] 🟡 `docs/content/docs/blocks/overview.md` + per-block pages
+- [x] 🟡 `docs/content/docs/themes/overview.md` + per-theme pages + `creating-themes.md`
+- [x] 🟡 `CardFeatureEditorialDemo.svelte` registered in `nav.ts` and `[...slug]/+page.svelte` demos map
 
 ---
 

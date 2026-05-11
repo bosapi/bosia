@@ -136,6 +136,36 @@ export const sidebar: NavGroup[] = [
 		],
 	},
 	{
+		label: "Blocks",
+		labelId: "Blok",
+		items: [
+			{ label: "Overview", labelId: "Ringkasan", slug: "blocks/overview" },
+			{
+				label: "Cards",
+				children: [
+					{
+						label: "Feature (Editorial)",
+						slug: "blocks/cards/feature-editorial",
+					},
+				],
+			},
+		],
+	},
+	{
+		label: "Themes",
+		labelId: "Tema",
+		items: [
+			{ label: "Overview", labelId: "Ringkasan", slug: "themes/overview" },
+			{ label: "Neutral", slug: "themes/neutral" },
+			{ label: "Editorial", slug: "themes/editorial" },
+			{
+				label: "Creating Themes",
+				labelId: "Membuat Tema",
+				slug: "themes/creating-themes",
+			},
+		],
+	},
+	{
 		label: "Reference",
 		labelId: "Referensi",
 		items: [

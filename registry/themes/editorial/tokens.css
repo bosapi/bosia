@@ -1,0 +1,107 @@
+/*
+ * Bosia theme: editorial
+ * Warm cream palette + Instrument Serif display, magazine feel.
+ * Body stays Inter for readability. Light + dark via :root / .dark.
+ */
+
+@theme {
+	--color-background: hsl(var(--background));
+	--color-foreground: hsl(var(--foreground));
+
+	--color-card: hsl(var(--card));
+	--color-card-foreground: hsl(var(--card-foreground));
+
+	--color-popover: hsl(var(--popover));
+	--color-popover-foreground: hsl(var(--popover-foreground));
+
+	--color-primary: hsl(var(--primary));
+	--color-primary-foreground: hsl(var(--primary-foreground));
+
+	--color-secondary: hsl(var(--secondary));
+	--color-secondary-foreground: hsl(var(--secondary-foreground));
+
+	--color-muted: hsl(var(--muted));
+	--color-muted-foreground: hsl(var(--muted-foreground));
+
+	--color-accent: hsl(var(--accent));
+	--color-accent-foreground: hsl(var(--accent-foreground));
+
+	--color-destructive: hsl(var(--destructive));
+	--color-destructive-foreground: hsl(var(--destructive-foreground));
+
+	--color-border: hsl(var(--border));
+	--color-input: hsl(var(--input));
+	--color-ring: hsl(var(--ring));
+
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+
+	--font-display: "Instrument Serif", "Times New Roman", serif;
+	--font-body:
+		"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+:root {
+	/* Warm cream + ink */
+	--background: 40 30% 88%;
+	--foreground: 25 25% 14%;
+
+	--card: 40 30% 90%;
+	--card-foreground: 25 25% 14%;
+
+	--popover: 40 38% 94%;
+	--popover-foreground: 25 25% 14%;
+
+	--primary: 25 25% 14%;
+	--primary-foreground: 40 38% 94%;
+
+	--secondary: 40 22% 84%;
+	--secondary-foreground: 25 25% 14%;
+
+	--muted: 40 18% 86%;
+	--muted-foreground: 25 12% 38%;
+
+	--accent: 14 60% 56%;
+	--accent-foreground: 40 38% 94%;
+
+	--destructive: 0 70% 45%;
+	--destructive-foreground: 40 38% 94%;
+
+	--border: 30 18% 80%;
+	--input: 30 18% 80%;
+	--ring: 25 25% 14%;
+
+	--radius: 0.75rem;
+}
+
+.dark {
+	--background: 25 18% 10%;
+	--foreground: 40 38% 94%;
+
+	--card: 25 16% 14%;
+	--card-foreground: 40 38% 94%;
+
+	--popover: 25 18% 10%;
+	--popover-foreground: 40 38% 94%;
+
+	--primary: 40 38% 94%;
+	--primary-foreground: 25 25% 14%;
+
+	--secondary: 25 12% 22%;
+	--secondary-foreground: 40 38% 94%;
+
+	--muted: 25 12% 22%;
+	--muted-foreground: 40 16% 70%;
+
+	--accent: 25 60% 55%;
+	--accent-foreground: 25 25% 14%;
+
+	--destructive: 0 60% 45%;
+	--destructive-foreground: 40 38% 94%;
+
+	--border: 25 12% 24%;
+	--input: 25 12% 24%;
+	--ring: 40 38% 94%;
+}

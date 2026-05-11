@@ -17,7 +17,8 @@
 			"$lib/components/ui/*": ["../registry/components/ui/*"],
 			"$lib/*": ["./src/lib/*"],
 			"$registry": ["../registry/components/ui"],
-			"$registry/*": ["../registry/components/ui/*"]
+			"$registry/*": ["../registry/components/ui/*"],
+			"$blocks/*": ["../registry/blocks/*"]
 		}
 	},
 	"include": ["src/**/*"],

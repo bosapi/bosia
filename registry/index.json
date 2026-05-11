@@ -65,5 +65,7 @@
 		"ui/sidebar",
 		"ui/slider"
 	],
-	"features": ["drizzle", "todo"]
+	"features": ["drizzle", "todo"],
+	"blocks": ["cards/feature-editorial"],
+	"themes": ["neutral", "editorial"]
 }

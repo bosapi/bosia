@@ -1,0 +1,7 @@
+{
+	"name": "neutral",
+	"description": "Default shadcn-inspired neutral palette with light + dark modes. System font stack.",
+	"files": ["tokens.css"],
+	"fonts": {},
+	"npmDeps": {}
+}

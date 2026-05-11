@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.4.5] - 2026-05-11
+
+### Added
+
+- Two new registry kinds: **Blocks** and **Themes**. Blocks are ready-made UI sections (cards, hero, pricing) with hardcoded copy and tuned typography you can install with a single command. Themes are token packs (colors, fonts, radii) that restyle every block and primitive at once.
+- New CLI commands. `bun x bosia@latest add block cards/feature-editorial` drops a polished feature card into `src/lib/blocks/`, pulling in any primitive components it needs. `bun x bosia@latest add theme editorial` installs a warm cream + serif theme and wires the imports into `app.css`.
+- First block ships: `cards/feature-editorial` — magazine-style card with a serif title, eyebrow numeral, and circular CTA. Designed to look great on the new editorial theme, but works on any theme.
+- New `themes/neutral` and `themes/editorial` themes. Switching is one command — `app.css` is patched idempotently and Google Fonts are auto-imported when a theme needs them.
+- Docs site has new **Blocks** and **Themes** sections with previews and install instructions.
+
+---
+
 ## [0.4.4] - 2026-05-09
 
 ### Fixed

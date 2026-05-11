@@ -1,0 +1,10 @@
+{
+	"name": "card-feature-editorial",
+	"description": "Editorial feature card with numeral eyebrow, serif title, body, and circular CTA. Pairs with the editorial theme but works on any.",
+	"category": "cards",
+	"themes": ["editorial"],
+	"dependencies": ["ui/card", "ui/button"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

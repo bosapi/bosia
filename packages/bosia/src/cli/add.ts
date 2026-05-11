@@ -27,9 +27,11 @@ interface ComponentMeta {
 	npmDeps: Record<string, string>;
 }
 
-interface RegistryIndex {
+export interface RegistryIndex {
 	components: string[];
 	features: string[];
+	blocks?: string[];
+	themes?: string[];
 }
 
 // Track already-installed components within a session to avoid re-running deps
@@ -193,7 +195,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 `;
 
-function ensureUtils() {
+export function ensureUtils() {
 	const utilsPath = join(process.cwd(), "src", "lib", "utils.ts");
 	if (!existsSync(utilsPath)) {
 		mkdirSync(dirname(utilsPath), { recursive: true });
