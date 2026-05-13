@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 
 import { existsSync, readFileSync } from "fs";
-import { join, resolve as resolvePath } from "path";
+import { join } from "path";
 
 import { findMatch, compileRoutes, canonicalPathname } from "./matcher.ts";
 import { apiRoutes, serverRoutes } from "bosia:routes";
@@ -14,6 +14,7 @@ compileRoutes(serverRoutes);
 import type { Handle, RequestEvent } from "./hooks.ts";
 import { HttpError, Redirect, ActionFailure } from "./errors.ts";
 import { CookieJar } from "./cookies.ts";
+import { safePath } from "./safePath.ts";
 import { checkCsrf } from "./csrf.ts";
 import type { CsrfConfig } from "./csrf.ts";
 import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
@@ -102,13 +103,6 @@ function isValidRoutePath(path: string, origin: string): boolean {
 	} catch {
 		return false;
 	}
-}
-
-/** Resolve a file path and verify it stays within the allowed base directory. Returns null if traversal detected. */
-function safePath(base: string, untrusted: string): string | null {
-	const root = resolvePath(base);
-	const full = resolvePath(join(base, untrusted));
-	return full.startsWith(root + "/") || full === root ? full : null;
 }
 
 /** Extract action name from URL searchParams — `?/login` → "login", no slash key → "default". */

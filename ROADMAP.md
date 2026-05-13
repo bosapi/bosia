@@ -172,7 +172,7 @@
 - [x] 🟡 Test: `allowExternal: true` still rejects `javascript:` / `data:` / `vbscript:` URLs
 - [x] 🟡 Test: `handlePreflight` rejects when `Access-Control-Request-Method` is not in `allowedMethods`
 - [x] 🟡 Test: `Vary: Origin` is present on CORS-configured responses even when requesting origin doesn't match
-- [ ] 🟡 Test: dedicated `safePath()` unit test file (currently only covered indirectly via static file serving)
+- [x] 🟡 Test: dedicated `safePath()` unit test file (currently only covered indirectly via static file serving)
 - [x] 🟡 Test: `substituteParams()` rejects malicious entry values containing path-traversal characters
 - [x] 🟡 Test: `TRUST_PROXY` env gates `X-Forwarded-*` header trust in CSRF checks
 
