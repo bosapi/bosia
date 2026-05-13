@@ -296,6 +296,7 @@ export async function renderSSRStream(
 	if (!match) return null;
 
 	const { route, params } = match;
+	const nonce = typeof locals.nonce === "string" ? locals.nonce : undefined;
 
 	// ── Pre-stream phase: resolve metadata before committing to a 200 ──
 	// Errors here return a proper error response with correct status code.
@@ -307,7 +308,17 @@ export async function renderSSRStream(
 			return Response.redirect(err.location, err.status);
 		}
 		if (err instanceof HttpError) {
-			return renderErrorPage(err.status, err.message, url, req, route);
+			return renderErrorPage(
+				err.status,
+				err.message,
+				url,
+				req,
+				route,
+				undefined,
+				undefined,
+				undefined,
+				nonce,
+			);
 		}
 		if (isDev) console.error("Metadata load error:", err);
 		else console.error("Metadata load error:", (err as Error).message ?? err);
@@ -344,14 +355,36 @@ export async function renderSSRStream(
 				e.errorDepth,
 				e.errorOrigin,
 				e.partialLayoutData,
+				nonce,
 			);
 		}
 		if (isDev) console.error("SSR load error:", err);
 		else console.error("SSR load error:", (err as Error).message ?? err);
-		return renderErrorPage(500, "Internal Server Error", url, req, route);
+		return renderErrorPage(
+			500,
+			"Internal Server Error",
+			url,
+			req,
+			route,
+			undefined,
+			undefined,
+			undefined,
+			nonce,
+		);
 	}
 
-	if (!data) return renderErrorPage(404, "Not Found", url, req);
+	if (!data)
+		return renderErrorPage(
+			404,
+			"Not Found",
+			url,
+			req,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			nonce,
+		);
 
 	const enc = new TextEncoder();
 	const renderCtx: RenderContext = {
@@ -374,9 +407,19 @@ export async function renderSSRStream(
 			);
 		}
 		const html =
-			buildHtmlShellOpen(metadata?.lang) +
+			buildHtmlShellOpen(metadata?.lang, nonce) +
 			buildMetadataChunk(metadata, headExtras) +
-			buildHtmlTail("", "", data.pageData, data.layoutData, true, null, false, bodyEndExtras);
+			buildHtmlTail(
+				"",
+				"",
+				data.pageData,
+				data.layoutData,
+				true,
+				null,
+				false,
+				bodyEndExtras,
+				nonce,
+			);
 		return new Response(html, {
 			headers: { "Content-Type": "text/html; charset=utf-8" },
 		});
@@ -408,12 +451,13 @@ export async function renderSSRStream(
 			route.layoutModules.length,
 			"page",
 			data.layoutData,
+			nonce,
 		);
 	}
 
 	// Pre-compute all chunks; pull-based stream gives Bun native backpressure.
 	const chunks: Uint8Array[] = [
-		enc.encode(buildHtmlShellOpen(metadata?.lang)),
+		enc.encode(buildHtmlShellOpen(metadata?.lang, nonce)),
 		enc.encode(buildMetadataChunk(metadata, headExtras)),
 		enc.encode(
 			buildHtmlTail(
@@ -425,6 +469,7 @@ export async function renderSSRStream(
 				null,
 				true,
 				bodyEndExtras,
+				nonce,
 			),
 		),
 	];
@@ -473,8 +518,20 @@ export async function renderPageWithFormData(
 	status: number,
 	match?: RouteMatch<(typeof serverRoutes)[number]> | null,
 ): Promise<Response> {
+	const nonce = typeof locals.nonce === "string" ? locals.nonce : undefined;
 	match ??= findMatch(serverRoutes, url.pathname);
-	if (!match) return renderErrorPage(404, "Not Found", url, req);
+	if (!match)
+		return renderErrorPage(
+			404,
+			"Not Found",
+			url,
+			req,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			nonce,
+		);
 
 	const { route } = match;
 
@@ -485,7 +542,18 @@ export async function renderPageWithFormData(
 		Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
 	]);
 
-	if (!data) return renderErrorPage(404, "Not Found", url, req);
+	if (!data)
+		return renderErrorPage(
+			404,
+			"Not Found",
+			url,
+			req,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			nonce,
+		);
 
 	if (!data.ssr) {
 		if (!data.csr && isDev) {
@@ -502,6 +570,7 @@ export async function renderPageWithFormData(
 			formData,
 			undefined,
 			false,
+			nonce,
 		);
 		return compress(html, "text/html; charset=utf-8", req, status);
 	}
@@ -517,7 +586,17 @@ export async function renderPageWithFormData(
 		},
 	});
 
-	const html = buildHtml(body, head, data.pageData, data.layoutData, data.csr, formData);
+	const html = buildHtml(
+		body,
+		head,
+		data.pageData,
+		data.layoutData,
+		data.csr,
+		formData,
+		undefined,
+		true,
+		nonce,
+	);
 	return compress(html, "text/html; charset=utf-8", req, status);
 }
 
@@ -536,6 +615,7 @@ export async function renderErrorPage(
 	errorDepth?: number,
 	errorOrigin?: ErrorOrigin,
 	partialLayoutData?: Record<string, any>[],
+	nonce?: string,
 ): Promise<Response> {
 	// 1. Nested boundary
 	if (route && errorDepth !== undefined && route.errorPages?.length) {
@@ -567,7 +647,17 @@ export async function renderErrorPage(
 					},
 				});
 				// csr=false: no client hydration on the error page itself.
-				const html = buildHtml(body, head, { status, message }, layoutData, false);
+				const html = buildHtml(
+					body,
+					head,
+					{ status, message },
+					layoutData,
+					false,
+					null,
+					undefined,
+					true,
+					nonce,
+				);
 				return compress(html, "text/html; charset=utf-8", req, status);
 			} catch (err) {
 				if (isDev) console.error("Nested error page render failed:", err);
@@ -591,7 +681,17 @@ export async function renderErrorPage(
 			const { body, head } = render(mod.default, {
 				props: { error: { status, message } },
 			});
-			const html = buildHtml(body, head, { status, message }, [], false);
+			const html = buildHtml(
+				body,
+				head,
+				{ status, message },
+				[],
+				false,
+				null,
+				undefined,
+				true,
+				nonce,
+			);
 			return compress(html, "text/html; charset=utf-8", req, status);
 		} catch (err) {
 			if (isDev) console.error("Error page render failed:", err);

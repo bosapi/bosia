@@ -19,6 +19,7 @@ import { checkCsrf } from "./csrf.ts";
 import type { CsrfConfig } from "./csrf.ts";
 import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
+import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, generateNonce } from "./csp.ts";
 import { isDev, compress, isStaticPath } from "./html.ts";
 import { dedup, dedupKey } from "./dedup.ts";
 import {
@@ -92,6 +93,12 @@ const CORS_CONFIG: CorsConfig | null = _corsAllowedOrigins?.length
 
 if (_corsAllowedOrigins?.length) {
 	console.log(`🌐 CORS allowed origins: ${_corsAllowedOrigins.join(", ")}`);
+}
+
+// ─── CSP Config ──────────────────────────────────────────
+
+if (CSP_DIRECTIVES_TEMPLATE) {
+	console.log(`🔒 CSP: opt-in header active`);
 }
 
 // ─── Core Request Resolver ────────────────────────────────
@@ -353,6 +360,11 @@ async function resolve(event: RequestEvent): Promise<Response> {
 							`Action "${actionName}" not found`,
 							url,
 							request,
+							undefined,
+							undefined,
+							undefined,
+							undefined,
+							locals.nonce,
 						);
 					}
 
@@ -381,7 +393,17 @@ async function resolve(event: RequestEvent): Promise<Response> {
 									{ status: err.status },
 								);
 							}
-							return renderErrorPage(err.status, err.message, url, request);
+							return renderErrorPage(
+								err.status,
+								err.message,
+								url,
+								request,
+								undefined,
+								undefined,
+								undefined,
+								undefined,
+								locals.nonce,
+							);
 						}
 						throw err;
 					}
@@ -476,7 +498,18 @@ async function resolve(event: RequestEvent): Promise<Response> {
 
 	// SSR pages (+page.svelte) — streaming by default
 	const streamResponse = await renderSSRStream(url, locals, request, cookies, pageMatch);
-	if (!streamResponse) return renderErrorPage(404, "Not Found", url, request);
+	if (!streamResponse)
+		return renderErrorPage(
+			404,
+			"Not Found",
+			url,
+			request,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			locals.nonce,
+		);
 	return streamResponse;
 }
 
@@ -512,11 +545,20 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		}
 
 		const cookieJar = new CookieJar(request.headers.get("cookie") ?? "", isDev);
-		const event: RequestEvent = { request, url, locals: {}, params: {}, cookies: cookieJar };
+		const nonce = generateNonce();
+		const event: RequestEvent = {
+			request,
+			url,
+			locals: { nonce },
+			params: {},
+			cookies: cookieJar,
+		};
 		const response = userHandle ? await userHandle({ event, resolve }) : await resolve(event);
 
 		const headers = new Headers(response.headers);
 		for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
+		const cspHeader = buildCspHeader(nonce);
+		if (cspHeader) headers.set("Content-Security-Policy", cspHeader);
 		// Apply CORS headers for allowed origins. `Vary: Origin` is set whenever
 		// CORS is configured — even on responses to non-allowed origins — so
 		// downstream caches (CDNs, browser HTTP cache) key on the Origin header

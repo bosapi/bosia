@@ -34,7 +34,16 @@ export interface Cookies {
 export type RequestEvent = {
 	request: Request;
 	url: URL;
-	locals: Record<string, any>;
+	/**
+	 * Per-request scratch object for user hooks/load functions.
+	 *
+	 * `locals.nonce` is populated by the framework with a fresh per-request
+	 * cryptographic nonce (base64, 128 bits of entropy) and is safe to embed
+	 * as `nonce="${event.locals.nonce}"` on user-authored inline scripts when
+	 * the operator enables a `Content-Security-Policy` via the
+	 * `CSP_DIRECTIVES` env var.
+	 */
+	locals: Record<string, any> & { nonce?: string };
 	params: Record<string, string>;
 	cookies: Cookies;
 };

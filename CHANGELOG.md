@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.4.6] - 2026-05-13
 
+### Added
+
+- Every request now gets a fresh cryptographic nonce that the framework stamps onto every `<script>` tag it emits. This lets you turn on a strict `Content-Security-Policy` (only "scripts I marked" are allowed to run) without breaking Bosia's own hydration scripts. The nonce is also exposed as `event.locals.nonce` so your own inline scripts and hooks can reuse the same value.
+- New optional `CSP_DIRECTIVES` env var. When set, Bosia adds a matching `Content-Security-Policy` response header on every response, substituting the per-request nonce into any `{nonce}` placeholder. CSP is off by default — you opt in only when you're ready to lock things down. Example: `CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'"`.
+
 ### Fixed
 
 - Server-side redirects now reject `javascript:`, `data:`, and `vbscript:` URLs even when the developer passes `{ allowExternal: true }` — those schemes are never legitimate redirect targets and could have been abused to inject script execution into a redirect chain.

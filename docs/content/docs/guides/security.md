@@ -73,6 +73,38 @@ Bosia sets these headers on every response:
 | `X-Frame-Options`        | `SAMEORIGIN`                      |
 | `Referrer-Policy`        | `strict-origin-when-cross-origin` |
 
+## Content Security Policy (nonce-based)
+
+Every request gets a fresh cryptographic nonce (128 bits of entropy, base64-encoded). Bosia stamps it onto every `<script>` tag it emits — page-data hydration, the theme bootstrap, dev SSE reload, plugin head/body fragments emitted via the framework. The same value is exposed on the request event:
+
+```ts
+// In a +page.server.ts load() or a hook:
+event.locals.nonce; // → "kJ3p1f...":  unique per request
+```
+
+CSP itself is **off by default** — turning it on without the right directives breaks user inline scripts and third-party widgets. Opt in by setting the `CSP_DIRECTIVES` env var. The literal `{nonce}` placeholder is substituted with the per-request nonce on every response:
+
+```bash
+CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'"
+```
+
+The framework will then add a matching `Content-Security-Policy` header to every response. Use the nonce on your own inline scripts so they keep working under the policy:
+
+```svelte
+<script nonce="{data.nonce}">
+	console.log("hello");
+</script>
+```
+
+Forward the nonce to the page via a `load()` function:
+
+```ts
+// +page.server.ts
+export async function load({ locals }) {
+	return { nonce: locals.nonce };
+}
+```
+
 ## Cookie Security
 
 Every `cookies.set()` call applies secure defaults automatically — no need to specify them manually:

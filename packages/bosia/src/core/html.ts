@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "fs";
 import { getDeclaredEnvKeys } from "./env.ts";
+import { nonceAttr } from "./csp.ts";
 
 // ─── Dist Manifest ───────────────────────────────────────
 // Maps hashed filenames → script/link tags.
@@ -76,6 +77,7 @@ export function buildHtml(
 	formData: any = null,
 	lang?: string,
 	ssr = true,
+	nonce?: string,
 ): string {
 	const cssLinks = (distManifest.css ?? [])
 		.map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
@@ -83,10 +85,11 @@ export function buildHtml(
 
 	const fallbackTitle = head.includes("<title>") ? "" : "<title>Bosia App</title>";
 
+	const n = nonceAttr(nonce);
 	const publicEnv = getPublicDynamicEnv();
 	const envScript =
 		Object.keys(publicEnv).length > 0
-			? `\n  <script>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`
+			? `\n  <script${n}>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`
 			: "";
 
 	const formScript =
@@ -94,9 +97,9 @@ export function buildHtml(
 	const ssrFlag = ssr ? "" : "window.__BOSIA_SSR__=false;";
 
 	const scripts = csr
-		? `${envScript}\n  <script>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formScript}</script>\n  <script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
+		? `${envScript}\n  <script${n}>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formScript}</script>\n  <script${n} type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
 		: isDev
-			? `\n  <script>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
+			? `\n  <script${n}>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
 			: "";
 
 	return `<!DOCTYPE html>
@@ -109,7 +112,7 @@ export function buildHtml(
   ${head}
   ${cssLinks}
   <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">
-  <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>
+  <script${n}>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>
 </head>
 <body>
   <div id="app">${body}</div>${scripts}
@@ -121,27 +124,23 @@ export function buildHtml(
 
 import type { Metadata } from "./hooks.ts";
 
-const _shellOpenCache = new Map<string, string>();
-
 /** Chunk 1: everything from <!DOCTYPE> through CSS/modulepreload links (head still open) */
-export function buildHtmlShellOpen(lang?: string): string {
+export function buildHtmlShellOpen(lang?: string, nonce?: string): string {
 	const key = safeLang(lang);
-	const cached = _shellOpenCache.get(key);
-	if (cached) return cached;
+	const n = nonceAttr(nonce);
 	const cssLinks = (distManifest.css ?? [])
 		.map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
 		.join("\n  ");
-	const result =
+	return (
 		`<!DOCTYPE html>\n<html lang="${key}">\n<head>\n` +
 		`  <meta charset="UTF-8">\n` +
 		`  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n` +
 		`  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n` +
 		`  ${cssLinks}\n` +
 		`  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
-		`  <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>\n` +
-		`  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`;
-	_shellOpenCache.set(key, result);
-	return result;
+		`  <script${n}>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>\n` +
+		`  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`
+	);
 }
 
 const SPINNER =
@@ -208,25 +207,27 @@ export function buildHtmlTail(
 	formData: any = null,
 	ssr = true,
 	bodyEndExtras?: string[],
+	nonce?: string,
 ): string {
-	let out = `<script>document.getElementById('__bs__').remove()</script>`;
+	const n = nonceAttr(nonce);
+	let out = `<script${n}>document.getElementById('__bs__').remove()</script>`;
 	out += `\n<div id="app">${body}</div>`;
 	if (head)
-		out += `\n<script>document.head.insertAdjacentHTML('beforeend',${safeJsonStringify(head)})</script>`;
+		out += `\n<script${n}>document.head.insertAdjacentHTML('beforeend',${safeJsonStringify(head)})</script>`;
 	if (csr) {
 		const publicEnv = getPublicDynamicEnv();
 		if (Object.keys(publicEnv).length > 0) {
-			out += `\n<script>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`;
+			out += `\n<script${n}>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`;
 		}
 		const formInject =
 			formData != null ? `window.__BOSIA_FORM_DATA__=${safeJsonStringify(formData)};` : "";
 		const ssrFlag = ssr ? "" : "window.__BOSIA_SSR__=false;";
 		out +=
-			`\n<script>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};` +
+			`\n<script${n}>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};` +
 			`window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formInject}</script>`;
-		out += `\n<script type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`;
+		out += `\n<script${n} type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`;
 	} else if (isDev) {
-		out += `\n<script>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;
+		out += `\n<script${n}>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;
 	}
 	if (bodyEndExtras?.length) {
 		for (const fragment of bodyEndExtras) {

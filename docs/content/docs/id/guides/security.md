@@ -73,6 +73,38 @@ Bosia menyetel header-header ini pada setiap response:
 | `X-Frame-Options`        | `SAMEORIGIN`                      |
 | `Referrer-Policy`        | `strict-origin-when-cross-origin` |
 
+## Content Security Policy (berbasis nonce)
+
+Setiap request mendapatkan nonce kriptografis baru (entropi 128-bit, di-encode base64). Bosia menempelkannya pada setiap tag `<script>` yang ia emit — script hidrasi page-data, bootstrap tema, SSE reload mode dev, fragment head/body dari plugin yang dikirim lewat framework. Nilai yang sama diekspos di request event:
+
+```ts
+// Di +page.server.ts load() atau di hook:
+event.locals.nonce; // → "kJ3p1f...":  unik per request
+```
+
+CSP sendiri **dimatikan secara bawaan** — menyalakannya tanpa direktif yang tepat akan merusak inline script milikmu dan widget pihak ketiga. Aktifkan dengan menyetel env `CSP_DIRECTIVES`. Placeholder literal `{nonce}` akan disubstitusi dengan nonce per-request pada setiap response:
+
+```bash
+CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'"
+```
+
+Framework lalu menambahkan header `Content-Security-Policy` yang cocok pada setiap response. Gunakan nonce pada inline script milikmu agar tetap jalan di bawah policy ini:
+
+```svelte
+<script nonce="{data.nonce}">
+	console.log("hello");
+</script>
+```
+
+Teruskan nonce ke page lewat fungsi `load()`:
+
+```ts
+// +page.server.ts
+export async function load({ locals }) {
+	return { nonce: locals.nonce };
+}
+```
+
 ## Keamanan Cookie
 
 API cookie menyertakan beberapa proteksi:
