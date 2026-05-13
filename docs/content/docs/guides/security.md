@@ -39,6 +39,8 @@ Only enable this when **all** of the following are true:
 
 Do **not** set `TRUST_PROXY=true` when Bosia is internet-facing with no proxy in front, or when you can't verify the proxy strips inbound forwarded headers — that re-opens the spoofing window the default closes.
 
+In **dev mode**, `bun run dev` runs a proxy in front of the inner app server on a different port. The dev proxy injects `X-Forwarded-Host` / `X-Forwarded-Proto` and sets `TRUST_PROXY=true` on the spawned app process automatically, so same-origin form submissions and `POST`s work without any extra configuration.
+
 ## CORS
 
 CORS is **disabled by default**. Enable it by setting allowed origins:
@@ -57,7 +59,7 @@ CORS_CREDENTIALS=true
 CORS_MAX_AGE=86400
 ```
 
-Preflight `OPTIONS` requests are handled automatically when CORS is configured.
+Preflight `OPTIONS` requests are handled automatically when CORS is configured. The preflight also validates the requested method (`Access-Control-Request-Method`) and headers (`Access-Control-Request-Headers`) against `CORS_ALLOWED_METHODS` / `CORS_ALLOWED_HEADERS`. A preflight that asks for a method or header outside the allow-list is answered with a `403` (still carrying `Access-Control-Allow-Origin` and `Vary: Origin`), so misconfigured clients surface a clear "not allowed by CORS policy" error in browser devtools instead of falling through to a permissive 204.
 
 When CORS is configured, every response includes `Vary: Origin` — even responses to origins that aren't on the allow-list. This stops shared caches (CDNs, browser HTTP cache) from accidentally serving a response that contains `Access-Control-Allow-Origin: A` to a request from a different origin `B`.
 

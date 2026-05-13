@@ -13,8 +13,15 @@ export interface CorsConfig {
 	maxAge?: number;
 }
 
-const DEFAULT_METHODS = "GET, HEAD, PUT, PATCH, POST, DELETE";
-const DEFAULT_HEADERS = "Content-Type, Authorization";
+const DEFAULT_METHODS = ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"];
+const DEFAULT_HEADERS = ["Content-Type", "Authorization"];
+
+function parseHeaderList(value: string): string[] {
+	return value
+		.split(",")
+		.map((s) => s.trim())
+		.filter(Boolean);
+}
 
 /**
  * Headers applied to *every* response when CORS is configured, regardless of
@@ -57,22 +64,52 @@ export function getCorsHeaders(
 
 /**
  * Handles OPTIONS preflight requests.
- * Returns a 204 response with CORS headers, or null if the origin is not allowed.
+ *
+ * - Returns `null` if the request's Origin is missing or not allowed — the
+ *   caller treats this as "not a CORS preflight we serve", avoiding leaking
+ *   policy details to unknown origins.
+ * - Returns a 403 (carrying `Access-Control-Allow-Origin` + `Vary: Origin`)
+ *   when the requested method or any requested header falls outside the
+ *   configured allow-list. A 403 surfaces a clearer "not allowed by CORS
+ *   policy" message in the browser than letting the OPTIONS request fall
+ *   through to the default handler.
+ * - Otherwise returns a 204 with the standard preflight headers.
  */
 export function handlePreflight(request: Request, config: CorsConfig): Response | null {
 	const base = getCorsHeaders(request, config);
 	if (!base) return null;
 
+	const allowedMethods = config.allowedMethods ?? DEFAULT_METHODS;
+	const allowedHeaders = config.allowedHeaders ?? DEFAULT_HEADERS;
+
+	const requestedMethod = request.headers.get("access-control-request-method");
+	if (requestedMethod) {
+		const upper = requestedMethod.toUpperCase();
+		const allowedUpper = allowedMethods.map((m) => m.toUpperCase());
+		if (!allowedUpper.includes(upper)) {
+			return rejectPreflight(base, `Method ${requestedMethod} not allowed by CORS policy`);
+		}
+	}
+
+	const requestedHeadersRaw = request.headers.get("access-control-request-headers");
+	if (requestedHeadersRaw) {
+		const requested = parseHeaderList(requestedHeadersRaw).map((h) => h.toLowerCase());
+		const allowedLower = allowedHeaders.map((h) => h.toLowerCase());
+		const disallowed = requested.find((h) => !allowedLower.includes(h));
+		if (disallowed) {
+			return rejectPreflight(base, `Header ${disallowed} not allowed by CORS policy`);
+		}
+	}
+
 	const headers = new Headers(base as HeadersInit);
-	headers.set(
-		"Access-Control-Allow-Methods",
-		config.allowedMethods?.join(", ") ?? DEFAULT_METHODS,
-	);
-	headers.set(
-		"Access-Control-Allow-Headers",
-		config.allowedHeaders?.join(", ") ?? DEFAULT_HEADERS,
-	);
+	headers.set("Access-Control-Allow-Methods", allowedMethods.join(", "));
+	headers.set("Access-Control-Allow-Headers", allowedHeaders.join(", "));
 	headers.set("Access-Control-Max-Age", String(config.maxAge ?? 86400));
 
 	return new Response(null, { status: 204, headers });
+}
+
+function rejectPreflight(base: Record<string, string>, reason: string): Response {
+	const headers = new Headers(base as HeadersInit);
+	return new Response(reason, { status: 403, headers });
 }

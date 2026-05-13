@@ -93,4 +93,88 @@ describe("handlePreflight", () => {
 		expect(res.headers.get("access-control-allow-headers")).toContain("Content-Type");
 		expect(res.headers.get("access-control-max-age")).toBe("86400");
 	});
+
+	test("403 when requested method not in allowedMethods", () => {
+		const r = req(
+			{
+				origin: "https://app.example.com",
+				"access-control-request-method": "DELETE",
+			},
+			"OPTIONS",
+		);
+		const res = handlePreflight(r, {
+			allowedOrigins: ["https://app.example.com"],
+			allowedMethods: ["GET", "POST"],
+		})!;
+		expect(res.status).toBe(403);
+		expect(res.headers.get("access-control-allow-origin")).toBe("https://app.example.com");
+		expect(res.headers.get("vary")).toBe("Origin");
+	});
+
+	test("403 when requested header not in allowedHeaders", () => {
+		const r = req(
+			{
+				origin: "https://app.example.com",
+				"access-control-request-method": "POST",
+				"access-control-request-headers": "X-Custom-Token",
+			},
+			"OPTIONS",
+		);
+		const res = handlePreflight(r, {
+			allowedOrigins: ["https://app.example.com"],
+			allowedMethods: ["GET", "POST"],
+			allowedHeaders: ["Content-Type"],
+		})!;
+		expect(res.status).toBe(403);
+		expect(res.headers.get("access-control-allow-origin")).toBe("https://app.example.com");
+	});
+
+	test("403 when any of multiple requested headers is disallowed", () => {
+		const r = req(
+			{
+				origin: "https://app.example.com",
+				"access-control-request-method": "POST",
+				"access-control-request-headers": "Content-Type, X-Sneaky",
+			},
+			"OPTIONS",
+		);
+		const res = handlePreflight(r, {
+			allowedOrigins: ["https://app.example.com"],
+			allowedHeaders: ["Content-Type"],
+		})!;
+		expect(res.status).toBe(403);
+	});
+
+	test("204 when requested method/headers match (case-insensitive)", () => {
+		const r = req(
+			{
+				origin: "https://app.example.com",
+				"access-control-request-method": "post",
+				"access-control-request-headers": "content-type, AUTHORIZATION",
+			},
+			"OPTIONS",
+		);
+		const res = handlePreflight(r, {
+			allowedOrigins: ["https://app.example.com"],
+			allowedMethods: ["GET", "POST"],
+			allowedHeaders: ["Content-Type", "Authorization"],
+		})!;
+		expect(res.status).toBe(204);
+	});
+
+	test("null (not 403) when origin not allowed, even with bad method", () => {
+		const r = req(
+			{
+				origin: "https://evil.com",
+				"access-control-request-method": "DELETE",
+			},
+			"OPTIONS",
+		);
+		expect(
+			handlePreflight(r, {
+				allowedOrigins: ["https://app.example.com"],
+				allowedMethods: ["GET"],
+			}),
+		).toBe(null);
+	});
 });

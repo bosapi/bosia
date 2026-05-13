@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - CSRF origin checks no longer trust `X-Forwarded-Host` / `X-Forwarded-Proto` by default. They are only honoured when the operator sets `TRUST_PROXY=true`, which prevents a directly-exposed server from being tricked into accepting an attacker-supplied origin via spoofed forwarded headers.
 - Responses now always include `Vary: Origin` whenever CORS is configured, even when the request's origin isn't allowed. Stops CDNs and browser caches from accidentally serving a response with `Access-Control-Allow-Origin` for one site to a different site.
 - Prerender `entries()` now fails the build when a dynamic-segment value contains `..` or `\`, or when a non-catch-all segment value contains `/`. Prevents a typo or malicious data source from writing prerendered HTML outside the intended output directory.
+- CORS preflight (`OPTIONS`) now validates the requested method and headers against the configured allow-list. A request asking for a disallowed method or header is answered with a 403 (still carrying `Access-Control-Allow-Origin` and `Vary: Origin`) instead of being waved through with a permissive 204, so misconfigured clients fail loudly and the browser surfaces a clear "not allowed by CORS policy" message in devtools.
+- Dev mode no longer 403s same-origin `POST` / form submissions when the inner app is gated behind the dev proxy. The proxy now forwards `X-Forwarded-Host` / `X-Forwarded-Proto` and sets `TRUST_PROXY=true` on the spawned app process automatically, so the CSRF origin check reconstructs the public `http://localhost:<DEV_PORT>` URL the browser is actually using.
 
 ---
 

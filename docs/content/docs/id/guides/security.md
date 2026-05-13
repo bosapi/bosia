@@ -39,6 +39,8 @@ Aktifkan hanya jika **semua** kondisi berikut terpenuhi:
 
 **Jangan** menyetel `TRUST_PROXY=true` jika Bosia langsung terekspos ke internet tanpa proxy, atau jika kamu tidak bisa memastikan proxy membersihkan header forwarded yang masuk — hal itu akan membuka kembali celah pemalsuan yang ditutup oleh nilai default.
 
+Pada **mode dev**, `bun run dev` menjalankan proxy di depan app server internal pada port berbeda. Dev proxy menyuntikkan `X-Forwarded-Host` / `X-Forwarded-Proto` dan menyetel `TRUST_PROXY=true` di proses app secara otomatis, sehingga submission form same-origin dan `POST` bekerja tanpa konfigurasi tambahan.
+
 ## CORS
 
 CORS **dinonaktifkan secara bawaan**. Aktifkan dengan menyetel origin yang diizinkan:
@@ -57,7 +59,7 @@ CORS_CREDENTIALS=true
 CORS_MAX_AGE=86400
 ```
 
-Request preflight `OPTIONS` ditangani secara otomatis saat CORS dikonfigurasi.
+Request preflight `OPTIONS` ditangani secara otomatis saat CORS dikonfigurasi. Preflight juga memvalidasi method yang diminta (`Access-Control-Request-Method`) dan header (`Access-Control-Request-Headers`) terhadap `CORS_ALLOWED_METHODS` / `CORS_ALLOWED_HEADERS`. Preflight yang meminta method atau header di luar daftar izin dijawab dengan `403` (tetap membawa `Access-Control-Allow-Origin` dan `Vary: Origin`), sehingga klien yang salah konfigurasi memunculkan pesan "not allowed by CORS policy" yang jelas di devtools browser, bukan diloloskan dengan 204 yang permisif.
 
 Saat CORS dikonfigurasi, setiap response menyertakan `Vary: Origin` — termasuk response untuk origin yang tidak ada di daftar izin. Ini mencegah cache bersama (CDN, cache HTTP browser) secara tidak sengaja menyajikan response berisi `Access-Control-Allow-Origin: A` untuk request dari origin `B` yang berbeda.
 

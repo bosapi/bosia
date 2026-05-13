@@ -94,6 +94,10 @@ async function startAppServer() {
 			PORT: String(APP_PORT),
 			// Allow externalized deps (elysia, etc.) to resolve from bosia's node_modules
 			NODE_PATH: BOSIA_NODE_PATH,
+			// Dev proxy injects X-Forwarded-Host/Proto reflecting the public DEV_PORT, so CSRF
+			// origin checks must honour them. Safe in dev because the proxy controls these
+			// headers — no untrusted client can spoof them.
+			TRUST_PROXY: "true",
 		},
 	});
 
@@ -204,16 +208,24 @@ const devServer = Bun.serve({
 			);
 		}
 
-		// Proxy everything else to the app server
+		// Proxy everything else to the app server. Inject X-Forwarded-Host/Proto so
+		// the app's CSRF origin check (gated behind TRUST_PROXY=true, also set in the
+		// app env above) reconstructs the public-facing origin from the dev proxy
+		// rather than the inner-app's host (localhost:APP_PORT).
 		try {
+			const reqUrl = new URL(req.url);
 			const target = new URL(req.url);
 			target.hostname = "localhost";
 			target.port = String(APP_PORT);
 
+			const forwardedHeaders = new Headers(req.headers);
+			forwardedHeaders.set("x-forwarded-host", reqUrl.host);
+			forwardedHeaders.set("x-forwarded-proto", reqUrl.protocol.replace(":", ""));
+
 			return await fetch(
 				new Request(target.toString(), {
 					method: req.method,
-					headers: req.headers,
+					headers: forwardedHeaders,
 					body: req.body,
 					redirect: "manual",
 				}),
