@@ -4,6 +4,7 @@ import { findMatch } from "./matcher.ts";
 import { serverRoutes, errorPage } from "bosia:routes";
 import type { RouteMatch } from "./types.ts";
 import type { Cookies } from "./hooks.ts";
+import { CSP_ENABLED } from "./csp.ts";
 import { HttpError, Redirect } from "./errors.ts";
 import { pickErrorPage, type ErrorOrigin } from "./errorMatch.ts";
 import App from "./client/App.svelte";
@@ -296,7 +297,7 @@ export async function renderSSRStream(
 	if (!match) return null;
 
 	const { route, params } = match;
-	const nonce = typeof locals.nonce === "string" ? locals.nonce : undefined;
+	const nonce = CSP_ENABLED && typeof locals.nonce === "string" ? locals.nonce : undefined;
 
 	// ── Pre-stream phase: resolve metadata before committing to a 200 ──
 	// Errors here return a proper error response with correct status code.
@@ -518,7 +519,7 @@ export async function renderPageWithFormData(
 	status: number,
 	match?: RouteMatch<(typeof serverRoutes)[number]> | null,
 ): Promise<Response> {
-	const nonce = typeof locals.nonce === "string" ? locals.nonce : undefined;
+	const nonce = CSP_ENABLED && typeof locals.nonce === "string" ? locals.nonce : undefined;
 	match ??= findMatch(serverRoutes, url.pathname);
 	if (!match)
 		return renderErrorPage(
@@ -617,6 +618,9 @@ export async function renderErrorPage(
 	partialLayoutData?: Record<string, any>[],
 	nonce?: string,
 ): Promise<Response> {
+	// Strip the nonce from emitted scripts when CSP is off — the attribute
+	// is dead bytes without a matching policy header.
+	if (!CSP_ENABLED) nonce = undefined;
 	// 1. Nested boundary
 	if (route && errorDepth !== undefined && route.errorPages?.length) {
 		const origin = errorOrigin ?? "page";

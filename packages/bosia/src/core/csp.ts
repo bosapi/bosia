@@ -33,6 +33,14 @@ export function nonceAttr(nonce: string | undefined): string {
 
 export const CSP_DIRECTIVES_TEMPLATE: string | null = process.env.CSP_DIRECTIVES?.trim() || null;
 
+/**
+ * `true` when an operator has opted into CSP via `CSP_DIRECTIVES`. The
+ * framework gates *all* nonce-related wire output on this flag — without a
+ * matching `Content-Security-Policy` header the nonce attribute is just dead
+ * bytes, so we omit it.
+ */
+export const CSP_ENABLED: boolean = CSP_DIRECTIVES_TEMPLATE !== null;
+
 export function buildCspHeader(nonce: string): string | null {
 	if (!CSP_DIRECTIVES_TEMPLATE) return null;
 	return CSP_DIRECTIVES_TEMPLATE.replace(/\{nonce\}/g, nonce);

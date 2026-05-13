@@ -75,20 +75,27 @@ Bosia sets these headers on every response:
 
 ## Content Security Policy (nonce-based)
 
-Every request gets a fresh cryptographic nonce (128 bits of entropy, base64-encoded). Bosia stamps it onto every `<script>` tag it emits — page-data hydration, the theme bootstrap, dev SSE reload, plugin head/body fragments emitted via the framework. The same value is exposed on the request event:
+CSP is **off by default** — turning it on without the right directives breaks user inline scripts and third-party widgets. Opt in by setting the `CSP_DIRECTIVES` env var. The literal `{nonce}` placeholder is substituted with a fresh per-request nonce (128 bits of entropy, base64) on every response:
+
+```bash
+CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'"
+```
+
+Once `CSP_DIRECTIVES` is set, two things happen on every response:
+
+1. A matching `Content-Security-Policy` header is added.
+2. The framework's own `<script>` tags — page-data hydration, theme bootstrap, dev SSE reload, plugin head/body fragments emitted via the framework — get `nonce="…"` stamped on them so the policy doesn't break them.
+
+Without `CSP_DIRECTIVES`, the framework emits neither the header nor the attribute (the attribute alone would be dead bytes — browsers only compare nonces when a policy header tells them to).
+
+The same nonce is always exposed on the request event so user code can use it under any policy:
 
 ```ts
 // In a +page.server.ts load() or a hook:
 event.locals.nonce; // → "kJ3p1f...":  unique per request
 ```
 
-CSP itself is **off by default** — turning it on without the right directives breaks user inline scripts and third-party widgets. Opt in by setting the `CSP_DIRECTIVES` env var. The literal `{nonce}` placeholder is substituted with the per-request nonce on every response:
-
-```bash
-CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'"
-```
-
-The framework will then add a matching `Content-Security-Policy` header to every response. Use the nonce on your own inline scripts so they keep working under the policy:
+Use the nonce on your own inline scripts so they keep working under the policy:
 
 ```svelte
 <script nonce="{data.nonce}">

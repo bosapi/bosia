@@ -75,20 +75,27 @@ Bosia menyetel header-header ini pada setiap response:
 
 ## Content Security Policy (berbasis nonce)
 
-Setiap request mendapatkan nonce kriptografis baru (entropi 128-bit, di-encode base64). Bosia menempelkannya pada setiap tag `<script>` yang ia emit — script hidrasi page-data, bootstrap tema, SSE reload mode dev, fragment head/body dari plugin yang dikirim lewat framework. Nilai yang sama diekspos di request event:
+CSP **dimatikan secara bawaan** — menyalakannya tanpa direktif yang tepat akan merusak inline script milikmu dan widget pihak ketiga. Aktifkan dengan menyetel env `CSP_DIRECTIVES`. Placeholder literal `{nonce}` akan disubstitusi dengan nonce per-request baru (entropi 128-bit, base64) pada setiap response:
+
+```bash
+CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'"
+```
+
+Setelah `CSP_DIRECTIVES` diset, dua hal terjadi pada setiap response:
+
+1. Header `Content-Security-Policy` yang cocok ditambahkan.
+2. Tag `<script>` milik framework — hidrasi page-data, bootstrap tema, SSE reload mode dev, fragment head/body dari plugin yang dikirim lewat framework — distempel `nonce="…"` agar policy tidak memblokirnya.
+
+Tanpa `CSP_DIRECTIVES`, framework tidak mengirim header maupun atribut nonce (atribut saja hanya membuang byte — browser hanya membandingkan nonce ketika ada header policy yang menyuruhnya).
+
+Nonce yang sama selalu diekspos di request event sehingga kode pengguna bisa memakainya di policy apa pun:
 
 ```ts
 // Di +page.server.ts load() atau di hook:
 event.locals.nonce; // → "kJ3p1f...":  unik per request
 ```
 
-CSP sendiri **dimatikan secara bawaan** — menyalakannya tanpa direktif yang tepat akan merusak inline script milikmu dan widget pihak ketiga. Aktifkan dengan menyetel env `CSP_DIRECTIVES`. Placeholder literal `{nonce}` akan disubstitusi dengan nonce per-request pada setiap response:
-
-```bash
-CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'"
-```
-
-Framework lalu menambahkan header `Content-Security-Policy` yang cocok pada setiap response. Gunakan nonce pada inline script milikmu agar tetap jalan di bawah policy ini:
+Gunakan nonce pada inline script milikmu agar tetap jalan di bawah policy ini:
 
 ```svelte
 <script nonce="{data.nonce}">

@@ -10,8 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Every request now gets a fresh cryptographic nonce that the framework stamps onto every `<script>` tag it emits. This lets you turn on a strict `Content-Security-Policy` (only "scripts I marked" are allowed to run) without breaking Bosia's own hydration scripts. The nonce is also exposed as `event.locals.nonce` so your own inline scripts and hooks can reuse the same value.
-- New optional `CSP_DIRECTIVES` env var. When set, Bosia adds a matching `Content-Security-Policy` response header on every response, substituting the per-request nonce into any `{nonce}` placeholder. CSP is off by default — you opt in only when you're ready to lock things down. Example: `CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'"`.
+- New optional `CSP_DIRECTIVES` env var turns on a strict, nonce-based Content Security Policy. Set it (example: `CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'"`) and Bosia adds a matching `Content-Security-Policy` response header on every response — substituting `{nonce}` with a fresh per-request value — and stamps that nonce onto every `<script>` tag it emits so its own hydration scripts keep running. With `CSP_DIRECTIVES` unset (the default), neither the header nor the nonce attribute is emitted: no dead bytes, no surprise blocking of your inline scripts.
+- New `event.locals.nonce` request-event field exposes the per-request nonce to user code (load functions, hooks). Forward it to a page via `load()` and use it as `<script nonce={data.nonce}>…</script>` on your own inline scripts so they stay valid under CSP.
 
 ### Fixed
 
