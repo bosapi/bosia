@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getCorsHeaders, handlePreflight } from "../src/core/cors.ts";
+import { applyCorsVary, getCorsHeaders, handlePreflight } from "../src/core/cors.ts";
 
 function req(headers: Record<string, string> = {}, method = "GET") {
 	return new Request("https://api.example.com/x", { method, headers });
@@ -38,6 +38,31 @@ describe("getCorsHeaders", () => {
 			exposedHeaders: ["X-Total", "X-Page"],
 		});
 		expect(h?.["Access-Control-Expose-Headers"]).toBe("X-Total, X-Page");
+	});
+});
+
+describe("applyCorsVary", () => {
+	test("sets Vary: Origin on an empty Headers instance", () => {
+		const h = new Headers();
+		applyCorsVary(h);
+		expect(h.get("Vary")).toBe("Origin");
+	});
+
+	test("overwrites pre-existing Vary value", () => {
+		const h = new Headers({ Vary: "Accept-Encoding" });
+		applyCorsVary(h);
+		expect(h.get("Vary")).toBe("Origin");
+	});
+
+	test("applied independently of origin-match (non-allowed origin still gets Vary)", () => {
+		const r = req({ origin: "https://evil.com" });
+		const config = { allowedOrigins: ["https://app.example.com"] };
+		const headers = new Headers();
+		applyCorsVary(headers);
+		const corsHeaders = getCorsHeaders(r, config);
+		expect(corsHeaders).toBe(null);
+		expect(headers.get("Vary")).toBe("Origin");
+		expect(headers.get("Access-Control-Allow-Origin")).toBe(null);
 	});
 });
 

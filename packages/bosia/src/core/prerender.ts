@@ -44,6 +44,17 @@ interface PrerenderTarget {
 export function substituteParams(pattern: string, entry: Record<string, string>): string {
 	let resolved = pattern;
 	for (const [key, value] of Object.entries(entry)) {
+		// `..` and `\` are never legitimate in a route segment — they let a build
+		// emit prerendered HTML outside the intended output tree. Forward slashes
+		// are only allowed for catch-all (`[...key]`) segments, which by design
+		// expand to multiple path parts. Validate accordingly.
+		const isRest = pattern.includes(`[...${key}]`);
+		if (/\\|\.\./.test(value) || (!isRest && value.includes("/"))) {
+			throw new Error(
+				`Prerender entries(): unsafe value "${value}" for [${key}] — ` +
+					`path traversal characters are not allowed in dynamic segment values.`,
+			);
+		}
 		resolved = resolved.replace(`[...${key}]`, value);
 		resolved = resolved.replace(`[${key}]`, value);
 	}

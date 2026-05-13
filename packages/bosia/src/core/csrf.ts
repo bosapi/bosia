@@ -31,12 +31,15 @@ export function checkCsrf(
 	if (SAFE_METHODS.has(request.method.toUpperCase())) return null;
 
 	// Derive the expected origin.
-	// In dev, the browser hits the proxy on DEV_PORT (e.g. localhost:9000)
-	// while the Elysia server sees url.origin as localhost:9001.
-	// X-Forwarded-Host / Host headers reflect the actual host the client used.
-	const forwardedHost = request.headers.get("x-forwarded-host");
+	// `X-Forwarded-*` headers are only trusted when `TRUST_PROXY=true`, since a
+	// directly-exposed server would otherwise let a client spoof its own origin
+	// via attacker-controlled forwarded headers. Behind a real reverse proxy
+	// (nginx, Caddy, Cloudflare) the operator opts in by setting the env.
+	const trustProxy = process.env.TRUST_PROXY === "true";
+	const forwardedHost = trustProxy ? request.headers.get("x-forwarded-host") : null;
 	const host = forwardedHost ?? request.headers.get("host");
-	const protocol = request.headers.get("x-forwarded-proto") ?? url.protocol.replace(":", "");
+	const forwardedProto = trustProxy ? request.headers.get("x-forwarded-proto") : null;
+	const protocol = forwardedProto ?? url.protocol.replace(":", "");
 	const expectedOrigin = host ? `${protocol}://${host}` : url.origin;
 
 	const allowedOrigins = new Set([expectedOrigin, ...(config.allowedOrigins ?? [])]);

@@ -29,17 +29,18 @@ export class Redirect {
 const DANGEROUS_SCHEMES = /^(javascript|data|vbscript):/i;
 
 function validateRedirectLocation(location: string, options?: RedirectOptions): void {
-	if (options?.allowExternal) return;
-
 	const trimmed = location.trim();
 
-	// Reject dangerous schemes
+	// Dangerous schemes are rejected even when `allowExternal: true` —
+	// `javascript:` / `data:` / `vbscript:` are never legitimate redirect targets.
 	if (DANGEROUS_SCHEMES.test(trimmed)) {
 		throw new Error(
 			`redirect(): dangerous scheme in URL "${location}". ` +
 				`Only relative paths and same-origin URLs are allowed.`,
 		);
 	}
+
+	if (options?.allowExternal) return;
 
 	// Reject protocol-relative URLs (//evil.com)
 	if (trimmed.startsWith("//")) {

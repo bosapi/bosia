@@ -43,21 +43,22 @@ Only variables declared in your `.env` files are available through this import. 
 
 These variables are reserved by Bosia and control framework behavior:
 
-| Variable               | Default | Description                                        |
-| ---------------------- | ------- | -------------------------------------------------- |
-| `PORT`                 | `9000`  | Server port                                        |
-| `NODE_ENV`             | —       | `development` or `production`                      |
-| `BODY_SIZE_LIMIT`      | `512K`  | Max request body size (supports K, M, G, Infinity) |
-| `LOAD_TIMEOUT`         | —       | Timeout for `load()` in ms                         |
-| `METADATA_TIMEOUT`     | —       | Timeout for `metadata()` in ms                     |
-| `PRERENDER_TIMEOUT`    | —       | Timeout for prerender fetch in ms                  |
-| `CSRF_ALLOWED_ORIGINS` | —       | Comma-separated allowed origins for CSRF           |
-| `CORS_ALLOWED_ORIGINS` | —       | Comma-separated allowed origins for CORS           |
-| `CORS_ALLOWED_METHODS` | —       | Comma-separated allowed methods                    |
-| `CORS_ALLOWED_HEADERS` | —       | Comma-separated allowed headers                    |
-| `CORS_EXPOSED_HEADERS` | —       | Comma-separated exposed headers                    |
-| `CORS_CREDENTIALS`     | `false` | Set to `"true"` to allow credentials               |
-| `CORS_MAX_AGE`         | `86400` | Preflight cache duration in seconds                |
+| Variable               | Default | Description                                                                                                                                                                                                                                                        |
+| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PORT`                 | `9000`  | Server port                                                                                                                                                                                                                                                        |
+| `NODE_ENV`             | —       | `development` or `production`                                                                                                                                                                                                                                      |
+| `BODY_SIZE_LIMIT`      | `512K`  | Max request body size (supports K, M, G, Infinity)                                                                                                                                                                                                                 |
+| `LOAD_TIMEOUT`         | —       | Timeout for `load()` in ms                                                                                                                                                                                                                                         |
+| `METADATA_TIMEOUT`     | —       | Timeout for `metadata()` in ms                                                                                                                                                                                                                                     |
+| `PRERENDER_TIMEOUT`    | —       | Timeout for prerender fetch in ms                                                                                                                                                                                                                                  |
+| `CSRF_ALLOWED_ORIGINS` | —       | Comma-separated allowed origins for CSRF                                                                                                                                                                                                                           |
+| `CORS_ALLOWED_ORIGINS` | —       | Comma-separated allowed origins for CORS                                                                                                                                                                                                                           |
+| `CORS_ALLOWED_METHODS` | —       | Comma-separated allowed methods                                                                                                                                                                                                                                    |
+| `CORS_ALLOWED_HEADERS` | —       | Comma-separated allowed headers                                                                                                                                                                                                                                    |
+| `CORS_EXPOSED_HEADERS` | —       | Comma-separated exposed headers                                                                                                                                                                                                                                    |
+| `CORS_CREDENTIALS`     | `false` | Set to `"true"` to allow credentials                                                                                                                                                                                                                               |
+| `CORS_MAX_AGE`         | `86400` | Preflight cache duration in seconds                                                                                                                                                                                                                                |
+| `TRUST_PROXY`          | `false` | Trust `X-Forwarded-Host` / `X-Forwarded-Proto` for CSRF origin checks. Only enable when behind a reverse proxy that strips client-supplied forwarded headers. See [Security › Reverse-proxy deployments](/guides/security/#reverse-proxy-deployments-trust_proxy). |
 
 Framework variables are accessed via `process.env` directly, not through `$env`.
 

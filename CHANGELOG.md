@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.4.6] - 2026-05-13
+
+### Fixed
+
+- Server-side redirects now reject `javascript:`, `data:`, and `vbscript:` URLs even when the developer passes `{ allowExternal: true }` — those schemes are never legitimate redirect targets and could have been abused to inject script execution into a redirect chain.
+- CSRF origin checks no longer trust `X-Forwarded-Host` / `X-Forwarded-Proto` by default. They are only honoured when the operator sets `TRUST_PROXY=true`, which prevents a directly-exposed server from being tricked into accepting an attacker-supplied origin via spoofed forwarded headers.
+- Responses now always include `Vary: Origin` whenever CORS is configured, even when the request's origin isn't allowed. Stops CDNs and browser caches from accidentally serving a response with `Access-Control-Allow-Origin` for one site to a different site.
+- Prerender `entries()` now fails the build when a dynamic-segment value contains `..` or `\`, or when a non-catch-all segment value contains `/`. Prevents a typo or malicious data source from writing prerendered HTML outside the intended output directory.
+
+---
+
 ## [0.4.5] - 2026-05-11
 
 ### Added

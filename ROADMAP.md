@@ -153,17 +153,28 @@
 
 ### Security
 
+> Findings #1–#7 below come from the v0.4.5 security audit — see `backup/SECURITY_ISSUE_1.md` for full context, attack scenarios, and proposed diffs.
+
 - [x] Cookie secure defaults — default `HttpOnly; Secure; SameSite=Lax` on `cookies.set()` with opt-out
 - [x] Auto-detect `Cache-Control` on `/__bosia/data/` — `private, no-cache` when cookies accessed; `public, max-age=0, must-revalidate` otherwise
 - [x] 🔴 `load()` `fetch` cookie scoping — `makeFetch` now forwards the `Cookie` header only to same-origin requests or origins in the `INTERNAL_HOSTS` allowlist; third-party hosts get no cookie. User-supplied `init.headers.cookie` is preserved
-- [ ] 🟠 Trusted proxy configuration — `TRUST_PROXY` env to control when `X-Forwarded-*` headers are trusted in CSRF checks
-- [ ] 🟠 `allowExternal` redirect validation — still validate against `javascript:`, `data:`, `vbscript:` schemes even when `allowExternal: true`
-- [ ] 🟠 CSP nonce infrastructure — per-request nonce generation, inject into all framework `<script>` tags, expose nonce in hooks for user scripts
-- [ ] 🟡 CORS preflight validation — validate requested method/headers against allowed config
-- [ ] 🟡 CORS `Vary: Origin` on all responses when CORS is configured — prevent CDN caching bugs on non-matching origins
-- [ ] 🟡 Validate prerender `entries()` return values — sanitize path segments before URL substitution
+- [x] 🔴 **Audit #1** — `allowExternal` redirect validation — still validate against `javascript:`, `data:`, `vbscript:` schemes even when `allowExternal: true` (move `DANGEROUS_SCHEMES` check above the early return in `errors.ts:32`)
+- [x] 🟠 **Audit #4** — Trusted proxy configuration — `TRUST_PROXY` env to control when `X-Forwarded-*` headers are trusted in CSRF checks (`csrf.ts:37-40`)
+- [ ] 🟠 **Audit #6** — CSP nonce infrastructure — per-request nonce generation, inject into all framework `<script>` tags, expose nonce in hooks for user scripts
+- [ ] 🟠 **Audit #2** — CORS preflight validation — validate `Access-Control-Request-Method` / `Access-Control-Request-Headers` against allowed config in `handlePreflight` (`cors.ts:53-69`)
+- [x] 🟠 **Audit #3** — CORS `Vary: Origin` on all responses when CORS is configured — prevent CDN caching bugs on non-matching origins (set at `server.ts` request level, not only in `getCorsHeaders`)
+- [x] 🟡 **Audit #5** — Validate prerender `entries()` return values — reject `/`, `\`, `..` in dynamic segment values before URL substitution (`prerender.ts:44-50`)
 - [x] 🟡 Escape `lang` attribute in HTML shell — `<html lang="${lang}">` injects `lang` raw; if a `metadata()` derives `lang` from URL/user input it can break out of the attribute
 - [x] ⚪ Validate `CORS_MAX_AGE` env — reject non-numeric values instead of producing `NaN` header
+
+#### Security test coverage (from audit)
+
+- [x] 🟡 Test: `allowExternal: true` still rejects `javascript:` / `data:` / `vbscript:` URLs
+- [ ] 🟡 Test: `handlePreflight` rejects when `Access-Control-Request-Method` is not in `allowedMethods`
+- [x] 🟡 Test: `Vary: Origin` is present on CORS-configured responses even when requesting origin doesn't match
+- [ ] 🟡 Test: dedicated `safePath()` unit test file (currently only covered indirectly via static file serving)
+- [x] 🟡 Test: `substituteParams()` rejects malicious entry values containing path-traversal characters
+- [x] 🟡 Test: `TRUST_PROXY` env gates `X-Forwarded-*` header trust in CSRF checks
 
 ### Performance
 
@@ -194,7 +205,7 @@
 
 ### DX
 
-- [ ] 🟠 Dev proxy must forward `X-Forwarded-Host` / `X-Forwarded-Proto` to the inner app server — without them the inner CSRF check derives `expectedOrigin = http://localhost:APP_PORT` while the browser's `Origin` is `http://localhost:DEV_PORT`, causing same-origin POST/form actions to 403 in dev
+- [ ] 🟠 **Audit #7** — Dev proxy must forward `X-Forwarded-Host` / `X-Forwarded-Proto` to the inner app server (`dev.ts:208-220`) — without them the inner CSRF check derives `expectedOrigin = http://localhost:APP_PORT` while the browser's `Origin` is `http://localhost:DEV_PORT`, causing same-origin POST/form actions to 403 in dev (audit rates 🟡 — DX-only, production unaffected — but keeping 🟠 per project policy)
 - [x] 🟡 Stale env cleanup in dev — reset removed `.env` vars on hot-reload
 
 ---

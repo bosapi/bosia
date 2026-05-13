@@ -17,6 +17,15 @@ const DEFAULT_METHODS = "GET, HEAD, PUT, PATCH, POST, DELETE";
 const DEFAULT_HEADERS = "Content-Type, Authorization";
 
 /**
+ * Headers applied to *every* response when CORS is configured, regardless of
+ * whether the request Origin is allowed. Keeps caches/CDNs from serving a
+ * response with `Access-Control-Allow-Origin: X` to a different origin Y.
+ */
+export function applyCorsVary(headers: Headers): void {
+	headers.set("Vary", "Origin");
+}
+
+/**
  * Returns CORS response headers if the request Origin is in the allowed list.
  * Returns null if Origin is absent or not allowed.
  */

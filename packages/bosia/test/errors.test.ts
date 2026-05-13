@@ -45,6 +45,33 @@ describe("redirect()", () => {
 		const r = new Redirect(302, "https://evil.com/x", { allowExternal: true });
 		expect(r.location).toBe("https://evil.com/x");
 	});
+
+	test("allowExternal still rejects javascript:", () => {
+		expect(() => new Redirect(302, "javascript:alert(1)", { allowExternal: true })).toThrow(
+			/dangerous scheme/,
+		);
+	});
+
+	test("allowExternal still rejects data:", () => {
+		expect(
+			() =>
+				new Redirect(302, "data:text/html,<script>alert(1)</script>", {
+					allowExternal: true,
+				}),
+		).toThrow(/dangerous scheme/);
+	});
+
+	test("allowExternal still rejects vbscript:", () => {
+		expect(() => new Redirect(302, "vbscript:msgbox", { allowExternal: true })).toThrow(
+			/dangerous scheme/,
+		);
+	});
+
+	test("allowExternal rejects dangerous schemes with leading whitespace", () => {
+		expect(() => new Redirect(302, "  javascript:alert(1)", { allowExternal: true })).toThrow(
+			/dangerous scheme/,
+		);
+	});
 });
 
 function redirectSafe(status: number, location: string): Redirect {

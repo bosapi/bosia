@@ -16,7 +16,7 @@ import { HttpError, Redirect, ActionFailure } from "./errors.ts";
 import { CookieJar } from "./cookies.ts";
 import { checkCsrf } from "./csrf.ts";
 import type { CsrfConfig } from "./csrf.ts";
-import { getCorsHeaders, handlePreflight } from "./cors.ts";
+import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
 import { isDev, compress, isStaticPath } from "./html.ts";
 import { dedup, dedupKey } from "./dedup.ts";
@@ -523,8 +523,12 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 
 		const headers = new Headers(response.headers);
 		for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
-		// Apply CORS headers for allowed origins
+		// Apply CORS headers for allowed origins. `Vary: Origin` is set whenever
+		// CORS is configured — even on responses to non-allowed origins — so
+		// downstream caches (CDNs, browser HTTP cache) key on the Origin header
+		// instead of serving an Access-Control-Allow-Origin response across origins.
 		if (CORS_CONFIG) {
+			applyCorsVary(headers);
 			const corsHeaders = getCorsHeaders(request, CORS_CONFIG);
 			if (corsHeaders) {
 				for (const [k, v] of Object.entries(corsHeaders)) headers.set(k, v);

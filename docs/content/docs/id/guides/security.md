@@ -21,6 +21,24 @@ Izinkan origin tambahan melalui variabel lingkungan `CSRF_ALLOWED_ORIGINS`:
 CSRF_ALLOWED_ORIGINS=https://app.example.com, https://mobile.example.com
 ```
 
+### Deployment di belakang reverse-proxy (`TRUST_PROXY`)
+
+Secara bawaan Bosia **tidak** mempercayai header `X-Forwarded-Host` dan `X-Forwarded-Proto` saat menentukan apakah origin sebuah request cocok. Server yang langsung terekspos ke internet bisa membiarkan klien memalsukan origin yang diharapkan melalui header forwarded buatan penyerang, sehingga melewati pemeriksaan CSRF.
+
+Saat Bosia berjalan di belakang reverse proxy atau load balancer (nginx, Caddy, Cloudflare, ALB, dsb.), host publik biasanya berbeda dengan header `Host` yang diterima proses Bun di dalamnya. Pada kasus itu, setel:
+
+```bash
+TRUST_PROXY=true
+```
+
+Aktifkan hanya jika **semua** kondisi berikut terpenuhi:
+
+- Ada proxy/load balancer di depan Bosia.
+- Proxy tersebut **menghapus** header `X-Forwarded-*` yang dikirim klien sebelum diteruskan (umumnya proxy melakukan ini secara default; pastikan punyamu juga).
+- Proxy menambahkan `X-Forwarded-Host` / `X-Forwarded-Proto` sendiri yang mencerminkan origin publik.
+
+**Jangan** menyetel `TRUST_PROXY=true` jika Bosia langsung terekspos ke internet tanpa proxy, atau jika kamu tidak bisa memastikan proxy membersihkan header forwarded yang masuk — hal itu akan membuka kembali celah pemalsuan yang ditutup oleh nilai default.
+
 ## CORS
 
 CORS **dinonaktifkan secara bawaan**. Aktifkan dengan menyetel origin yang diizinkan:
@@ -40,6 +58,8 @@ CORS_MAX_AGE=86400
 ```
 
 Request preflight `OPTIONS` ditangani secara otomatis saat CORS dikonfigurasi.
+
+Saat CORS dikonfigurasi, setiap response menyertakan `Vary: Origin` — termasuk response untuk origin yang tidak ada di daftar izin. Ini mencegah cache bersama (CDN, cache HTTP browser) secara tidak sengaja menyajikan response berisi `Access-Control-Allow-Origin: A` untuk request dari origin `B` yang berbeda.
 
 ## Header Keamanan
 
@@ -94,6 +114,20 @@ Mendukung sufiks `K` (kilobyte), `M` (megabyte), dan `G` (gigabyte).
 ## Proteksi Path Traversal
 
 Penayangan file statis dan halaman prerendered memvalidasi bahwa path file yang telah diselesaikan tetap berada dalam direktori yang diizinkan, mencegah serangan traversal `../`.
+
+Pada waktu build, nilai `entries()` untuk prerender juga divalidasi: `..` dan `\` tidak pernah diizinkan di segmen mana pun, dan `/` hanya diizinkan pada segmen catch-all (`[...rest]`). Build yang mengembalikan nilai tidak aman akan gagal lebih awal dengan pesan error yang jelas, alih-alih diam-diam menulis HTML ke luar direktori output.
+
+## Proteksi Open-Redirect
+
+`redirect(status, location)` menolak URL eksternal secara bawaan. Setel `{ allowExternal: true }` untuk redirect eksternal yang sah (misalnya provider OAuth):
+
+```ts
+import { redirect } from "bosia";
+
+redirect(303, "https://accounts.example.com/oauth", { allowExternal: true });
+```
+
+Meski `allowExternal: true`, skema berbahaya — `javascript:`, `data:`, `vbscript:` — **selalu** ditolak. Skema-skema itu tidak pernah menjadi tujuan redirect yang sah dan bisa disalahgunakan untuk menyuntikkan eksekusi script ke dalam rantai redirect.
 
 ## Penanganan Error di Produksi
 

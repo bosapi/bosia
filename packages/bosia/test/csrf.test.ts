@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { checkCsrf } from "../src/core/csrf.ts";
 
 function req(method: string, headers: Record<string, string> = {}) {
@@ -42,7 +42,41 @@ describe("checkCsrf", () => {
 		expect(checkCsrf(req("POST"), url)).toContain("missing");
 	});
 
-	test("X-Forwarded-Host / -Proto override expected origin", () => {
+	test("allowedOrigins list", () => {
+		const r = req("POST", { origin: "https://cdn.example.com" });
+		expect(
+			checkCsrf(r, url, { checkOrigin: true, allowedOrigins: ["https://cdn.example.com"] }),
+		).toBe(null);
+	});
+});
+
+describe("checkCsrf — TRUST_PROXY gate", () => {
+	const originalTrustProxy = process.env.TRUST_PROXY;
+
+	beforeEach(() => {
+		delete process.env.TRUST_PROXY;
+	});
+
+	afterEach(() => {
+		if (originalTrustProxy === undefined) delete process.env.TRUST_PROXY;
+		else process.env.TRUST_PROXY = originalTrustProxy;
+	});
+
+	test("spoofed X-Forwarded-Host is ignored when TRUST_PROXY unset", () => {
+		const innerUrl = new URL("http://localhost:9001/x");
+		const r = new Request("http://localhost:9001/x", {
+			method: "POST",
+			headers: {
+				"x-forwarded-host": "attacker.com",
+				"x-forwarded-proto": "https",
+				origin: "https://attacker.com",
+			},
+		});
+		expect(checkCsrf(r, innerUrl)).toContain("Origin");
+	});
+
+	test("X-Forwarded-Host honored when TRUST_PROXY=true", () => {
+		process.env.TRUST_PROXY = "true";
 		const innerUrl = new URL("http://localhost:9001/x");
 		const r = new Request("http://localhost:9001/x", {
 			method: "POST",
@@ -55,10 +89,16 @@ describe("checkCsrf", () => {
 		expect(checkCsrf(r, innerUrl)).toBe(null);
 	});
 
-	test("allowedOrigins list", () => {
-		const r = req("POST", { origin: "https://cdn.example.com" });
-		expect(
-			checkCsrf(r, url, { checkOrigin: true, allowedOrigins: ["https://cdn.example.com"] }),
-		).toBe(null);
+	test("TRUST_PROXY=false (string) does not enable trust", () => {
+		process.env.TRUST_PROXY = "false";
+		const innerUrl = new URL("http://localhost:9001/x");
+		const r = new Request("http://localhost:9001/x", {
+			method: "POST",
+			headers: {
+				"x-forwarded-host": "attacker.com",
+				origin: "https://attacker.com",
+			},
+		});
+		expect(checkCsrf(r, innerUrl)).toContain("Origin");
 	});
 });

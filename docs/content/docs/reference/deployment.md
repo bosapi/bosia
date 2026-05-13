@@ -63,6 +63,29 @@ Bosia sets cache headers automatically:
 | Hashed filenames | `public, max-age=31536000, immutable` |
 | Non-hashed files | `no-cache`                            |
 
+## Behind a Reverse Proxy
+
+When Bosia runs behind nginx, Caddy, Cloudflare, an ALB, or any other reverse proxy / load balancer, the public-facing host typically differs from the `Host` header reaching the inner Bun process. Set:
+
+```bash
+TRUST_PROXY=true
+```
+
+so that CSRF origin checks honour `X-Forwarded-Host` and `X-Forwarded-Proto` and accept requests whose `Origin` matches the public-facing URL.
+
+**Only enable `TRUST_PROXY=true` when:**
+
+- A proxy or load balancer sits in front of Bosia, and
+- That proxy strips any **client-supplied** `X-Forwarded-*` headers before forwarding (verify your proxy's behaviour), and
+- The proxy injects its own `X-Forwarded-Host` / `X-Forwarded-Proto` reflecting the public origin.
+
+**Do not** set `TRUST_PROXY=true` when:
+
+- Bosia is directly internet-facing with no proxy, or
+- You cannot confirm the proxy sanitises inbound `X-Forwarded-*` headers — that would let any client spoof its own origin and bypass CSRF.
+
+See [Security › Reverse-proxy deployments](/guides/security/#reverse-proxy-deployments-trust_proxy) for the full rationale.
+
 ## Graceful Shutdown
 
 The production server handles `SIGTERM` and `SIGINT` signals:

@@ -30,6 +30,30 @@ describe("substituteParams()", () => {
 		// `[...key]` matched first, so `[key]` substitution doesn't see the leftover
 		expect(substituteParams("/x/[...key]", { key: "a/b" })).toBe("/x/a/b");
 	});
+
+	test("rejects `..` in any segment value", () => {
+		expect(() => substituteParams("/blog/[slug]", { slug: "../etc" })).toThrow(
+			/path traversal/,
+		);
+		expect(() => substituteParams("/docs/[...path]", { path: "a/../b" })).toThrow(
+			/path traversal/,
+		);
+	});
+
+	test("rejects backslash in any segment value", () => {
+		expect(() => substituteParams("/blog/[slug]", { slug: "a\\b" })).toThrow(/path traversal/);
+		expect(() => substituteParams("/docs/[...path]", { path: "a\\b" })).toThrow(
+			/path traversal/,
+		);
+	});
+
+	test("rejects `/` in non-rest dynamic segment value", () => {
+		expect(() => substituteParams("/blog/[slug]", { slug: "a/b" })).toThrow(/path traversal/);
+	});
+
+	test("allows `/` inside catch-all `[...rest]` value", () => {
+		expect(substituteParams("/docs/[...path]", { path: "a/b/c" })).toBe("/docs/a/b/c");
+	});
 });
 
 describe("canonicalRouteFor()", () => {

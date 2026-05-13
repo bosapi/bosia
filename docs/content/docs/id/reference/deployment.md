@@ -63,6 +63,29 @@ Bosia mengatur cache header secara otomatis:
 | Nama file dengan hash | `public, max-age=31536000, immutable` |
 | File tanpa hash       | `no-cache`                            |
 
+## Di Belakang Reverse Proxy
+
+Saat Bosia berjalan di belakang nginx, Caddy, Cloudflare, ALB, atau reverse proxy / load balancer lain, host publik biasanya berbeda dengan header `Host` yang sampai ke proses Bun di dalamnya. Setel:
+
+```bash
+TRUST_PROXY=true
+```
+
+agar pemeriksaan origin CSRF menghormati `X-Forwarded-Host` dan `X-Forwarded-Proto` serta menerima request yang `Origin`-nya cocok dengan URL publik.
+
+**Aktifkan `TRUST_PROXY=true` hanya jika:**
+
+- Ada proxy atau load balancer di depan Bosia, dan
+- Proxy tersebut membersihkan setiap header `X-Forwarded-*` yang **dikirim klien** sebelum diteruskan (pastikan perilaku proxy-mu), dan
+- Proxy menyuntikkan `X-Forwarded-Host` / `X-Forwarded-Proto` sendiri yang mencerminkan origin publik.
+
+**Jangan** menyetel `TRUST_PROXY=true` jika:
+
+- Bosia langsung terekspos ke internet tanpa proxy, atau
+- Kamu tidak bisa memastikan proxy membersihkan header `X-Forwarded-*` yang masuk — ini akan membuat klien mana pun bisa memalsukan origin-nya sendiri dan melewati CSRF.
+
+Lihat [Keamanan › Deployment di belakang reverse-proxy](/id/guides/security/#deployment-di-belakang-reverse-proxy-trust_proxy) untuk penjelasan lengkapnya.
+
 ## Graceful Shutdown
 
 Server produksi menangani sinyal `SIGTERM` dan `SIGINT`:

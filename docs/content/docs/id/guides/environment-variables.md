@@ -43,21 +43,22 @@ Hanya variabel yang dideklarasikan dalam file `.env` Anda yang tersedia melalui 
 
 Variabel-variabel ini dicadangkan oleh Bosia dan mengontrol perilaku framework:
 
-| Variabel               | Default | Deskripsi                                                  |
-| ---------------------- | ------- | ---------------------------------------------------------- |
-| `PORT`                 | `9000`  | Port server                                                |
-| `NODE_ENV`             | —       | `development` atau `production`                            |
-| `BODY_SIZE_LIMIT`      | `512K`  | Ukuran maksimal body request (mendukung K, M, G, Infinity) |
-| `LOAD_TIMEOUT`         | —       | Timeout untuk `load()` dalam ms                            |
-| `METADATA_TIMEOUT`     | —       | Timeout untuk `metadata()` dalam ms                        |
-| `PRERENDER_TIMEOUT`    | —       | Timeout untuk fetch prerender dalam ms                     |
-| `CSRF_ALLOWED_ORIGINS` | —       | Origin yang diizinkan untuk CSRF, dipisahkan koma          |
-| `CORS_ALLOWED_ORIGINS` | —       | Origin yang diizinkan untuk CORS, dipisahkan koma          |
-| `CORS_ALLOWED_METHODS` | —       | Method yang diizinkan, dipisahkan koma                     |
-| `CORS_ALLOWED_HEADERS` | —       | Header yang diizinkan, dipisahkan koma                     |
-| `CORS_EXPOSED_HEADERS` | —       | Header yang diekspos, dipisahkan koma                      |
-| `CORS_CREDENTIALS`     | `false` | Setel ke `"true"` untuk mengizinkan credentials            |
-| `CORS_MAX_AGE`         | `86400` | Durasi cache preflight dalam detik                         |
+| Variabel               | Default | Deskripsi                                                                                                                                                                                                                                                                                                     |
+| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                 | `9000`  | Port server                                                                                                                                                                                                                                                                                                   |
+| `NODE_ENV`             | —       | `development` atau `production`                                                                                                                                                                                                                                                                               |
+| `BODY_SIZE_LIMIT`      | `512K`  | Ukuran maksimal body request (mendukung K, M, G, Infinity)                                                                                                                                                                                                                                                    |
+| `LOAD_TIMEOUT`         | —       | Timeout untuk `load()` dalam ms                                                                                                                                                                                                                                                                               |
+| `METADATA_TIMEOUT`     | —       | Timeout untuk `metadata()` dalam ms                                                                                                                                                                                                                                                                           |
+| `PRERENDER_TIMEOUT`    | —       | Timeout untuk fetch prerender dalam ms                                                                                                                                                                                                                                                                        |
+| `CSRF_ALLOWED_ORIGINS` | —       | Origin yang diizinkan untuk CSRF, dipisahkan koma                                                                                                                                                                                                                                                             |
+| `CORS_ALLOWED_ORIGINS` | —       | Origin yang diizinkan untuk CORS, dipisahkan koma                                                                                                                                                                                                                                                             |
+| `CORS_ALLOWED_METHODS` | —       | Method yang diizinkan, dipisahkan koma                                                                                                                                                                                                                                                                        |
+| `CORS_ALLOWED_HEADERS` | —       | Header yang diizinkan, dipisahkan koma                                                                                                                                                                                                                                                                        |
+| `CORS_EXPOSED_HEADERS` | —       | Header yang diekspos, dipisahkan koma                                                                                                                                                                                                                                                                         |
+| `CORS_CREDENTIALS`     | `false` | Setel ke `"true"` untuk mengizinkan credentials                                                                                                                                                                                                                                                               |
+| `CORS_MAX_AGE`         | `86400` | Durasi cache preflight dalam detik                                                                                                                                                                                                                                                                            |
+| `TRUST_PROXY`          | `false` | Percayai `X-Forwarded-Host` / `X-Forwarded-Proto` untuk pemeriksaan origin CSRF. Aktifkan hanya saat di belakang reverse proxy yang membersihkan header forwarded dari klien. Lihat [Keamanan › Deployment di belakang reverse-proxy](/id/guides/security/#deployment-di-belakang-reverse-proxy-trust_proxy). |
 
 Variabel framework diakses melalui `process.env` secara langsung, bukan melalui `$env`.
 
