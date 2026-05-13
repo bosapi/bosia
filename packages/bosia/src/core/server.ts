@@ -19,7 +19,7 @@ import { checkCsrf } from "./csrf.ts";
 import type { CsrfConfig } from "./csrf.ts";
 import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
-import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, generateNonce } from "./csp.ts";
+import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } from "./csp.ts";
 import { isDev, compress, isStaticPath } from "./html.ts";
 import { dedup, dedupKey } from "./dedup.ts";
 import {
@@ -545,7 +545,7 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		}
 
 		const cookieJar = new CookieJar(request.headers.get("cookie") ?? "", isDev);
-		const nonce = generateNonce();
+		const nonce = CSP_ENABLED ? generateNonce() : "";
 		const event: RequestEvent = {
 			request,
 			url,
