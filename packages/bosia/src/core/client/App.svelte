@@ -3,7 +3,8 @@
 	import { findMatch } from "../matcher.ts";
 	import { clientRoutes } from "bosia:routes";
 	import { consumePrefetch, prefetchCache, dataUrl } from "./prefetch.ts";
-	import { appState } from "./appState.svelte.ts";
+	import { appState, clearDirty } from "./appState.svelte.ts";
+	import { captureSnapshot, liveContext, shouldRerun, type CacheEntry } from "./loaderCache.ts";
 	import { pickErrorPage } from "../errorMatch.ts";
 
 	let {
@@ -49,6 +50,10 @@
 	$effect(() => {
 		if (ssrMode) return;
 
+		// Subscribe to `invalidationTick` so `invalidate()` can wake the effect
+		// without a URL change.
+		void appState.invalidationTick;
+
 		const path = router.currentRoute;
 		const pathname = path.split("?")[0].split("#")[0];
 		const match = findMatch(clientRoutes, pathname);
@@ -68,6 +73,43 @@
 		navDone = false;
 		navigating = true;
 
+		// ─── Loader cache: decide which loaders need to re-run ─────────────
+		// For each layout depth + the page, compare the cached entry (if any)
+		// against the live URL/params and the dirty set. If everything is
+		// cacheable, skip the fetch entirely.
+		const url = new URL(path, window.location.origin);
+		const ctx = liveContext(pathname, match.params, url);
+		const layoutIds = (match.route as any).layoutIds as (string | null)[];
+		const pageId = (match.route as any).pageId as string | null;
+
+		const layoutRunFlags: boolean[] = layoutIds.map((id) => {
+			if (id === null) return false; // no server loader at this depth
+			const entry = appState.loaderCache.layouts[id];
+			if (!entry) return true; // never loaded → must run
+			return shouldRerun(entry, appState.dirty, ctx);
+		});
+
+		let pageRun = false;
+		if (pageId !== null) {
+			const entry = appState.loaderCache.page;
+			if (!entry || entry.nodeId !== pageId) {
+				pageRun = true;
+			} else {
+				pageRun = shouldRerun(entry, appState.dirty, ctx);
+			}
+		}
+
+		// Build `_invalidated=<bits>` — char 0 = page, char i+1 = layouts[i].
+		// '1' = run, '0' = skip. Always sent so the server honors cached layers.
+		// We always issue the fetch (even when all loaders skip) so page-level
+		// metadata stays fresh on every navigation; only the loaders flagged in
+		// the mask actually run server-side.
+		const maskBits =
+			(pageRun ? "1" : "0") + layoutRunFlags.map((b) => (b ? "1" : "0")).join("");
+
+		// Clear dirty set now — we've baked it into the mask.
+		clearDirty();
+
 		// Load components + data in parallel, then update state atomically
 		// to avoid a flash of stale/empty data before the fetch completes.
 		const cached = match.route.hasServerData ? consumePrefetch(path) : null;
@@ -75,7 +117,7 @@
 		const dataFetch = cached
 			? Promise.resolve(cached)
 			: match.route.hasServerData
-				? fetch(dataUrl(path))
+				? fetch(dataUrl(path, maskBits))
 						.then((r) => r.json())
 						.catch(() => null)
 				: Promise.resolve(null);
@@ -143,9 +185,83 @@
 			}
 			PageComponent = pageMod.default;
 			layoutComponents = layoutMods.map((m: any) => m.default);
-			appState.pageData = result?.pageData ?? {};
-			appState.layoutData = result?.layoutData ?? [];
-			appState.routeParams = result?.pageData?.params ?? match.params;
+
+			// Merge sparse server response with the existing client cache.
+			// Slots the server returned null for were intentionally skipped — we
+			// must pull their data from the cache to keep rendering correct.
+			const respLayoutData: (Record<string, any> | null)[] = result?.layoutData ?? [];
+			const respLayoutDeps: (any | null)[] = result?.layoutDeps ?? [];
+			const respPageData: Record<string, any> | null | undefined = result?.pageData;
+			const respPageDeps: any = result?.pageDeps ?? null;
+
+			const mergedLayoutData: Record<string, any>[] = [];
+			for (let i = 0; i < layoutIds.length; i++) {
+				const id = layoutIds[i];
+				if (id === null) {
+					mergedLayoutData.push({});
+					continue;
+				}
+				if (respLayoutData[i] !== null && respLayoutData[i] !== undefined) {
+					const entry: CacheEntry = {
+						nodeId: id,
+						data: respLayoutData[i] as Record<string, any>,
+						deps: respLayoutDeps[i] ?? {
+							keys: [],
+							urls: [],
+							params: [],
+							searchParams: [],
+							cookies: [],
+							uses_url: false,
+						},
+						snapshot: captureSnapshot(
+							respLayoutDeps[i] ?? {
+								keys: [],
+								urls: [],
+								params: [],
+								searchParams: [],
+								cookies: [],
+								uses_url: false,
+							},
+							ctx,
+						),
+					};
+					appState.loaderCache.layouts[id] = entry;
+					mergedLayoutData.push(entry.data);
+				} else {
+					const cachedEntry = appState.loaderCache.layouts[id];
+					mergedLayoutData.push(cachedEntry?.data ?? {});
+				}
+			}
+
+			let mergedPageData: Record<string, any>;
+			if (respPageData !== null && respPageData !== undefined) {
+				const deps = respPageDeps ?? {
+					keys: [],
+					urls: [],
+					params: [],
+					searchParams: [],
+					cookies: [],
+					uses_url: false,
+				};
+				const entry: CacheEntry = {
+					nodeId: pageId ?? "",
+					data: respPageData,
+					deps,
+					snapshot: captureSnapshot(deps, ctx),
+				};
+				if (pageId !== null) appState.loaderCache.page = entry;
+				mergedPageData = respPageData;
+			} else if (appState.loaderCache.page && appState.loaderCache.page.nodeId === pageId) {
+				mergedPageData = appState.loaderCache.page.data;
+			} else {
+				mergedPageData = {};
+			}
+
+			// Always overlay current match.params — cached pageData carries the
+			// stale params from when the loader ran, so trust the live match.
+			appState.pageData = { ...mergedPageData, params: match.params };
+			appState.layoutData = mergedLayoutData;
+			appState.routeParams = match.params;
 			// Successful navigation — clear any prior error state.
 			appState.errorComponent = null;
 			appState.errorProps = null;

@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.0] - 2026-05-14
+
+### Added
+
+- Pages and layouts now skip reloading their data when nothing they care about changed, making client-side navigation much faster. A navbar that only reads the current user no longer fires a database query every time you click a link — its loader runs once on first load and then sits cached until something explicitly invalidates it.
+- New `depends()` API on `LoadEvent` lets a loader declare custom dependency keys (e.g. `depends("app:user")`). Combine with the new `invalidate("app:user")` / `invalidateAll()` helpers exported from `bosia/client` to force selective re-runs from anywhere on the client — useful after WebSocket updates, manual refresh buttons, or cross-page mutations.
+- Loaders now track their reads (params, search params, cookies, `fetch()` URLs, URL pathname) automatically. The next navigation only re-fetches the loaders whose tracked inputs actually changed.
+- Form actions via `use:enhance` now invalidate **only the page loader** by default — layouts stay cached. Call `invalidate("app:key")` from your submit handler if a mutation needs to refresh a layout too.
+- New docs page `Guides → Data Invalidation` (English + Indonesian) covering `depends()`, the three forms of `invalidate()`, and the form-action default.
+
+### Fixed
+
+- Hover/viewport link prefetches now also send the loader cache mask, so layouts that are still cache-fresh no longer re-run on the server just because a user moused over a link. Without this fix, the new selective-reload work was undone by prefetch warming up the data endpoint with no mask.
+
+---
+
 ## [0.4.6] - 2026-05-13
 
 ### Added

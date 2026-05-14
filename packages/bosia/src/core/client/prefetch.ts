@@ -2,11 +2,52 @@
 // Supports `data-bosia-preload="hover"` and `data-bosia-preload="viewport"`
 // on <a> elements or their ancestors.
 
+import { findMatch } from "../matcher.ts";
+import { clientRoutes } from "bosia:routes";
+import { appState } from "./appState.svelte.ts";
+import { liveContext, shouldRerun } from "./loaderCache.ts";
+
+/**
+ * Build the `_invalidated` mask bits for a target path using the current
+ * client loader cache. Char 0 = page, char i+1 = layout depth i; '1' = run,
+ * '0' = skip. Returns `null` when the route cannot be matched.
+ */
+export function buildMaskBits(path: string): string | null {
+	const url = new URL(path, window.location.origin);
+	const pathname = url.pathname;
+	const match = findMatch(clientRoutes, pathname);
+	if (!match) return null;
+	const ctx = liveContext(pathname, match.params, url);
+	const layoutIds = (match.route as any).layoutIds as (string | null)[];
+	const pageId = (match.route as any).pageId as string | null;
+
+	const layoutRunFlags = layoutIds.map((id) => {
+		if (id === null) return false;
+		const entry = appState.loaderCache.layouts[id];
+		if (!entry) return true;
+		return shouldRerun(entry, appState.dirty, ctx);
+	});
+
+	let pageRun = false;
+	if (pageId !== null) {
+		const entry = appState.loaderCache.page;
+		if (!entry || entry.nodeId !== pageId) pageRun = true;
+		else pageRun = shouldRerun(entry, appState.dirty, ctx);
+	}
+
+	return (pageRun ? "1" : "0") + layoutRunFlags.map((b) => (b ? "1" : "0")).join("");
+}
+
 /** Builds the `/__bosia/data/…` URL for a given client path. */
-export function dataUrl(path: string): string {
+export function dataUrl(path: string, invalidatedBits?: string): string {
 	const url = new URL(path, window.location.origin);
 	let p = url.pathname.replace(/\/$/, "");
-	return `/__bosia/data${p || "/index"}.json${url.search}`;
+	let qs = url.search;
+	if (invalidatedBits) {
+		const sep = qs ? "&" : "?";
+		qs = `${qs}${sep}_invalidated=${invalidatedBits}`;
+	}
+	return `/__bosia/data${p || "/index"}.json${qs}`;
 }
 
 export const prefetchCache = new Map<string, { data: any; ts: number }>();
@@ -33,7 +74,11 @@ export async function prefetchPath(path: string): Promise<void> {
 
 	pending.add(path);
 	try {
-		const res = await fetch(dataUrl(path));
+		// Send the same mask as a real client nav would so the server can skip
+		// loaders whose tracked inputs haven't changed. Falls back to running
+		// everything when the route can't be matched (e.g. external/unknown URL).
+		const maskBits = buildMaskBits(path) ?? undefined;
+		const res = await fetch(dataUrl(path, maskBits));
 		if (res.ok) {
 			if (prefetchCache.size >= MAX_PREFETCH_ENTRIES) {
 				const oldest = prefetchCache.keys().next().value;

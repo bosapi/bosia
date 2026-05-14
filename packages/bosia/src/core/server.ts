@@ -112,6 +112,23 @@ function isValidRoutePath(path: string, origin: string): boolean {
 	}
 }
 
+/**
+ * Decode an `_invalidated` bitmask string. Char 0 = page, char i+1 = layout
+ * depth i, '1' = run, '0' = skip. Missing/extra chars default to run.
+ */
+function buildMaskFromBits(
+	bits: string,
+	layoutCount: number,
+): { page: boolean; layouts: boolean[] } {
+	const page = bits[0] !== "0";
+	const layouts: boolean[] = [];
+	for (let i = 0; i < layoutCount; i++) {
+		const c = bits[i + 1];
+		layouts.push(c !== "0");
+	}
+	return { page, layouts };
+}
+
 /** Extract action name from URL searchParams — `?/login` → "login", no slash key → "default". */
 function parseActionName(url: URL): string {
 	for (const key of url.searchParams.keys()) {
@@ -146,15 +163,41 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			return Response.json({ error: "Invalid path", status: 400 }, { status: 400 });
 		}
 		const routeUrl = new URL(routePathStr, url.origin);
+		let invalidatedBits: string | null = null;
 		for (const [key, val] of url.searchParams.entries()) {
+			if (key === "_invalidated") {
+				invalidatedBits = val;
+				continue;
+			}
 			routeUrl.searchParams.append(key, val);
 		}
 		// Rewrite event.url so logging middleware sees the real page path, not /__bosia/data
 		event.url = routeUrl;
 		try {
 			const pageMatch = findMatch(serverRoutes, routeUrl.pathname);
+			// Build mask from `?_invalidated=<bits>` where char 0 = page,
+			// char i+1 = layout depth i, '1' = run, '0' = skip. Absent → run all.
+			// Mask is sized to the total layout count (matching client `layoutIds`),
+			// not the count of layout servers, so depths without a server loader
+			// still occupy a bit position and stay aligned with the client.
+			const mask = invalidatedBits
+				? buildMaskFromBits(
+						invalidatedBits,
+						pageMatch?.route
+							? ((pageMatch.route as any).layoutModules?.length ?? 0)
+							: 0,
+					)
+				: undefined;
 			const runLoad = async () => {
-				const data = await loadRouteData(routeUrl, locals, request, cookies);
+				const data = await loadRouteData(
+					routeUrl,
+					locals,
+					request,
+					cookies,
+					null,
+					pageMatch,
+					mask,
+				);
 
 				let metadata = null;
 				if (pageMatch) {
@@ -176,12 +219,17 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				return { data, metadata, cookiesAccessed: (cookies as CookieJar).accessed };
 			};
 
-			// Dedup public routes by URL only. `(private)` scope routes (per-user content)
-			// skip the cache to prevent cross-user data leaks. See dedup.ts.
+			// Dedup public routes by URL + mask. `(private)` scope routes (per-user
+			// content) skip the cache to prevent cross-user data leaks. The mask is
+			// part of the key so concurrent requests for the same URL with different
+			// invalidation patterns don't collapse onto each other. See dedup.ts.
+			const dedupK = invalidatedBits
+				? `${dedupKey(routeUrl)}|m=${invalidatedBits}`
+				: dedupKey(routeUrl);
 			const result =
 				pageMatch?.route.scope === "private"
 					? await runLoad()
-					: await dedup(dedupKey(routeUrl), runLoad);
+					: await dedup(dedupK, runLoad);
 
 			const cookiesWereAccessed = (cookies as CookieJar).accessed || result.cookiesAccessed;
 			const cc = cookiesWereAccessed

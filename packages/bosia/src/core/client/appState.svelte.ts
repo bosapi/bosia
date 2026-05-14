@@ -7,8 +7,7 @@
 // `ssrMode` and reads from `ssrXxx` props directly during SSR,
 // so concurrent requests don't share these cells.
 
-import { dataUrl } from "./prefetch.ts";
-import { router } from "./router.svelte.ts";
+import type { CacheEntry, DirtyState } from "./loaderCache.ts";
 
 class AppState {
 	pageData = $state<Record<string, any>>({});
@@ -21,43 +20,31 @@ class AppState {
 	errorComponent = $state<any>(null);
 	errorProps = $state<{ error: { status: number; message: string } } | null>(null);
 	errorDepth = $state<number | null>(null);
+	// Loader cache — keyed by stable id (codegen-emitted server file path).
+	// Mirrors the most recent successful run of each layout/page server loader.
+	// Wiped on hard refresh, never persisted.
+	loaderCache: { page: CacheEntry | null; layouts: Record<string, CacheEntry> } = {
+		page: null,
+		layouts: {},
+	};
+	// Pending invalidations consumed by the next data fetch. Mutated by
+	// `invalidate()` / `invalidateAll()` and cleared after the request fires.
+	dirty: DirtyState = {
+		all: false,
+		keys: new Set<string>(),
+		urls: new Set<string>(),
+		urlMatchers: [],
+	};
+	// Bumped by `invalidate*()` to wake the App.svelte nav effect, so calling
+	// `invalidate("k")` re-runs the loader pipeline without changing the URL.
+	invalidationTick = $state(0);
 }
 
 export const appState = new AppState();
 
-/**
- * Re-fetch loader data for the given path and apply to `appState`.
- * Used by `use:enhance` after a successful action — mirrors SvelteKit's
- * `invalidateAll` default. No-op if the fetch fails or returns an error.
- */
-export async function refreshData(path: string): Promise<void> {
-	try {
-		const res = await fetch(dataUrl(path));
-		if (!res.ok) return;
-		const result = await res.json();
-		if (result?.redirect) {
-			router.navigate(result.redirect);
-			return;
-		}
-		if (result?.error) return;
-		appState.pageData = result?.pageData ?? {};
-		appState.layoutData = result?.layoutData ?? [];
-		appState.routeParams = result?.pageData?.params ?? appState.routeParams;
-		if (result?.metadata) {
-			if (result.metadata.title) document.title = result.metadata.title;
-			if (result.metadata.description) {
-				let meta = document.querySelector(
-					'meta[name="description"]',
-				) as HTMLMetaElement | null;
-				if (!meta) {
-					meta = document.createElement("meta");
-					meta.name = "description";
-					document.head.appendChild(meta);
-				}
-				meta.content = result.metadata.description;
-			}
-		}
-	} catch {
-		// best-effort — silently swallow
-	}
+export function clearDirty(): void {
+	appState.dirty.all = false;
+	appState.dirty.keys.clear();
+	appState.dirty.urls.clear();
+	appState.dirty.urlMatchers = [];
 }

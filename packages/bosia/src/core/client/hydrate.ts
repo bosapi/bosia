@@ -5,6 +5,8 @@ import { initPrefetch } from "./prefetch.ts";
 import { findMatch, compileRoutes, canonicalPathname } from "../matcher.ts";
 import { clientRoutes } from "bosia:routes";
 import { appState } from "./appState.svelte.ts";
+import { captureSnapshot, liveContext, type CacheEntry } from "./loaderCache.ts";
+import type { LoaderDeps } from "../hooks.ts";
 
 // Pre-compile route patterns into RegExp at startup (shared by App.svelte and router via module reference)
 compileRoutes(clientRoutes);
@@ -59,6 +61,42 @@ async function main() {
 	appState.layoutData = ssrLayoutData;
 	appState.routeParams = ssrPageData?.params ?? match?.params ?? {};
 	appState.form = ssrFormData;
+
+	// Seed the loader cache from window globals emitted server-side so the
+	// next client navigation can decide which loaders to skip without an
+	// extra fetch round-trip.
+	if (match) {
+		const url = new URL(window.location.href);
+		const ctx = liveContext(window.location.pathname, match.params, url);
+		const ssrPageDeps: LoaderDeps | null = (window as any).__BOSIA_PAGE_DEPS__ ?? null;
+		const ssrLayoutDeps: (LoaderDeps | null)[] = (window as any).__BOSIA_LAYOUT_DEPS__ ?? [];
+		const pageId = (match.route as any).pageId as string | null;
+		const layoutIds = (match.route as any).layoutIds as (string | null)[];
+
+		if (pageId !== null && ssrPageDeps && ssrPageData) {
+			const entry: CacheEntry = {
+				nodeId: pageId,
+				data: ssrPageData,
+				deps: ssrPageDeps,
+				snapshot: captureSnapshot(ssrPageDeps, ctx),
+			};
+			appState.loaderCache.page = entry;
+		}
+		for (let i = 0; i < layoutIds.length; i++) {
+			const id = layoutIds[i];
+			if (id === null) continue;
+			const deps = ssrLayoutDeps[i];
+			const data = ssrLayoutData[i];
+			if (!deps || !data) continue;
+			const entry: CacheEntry = {
+				nodeId: id,
+				data,
+				deps,
+				snapshot: captureSnapshot(deps, ctx),
+			};
+			appState.loaderCache.layouts[id] = entry;
+		}
+	}
 
 	const target = document.getElementById("app")!;
 	const props = {

@@ -40,6 +40,11 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 	lines.push("  errorPages: { loader: () => Promise<any>; depth: number }[];");
 	lines.push("  hasServerData: boolean;");
 	lines.push('  trailingSlash: "never" | "always" | "ignore";');
+	// Stable ids per node, used by the client loader cache to detect whether
+	// a layout/page at a given depth is the same as last nav's (skip) or new
+	// (re-run). One id per layout in order, plus an optional page id.
+	lines.push("  pageId: string | null;");
+	lines.push("  layoutIds: (string | null)[];");
 	lines.push("}> = [");
 	for (const r of pages) {
 		const layoutImports = r.layouts
@@ -52,6 +57,15 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 			)
 			.join(", ");
 		const hasServerData = !!(r.pageServer || r.layoutServers.length > 0);
+		const pageId = r.pageServer ? JSON.stringify(r.pageServer) : "null";
+		// Map +layout.server.ts paths to their layout depth, leaving nulls for
+		// layouts that have no server loader. Length matches layouts.length so
+		// client cache can index by depth.
+		const layoutIdByDepth: (string | null)[] = new Array(r.layouts.length).fill(null);
+		for (const ls of r.layoutServers) layoutIdByDepth[ls.depth] = ls.path;
+		const layoutIds = layoutIdByDepth
+			.map((id) => (id === null ? "null" : JSON.stringify(id)))
+			.join(", ");
 		lines.push("  {");
 		lines.push(`    pattern: ${JSON.stringify(r.pattern)},`);
 		lines.push(`    page: () => import(${JSON.stringify(toImportPath(r.page))}),`);
@@ -59,6 +73,8 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 		lines.push(`    errorPages: [${errorPageImports}],`);
 		lines.push(`    hasServerData: ${hasServerData},`);
 		lines.push(`    trailingSlash: ${JSON.stringify(r.trailingSlash)},`);
+		lines.push(`    pageId: ${pageId},`);
+		lines.push(`    layoutIds: [${layoutIds}],`);
 		lines.push("  },");
 	}
 	lines.push("];\n");
@@ -157,6 +173,8 @@ function generateClientRoutesFile(
 	lines.push("  errorPages: { loader: () => Promise<any>; depth: number }[];");
 	lines.push("  hasServerData: boolean;");
 	lines.push('  trailingSlash: "never" | "always" | "ignore";');
+	lines.push("  pageId: string | null;");
+	lines.push("  layoutIds: (string | null)[];");
 	lines.push("}> = [");
 	for (const r of pages) {
 		const layoutImports = r.layouts
@@ -169,6 +187,12 @@ function generateClientRoutesFile(
 			)
 			.join(", ");
 		const hasServerData = !!(r.pageServer || r.layoutServers.length > 0);
+		const pageId = r.pageServer ? JSON.stringify(r.pageServer) : "null";
+		const layoutIdByDepth: (string | null)[] = new Array(r.layouts.length).fill(null);
+		for (const ls of r.layoutServers) layoutIdByDepth[ls.depth] = ls.path;
+		const layoutIds = layoutIdByDepth
+			.map((id) => (id === null ? "null" : JSON.stringify(id)))
+			.join(", ");
 		lines.push("  {");
 		lines.push(`    pattern: ${JSON.stringify(r.pattern)},`);
 		lines.push(`    page: () => import(${JSON.stringify(toImportPath(r.page))}),`);
@@ -176,6 +200,8 @@ function generateClientRoutesFile(
 		lines.push(`    errorPages: [${errorPageImports}],`);
 		lines.push(`    hasServerData: ${hasServerData},`);
 		lines.push(`    trailingSlash: ${JSON.stringify(r.trailingSlash)},`);
+		lines.push(`    pageId: ${pageId},`);
+		lines.push(`    layoutIds: [${layoutIds}],`);
 		lines.push("  },");
 	}
 	lines.push("];\n");

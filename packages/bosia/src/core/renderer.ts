@@ -3,7 +3,7 @@ import { render } from "svelte/server";
 import { findMatch } from "./matcher.ts";
 import { serverRoutes, errorPage } from "bosia:routes";
 import type { RouteMatch } from "./types.ts";
-import type { Cookies } from "./hooks.ts";
+import type { Cookies, LoaderDeps } from "./hooks.ts";
 import { CSP_ENABLED } from "./csp.ts";
 import { HttpError, Redirect } from "./errors.ts";
 import { pickErrorPage, type ErrorOrigin } from "./errorMatch.ts";
@@ -158,9 +158,134 @@ function stampErrorContext(
 	e.partialLayoutData ??= [...partialLayoutData];
 }
 
+// ─── Per-Loader Dependency Tracking ──────────────────────
+// Wraps `params`, `url`, `cookies`, and `fetch` with proxies/closures
+// that record every key read during a single loader run. The client
+// cache uses these records to skip re-runs on subsequent navigations
+// when none of the tracked inputs changed.
+
+function emptyDeps(): LoaderDeps {
+	return {
+		keys: [],
+		urls: [],
+		params: [],
+		searchParams: [],
+		cookies: [],
+		uses_url: false,
+	};
+}
+
+function trackedParams(params: Record<string, string>, deps: LoaderDeps): Record<string, string> {
+	return new Proxy(params, {
+		get(target, prop) {
+			if (typeof prop === "string") {
+				if (!deps.params.includes(prop)) deps.params.push(prop);
+			}
+			return Reflect.get(target, prop);
+		},
+	});
+}
+
+const URL_TRACKED_PROPS = new Set(["pathname", "origin", "hash", "href", "host", "hostname"]);
+
+function trackedUrl(url: URL, deps: LoaderDeps): URL {
+	const trackedSearch = new Proxy(url.searchParams, {
+		get(target, prop) {
+			if (prop === "get" || prop === "has" || prop === "getAll") {
+				return (key: string) => {
+					if (typeof key === "string" && !deps.searchParams.includes(key)) {
+						deps.searchParams.push(key);
+					}
+					return (target as any)[prop](key);
+				};
+			}
+			const value = Reflect.get(target, prop);
+			return typeof value === "function" ? value.bind(target) : value;
+		},
+	});
+	return new Proxy(url, {
+		get(target, prop) {
+			if (prop === "searchParams") return trackedSearch;
+			if (prop === "search") {
+				// Whole search string read → treat as broad searchParams dep
+				deps.uses_url = true;
+				return target.search;
+			}
+			if (typeof prop === "string" && URL_TRACKED_PROPS.has(prop)) {
+				deps.uses_url = true;
+			}
+			const value = Reflect.get(target, prop);
+			return typeof value === "function" ? value.bind(target) : value;
+		},
+	});
+}
+
+function trackedCookies(cookies: Cookies, deps: LoaderDeps): Cookies {
+	return {
+		get(name: string) {
+			if (!deps.cookies.includes(name)) deps.cookies.push(name);
+			return cookies.get(name);
+		},
+		getAll() {
+			// Broad read — treat as wildcard; record empty marker so any cookie
+			// invalidation triggers re-run. Use a sentinel "*" to mean "all".
+			if (!deps.cookies.includes("*")) deps.cookies.push("*");
+			return cookies.getAll();
+		},
+		set(name, value, options) {
+			cookies.set(name, value, options);
+		},
+		delete(name, options) {
+			cookies.delete(name, options);
+		},
+	};
+}
+
+function trackedFetch(
+	fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>,
+	origin: string,
+	deps: LoaderDeps,
+): (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> {
+	return (input, init) => {
+		let href: string | null = null;
+		try {
+			if (typeof input === "string") href = new URL(input, origin).href;
+			else if (input instanceof URL) href = input.href;
+			else href = new URL(input.url, origin).href;
+		} catch {
+			href = null;
+		}
+		if (href && !deps.urls.includes(href)) deps.urls.push(href);
+		return fetch(input, init);
+	};
+}
+
+function makeDepends(deps: LoaderDeps): (...keys: string[]) => void {
+	return (...keys: string[]) => {
+		for (const k of keys) {
+			if (typeof k === "string" && !deps.keys.includes(k)) deps.keys.push(k);
+		}
+	};
+}
+
 // ─── Route Data Loader ───────────────────────────────────
 // Runs layout + page server loaders for a given URL.
 // Used by both SSR and the /__bosia/data JSON endpoint.
+//
+// `mask` controls selective re-runs from the client data endpoint:
+//   - undefined → run everything (SSR, first nav)
+//   - layouts[i] === true → run that layout; false → skip, emit null
+//   - page === true → run page; false → skip, emit null
+// When skipped, the parent() chain still receives the *combined parent
+// data* contributed by previously-cached layers, which the client
+// reconstructs and forwards in the request body. For now (initial
+// implementation), skipped loaders contribute `{}` to parent and the
+// response slot is `null`; the client merges with its cached data.
+
+export type LoaderMask = {
+	page: boolean;
+	layouts: boolean[];
+};
 
 export async function loadRouteData(
 	url: URL,
@@ -169,89 +294,155 @@ export async function loadRouteData(
 	cookies: Cookies,
 	metadataData: Record<string, any> | null = null,
 	match?: RouteMatch<(typeof serverRoutes)[number]> | null,
+	mask?: LoaderMask,
 ) {
 	match ??= findMatch(serverRoutes, url.pathname);
 	if (!match) return null;
 
 	const { route, params } = match;
 	const fetch = makeFetch(req, url);
-	const layoutData: Record<string, any>[] = [];
+	const origin = url.origin;
+	const layoutData: (Record<string, any> | null)[] = [];
+	const layoutDeps: (LoaderDeps | null)[] = [];
 	let parentData: Record<string, any> = {};
 
 	// Run layout server loaders root → leaf, each gets parent() data
 	for (const ls of route.layoutServers) {
+		const skip = mask && mask.layouts[ls.depth] === false;
 		try {
+			if (skip) {
+				layoutData[ls.depth] = null;
+				layoutDeps[ls.depth] = null;
+				// Skipped layers contribute {} to the parent chain. The client
+				// already has their data and renders it from cache, so dependent
+				// loaders that DO re-run will see stale parent() data here. This
+				// is the same trade-off SvelteKit makes; loaders that need fresh
+				// upstream data should call `depends()` on a shared key.
+				continue;
+			}
 			const mod = await ls.loader();
 			if (typeof mod.load === "function") {
 				// Snapshot per layer so loaders cannot mutate the shared accumulator,
 				// preserving the same isolation semantics as the previous merge-on-call code.
 				const snapshot = { ...parentData };
 				const parent = async () => snapshot;
+				const deps = emptyDeps();
 				const result =
 					(await withTimeout(
-						mod.load({ params, url, locals, cookies, parent, fetch, metadata: null }),
+						mod.load({
+							params: trackedParams(params, deps),
+							url: trackedUrl(url, deps),
+							locals,
+							cookies: trackedCookies(cookies, deps),
+							parent,
+							fetch: trackedFetch(fetch, origin, deps),
+							metadata: null,
+							depends: makeDepends(deps),
+						}),
 						LOAD_TIMEOUT,
 						`layout load (depth=${ls.depth}, ${url.pathname})`,
 					)) ?? {};
 				layoutData[ls.depth] = result;
+				layoutDeps[ls.depth] = deps;
 				parentData = { ...parentData, ...result };
+			} else {
+				layoutData[ls.depth] = {};
+				layoutDeps[ls.depth] = emptyDeps();
 			}
 		} catch (err) {
 			if (err instanceof Redirect) throw err;
 			if (err instanceof HttpError) {
-				stampErrorContext(err, ls.depth, "layout", layoutData);
+				stampErrorContext(
+					err,
+					ls.depth,
+					"layout",
+					layoutData.map((d) => d ?? {}),
+				);
 				throw err;
 			}
 			if (isDev) console.error("Layout server load error:", err);
 			else console.error("Layout server load error:", (err as Error).message ?? err);
 			const wrapped = new HttpError(500, "Internal Server Error");
-			stampErrorContext(wrapped, ls.depth, "layout", layoutData);
+			stampErrorContext(
+				wrapped,
+				ls.depth,
+				"layout",
+				layoutData.map((d) => d ?? {}),
+			);
 			throw wrapped;
 		}
 	}
 
 	// Run page server loader
-	let pageData: Record<string, any> = {};
+	let pageData: Record<string, any> | null = null;
+	let pageDeps: LoaderDeps | null = null;
 	let csr = true;
 	let ssr = true;
+	const skipPage = mask && mask.page === false;
 	if (route.pageServer) {
 		try {
 			const mod = await route.pageServer();
 			if (mod.csr === false) csr = false;
 			if (mod.ssr === false) ssr = false;
-			if (typeof mod.load === "function") {
+			if (skipPage) {
+				pageData = null;
+				pageDeps = null;
+			} else if (typeof mod.load === "function") {
 				const snapshot = { ...parentData };
 				const parent = async () => snapshot;
+				const deps = emptyDeps();
 				pageData =
 					(await withTimeout(
 						mod.load({
-							params,
-							url,
+							params: trackedParams(params, deps),
+							url: trackedUrl(url, deps),
 							locals,
-							cookies,
+							cookies: trackedCookies(cookies, deps),
 							parent,
-							fetch,
+							fetch: trackedFetch(fetch, origin, deps),
 							metadata: metadataData,
+							depends: makeDepends(deps),
 						}),
 						LOAD_TIMEOUT,
 						`page load (${url.pathname})`,
 					)) ?? {};
+				pageDeps = deps;
+			} else {
+				pageData = {};
+				pageDeps = emptyDeps();
 			}
 		} catch (err) {
 			if (err instanceof Redirect) throw err;
 			if (err instanceof HttpError) {
-				stampErrorContext(err, route.layoutModules.length, "page", layoutData);
+				stampErrorContext(
+					err,
+					route.layoutModules.length,
+					"page",
+					layoutData.map((d) => d ?? {}),
+				);
 				throw err;
 			}
 			if (isDev) console.error("Page server load error:", err);
 			else console.error("Page server load error:", (err as Error).message ?? err);
 			const wrapped = new HttpError(500, "Internal Server Error");
-			stampErrorContext(wrapped, route.layoutModules.length, "page", layoutData);
+			stampErrorContext(
+				wrapped,
+				route.layoutModules.length,
+				"page",
+				layoutData.map((d) => d ?? {}),
+			);
 			throw wrapped;
 		}
+	} else {
+		pageData = {};
+		pageDeps = emptyDeps();
 	}
 
-	return { pageData: { ...pageData, params }, layoutData, csr, ssr };
+	// `params` are always attached to pageData for client-side router consumption.
+	// When pageData is skipped, the client merges its cached pageData with current
+	// route params separately, so we keep the `null` sentinel here.
+	const pageOut = pageData === null ? null : { ...pageData, params };
+	return { pageData: pageOut, layoutData, csr, ssr, pageDeps, layoutDeps };
 }
 
 // ─── Metadata Loader ─────────────────────────────────────
@@ -399,6 +590,10 @@ export async function renderSSRStream(
 		pluginRenderFragments("bodyEnd", renderCtx),
 	]);
 
+	// SSR always runs every loader, so coerce types from the optional sparse shape.
+	const layoutDataFull = (data.layoutData as Record<string, any>[]).map((d) => d ?? {});
+	const pageDataFull = data.pageData ?? {};
+
 	// ssr=false → no render() needed; ship shell + hydration as a single response.
 	// ssr=false && csr=false is meaningless (nothing renders) — force csr=true.
 	if (!data.ssr) {
@@ -413,13 +608,15 @@ export async function renderSSRStream(
 			buildHtmlTail(
 				"",
 				"",
-				data.pageData,
-				data.layoutData,
+				pageDataFull,
+				layoutDataFull,
 				true,
 				null,
 				false,
 				bodyEndExtras,
 				nonce,
+				data.pageDeps,
+				data.layoutDeps,
 			);
 		return new Response(html, {
 			headers: { "Content-Type": "text/html; charset=utf-8" },
@@ -435,8 +632,8 @@ export async function renderSSRStream(
 				ssrMode: true,
 				ssrPageComponent: pageMod.default,
 				ssrLayoutComponents: layoutMods.map((m: any) => m.default),
-				ssrPageData: data.pageData,
-				ssrLayoutData: data.layoutData,
+				ssrPageData: pageDataFull,
+				ssrLayoutData: layoutDataFull,
 			},
 		}));
 	} catch (err) {
@@ -451,7 +648,7 @@ export async function renderSSRStream(
 			route,
 			route.layoutModules.length,
 			"page",
-			data.layoutData,
+			layoutDataFull,
 			nonce,
 		);
 	}
@@ -464,13 +661,15 @@ export async function renderSSRStream(
 			buildHtmlTail(
 				body,
 				head,
-				data.pageData,
-				data.layoutData,
+				pageDataFull,
+				layoutDataFull,
 				data.csr,
 				null,
 				true,
 				bodyEndExtras,
 				nonce,
+				data.pageDeps,
+				data.layoutDeps,
 			),
 		),
 	];
@@ -556,6 +755,10 @@ export async function renderPageWithFormData(
 			nonce,
 		);
 
+	// Form-action re-render always runs every loader (no client mask).
+	const layoutDataFull = (data.layoutData as Record<string, any>[]).map((d) => d ?? {});
+	const pageDataFull = data.pageData ?? {};
+
 	if (!data.ssr) {
 		if (!data.csr && isDev) {
 			console.warn(
@@ -565,13 +768,15 @@ export async function renderPageWithFormData(
 		const html = buildHtml(
 			"",
 			"",
-			data.pageData,
-			data.layoutData,
+			pageDataFull,
+			layoutDataFull,
 			true,
 			formData,
 			undefined,
 			false,
 			nonce,
+			data.pageDeps,
+			data.layoutDeps,
 		);
 		return compress(html, "text/html; charset=utf-8", req, status);
 	}
@@ -581,8 +786,8 @@ export async function renderPageWithFormData(
 			ssrMode: true,
 			ssrPageComponent: pageMod.default,
 			ssrLayoutComponents: layoutMods.map((m: any) => m.default),
-			ssrPageData: data.pageData,
-			ssrLayoutData: data.layoutData,
+			ssrPageData: pageDataFull,
+			ssrLayoutData: layoutDataFull,
 			ssrFormData: formData,
 		},
 	});
@@ -590,13 +795,15 @@ export async function renderPageWithFormData(
 	const html = buildHtml(
 		body,
 		head,
-		data.pageData,
-		data.layoutData,
+		pageDataFull,
+		layoutDataFull,
 		data.csr,
 		formData,
 		undefined,
 		true,
 		nonce,
+		data.pageDeps,
+		data.layoutDeps,
 	);
 	return compress(html, "text/html; charset=utf-8", req, status);
 }
@@ -615,7 +822,7 @@ export async function renderErrorPage(
 	route?: any,
 	errorDepth?: number,
 	errorOrigin?: ErrorOrigin,
-	partialLayoutData?: Record<string, any>[],
+	partialLayoutData?: (Record<string, any> | null)[],
 	nonce?: string,
 ): Promise<Response> {
 	// Strip the nonce from emitted scripts when CSP is off — the attribute

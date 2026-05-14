@@ -216,7 +216,7 @@
 
 ### Data Loading
 
-- [ ] 🟠 `depends()` and `invalidate()` — selective data reloading
+- [x] 🟠 `depends()` and `invalidate()` — selective data reloading
 - [ ] 🟡 `setHeaders()` in load functions — set response headers from loaders
 
 ### Navigation

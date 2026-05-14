@@ -10,6 +10,7 @@ export type { HttpError, Redirect, RedirectOptions, ActionFailure } from "../cor
 export type {
 	RequestEvent,
 	LoadEvent,
+	LoaderDeps,
 	MetadataEvent,
 	Metadata,
 	Handle,

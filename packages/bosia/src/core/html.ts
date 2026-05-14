@@ -78,6 +78,8 @@ export function buildHtml(
 	lang?: string,
 	ssr = true,
 	nonce?: string,
+	pageDeps: any = null,
+	layoutDeps: any[] | null = null,
 ): string {
 	const cssLinks = (distManifest.css ?? [])
 		.map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
@@ -96,8 +98,13 @@ export function buildHtml(
 		formData != null ? `window.__BOSIA_FORM_DATA__=${safeJsonStringify(formData)};` : "";
 	const ssrFlag = ssr ? "" : "window.__BOSIA_SSR__=false;";
 
+	const depsScript =
+		pageDeps !== null || layoutDeps !== null
+			? `window.__BOSIA_PAGE_DEPS__=${safeJsonStringify(pageDeps)};window.__BOSIA_LAYOUT_DEPS__=${safeJsonStringify(layoutDeps ?? [])};`
+			: "";
+
 	const scripts = csr
-		? `${envScript}\n  <script${n}>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formScript}</script>\n  <script${n} type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
+		? `${envScript}\n  <script${n}>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${depsScript}${formScript}</script>\n  <script${n} type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
 		: isDev
 			? `\n  <script${n}>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
 			: "";
@@ -208,6 +215,8 @@ export function buildHtmlTail(
 	ssr = true,
 	bodyEndExtras?: string[],
 	nonce?: string,
+	pageDeps: any = null,
+	layoutDeps: any[] | null = null,
 ): string {
 	const n = nonceAttr(nonce);
 	let out = `<script${n}>document.getElementById('__bs__').remove()</script>`;
@@ -222,9 +231,13 @@ export function buildHtmlTail(
 		const formInject =
 			formData != null ? `window.__BOSIA_FORM_DATA__=${safeJsonStringify(formData)};` : "";
 		const ssrFlag = ssr ? "" : "window.__BOSIA_SSR__=false;";
+		const depsInject =
+			pageDeps !== null || layoutDeps !== null
+				? `window.__BOSIA_PAGE_DEPS__=${safeJsonStringify(pageDeps)};window.__BOSIA_LAYOUT_DEPS__=${safeJsonStringify(layoutDeps ?? [])};`
+				: "";
 		out +=
 			`\n<script${n}>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};` +
-			`window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${formInject}</script>`;
+			`window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${depsInject}${formInject}</script>`;
 		out += `\n<script${n} type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`;
 	} else if (isDev) {
 		out += `\n<script${n}>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;

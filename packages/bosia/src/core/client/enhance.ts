@@ -5,7 +5,7 @@
 // full page reload. Falls back to native form submission when JS is
 // disabled because nothing is wired up until this action runs.
 
-import { appState, refreshData } from "./appState.svelte.ts";
+import { appState } from "./appState.svelte.ts";
 import { router } from "./router.svelte.ts";
 
 export type ActionResult =
@@ -53,7 +53,11 @@ async function applyResult(
 	appState.form = result.data;
 	if (reset) form.reset();
 	if (invalidateAll) {
-		await refreshData(window.location.pathname + window.location.search);
+		// Form actions invalidate the page loader only by default — layouts
+		// stay cached. Loaders that need to react to a mutation should call
+		// `invalidate("app:key")` from the action's submit handler.
+		appState.loaderCache.page = null;
+		appState.invalidationTick = appState.invalidationTick + 1;
 	}
 }
 

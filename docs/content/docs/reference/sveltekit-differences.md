@@ -19,6 +19,7 @@ These work the same way you'd expect:
 - **Cookie API** — `get()`, `getAll()`, `set()`, `delete()`
 - **`$lib` alias** — maps to `src/lib/`
 - **CSRF protection** — origin-based checking on non-safe methods
+- **Data invalidation** — `depends()` on `LoadEvent`, plus `invalidate()` / `invalidateAll()` exported from `bosia/client`
 
 ## Different from SvelteKit
 
@@ -76,7 +77,6 @@ These SvelteKit features are not available in Bosia:
 - `+page.ts` / `+layout.ts` (universal load functions)
 - `$app/stores` (`page`, `navigating`, `updated`)
 - `$app/navigation` (`goto`, `beforeNavigate`, `afterNavigate`)
-- `depends()` / `invalidate()` / `invalidateAll()`
 - Image optimization (`@sveltejs/enhanced-img`)
 - Service workers
 - Snapshots

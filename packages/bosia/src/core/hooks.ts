@@ -56,6 +56,33 @@ export type LoadEvent = {
 	fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 	parent: () => Promise<Record<string, any>>;
 	metadata: Record<string, any> | null;
+	/**
+	 * Declare custom dependency keys for this loader. The client cache
+	 * will re-run the loader when `invalidate(key)` is called with any
+	 * of these keys. Keys are arbitrary strings, but conventionally
+	 * namespaced (e.g. `"app:user"`).
+	 */
+	depends: (...keys: string[]) => void;
+};
+
+/**
+ * Tracked dependencies captured for a single loader during one run.
+ * Shipped to the client so subsequent client-side navigations can
+ * decide whether to re-run the loader.
+ */
+export type LoaderDeps = {
+	/** `depends(...keys)` declarations. */
+	keys: string[];
+	/** Absolute URLs passed to the loader's `fetch()`. */
+	urls: string[];
+	/** Route params the loader read (`params.X`). */
+	params: string[];
+	/** Search params the loader read (`url.searchParams.get(X)` / `.has(X)`). */
+	searchParams: string[];
+	/** Cookies the loader read (`cookies.get(X)`). */
+	cookies: string[];
+	/** True if the loader read `url.pathname`/`url.origin`/`url.hash`/`url.href`. */
+	uses_url: boolean;
 };
 
 export type ResolveFunction = (event: RequestEvent) => MaybePromise<Response>;
