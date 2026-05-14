@@ -217,6 +217,7 @@
 ### Data Loading
 
 - [x] 🟠 `depends()` and `invalidate()` — selective data reloading
+- [x] 🟡 Prefetch sends the loader cache mask — hover/viewport `data-bosia-preload` was warming the data endpoint with no mask, re-running every loader server-side; now it sends the same `_invalidated` bits as a real nav
 - [ ] 🟡 `setHeaders()` in load functions — set response headers from loaders
 
 ### Navigation
@@ -449,8 +450,8 @@
 
 ### Open
 
-- [ ] 🟠 **Truly progressive SSR streaming** — `renderSSRStream` is currently blocking before first byte (load → render → enqueue prebuilt chunks). Blocked on `depends()` / `invalidate()` (v0.2.1) and the trie-based matcher (v0.2.2)
-- [ ] 🟡 **Reduce `safeJsonStringify` cost on large loader payloads** — guidance, not a `trusted` opt-out flag. Server-loader data routinely carries user-generated DB content; removing the XSS escape per payload is unsafe. Document "keep loader data lean" and consider one combined regex pass over the embedded JSON-script block
+- [ ] 🟠 **Truly progressive SSR streaming** — `renderSSRStream` is currently blocking before first byte (load → render → enqueue prebuilt chunks). Real blocker is a parallel-aware loader runner that can flush layout/page chunks as each loader resolves (the trie matcher is unrelated — tracked separately under Performance (at scale)). `depends()` / `invalidate()` (shipped v0.5.0) is no longer a prerequisite
+- [x] 🟡 **Reduce `safeJsonStringify` cost on large loader payloads** — done in v0.5.0 by migrating `__BOSIA_PAGE_DATA__`, `__BOSIA_LAYOUT_DATA__`, `__BOSIA_FORM_DATA__` to `<script type="application/json">` islands. Client reads via `JSON.parse(document.getElementById(id).textContent)`. Escape surface drops from 5 JS-context sequences to `</script` / `<!--` only; clean payloads are byte-identical to `JSON.stringify`. System globals (`__BOSIA_ENV__`, deps, SSR flag) kept as inline JS — small/fixed-shape, no benefit
 
 > Reference: `backup/PERFORM_ISSUES.md` (full request-pipeline review, 2026-05-08).
 

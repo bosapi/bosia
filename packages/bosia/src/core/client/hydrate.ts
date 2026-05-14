@@ -11,6 +11,16 @@ import type { LoaderDeps } from "../hooks.ts";
 // Pre-compile route patterns into RegExp at startup (shared by App.svelte and router via module reference)
 compileRoutes(clientRoutes);
 
+function readJsonScript<T>(id: string): T | null {
+	const el = document.getElementById(id);
+	if (!el) return null;
+	try {
+		return JSON.parse(el.textContent ?? "null") as T;
+	} catch {
+		return null;
+	}
+}
+
 // ─── Hydration ────────────────────────────────────────────
 
 async function main() {
@@ -51,9 +61,9 @@ async function main() {
 		router.params = match.params;
 	}
 
-	const ssrPageData = (window as any).__BOSIA_PAGE_DATA__ ?? {};
-	const ssrLayoutData = (window as any).__BOSIA_LAYOUT_DATA__ ?? [];
-	const ssrFormData = (window as any).__BOSIA_FORM_DATA__ ?? null;
+	const ssrPageData = readJsonScript<Record<string, any>>("__bosia-page-data__") ?? {};
+	const ssrLayoutData = readJsonScript<Record<string, any>[]>("__bosia-layout-data__") ?? [];
+	const ssrFormData = readJsonScript<Record<string, any>>("__bosia-form-data__");
 
 	// Seed shared client state so `use:enhance` and other helpers
 	// start from the same values App.svelte renders during hydration.

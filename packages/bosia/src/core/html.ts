@@ -37,6 +37,22 @@ export function safeJsonStringify(data: unknown): string {
 	return json.replace(/[<>&\u2028\u2029]/g, (c) => map[c]);
 }
 
+const SCRIPT_HAZARD_RE = /<(\/script|!--)/gi;
+
+/** Escapes JSON for safe embedding inside <script type="application/json"> blocks.
+ *  Blocks premature </script> and <!-- (HTML script-data escape state) without
+ *  the JS-context overhead of safeJsonStringify. */
+export function safeJsonForScript(data: unknown): string {
+	let json: string;
+	try {
+		json = JSON.stringify(data);
+	} catch {
+		console.error("safeJsonForScript: failed to serialize data (circular reference?)");
+		json = "null";
+	}
+	return json.replace(SCRIPT_HAZARD_RE, "\\u003c$1");
+}
+
 // ─── Public Env Injection ─────────────────────────────────
 
 /**
@@ -94,8 +110,6 @@ export function buildHtml(
 			? `\n  <script${n}>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`
 			: "";
 
-	const formScript =
-		formData != null ? `window.__BOSIA_FORM_DATA__=${safeJsonStringify(formData)};` : "";
 	const ssrFlag = ssr ? "" : "window.__BOSIA_SSR__=false;";
 
 	const depsScript =
@@ -103,8 +117,19 @@ export function buildHtml(
 			? `window.__BOSIA_PAGE_DEPS__=${safeJsonStringify(pageDeps)};window.__BOSIA_LAYOUT_DEPS__=${safeJsonStringify(layoutDeps ?? [])};`
 			: "";
 
+	const sysScript =
+		ssrFlag || depsScript ? `\n  <script${n}>${ssrFlag}${depsScript}</script>` : "";
+
+	const dataIslands = csr
+		? `\n  <script${n} type="application/json" id="__bosia-page-data__">${safeJsonForScript(pageData)}</script>` +
+			`\n  <script${n} type="application/json" id="__bosia-layout-data__">${safeJsonForScript(layoutData)}</script>` +
+			(formData != null
+				? `\n  <script${n} type="application/json" id="__bosia-form-data__">${safeJsonForScript(formData)}</script>`
+				: "")
+		: "";
+
 	const scripts = csr
-		? `${envScript}\n  <script${n}>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${depsScript}${formScript}</script>\n  <script${n} type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
+		? `${envScript}${dataIslands}${sysScript}\n  <script${n} type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
 		: isDev
 			? `\n  <script${n}>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
 			: "";
@@ -228,16 +253,19 @@ export function buildHtmlTail(
 		if (Object.keys(publicEnv).length > 0) {
 			out += `\n<script${n}>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`;
 		}
-		const formInject =
-			formData != null ? `window.__BOSIA_FORM_DATA__=${safeJsonStringify(formData)};` : "";
+		out += `\n<script${n} type="application/json" id="__bosia-page-data__">${safeJsonForScript(pageData)}</script>`;
+		out += `\n<script${n} type="application/json" id="__bosia-layout-data__">${safeJsonForScript(layoutData)}</script>`;
+		if (formData != null) {
+			out += `\n<script${n} type="application/json" id="__bosia-form-data__">${safeJsonForScript(formData)}</script>`;
+		}
 		const ssrFlag = ssr ? "" : "window.__BOSIA_SSR__=false;";
 		const depsInject =
 			pageDeps !== null || layoutDeps !== null
 				? `window.__BOSIA_PAGE_DEPS__=${safeJsonStringify(pageDeps)};window.__BOSIA_LAYOUT_DEPS__=${safeJsonStringify(layoutDeps ?? [])};`
 				: "";
-		out +=
-			`\n<script${n}>${ssrFlag}window.__BOSIA_PAGE_DATA__=${safeJsonStringify(pageData)};` +
-			`window.__BOSIA_LAYOUT_DATA__=${safeJsonStringify(layoutData)};${depsInject}${formInject}</script>`;
+		if (ssrFlag || depsInject) {
+			out += `\n<script${n}>${ssrFlag}${depsInject}</script>`;
+		}
 		out += `\n<script${n} type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`;
 	} else if (isDev) {
 		out += `\n<script${n}>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;

@@ -29,8 +29,9 @@
 		<h2 class="text-xl font-semibold">Server load() data</h2>
 		<pre class="rounded bg-muted p-3 text-sm">{JSON.stringify(data, null, 2)}</pre>
 		<p class="text-xs text-muted-foreground">
-			Server still ran <code>load()</code> — its return value is injected as
-			<code>__BOSIA_PAGE_DATA__</code> and consumed during client mount.
+			Server still ran <code>load()</code> — its return value is injected as a
+			<code>&lt;script type="application/json" id="__bosia-page-data__"&gt;</code> island and consumed
+			during client mount.
 		</p>
 	</section>
 

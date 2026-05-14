@@ -41,7 +41,7 @@ describe("buildHtmlTail — plugin bodyEnd fragments", () => {
 
 	test("hydration script still appears before bodyEnd extras when csr=true", () => {
 		const out = buildHtmlTail("", "", {}, [], true, null, true, [`<!--plugin-->`]);
-		const hydrate = out.indexOf("__BOSIA_PAGE_DATA__");
+		const hydrate = out.indexOf("__bosia-page-data__");
 		const plugin = out.indexOf("<!--plugin-->");
 		expect(hydrate).toBeGreaterThan(0);
 		expect(hydrate).toBeLessThan(plugin);

@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.5.0] - 2026-05-14
 
+### Changed
+
+- Loader payloads (page data, layout data, form data) are now embedded in the SSR HTML as `<script type="application/json">` islands instead of inline JavaScript assignments to `window.*`. The browser parses them with `JSON.parse` (significantly faster than the JS parser on large payloads) and the escape surface shrinks to a single sequence (`</script` / `<!--`), so payloads without those substrings ship byte-for-byte the same as `JSON.stringify` output. Aligns with how Next.js, Nuxt, SvelteKit, and Remix ship their data. No app-facing API changes — `data` / `form` props in your pages and layouts still arrive the same way.
+
 ### Added
 
 - Pages and layouts now skip reloading their data when nothing they care about changed, making client-side navigation much faster. A navbar that only reads the current user no longer fires a database query every time you click a link — its loader runs once on first load and then sits cached until something explicitly invalidates it.

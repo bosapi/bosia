@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
 	safeJsonStringify,
+	safeJsonForScript,
 	escapeHtml,
 	escapeAttr,
 	isStaticPath,
 	safeLang,
+	buildHtml,
+	buildHtmlTail,
 } from "../src/core/html.ts";
 
 describe("safeJsonStringify", () => {
@@ -32,6 +35,45 @@ describe("safeJsonStringify", () => {
 		console.error = () => {};
 		try {
 			expect(safeJsonStringify(a)).toBe("null");
+		} finally {
+			console.error = original;
+		}
+	});
+});
+
+describe("safeJsonForScript", () => {
+	test("returns valid JSON parseable by JSON.parse", () => {
+		const data = { a: 1, b: "hello", c: [true, null, 2.5] };
+		const out = safeJsonForScript(data);
+		expect(JSON.parse(out)).toEqual(data);
+	});
+
+	test("escapes </script> inside string values", () => {
+		const out = safeJsonForScript({ x: "</script><script>alert(1)</script>" });
+		expect(out.toLowerCase()).not.toContain("</script");
+		expect(out).toContain("\\u003c/script");
+		expect(JSON.parse(out).x).toBe("</script><script>alert(1)</script>");
+	});
+
+	test("escapes <!-- inside string values", () => {
+		const out = safeJsonForScript({ x: "before<!--comment-->after" });
+		expect(out).not.toContain("<!--");
+		expect(out).toContain("\\u003c!--");
+		expect(JSON.parse(out).x).toBe("before<!--comment-->after");
+	});
+
+	test("leaves clean HTML-free payloads byte-identical to JSON.stringify", () => {
+		const data = { a: 1, b: "hello world", c: [true, null, 2.5], d: { nested: "ok" } };
+		expect(safeJsonForScript(data)).toBe(JSON.stringify(data));
+	});
+
+	test("survives circular reference", () => {
+		const a: any = {};
+		a.self = a;
+		const original = console.error;
+		console.error = () => {};
+		try {
+			expect(safeJsonForScript(a)).toBe("null");
 		} finally {
 			console.error = original;
 		}
@@ -67,6 +109,77 @@ describe("isStaticPath", () => {
 		expect(isStaticPath("/about")).toBe(false);
 		expect(isStaticPath("/")).toBe(false);
 		expect(isStaticPath("/api/users")).toBe(false);
+	});
+});
+
+describe("buildHtml — JSON-island loader payloads", () => {
+	test("emits page+layout+form islands before the module hydration script", () => {
+		const html = buildHtml(
+			"<p>hi</p>",
+			"",
+			{ greeting: "hi" },
+			[{ layout: 1 }],
+			true,
+			{ formField: "v" },
+			"en",
+			true,
+		);
+		const pageIdx = html.indexOf(`id="__bosia-page-data__"`);
+		const layoutIdx = html.indexOf(`id="__bosia-layout-data__"`);
+		const formIdx = html.indexOf(`id="__bosia-form-data__"`);
+		const moduleIdx = html.indexOf(`type="module"`);
+		expect(pageIdx).toBeGreaterThan(0);
+		expect(layoutIdx).toBeGreaterThan(pageIdx);
+		expect(formIdx).toBeGreaterThan(layoutIdx);
+		expect(moduleIdx).toBeGreaterThan(formIdx);
+		expect(html).not.toContain("window.__BOSIA_PAGE_DATA__");
+		expect(html).not.toContain("window.__BOSIA_LAYOUT_DATA__");
+		expect(html).not.toContain("window.__BOSIA_FORM_DATA__");
+	});
+
+	test("omits form-data island when formData is null", () => {
+		const html = buildHtml("", "", {}, [], true, null, "en", true);
+		expect(html).toContain(`id="__bosia-page-data__"`);
+		expect(html).toContain(`id="__bosia-layout-data__"`);
+		expect(html).not.toContain(`id="__bosia-form-data__"`);
+	});
+
+	test("emits no JSON islands when csr=false", () => {
+		const html = buildHtml("", "", { x: 1 }, [], false, null, "en", true);
+		expect(html).not.toContain(`id="__bosia-page-data__"`);
+		expect(html).not.toContain(`id="__bosia-layout-data__"`);
+	});
+
+	test("XSS payload in pageData is escaped, no executable </script> emitted", () => {
+		const html = buildHtml(
+			"",
+			"",
+			{ evil: "</script><script>alert(1)</script>" },
+			[],
+			true,
+			null,
+			"en",
+			true,
+		);
+		const start = html.indexOf(`id="__bosia-page-data__"`);
+		const end = html.indexOf("</script>", start);
+		const island = html.slice(start, end);
+		expect(island.toLowerCase()).not.toContain("</script");
+		expect(island).toContain("\\u003c/script");
+	});
+});
+
+describe("buildHtmlTail — JSON-island loader payloads", () => {
+	test("emits page+layout+form islands before the module hydration script", () => {
+		const tail = buildHtmlTail("", "", { a: 1 }, [{ b: 2 }], true, { formField: "v" }, true);
+		const pageIdx = tail.indexOf(`id="__bosia-page-data__"`);
+		const layoutIdx = tail.indexOf(`id="__bosia-layout-data__"`);
+		const formIdx = tail.indexOf(`id="__bosia-form-data__"`);
+		const moduleIdx = tail.indexOf(`type="module"`);
+		expect(pageIdx).toBeGreaterThan(0);
+		expect(layoutIdx).toBeGreaterThan(pageIdx);
+		expect(formIdx).toBeGreaterThan(layoutIdx);
+		expect(moduleIdx).toBeGreaterThan(formIdx);
 	});
 });
 
