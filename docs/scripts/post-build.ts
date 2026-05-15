@@ -3,12 +3,14 @@
  * Run after the main build to write dist/static/sitemap.xml.
  */
 
-import { readdirSync, writeFileSync, mkdirSync } from "fs";
+import { readdirSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
+import matter from "gray-matter";
 
 const BASE_URL = "https://bosia.bosapi.com";
 const contentDir = join(process.cwd(), "content", "docs");
 const outDir = join(process.cwd(), "dist", "static");
+const skillsDir = join(process.cwd(), "content", "skills");
 
 type PageEntry = { slug: string; locale: "en" | "id" };
 
@@ -100,3 +102,69 @@ xml += `</urlset>\n`;
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, "sitemap.xml"), xml);
 console.log(`✓ sitemap.xml written (${enPages.size + idPages.size} URLs)`);
+
+// ─── Static Skills API ────────────────────────────────────────────────
+// Precompute /api/skills and /api/skills/[name] as static JSON files
+// so they work on GitHub Pages (which has no running server).
+
+type SkillSummary = {
+	name: string;
+	description: string;
+	triggers?: string[];
+	kind?: string;
+	category?: string;
+};
+
+function generateSkillsApi(): void {
+	let entries: { name: string; isDirectory: () => boolean }[];
+	try {
+		entries = readdirSync(skillsDir, { withFileTypes: true });
+	} catch {
+		console.log("⏭️  No content/skills directory — skipping skills API");
+		return;
+	}
+
+	const summaries: SkillSummary[] = [];
+	const skillsApiDir = join(outDir, "api", "skills");
+	mkdirSync(skillsApiDir, { recursive: true });
+
+	for (const entry of entries) {
+		if (!entry.isDirectory()) continue;
+		const skillName = entry.name;
+		const file = join(skillsDir, skillName, "SKILL.md");
+		let raw: string;
+		try {
+			raw = readFileSync(file, "utf8");
+		} catch {
+			continue;
+		}
+
+		// Parse frontmatter for the list summary
+		const { data, content } = matter(raw);
+		const name = typeof data.name === "string" && data.name.length > 0 ? data.name : skillName;
+		const description = typeof data.description === "string" ? data.description : "";
+		const summary: SkillSummary = { name, description };
+		if (Array.isArray(data.triggers)) {
+			summary.triggers = data.triggers.filter((t): t is string => typeof t === "string");
+		}
+		if (data.od && typeof data.od === "object") {
+			const od = data.od as Record<string, unknown>;
+			if (typeof od.mode === "string") summary.kind = od.mode;
+			if (typeof od.category === "string") summary.category = od.category;
+		}
+		summaries.push(summary);
+
+		// Write individual skill: /api/skills/{name}.json
+		const skillFile = join(skillsApiDir, `${skillName}.json`);
+		writeFileSync(skillFile, JSON.stringify({ name, content }));
+	}
+
+	summaries.sort((a, b) => a.name.localeCompare(b.name));
+
+	// Write list: /api/skills.json
+	const listFile = join(outDir, "api", "skills.json");
+	writeFileSync(listFile, JSON.stringify({ skills: summaries }));
+	console.log(`✓ skills API: ${summaries.length} skills → api/skills.json`);
+}
+
+generateSkillsApi();
