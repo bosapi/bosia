@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `bosia add` now accepts multiple component names in a single call — `bun x bosia@latest add button card input` installs all three (and their dependencies) in one go, instead of having to run the command three times.
 - New `-y` / `--yes` flag on `bosia add` auto-confirms the "component already exists, replace?" prompt. Makes the CLI usable in CI pipelines and shell scripts where there's no human to answer prompts.
+- Docs site now also exposes `/api/components` and `/api/blocks` JSON endpoints so AI agents can discover available UI primitives and blocks (and their install commands) the same way they already discover skills. Each list entry has the install command, dependencies, and category; each detail endpoint also includes the full markdown body.
 
 ---
 

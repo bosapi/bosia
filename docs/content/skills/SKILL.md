@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 23 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness.
+description: Top-level index of 25 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness.
 od:
     mode: catalog
     category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-23 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+25 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -84,10 +84,12 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 ## Composition helpers
 
-| Name                   | Track | Purpose                                                                                       |
-| ---------------------- | ----- | --------------------------------------------------------------------------------------------- |
-| `bosia-empty-states`   | ✦     | `ui/empty`, `ui/skeleton`, `ui/spinner`, error boundary. Never blank screen on async failure. |
-| `bosia-inspector-edit` | ·     | Parse `[Inspector] file:line — comment` → surgical `fs_edit` scoped to the named node.        |
+| Name                      | Track | Purpose                                                                                                |
+| ------------------------- | ----- | ------------------------------------------------------------------------------------------------------ |
+| `bosia-empty-states`      | ✦     | `ui/empty`, `ui/skeleton`, `ui/spinner`, error boundary. Never blank screen on async failure.          |
+| `bosia-chat-form`         | ✦     | Chat composer — `ui/input` + `ui/button`, disable-on-stream, optimistic clear, a11y label.             |
+| `bosia-chat-message-list` | ✦     | Chat feed — role markers, `parts[]` rendering (text + reasoning + tool calls), respectful auto-scroll. |
+| `bosia-inspector-edit`    | ·     | Parse `[Inspector] file:line — comment` → surgical `fs_edit` scoped to the named node.                 |
 
 ---
 

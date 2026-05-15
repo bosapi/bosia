@@ -439,6 +439,15 @@
 
 ---
 
+## v0.5.2 — CLI ergonomics & registry API ✅ (shipped 2026-05-15)
+
+> Multi-component install and AI-discovery parity with skills.
+
+- [x] 🟠 `bosia add` accepts multiple component names in one call; new `-y`/`--yes` flag auto-confirms overwrite prompt for CI use
+- [x] 🟡 Static `/api/components.json` + `/api/components/{path}.json` and `/api/blocks.json` + `/api/blocks/{path}.json` emitted by `docs/scripts/post-build.ts`. Mirrors the skills API shape (summary list + per-entry detail with `mdFile`); install commands and `dependencies` come from `registry/{kind}/{path}/meta.json`
+
+---
+
 ## v0.4.4 — Build CSS collision hotfix ✅ (shipped 2026-05-09)
 
 > Republish of 0.4.3 with a missed regression in the Svelte build path fixed.

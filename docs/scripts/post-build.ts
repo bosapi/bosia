@@ -4,8 +4,9 @@
  */
 
 import { readdirSync, readFileSync, writeFileSync, mkdirSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
 import matter from "gray-matter";
+import { listRegistryWithContent, type RegistryKind } from "../src/lib/registry/list.ts";
 
 const BASE_URL = "https://bosia.bosapi.com";
 const contentDir = join(process.cwd(), "content", "docs");
@@ -168,3 +169,32 @@ function generateSkillsApi(): void {
 }
 
 generateSkillsApi();
+
+// ─── Static Components & Blocks API ───────────────────────────────────
+// Reuses the same listing logic the runtime routes use (src/lib/registry/list.ts)
+// so list/detail JSON served by GitHub Pages stays in sync with the dev server.
+
+async function generateRegistryApi(kind: RegistryKind): Promise<void> {
+	const details = await listRegistryWithContent(kind);
+	if (details.length === 0) {
+		console.log(`⏭️  No content/docs/${kind} entries — skipping ${kind} API`);
+		return;
+	}
+
+	const apiDir = join(outDir, "api", kind);
+	mkdirSync(apiDir, { recursive: true });
+
+	const summaries = details.map(({ mdFile: _mdFile, ...summary }) => summary);
+	for (const detail of details) {
+		const detailFile = join(apiDir, `${detail.path}.json`);
+		mkdirSync(dirname(detailFile), { recursive: true });
+		writeFileSync(detailFile, JSON.stringify(detail));
+	}
+
+	const listFile = join(outDir, "api", `${kind}.json`);
+	writeFileSync(listFile, JSON.stringify({ [kind]: summaries }));
+	console.log(`✓ ${kind} API: ${summaries.length} entries → api/${kind}.json`);
+}
+
+await generateRegistryApi("components");
+await generateRegistryApi("blocks");
