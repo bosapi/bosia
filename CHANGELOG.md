@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.5.1] - 2026-05-15
 
+### Added
+
+- New `DISABLE_X_FRAME_OPTIONS=true` environment variable lets you turn off the framework's `X-Frame-Options: SAMEORIGIN` header. Useful when your app is intentionally embedded as an iframe by another origin — preview hubs, design tools, sandbox runners. Other security headers stay on. The framework prints a startup line (`🪟  X-Frame-Options disabled`) when the override is active so it's never silent.
+
 ### Changed
 
 - New projects scaffolded with `bun create bosia` now ship a starter `bosia.config.ts` with the Inspector plugin enabled by default — across all three templates (`default`, `demo`, `todo`). Hold **Option** (Alt) and click any element on your dev page to jump straight to its source line in VS Code — no setup, no docs hunt. Edit the file to swap `editor: "code"` for `"cursor"` or `"zed"` if you use a different editor. Production builds are unaffected: Inspector self-disables under `NODE_ENV=production`, so nothing extra ends up in your shipped bundle.

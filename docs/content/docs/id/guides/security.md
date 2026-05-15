@@ -73,6 +73,16 @@ Bosia menyetel header-header ini pada setiap response:
 | `X-Frame-Options`        | `SAMEORIGIN`                      |
 | `Referrer-Policy`        | `strict-origin-when-cross-origin` |
 
+### Mematikan `X-Frame-Options`
+
+Setel `DISABLE_X_FRAME_OPTIONS=true` untuk menghilangkan header `X-Frame-Options`. Ditujukan untuk aplikasi yang memang sengaja disematkan sebagai iframe oleh origin lain — hub preview/proxy, alat desain, sandbox runner. Header keamanan lain tetap aktif.
+
+```bash
+DISABLE_X_FRAME_OPTIONS=true
+```
+
+Jika kamu mengontrol embedder dan butuh aturan framing yang lebih ketat, lebih baik gunakan `frame-ancestors` lewat `CSP_DIRECTIVES` daripada menghapus `X-Frame-Options`.
+
 ## Content Security Policy (berbasis nonce)
 
 CSP **dimatikan secara bawaan** — menyalakannya tanpa direktif yang tepat akan merusak inline script milikmu dan widget pihak ketiga. Aktifkan dengan menyetel env `CSP_DIRECTIVES`. Placeholder literal `{nonce}` akan disubstitusi dengan nonce per-request baru (entropi 128-bit, base64) pada setiap response:

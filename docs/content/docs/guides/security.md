@@ -73,6 +73,16 @@ Bosia sets these headers on every response:
 | `X-Frame-Options`        | `SAMEORIGIN`                      |
 | `Referrer-Policy`        | `strict-origin-when-cross-origin` |
 
+### Disabling `X-Frame-Options`
+
+Set `DISABLE_X_FRAME_OPTIONS=true` to omit the `X-Frame-Options` header. This is intended for apps that are intentionally embedded as an iframe by a different origin — preview/proxy hubs, design tools, sandbox runners. The other security headers stay on.
+
+```bash
+DISABLE_X_FRAME_OPTIONS=true
+```
+
+If you control the embedder and want stricter framing rules instead, prefer setting `frame-ancestors` via `CSP_DIRECTIVES` rather than removing `X-Frame-Options`.
+
 ## Content Security Policy (nonce-based)
 
 CSP is **off by default** — turning it on without the right directives breaks user inline scripts and third-party widgets. Opt in by setting the `CSP_DIRECTIVES` env var. The literal `{nonce}` placeholder is substituted with a fresh per-request nonce (128 bits of entropy, base64) on every response:

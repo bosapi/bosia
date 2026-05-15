@@ -563,11 +563,20 @@ async function resolve(event: RequestEvent): Promise<Response> {
 
 // ─── Request Entry ────────────────────────────────────────
 
+// Set DISABLE_X_FRAME_OPTIONS=true to omit `X-Frame-Options: SAMEORIGIN`.
+// Useful when the app is intentionally embedded as an iframe by a different origin
+// (preview/proxy hubs, design tools, etc.). Other security headers stay on.
+const _xfoDisabled = process.env.DISABLE_X_FRAME_OPTIONS === "true";
+
 const SECURITY_HEADERS: Record<string, string> = {
 	"X-Content-Type-Options": "nosniff",
-	"X-Frame-Options": "SAMEORIGIN",
+	...(_xfoDisabled ? {} : { "X-Frame-Options": "SAMEORIGIN" }),
 	"Referrer-Policy": "strict-origin-when-cross-origin",
 };
+
+if (_xfoDisabled) {
+	console.log("🪟  X-Frame-Options disabled (DISABLE_X_FRAME_OPTIONS=true)");
+}
 
 async function handleRequest(request: Request, url: URL): Promise<Response> {
 	// Reject new non-health requests during shutdown
