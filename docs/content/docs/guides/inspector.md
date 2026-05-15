@@ -9,6 +9,8 @@ It's a first-party plugin — no install. Works through compile-time attribute i
 
 ## Setup
 
+New projects scaffolded with `bun create bosia` (any template — `default`, `demo`, or `todo`) already ship a `bosia.config.ts` with `inspector({ editor: "code" })` enabled — skip this section unless you're adding it to an existing project or want to change the editor.
+
 Add `inspector()` to your `bosia.config.ts`:
 
 ```ts

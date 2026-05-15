@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.1] - 2026-05-15
+
+### Changed
+
+- New projects scaffolded with `bun create bosia` now ship a starter `bosia.config.ts` with the Inspector plugin enabled by default — across all three templates (`default`, `demo`, `todo`). Hold **Option** (Alt) and click any element on your dev page to jump straight to its source line in VS Code — no setup, no docs hunt. Edit the file to swap `editor: "code"` for `"cursor"` or `"zed"` if you use a different editor. Production builds are unaffected: Inspector self-disables under `NODE_ENV=production`, so nothing extra ends up in your shipped bundle.
+
+---
+
 ## [0.5.0] - 2026-05-14
 
 ### Changed

@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.4.5**
+> Current version: **0.5.1**
 
 ---
 
@@ -424,6 +424,15 @@
 - [x] 🟠 Ship `.gitignore` with `bun x bosia create` — npm pack strips `.gitignore`, so templates store it as `_gitignore` and `copyDir` restores the dotfile name on copy
 - [x] 🟡 Ignore generated Tailwind output `public/bosia-tw.css` in template `.prettierignore` and `.gitignore` (default, demo, todo) so `bun run check` succeeds on a clean scaffold
 - [x] 🟡 `bun run check:templates` — packs via `bun pm pack`, extracts the tarball, and asserts each `templates/*` still has the expected files (no install, no scaffold) so this class of regression fails locally before publishing
+
+---
+
+## v0.5.1 — Inspector default in all templates ✅ (shipped 2026-05-15)
+
+> Ship every scaffolding template with a minimal `bosia.config.ts` so freshly scaffolded projects get Alt+click-to-source out of the box.
+
+- [x] 🟡 Add `bosia.config.ts` to `packages/bosia/templates/{default,demo,todo}/` enabling `inspector({ editor: "code" })`. `copyDir` in `cli/create.ts` copies it as-is (not in the exclusion list); no template substitutions needed. Production-safe (plugin self-disables under `NODE_ENV=production`)
+- [x] ⚪ Note preconfigured state in `docs/content/docs/guides/inspector.md` so existing-project users still find the manual setup steps
 
 ---
 
