@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - New `DISABLE_X_FRAME_OPTIONS=true` environment variable lets you turn off the framework's `X-Frame-Options: SAMEORIGIN` header. Useful when your app is intentionally embedded as an iframe by another origin — preview hubs, design tools, sandbox runners. Other security headers stay on. The framework prints a startup line (`🪟  X-Frame-Options disabled`) when the override is active so it's never silent.
+- Docs site now serves a public skills API at `/api/skills` (index) and `/api/skills/<name>` (raw `SKILL.md`). Skill files live under `docs/content/skills/<name>/SKILL.md` — outside the docs sidebar — so editing a skill instantly updates every Bosapi instance and any third-party agent that consumes the endpoint.
 
 ### Changed
 
