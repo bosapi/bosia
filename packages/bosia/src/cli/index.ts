@@ -37,18 +37,20 @@ async function main() {
 			break;
 		}
 		case "add": {
-			const positional = args.filter((a) => !a.startsWith("--"));
-			const flags = args.filter((a) => a.startsWith("--"));
+			const positional = args.filter((a) => !a.startsWith("-"));
+			const flags = args.filter((a) => a.startsWith("-"));
 			const sub = positional[0];
 			if (sub === "block") {
+				const blockFlags = args.filter((a) => a.startsWith("--"));
 				const { runAddBlock } = await import("./block.ts");
-				await runAddBlock(positional[1], flags);
+				await runAddBlock(positional[1], blockFlags);
 			} else if (sub === "theme") {
+				const themeFlags = args.filter((a) => a.startsWith("--"));
 				const { runAddTheme } = await import("./theme.ts");
-				await runAddTheme(positional[1], flags);
+				await runAddTheme(positional[1], themeFlags);
 			} else {
 				const { runAdd } = await import("./add.ts");
-				await runAdd(sub, flags);
+				await runAdd(positional, flags);
 			}
 			break;
 		}
@@ -72,7 +74,7 @@ Commands:
   build               Build for production
   start               Run the production server
   test [args]         Run tests with bun test (auto-loads .env.test, sets BOSIA_ENV=test)
-  add <component>           Add a UI component from the registry
+  add <component...> [-y]   Add one or more UI components from the registry
   add block <cat>/<name>    Add a composed block from the registry
   add theme <name>          Add a theme (tokens.css) from the registry
   feat <feature>            Add a feature scaffold from the registry [--local]
@@ -87,6 +89,8 @@ Examples:
   bun x bosia test --watch
   bun x bosia test --coverage
   bun x bosia@latest add button              → src/lib/components/ui/button/
+  bun x bosia@latest add button card input   → install multiple at once
+  bun x bosia@latest add -y button card      → auto-confirm overwrites (CI / scripts)
   bun x bosia@latest add shop/cart           → src/lib/components/shop/cart/
   bun x bosia@latest add block cards/feature-editorial
   bun x bosia@latest add theme editorial

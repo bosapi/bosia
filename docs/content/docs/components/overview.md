@@ -8,10 +8,16 @@ Bosia ships a component registry — a collection of Svelte 5 UI components you 
 ## Installing Components
 
 ```bash
-bun x bosia@latest add <component>
+bun x bosia@latest add <component...>
 ```
 
 This downloads the component files into `src/lib/components/ui/<component>/` and auto-creates `src/lib/utils.ts` (the `cn()` helper) if it doesn't exist.
+
+Pass multiple names to install several components in one call:
+
+```bash
+bun x bosia@latest add button card input
+```
 
 ### Path-based Names
 
@@ -25,6 +31,14 @@ bun x bosia@latest add shop/cart           # → src/lib/components/shop/cart/
 Components without a `/` default to the `ui/` prefix. Components with a path are installed to the exact path under `src/lib/components/`.
 
 Dependencies between components are resolved automatically. For example, `bun x bosia@latest add data-table` also installs `button`, `input`, and `separator`.
+
+### Non-interactive Mode
+
+Pass `-y` (or `--yes`) to auto-confirm the "replace existing component?" prompt — useful for CI pipelines and shell scripts:
+
+```bash
+bun x bosia@latest add -y button card
+```
 
 ### Local Development
 

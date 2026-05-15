@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.5.1**
+> Current version: **0.5.2**
 
 ---
 
@@ -108,6 +108,8 @@
 - [x] 🟡 `bosia add` index-based path resolution — resolves component names from `index.json` instead of blindly prefixing `ui/`
 - [x] 🟡 `bosia feat` nested feature dependencies — `features` field in meta.json for recursive installation
 - [x] 🟡 `bosia feat` overwrite prompt — asks before replacing existing files
+- [x] 🟡 `bosia add` multi-component install — `bosia add button card input` installs all in one call
+- [x] 🟡 `bosia add -y` / `--yes` flag — auto-confirm overwrite prompts for CI / scripts
 
 ### Templates & Features
 

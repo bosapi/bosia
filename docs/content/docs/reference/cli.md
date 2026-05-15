@@ -93,16 +93,18 @@ Place test files anywhere Bun discovers them (default: `*.test.ts` / `*.test.tsx
 
 ## bosia add
 
-Install a UI component from the registry.
+Install one or more UI components from the registry.
 
 ```bash
-bun x bosia@latest add <component>
+bun x bosia@latest add <component...> [-y] [--local]
 ```
 
+- Accepts **multiple component names** in a single call — installs each (and its dependencies) in order
 - Downloads component files to `src/lib/components/ui/<component>/`
 - Supports **path-based names** — `bun x bosia@latest add shop/cart` installs to `src/lib/components/shop/cart/`
 - Components without a path prefix default to `ui/` — `bun x bosia@latest add button` → `src/lib/components/ui/button/`
 - If a component already exists, prompts to **replace** or **skip**
+- `-y`, `--yes` — auto-confirm overwrites without prompting (for CI / scripts)
 - Automatically installs component dependencies (other components it depends on)
 - Installs required npm packages via `bun add`
 - Registry hosted on GitHub: `bosapi/bosia/main/registry/components/`
@@ -112,6 +114,8 @@ Example:
 ```bash
 bun x bosia@latest add button              # → src/lib/components/ui/button/
 bun x bosia@latest add card                # → src/lib/components/ui/card/
+bun x bosia@latest add button card input   # install multiple at once
+bun x bosia@latest add -y button card      # auto-confirm overwrites
 bun x bosia@latest add shop/cart           # → src/lib/components/shop/cart/
 bun x bosia@latest add dashboard/widgets   # → src/lib/components/dashboard/widgets/
 ```

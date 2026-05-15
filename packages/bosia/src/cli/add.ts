@@ -47,10 +47,10 @@ export async function initAddRegistry(root: string | null) {
 	registryIndex = await loadIndex();
 }
 
-export async function runAdd(name: string | undefined, flags: string[] = []) {
-	if (!name) {
+export async function runAdd(names: string[], flags: string[] = []) {
+	if (names.length === 0) {
 		console.error(
-			"❌ Please provide a component name.\n   Usage: bun x bosia@latest add <component> [--local]",
+			"❌ Please provide a component name.\n   Usage: bun x bosia@latest add <component...> [-y] [--local]",
 		);
 		process.exit(1);
 	}
@@ -60,11 +60,15 @@ export async function runAdd(name: string | undefined, flags: string[] = []) {
 		console.log(`⬡ Using local registry: ${registryRoot}\n`);
 	}
 
+	const skipPrompts = flags.includes("-y") || flags.includes("--yes");
+
 	// Load index once to resolve component paths
 	registryIndex = await loadIndex();
 
 	ensureUtils();
-	await addComponent(name, true);
+	for (const name of names) {
+		await addComponent(name, true, { skipPrompts });
+	}
 }
 
 /**
