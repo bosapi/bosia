@@ -212,29 +212,43 @@ const devServer = Bun.serve({
 		// the app's CSRF origin check (gated behind TRUST_PROXY=true, also set in the
 		// app env above) reconstructs the public-facing origin from the dev proxy
 		// rather than the inner-app's host (localhost:APP_PORT).
-		try {
-			const reqUrl = new URL(req.url);
-			const target = new URL(req.url);
-			target.hostname = "localhost";
-			target.port = String(APP_PORT);
+		const reqUrl = new URL(req.url);
+		const target = new URL(req.url);
+		target.hostname = "localhost";
+		target.port = String(APP_PORT);
 
-			const forwardedHeaders = new Headers(req.headers);
-			forwardedHeaders.set("x-forwarded-host", reqUrl.host);
-			forwardedHeaders.set("x-forwarded-proto", reqUrl.protocol.replace(":", ""));
+		const forwardedHeaders = new Headers(req.headers);
+		forwardedHeaders.set("x-forwarded-host", reqUrl.host);
+		forwardedHeaders.set("x-forwarded-proto", reqUrl.protocol.replace(":", ""));
 
-			return await fetch(
-				new Request(target.toString(), {
-					method: req.method,
-					headers: forwardedHeaders,
-					body: req.body,
-					redirect: "manual",
-				}),
-			);
-		} catch {
-			return new Response("App server is starting...", {
-				status: 503,
-				headers: { "Content-Type": "text/plain", "Retry-After": "1" },
-			});
+		// HMR-driven reloads can land on the proxy before the freshly-respawned
+		// inner has bound APP_PORT. Retry for a few seconds on idempotent HTML
+		// navigations so the browser doesn't get stuck rendering the 503 body.
+		const accept = req.headers.get("accept") ?? "";
+		const retryable =
+			(req.method === "GET" || req.method === "HEAD") && accept.includes("text/html");
+		const deadline = Date.now() + (retryable ? 10_000 : 0);
+
+		while (true) {
+			try {
+				return await fetch(
+					new Request(target.toString(), {
+						method: req.method,
+						headers: forwardedHeaders,
+						body: req.body,
+						redirect: "manual",
+					}),
+				);
+			} catch {
+				if (retryable && Date.now() < deadline) {
+					await Bun.sleep(250);
+					continue;
+				}
+				return new Response("App server is starting...", {
+					status: 503,
+					headers: { "Content-Type": "text/plain", "Retry-After": "1" },
+				});
+			}
 		}
 	},
 });
