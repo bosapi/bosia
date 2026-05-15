@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Multi-line composer variant with Enter / Shift+Enter rule + slash commands.
+	// Canonical chat composer — Textarea + submit, Enter / Shift+Enter, IME-safe.
 	import { Button } from "$lib/components/ui/button";
 	import { Textarea } from "$lib/components/ui/textarea";
 	import type { Chat } from "@ai-sdk/svelte";
@@ -34,8 +34,8 @@
 		bind:value={text}
 		onkeydown={onKeydown}
 		aria-label="Pesan ke AI"
-		placeholder="Tulis pesan… (Enter kirim, Shift+Enter baris baru, '/' perintah)"
-		rows={3}
+		placeholder="Tulis pesan… (Enter kirim, Shift+Enter baris baru)"
+		rows={2}
 	/>
 	<div class="flex items-center justify-between">
 		<span class="text-muted-foreground text-xs">Enter untuk kirim · Shift+Enter baris baru</span

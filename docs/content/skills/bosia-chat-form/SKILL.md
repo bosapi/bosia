@@ -1,6 +1,6 @@
 ---
 name: bosia-chat-form
-description: Chat composer — text input + submit button with disabled-during-stream gating, trim-empty guard, optimistic input clear, a11y labels.
+description: Chat composer — `ui/textarea` (auto-resize, Enter/Shift+Enter, IME-safe) + submit button. Disabled-during-stream gating, trim-empty guard, optimistic clear, a11y label.
 triggers:
     - chat input
     - chat composer
@@ -15,7 +15,7 @@ bosia:
     requires:
         blocks: []
         themes: []
-        components: [ui/input, ui/button]
+        components: [ui/textarea, ui/button]
         feats: []
     targets:
         routes: []
@@ -26,7 +26,7 @@ bosia:
 
 ## What it builds
 
-The input row at the bottom of a chat surface — text field + submit button. Wired to an `@ai-sdk/svelte` `Chat` instance (or any async `sendMessage` handler) with the gating + a11y rules a production chat needs.
+The input row at the bottom of a chat surface — multi-line text area + submit button. Wired to an `@ai-sdk/svelte` `Chat` instance (or any async `sendMessage` handler) with the gating + a11y rules a production AI-agent chat needs (Claude / ChatGPT / Cursor style).
 
 ## When to use
 
@@ -37,108 +37,145 @@ Any view that lets the user send a message to an AI / human / queue and gets a s
 For any chat composer:
 
 ```
-chat.status === "ready"           → input enabled, submit enabled
-chat.status === "submitted"       → input enabled, submit disabled (request in-flight, no stream yet)
-chat.status === "streaming"       → input enabled, submit disabled (tokens arriving)
-chat.status === "error"           → input enabled, submit enabled (let user retry)
-text trimmed to ""                → submit disabled
-keyboard: Enter submits, Shift+Enter newline (only if textarea)
+chat.status === "ready"     → input enabled, submit enabled
+chat.status === "submitted" → input enabled, submit disabled (request in-flight, no stream yet)
+chat.status === "streaming" → input enabled, submit disabled (tokens arriving)
+chat.status === "error"     → input enabled, submit enabled (let user retry)
+text trimmed to ""          → submit disabled
+keyboard: Enter submits, Shift+Enter newline, IME composing → no submit
 ```
 
-Skip none. The "disable during stream" branch is the one most often missed and produces duplicate sends.
+Skip none. The "disable submit during stream" branch is the one most often missed and produces duplicate sends.
 
 ## Required registry items
 
-- `ui/input` — single-line composer (or `ui/textarea` if multi-line needed).
+- `ui/textarea` — multi-line composer with `field-sizing-content` (auto-grow to content).
 - `ui/button` — submit.
 
 Install:
 
 ```bash
-bosia add ui/input ui/button
+bosia add ui/textarea ui/button
 ```
 
-## Pattern — single-line composer
+## Canonical pattern
 
 ```svelte
 <script lang="ts">
 	import { Button } from "$lib/components/ui/button";
-	import { Input } from "$lib/components/ui/input";
+	import { Textarea } from "$lib/components/ui/textarea";
 	import type { Chat } from "@ai-sdk/svelte";
 
 	let { chat }: { chat: Chat } = $props();
 	let text = $state("");
 
 	const busy = $derived(chat.status === "submitted" || chat.status === "streaming");
+	const canSend = $derived(!busy && text.trim().length > 0);
 
-	async function send(e: Event) {
-		e.preventDefault();
+	async function submit() {
 		const t = text.trim();
 		if (!t || busy) return;
 		text = "";
 		await chat.sendMessage({ text: t });
 	}
+
+	function onSubmit(e: Event) {
+		e.preventDefault();
+		void submit();
+	}
+
+	function onKeydown(e: KeyboardEvent) {
+		if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+		e.preventDefault();
+		void submit();
+	}
 </script>
 
-<form onsubmit={send} class="flex gap-2">
-	<Input bind:value={text} placeholder="Tulis pesan..." aria-label="Pesan ke AI" />
-	<Button type="submit" disabled={busy || text.trim().length === 0}>Kirim</Button>
+<form onsubmit={onSubmit} class="flex flex-col gap-2">
+	<Textarea
+		bind:value={text}
+		onkeydown={onKeydown}
+		aria-label="Pesan ke AI"
+		placeholder="Tulis pesan… (Enter kirim, Shift+Enter baris baru)"
+		rows={2}
+	/>
+	<div class="flex items-center justify-between">
+		<span class="text-muted-foreground text-xs">
+			Enter untuk kirim · Shift+Enter baris baru
+		</span>
+		<Button type="submit" disabled={!canSend}>{busy ? "Mengirim…" : "Kirim"}</Button>
+	</div>
 </form>
 ```
 
-See `example.svelte` for the multi-line + slash-command variant.
+See `example.svelte` for the same pattern in a self-contained file.
 
 ## Rules
 
-### R1 — Always clear input before await
+### R1 — Use `ui/textarea`, not `ui/input`
 
-Optimistic clear before `await chat.sendMessage(...)` so the box is empty as soon as the user submits. Re-populate on error if you want to preserve typed text on failure.
+AI-agent chats always allow multi-line input. The registry `ui/textarea` ships with `field-sizing-content`, so the box grows with content up to the CSS max — no autosize hack needed. A single-line `ui/input` is wrong; it forces awkward shift-arrow scrolling for any message > one line.
 
-### R2 — Trim before length-check
+### R2 — Enter submits, Shift+Enter newline, IME-safe
 
-Empty whitespace-only sends are noise. Trim, then check `length === 0`. Do not send the trimmed value back into `bind:value`; let `sendMessage` receive the trimmed copy.
+Native textarea Enter inserts a newline. Override:
 
-### R3 — Disable submit while in-flight
+```ts
+if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+e.preventDefault();
+void submit();
+```
 
-Both `submitted` and `streaming` count as in-flight. A second send while streaming spawns a parallel request — bug.
+`isComposing` is mandatory — IME (Japanese / Chinese / Korean) users hit Enter to commit candidate characters mid-word. Without the guard, the message sends before the word is finished.
 
-### R4 — Keep input enabled
+### R3 — Always clear input before await
 
-Disable submit, not input. Users may want to type the next message while one streams; on `ready` the queued text flushes.
+Optimistic clear before `await chat.sendMessage(...)` so the box is empty as soon as the user submits. The user's message appears in the feed via `chat.messages` immediately.
 
-### R5 — a11y label, not just placeholder
+### R4 — Trim before length-check
+
+Empty whitespace-only sends are noise. Trim, then check `length === 0`. Pass the trimmed copy to `sendMessage`; leave the original `text` state alone (it was just cleared).
+
+### R5 — Disable submit while in-flight, keep input live
+
+Both `submitted` and `streaming` count as in-flight. Disable submit so a second send can't fire in parallel. Keep the textarea enabled so the user can type the next message while one streams.
+
+### R6 — a11y label, not just placeholder
 
 `aria-label="Pesan ke AI"` (or `<label class="sr-only">`). Placeholder is not a label and disappears on focus.
 
-### R6 — Enter submits, Shift+Enter newline (textarea only)
+### R7 — Visible keyboard hint
 
-Single-line `Input` already submits on Enter via native form behavior. For `Textarea`, bind `onkeydown` and call `send` on Enter without Shift.
+A small caption beneath the textarea ("Enter untuk kirim · Shift+Enter baris baru") teaches the convention without a tooltip. Free a11y for keyboard users.
 
 ## Bosia conventions
 
 - `bosia-svelte-runes` — `$state`, `$derived` only. No `export let`, no `$:`.
-- `bosia-theme-tokens` — `bg-card`, `text-foreground`. No raw colors on the focus ring.
-- `bosia-accessibility-review` — visible focus ring on Input + Button; label or `aria-label`; Enter submits.
-- `bosia-design-review` — touch target ≥ 44px (`ui/button` default size meets this).
+- `bosia-theme-tokens` — `text-muted-foreground`, `bg-background`. No raw colors.
+- `bosia-accessibility-review` — visible focus ring (free from registry `ui/textarea`); `aria-label`; IME-safe Enter.
+- `bosia-design-review` — textarea touch target ≥ 44px (default `min-h-16`).
 
 ## Checklist gate
 
 P0:
 
+- [ ] Composer uses `ui/textarea`, not `ui/input`.
+- [ ] Enter submits; Shift+Enter inserts newline; `isComposing` guarded.
 - [ ] Submit disabled during `submitted` + `streaming`.
 - [ ] Empty / whitespace-only text cannot submit.
 - [ ] Input cleared before `await sendMessage`.
-- [ ] `aria-label` or visible label on the input.
-- [ ] Enter key submits.
+- [ ] `aria-label` or visible label on the textarea.
+- [ ] Textarea stays enabled while in-flight (user can queue next message).
 
 P1:
 
-- [ ] Submit button shows spinner or label change during in-flight.
+- [ ] Visible keyboard hint near the textarea.
+- [ ] Submit button label changes ("Mengirim…" while busy) or shows spinner.
 - [ ] On error, retry possible without re-typing (preserved value).
 - [ ] Slash-command autocomplete uses `ui/command` if present.
-- [ ] Multi-line variant uses `ui/textarea` with Enter / Shift+Enter rule.
+- [ ] Paste image / attach file affordance (P2 — needs separate skill).
 
 ## References
 
-- `example.svelte` — multi-line composer with slash commands.
-- `references/design-principles.md` — why disable submit not input + duplicate-send incidents.
+- `example.svelte` — canonical composer in a single file.
+- `references/design-principles.md` — why textarea + disable-submit-not-input + IME-safe Enter.

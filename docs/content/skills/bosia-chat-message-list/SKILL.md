@@ -68,6 +68,7 @@ bosia add ui/empty ui/badge
 <script lang="ts">
 	import { Badge } from "$lib/components/ui/badge";
 	import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "$lib/components/ui/empty";
+	import { renderInlineMd } from "$lib/markdown";
 	import type { Chat } from "@ai-sdk/svelte";
 	import type { UIMessage } from "ai";
 
@@ -111,7 +112,7 @@ bosia add ui/empty ui/badge
 				</div>
 				{#each m.parts as p, i (i)}
 					{#if p.type === "text"}
-						<div class="whitespace-pre-wrap">{p.text}</div>
+						<div class="whitespace-pre-wrap">{@html renderInlineMd(p.text)}</div>
 					{:else if p.type === "reasoning"}
 						<div
 							class="text-muted-foreground border-border mb-1 border-l-2 pl-2 text-xs italic"
@@ -156,10 +157,54 @@ To respect user scroll position, check `scrollTop + clientHeight ≈ scrollHeigh
 
 Switch on `part.type`:
 
-- `"text"` → whitespace-preserved block.
-- `"reasoning"` → muted italic block (collapsible if long).
+- `"text"` → inline-markdown render (R3a), whitespace preserved on container.
+- `"reasoning"` → muted italic block (collapsible if long), plain text.
 - `"dynamic-tool"` or `"tool-*"` → `<ToolCall>` component (collapsible details).
 - unknown → ignore (forward-compat).
+
+### R3a — Inline markdown for text parts
+
+LLM output ships `**bold**`, `*italic*`, and `[label](url)` constantly. Rendering them as raw asterisks is a visible defect.
+
+Ship a tiny in-house renderer that covers **only** these three. Anything else (headings, code blocks, lists, tables, images) stays as plain text for now — add cases when the product needs them.
+
+```ts
+// $lib/markdown.ts
+function escapeHtml(s: string): string {
+	return s
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
+function safeUrl(href: string): string | null {
+	const t = href.trim();
+	return /^(https?:|mailto:|\/|#)/i.test(t) ? t : null;
+}
+
+export function renderInlineMd(raw: string): string {
+	let s = escapeHtml(raw);
+	s = s.replace(/\*\*([^*\n]+?)\*\*/g, "<strong>$1</strong>");
+	s = s.replace(/(^|[^*])\*([^*\s][^*\n]*?)\*(?!\*)/g, "$1<em>$2</em>");
+	s = s.replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, (m, label: string, url: string) => {
+		const safe = safeUrl(url);
+		return safe
+			? `<a href="${safe}" target="_blank" rel="noreferrer" class="underline">${label}</a>`
+			: m;
+	});
+	return s;
+}
+```
+
+Usage:
+
+```svelte
+<div class="whitespace-pre-wrap">{@html renderInlineMd(p.text)}</div>
+```
+
+Order matters: **escape first**, then bold (greedier than italic), then italic, then links. `safeUrl` blocks `javascript:` / `data:` schemes — never skip it. Do not pull in `marked` / `markdown-it` for these three cases — a regex pass is smaller, auditable, and adds zero deps.
 
 ### R4 — Tool calls go in `<details>`
 
@@ -197,6 +242,8 @@ P0:
 - [ ] Each message + part has a stable key.
 - [ ] Auto-scroll keyed to `messages.length`, not the array.
 - [ ] `parts[]` rendered — `text` + `reasoning` + tool parts each have a branch.
+- [ ] Text parts pass through `renderInlineMd` (or equivalent) so `**bold**`, `*italic*`, `[link](url)` render correctly.
+- [ ] Renderer escapes HTML before pattern-matching; link URLs gated by `safeUrl`.
 - [ ] `chat.error` renders a destructive row.
 - [ ] `aria-live="polite"` on the scroll container.
 

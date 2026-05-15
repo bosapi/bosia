@@ -84,12 +84,12 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 ## Composition helpers
 
-| Name                      | Track | Purpose                                                                                                |
-| ------------------------- | ----- | ------------------------------------------------------------------------------------------------------ |
-| `bosia-empty-states`      | ✦     | `ui/empty`, `ui/skeleton`, `ui/spinner`, error boundary. Never blank screen on async failure.          |
-| `bosia-chat-form`         | ✦     | Chat composer — `ui/input` + `ui/button`, disable-on-stream, optimistic clear, a11y label.             |
-| `bosia-chat-message-list` | ✦     | Chat feed — role markers, `parts[]` rendering (text + reasoning + tool calls), respectful auto-scroll. |
-| `bosia-inspector-edit`    | ·     | Parse `[Inspector] file:line — comment` → surgical `fs_edit` scoped to the named node.                 |
+| Name                      | Track | Purpose                                                                                            |
+| ------------------------- | ----- | -------------------------------------------------------------------------------------------------- |
+| `bosia-empty-states`      | ✦     | `ui/empty`, `ui/skeleton`, `ui/spinner`, error boundary. Never blank screen on async failure.      |
+| `bosia-chat-form`         | ✦     | Chat composer — `ui/textarea` + `ui/button`, Enter/Shift+Enter IME-safe, disable-submit-on-stream. |
+| `bosia-chat-message-list` | ✦     | Chat feed — role markers, `parts[]` + inline markdown (bold/italic/link), respectful auto-scroll.  |
+| `bosia-inspector-edit`    | ·     | Parse `[Inspector] file:line — comment` → surgical `fs_edit` scoped to the named node.             |
 
 ---
 

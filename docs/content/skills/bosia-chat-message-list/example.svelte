@@ -3,6 +3,7 @@
 	// scroll-respect-user, and the four async branches.
 	import { Badge } from "$lib/components/ui/badge";
 	import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "$lib/components/ui/empty";
+	import { renderInlineMd } from "$lib/markdown";
 	import type { Chat } from "@ai-sdk/svelte";
 	import type { UIMessage, UIMessagePart } from "ai";
 
@@ -103,7 +104,7 @@
 				</div>
 				{#each m.parts as p, i (i)}
 					{#if p.type === "text"}
-						<div class="whitespace-pre-wrap">{p.text}</div>
+						<div class="whitespace-pre-wrap">{@html renderInlineMd(p.text)}</div>
 					{:else if p.type === "reasoning"}
 						<div
 							class="text-muted-foreground border-border mb-1 border-l-2 pl-2 text-xs italic"
