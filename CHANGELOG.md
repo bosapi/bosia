@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.3] - 2026-05-16
+
+### Added
+
+- `+server.ts` API routes can now opt into static prerendering by exporting `const prerender = true`, just like pages. The framework fetches the route at build time and writes the response body to `dist/prerendered{path}.json` (e.g. `/api/skills` → `dist/prerendered/api/skills.json`). Dynamic routes (`[name]`, `[...path]`) need an `entries()` export — same contract as page prerendering. Static hosts like GitHub Pages can now serve the JSON without a runtime server.
+- Dev server now also resolves `<path>.json` for any API route that exports `prerender = true`. The bare URL keeps working too, so `/api/skills` and `/api/skills.json` both return the same JSON in dev — matching the URL that static hosting will serve in prod. Non-prerender API routes are not aliased.
+
+### Changed
+
+- Docs site `/api/skills`, `/api/skills/[name]`, `/api/components`, `/api/components/[...path]`, `/api/blocks`, `/api/blocks/[...path]` now use the new framework prerender. The hand-rolled JSON-emit block in `docs/scripts/post-build.ts` has been deleted; post-build returns to sitemap-only.
+
+---
+
 ## [0.5.2] - 2026-05-15
 
 ### Added

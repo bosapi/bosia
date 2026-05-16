@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.5.2**
+> Current version: **0.5.3**
 
 ---
 
@@ -439,12 +439,24 @@
 
 ---
 
+## v0.5.3 — API prerender ✅ (shipped 2026-05-16)
+
+> Same prerender ergonomics for `+server.ts` routes as pages already had. Drop the docs-only static-API post-build pipeline.
+
+- [x] 🟠 Framework: `+server.ts` honors `export const prerender = true` — `detectPrerenderRoutes` scans `manifest.apis`, dynamic routes call `entries()`, `prerenderApiOutPath()` writes a single `.json` per route (no trailing-slash variants). Fetched body is written verbatim — handlers decide the payload shape (`packages/bosia/src/core/prerender.ts`)
+- [x] 🟡 Dev runtime alias: API routes with `prerender = true` are also served at `<path>.json`, matching the URL static hosts will serve in prod. Non-prerender routes get no alias (`packages/bosia/src/core/server.ts`)
+- [x] 🟡 Unit tests for `prerenderApiOutPath` and `substituteParams` rest-segment cases (`packages/bosia/test/prerender-api.test.ts`)
+- [x] 🟡 Docs API routes migrated: `/api/skills`, `/api/skills/[name]`, `/api/components`, `/api/components/[...path]`, `/api/blocks`, `/api/blocks/[...path]` all opt into framework prerender. Dynamic routes export `entries()` from `listSkills()` / `listRegistry()`
+- [x] 🟡 Removed `generateSkillsApi()` + `generateRegistryApi()` from `docs/scripts/post-build.ts` — post-build returns to sitemap-only
+
+---
+
 ## v0.5.2 — CLI ergonomics & registry API ✅ (shipped 2026-05-15)
 
 > Multi-component install and AI-discovery parity with skills.
 
 - [x] 🟠 `bosia add` accepts multiple component names in one call; new `-y`/`--yes` flag auto-confirms overwrite prompt for CI use
-- [x] 🟡 Static `/api/components.json` + `/api/components/{path}.json` and `/api/blocks.json` + `/api/blocks/{path}.json` emitted by `docs/scripts/post-build.ts`. Mirrors the skills API shape (summary list + per-entry detail with `mdFile`); install commands and `dependencies` come from `registry/{kind}/{path}/meta.json`
+- [x] 🟡 Static `/api/components.json` + `/api/components/{path}.json` and `/api/blocks.json` + `/api/blocks/{path}.json` emitted by `docs/scripts/post-build.ts` (superseded in v0.5.3 by the framework prerender)
 
 ---
 

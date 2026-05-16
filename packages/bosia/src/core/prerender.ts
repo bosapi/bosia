@@ -32,6 +32,8 @@ const PRERENDER_TIMEOUT = Number(process.env.PRERENDER_TIMEOUT) || 5_000; // 5s 
 
 interface PrerenderTarget {
 	path: string;
+	kind: "page" | "api";
+	/** Page targets only; APIs always write a single `.json` file regardless of slash mode. */
 	trailingSlash: TrailingSlash;
 }
 
@@ -86,6 +88,15 @@ export function prerenderDataPath(routePath: string): string {
 	return routePath === "/" ? "/index.json" : `${routePath.replace(/\/$/, "")}.json`;
 }
 
+/**
+ * Output filename for a prerendered API route. Always emits a single `.json`
+ * file at the route's path (no trailing-slash variants — static hosts serve
+ * `/api/foo.json` regardless of the request URL's slash).
+ */
+export function prerenderApiOutPath(routePath: string): string {
+	return `./dist/prerendered${routePath.replace(/\/$/, "")}.json`;
+}
+
 async function detectPrerenderRoutes(manifest: RouteManifest): Promise<PrerenderTarget[]> {
 	const targets: PrerenderTarget[] = [];
 	for (const route of manifest.pages) {
@@ -116,6 +127,7 @@ async function detectPrerenderRoutes(manifest: RouteManifest): Promise<Prerender
 				for (const entry of entryList) {
 					targets.push({
 						path: substituteParams(route.pattern, entry),
+						kind: "page",
 						trailingSlash: ts,
 					});
 				}
@@ -123,9 +135,40 @@ async function detectPrerenderRoutes(manifest: RouteManifest): Promise<Prerender
 				console.error(`   ❌ Failed to resolve entries() for ${route.pattern}:`, err);
 			}
 		} else {
-			targets.push({ path: route.pattern, trailingSlash: ts });
+			targets.push({ path: route.pattern, kind: "page", trailingSlash: ts });
 		}
 	}
+
+	for (const route of manifest.apis) {
+		const filePath = join("src", "routes", route.server);
+		const content = await Bun.file(filePath).text();
+		if (!/export\s+const\s+prerender\s*=\s*true/.test(content)) continue;
+
+		if (route.pattern.includes("[")) {
+			try {
+				const mod = await import(join(process.cwd(), filePath));
+				if (typeof mod.entries !== "function") {
+					console.warn(
+						`   ⚠️  ${route.pattern} has prerender=true but no entries() export — skipped`,
+					);
+					continue;
+				}
+				const entryList: Record<string, string>[] = await mod.entries();
+				for (const entry of entryList) {
+					targets.push({
+						path: substituteParams(route.pattern, entry),
+						kind: "api",
+						trailingSlash: "never",
+					});
+				}
+			} catch (err) {
+				console.error(`   ❌ Failed to resolve entries() for ${route.pattern}:`, err);
+			}
+		} else {
+			targets.push({ path: route.pattern, kind: "api", trailingSlash: "never" });
+		}
+	}
+
 	return targets;
 }
 
@@ -178,8 +221,21 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 
 		mkdirSync("./dist/prerendered", { recursive: true });
 
-		for (const { path: routePath, trailingSlash: ts } of targets) {
+		for (const { path: routePath, kind, trailingSlash: ts } of targets) {
 			try {
+				if (kind === "api") {
+					// APIs: fetch the bare route URL, write body to `<path>.json`.
+					const res = await fetch(`${base}${routePath.replace(/\/$/, "")}`, {
+						signal: AbortSignal.timeout(PRERENDER_TIMEOUT),
+					});
+					const body = await res.text();
+					const outPath = prerenderApiOutPath(routePath);
+					mkdirSync(outPath.substring(0, outPath.lastIndexOf("/")), { recursive: true });
+					writeFileSync(outPath, body);
+					console.log(`   ✅ ${routePath} → ${outPath}`);
+					continue;
+				}
+
 				// Hit the canonical URL so the server doesn't 308 us mid-prerender
 				const canonicalRoute = canonicalRouteFor(routePath, ts);
 
