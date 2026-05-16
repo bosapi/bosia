@@ -14,7 +14,7 @@ export type RegistrySummary = {
 	category?: string;
 };
 
-export type RegistryDetail = RegistrySummary & { mdFile: string };
+export type RegistryDetail = RegistrySummary & { content: string };
 
 const DOCS_ROOT = resolve(process.cwd(), "content", "docs");
 const REGISTRY_ROOT = resolve(process.cwd(), "..", "registry");
@@ -108,7 +108,7 @@ function buildSummary(
 
 export async function listRegistry(kind: RegistryKind): Promise<RegistrySummary[]> {
 	const details = await listRegistryWithContent(kind);
-	return details.map(({ mdFile: _mdFile, ...summary }) => summary);
+	return details.map(({ content: _content, ...summary }) => summary);
 }
 
 export async function listRegistryWithContent(kind: RegistryKind): Promise<RegistryDetail[]> {
@@ -118,7 +118,7 @@ export async function listRegistryWithContent(kind: RegistryKind): Promise<Regis
 		if (path === "overview") continue;
 		const meta = await readRegistryMeta(kind, path);
 		const { summary, content } = buildSummary(kind, path, raw, meta);
-		details.push({ ...summary, mdFile: content });
+		details.push({ ...summary, content });
 	}
 	details.sort((a, b) => a.path.localeCompare(b.path));
 	return details;
@@ -138,5 +138,5 @@ export async function getRegistryDetail(
 	}
 	const meta = await readRegistryMeta(kind, path);
 	const { summary, content } = buildSummary(kind, path, raw, meta);
-	return { ...summary, mdFile: content };
+	return { ...summary, content };
 }

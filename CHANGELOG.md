@@ -16,6 +16,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Docs site `/api/skills`, `/api/skills/[name]`, `/api/components`, `/api/components/[...path]`, `/api/blocks`, `/api/blocks/[...path]` now use the new framework prerender. The hand-rolled JSON-emit block in `docs/scripts/post-build.ts` has been deleted; post-build returns to sitemap-only.
+- `/api/components/<path>` and `/api/blocks/<path>` detail responses now return the markdown body under `content` (was `mdFile`), matching `/api/skills/<name>`. Consumers should read `content` instead of `mdFile`.
+
+### Fixed
+
+- Dev `<path>.json` URLs now resolve correctly for dynamic prerender API routes that have a catch-all sibling. Previously `/api/components/ui/button.json`, `/api/blocks/cards/feature-editorial.json`, and `/api/skills/<name>.json` returned 4xx because the catch-all `[...path]` route absorbed the `.json` suffix into its rest-segment param. The alias now tries the bare path first and prefers it when the route opted into `prerender = true`.
+- `/api/skills/<name>` now returns proper JSON `{ name, content }` instead of raw markdown. The framework prerenderer was writing the markdown body verbatim into `<name>.json` files, which broke any consumer that expected JSON over an `application/json` response from static hosting.
+- Docs pages with code blocks no longer crash with "createHighlighter is not a function" in production builds. The lazy `await import("shiki")` was producing a circular cross-chunk eval (Bun's code-splitter put shiki's engine into a chunk that referenced its parent before the parent's exports were ready). Switched to a static import so shiki is bundled inline with the docs renderer — no lazy split, no circular init.
 
 ---
 

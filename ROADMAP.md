@@ -449,6 +449,15 @@
 - [x] 🟡 Docs API routes migrated: `/api/skills`, `/api/skills/[name]`, `/api/components`, `/api/components/[...path]`, `/api/blocks`, `/api/blocks/[...path]` all opt into framework prerender. Dynamic routes export `entries()` from `listSkills()` / `listRegistry()`
 - [x] 🟡 Removed `generateSkillsApi()` + `generateRegistryApi()` from `docs/scripts/post-build.ts` — post-build returns to sitemap-only
 
+### Hotfix (same-day, 2026-05-16)
+
+- [x] 🔴 Fix dev `.json` alias resolution: catch-all sibling routes (`/api/components/[...path]`, `/api/blocks/[...path]`, `/api/skills/[name]`) were absorbing the `.json` suffix into their rest-segment param, causing 4xx in dev. Logic now tries the bare path first when the URL ends in `.json` and prefers it only if the matched route opted into `prerender = true`. Extracted into `packages/bosia/src/core/apiResolver.ts` so it can be unit-tested independently of the bundler-virtual `bosia:routes` module
+- [x] 🔴 Fix `/api/skills/<name>` JSON shape: was emitting raw `SKILL.md` markdown into a `.json` file. Handler now returns `Response.json({ name, content })` with frontmatter stripped via `gray-matter`, matching the v0.5.2 post-build shape
+- [x] 🟡 New `packages/bosia/test/apiResolver.test.ts` — 10 cases covering flat-route alias, catch-all precedence, `[name]` precedence, non-prerender fall-through, and `module()` throw → fallback
+- [x] 🟡 New `docs/test/api-prerender.test.ts` — post-build sanity over `dist/static/api/**/*.json`: every artifact parses as JSON; list endpoints expose `{skills|components|blocks}[]`; skill detail returns `{name, content}` (not raw `---` markdown); component/block detail returns `{name, content, ...}`. Would have caught both hotfix bugs at v0.5.3 release
+- [x] 🟡 Renamed registry detail field `mdFile` → `content` in `/api/components/<path>` and `/api/blocks/<path>` responses to match `/api/skills/<name>` shape (`docs/src/lib/registry/list.ts`)
+- [x] 🔴 Fix production-build docs crash on every page with code blocks (`b is not a function (b({}))` / `A is not a function (createHighlighter)`). Lazy `await import("shiki")` triggered Bun code-splitter to produce a chunk that called into its parent at top-level eval before the parent's named exports were initialized. Switched to static `import { createHighlighter } from "shiki"` in `docs/src/lib/docs/markdown.ts` — shiki is now bundled inline with the page-server bundle, no cross-chunk circular eval
+
 ---
 
 ## v0.5.2 — CLI ergonomics & registry API ✅ (shipped 2026-05-15)

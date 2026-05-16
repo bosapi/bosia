@@ -1,11 +1,11 @@
 import { Marked } from "marked";
 import matter from "gray-matter";
+import { createHighlighter } from "shiki";
 
 let highlighter: any = null;
 
 export async function getHighlighter() {
 	if (highlighter) return highlighter;
-	const { createHighlighter } = await import("shiki");
 	highlighter = await createHighlighter({
 		themes: ["github-light", "github-dark"],
 		langs: ["svelte", "typescript", "bash", "json", "css", "html"],

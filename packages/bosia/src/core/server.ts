@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 
 import { findMatch, compileRoutes, canonicalPathname } from "./matcher.ts";
+import { resolveApiMatch } from "./apiResolver.ts";
 import { apiRoutes, serverRoutes } from "bosia:routes";
 import { loadPlugins } from "./config.ts";
 import type { RouteManifest } from "./types.ts";
@@ -338,25 +339,8 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		}
 	}
 
-	// API routes (+server.ts)
-	// `.json` alias: API routes that export `prerender = true` are also served at
-	// `<path>.json`, mirroring the static-host URL the prerender step emits. Same
-	// URL works in dev and prod. Non-prerender routes get no alias — keeps the
-	// URL surface explicit (matches the page model where `.html` only exists for
-	// prerendered routes).
-	let apiMatch = findMatch(apiRoutes, path);
-	if (!apiMatch && path.endsWith(".json")) {
-		const bare = path.slice(0, -".json".length);
-		const aliased = findMatch(apiRoutes, bare);
-		if (aliased) {
-			try {
-				const aliasedMod = await aliased.route.module();
-				if (aliasedMod.prerender === true) apiMatch = aliased;
-			} catch {
-				/* fall through; bare-path resolution would fail too */
-			}
-		}
-	}
+	// API routes (+server.ts) — resolve with `.json` alias preference.
+	const apiMatch = await resolveApiMatch(apiRoutes, path);
 	if (apiMatch) {
 		try {
 			const mod = await apiMatch.route.module();

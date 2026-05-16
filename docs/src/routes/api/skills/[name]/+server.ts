@@ -1,6 +1,7 @@
 import type { RequestEvent } from "bosia";
 import { realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
+import matter from "gray-matter";
 import { SKILLS_ROOT, listSkills } from "$lib/skills/list";
 
 const NAME_RE = /^[a-z0-9-]+$/;
@@ -29,11 +30,7 @@ export async function GET({ params }: RequestEvent) {
 	if (real !== root && !real.startsWith(root + sep)) {
 		return new Response("not found", { status: 404 });
 	}
-	const body = await Bun.file(real).text();
-	return new Response(body, {
-		headers: {
-			"content-type": "text/markdown; charset=utf-8",
-			"cache-control": "public, max-age=60",
-		},
-	});
+	const raw = await Bun.file(real).text();
+	const { content } = matter(raw);
+	return Response.json({ name, content }, { headers: { "cache-control": "public, max-age=60" } });
 }
