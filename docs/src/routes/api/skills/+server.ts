@@ -4,7 +4,8 @@ import { listSkills } from "$lib/skills/list";
 export const prerender = true;
 
 export async function GET(_event: RequestEvent) {
-	const skills = await listSkills();
+	const items = await listSkills();
+	const skills = items.map((s) => ({ ...s, path: `/api/skills/${s.name}.json` }));
 	return Response.json(
 		{ skills },
 		{

@@ -56,6 +56,36 @@ describe("prerendered /api/**/*.json artifacts", () => {
 		}
 	});
 
+	test("list endpoint items expose `path` as full /api/<kind>/<...>.json URL", async () => {
+		const cases: Array<[string, string, string]> = [
+			["skills.json", "skills", "/api/skills/"],
+			["components.json", "components", "/api/components/"],
+			["blocks.json", "blocks", "/api/blocks/"],
+		];
+		for (const [file, key, prefix] of cases) {
+			const full = join(STATIC_API, file);
+			if (!existsSync(full)) continue;
+			const j = JSON.parse(await readFile(full, "utf-8"));
+			const items: any[] = j[key];
+			expect(Array.isArray(items)).toBe(true);
+			for (const item of items) {
+				expect(typeof item.path).toBe("string");
+				if (!item.path.startsWith(prefix) || !item.path.endsWith(".json")) {
+					throw new Error(
+						`${file}: item path ${JSON.stringify(item.path)} must start with ${prefix} and end with .json`,
+					);
+				}
+				const rel = item.path.slice("/api/".length);
+				const onDisk = join(STATIC_API, rel);
+				if (!existsSync(onDisk)) {
+					throw new Error(
+						`${file}: path ${item.path} does not resolve to a file on disk`,
+					);
+				}
+			}
+		}
+	});
+
 	test("skills/<name>.json detail returns { name, content } (not raw markdown)", async () => {
 		const skillsDir = join(STATIC_API, "skills");
 		if (!existsSync(skillsDir)) return;
@@ -69,10 +99,12 @@ describe("prerendered /api/**/*.json artifacts", () => {
 			const j = JSON.parse(text);
 			expect(typeof j.name).toBe("string");
 			expect(typeof j.content).toBe("string");
+			expect(j.path).toMatch(/^\/api\/skills\/.+\.json$/);
+			expect(j.path).toBe(`/api/skills/${j.name}.json`);
 		}
 	});
 
-	test("components/<...>.json detail has { name, content, ... }", async () => {
+	test("components/<...>.json detail has { name, content, path: /api/components/<...>.json }", async () => {
 		const compRoot = join(STATIC_API, "components");
 		if (!existsSync(compRoot)) return;
 		const files = (await walkJson(compRoot)).filter(
@@ -83,10 +115,13 @@ describe("prerendered /api/**/*.json artifacts", () => {
 			if (Array.isArray(j.components)) continue; // list endpoint variant — skip
 			expect(typeof j.name).toBe("string");
 			expect(typeof j.content).toBe("string");
+			expect(j.path).toMatch(/^\/api\/components\/.+\.json$/);
+			const rel = "components/" + relative(compRoot, file);
+			expect(j.path).toBe("/api/" + rel);
 		}
 	});
 
-	test("blocks/<...>.json detail has { name, content, ... }", async () => {
+	test("blocks/<...>.json detail has { name, content, path: /api/blocks/<...>.json }", async () => {
 		const blockRoot = join(STATIC_API, "blocks");
 		if (!existsSync(blockRoot)) return;
 		const files = await walkJson(blockRoot);
@@ -95,6 +130,9 @@ describe("prerendered /api/**/*.json artifacts", () => {
 			if (Array.isArray(j.blocks)) continue;
 			expect(typeof j.name).toBe("string");
 			expect(typeof j.content).toBe("string");
+			expect(j.path).toMatch(/^\/api\/blocks\/.+\.json$/);
+			const rel = "blocks/" + relative(blockRoot, file);
+			expect(j.path).toBe("/api/" + rel);
 		}
 	});
 });

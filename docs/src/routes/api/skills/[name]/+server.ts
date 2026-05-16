@@ -32,5 +32,8 @@ export async function GET({ params }: RequestEvent) {
 	}
 	const raw = await Bun.file(real).text();
 	const { content } = matter(raw);
-	return Response.json({ name, content }, { headers: { "cache-control": "public, max-age=60" } });
+	return Response.json(
+		{ name, path: `/api/skills/${name}.json`, content },
+		{ headers: { "cache-control": "public, max-age=60" } },
+	);
 }

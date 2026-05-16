@@ -4,7 +4,8 @@ import { listRegistry } from "$lib/registry/list";
 export const prerender = true;
 
 export async function GET(_event: RequestEvent) {
-	const components = await listRegistry("components");
+	const items = await listRegistry("components");
+	const components = items.map((c) => ({ ...c, path: `/api/components/${c.path}.json` }));
 	return Response.json(
 		{ components },
 		{

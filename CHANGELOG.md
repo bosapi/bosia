@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Docs site `/api/skills`, `/api/skills/[name]`, `/api/components`, `/api/components/[...path]`, `/api/blocks`, `/api/blocks/[...path]` now use the new framework prerender. The hand-rolled JSON-emit block in `docs/scripts/post-build.ts` has been deleted; post-build returns to sitemap-only.
 - `/api/components/<path>` and `/api/blocks/<path>` detail responses now return the markdown body under `content` (was `mdFile`), matching `/api/skills/<name>`. Consumers should read `content` instead of `mdFile`.
+- API index entries for `/api/skills`, `/api/components`, `/api/blocks` now expose a `path` field whose value is the full detail-endpoint URL (e.g. `/api/components/ui/button.json`). Detail responses also normalize `path` to the same form, and `/api/skills/<name>` detail now includes `path`. **Breaking**: previously `/api/components` and `/api/blocks` entries had `path` set to the bare segment (e.g. `ui/button`); consumers must update.
 
 ### Fixed
 

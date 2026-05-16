@@ -457,6 +457,7 @@
 - [x] 🟡 New `docs/test/api-prerender.test.ts` — post-build sanity over `dist/static/api/**/*.json`: every artifact parses as JSON; list endpoints expose `{skills|components|blocks}[]`; skill detail returns `{name, content}` (not raw `---` markdown); component/block detail returns `{name, content, ...}`. Would have caught both hotfix bugs at v0.5.3 release
 - [x] 🟡 Renamed registry detail field `mdFile` → `content` in `/api/components/<path>` and `/api/blocks/<path>` responses to match `/api/skills/<name>` shape (`docs/src/lib/registry/list.ts`)
 - [x] 🔴 Fix production-build docs crash on every page with code blocks (`b is not a function (b({}))` / `A is not a function (createHighlighter)`). Lazy `await import("shiki")` triggered Bun code-splitter to produce a chunk that called into its parent at top-level eval before the parent's named exports were initialized. Switched to static `import { createHighlighter } from "shiki"` in `docs/src/lib/docs/markdown.ts` — shiki is now bundled inline with the page-server bundle, no cross-chunk circular eval
+- [x] 🟡 Normalize `path` field on `/api/skills`, `/api/components`, `/api/blocks` index + detail responses to the full detail-endpoint URL (e.g. `/api/components/ui/button.json`); skills detail gains `path`. Breaking for components/blocks index consumers that read bare-segment `path`. Internal `RegistrySummary.path` and `entries()` prerender seed remain segment-form (test in `docs/test/api-prerender.test.ts` asserts full-URL shape and on-disk resolution)
 
 ---
 

@@ -13,7 +13,8 @@ export async function GET({ params }: RequestEvent) {
 	if (!path) return new Response("bad path", { status: 400 });
 	const detail = await getRegistryDetail("components", path);
 	if (!detail) return new Response("not found", { status: 404 });
-	return Response.json(detail, {
-		headers: { "cache-control": "public, max-age=60" },
-	});
+	return Response.json(
+		{ ...detail, path: `/api/components/${detail.path}.json` },
+		{ headers: { "cache-control": "public, max-age=60" } },
+	);
 }
