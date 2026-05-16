@@ -1,6 +1,8 @@
 import type { RequestEvent } from "bosia";
 import { listRegistry } from "$lib/registry/list";
 
+export const prerender = true;
+
 export async function GET(_event: RequestEvent) {
 	const components = await listRegistry("components");
 	return Response.json(

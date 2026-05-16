@@ -1,5 +1,12 @@
 import type { RequestEvent } from "bosia";
-import { getRegistryDetail } from "$lib/registry/list";
+import { getRegistryDetail, listRegistry } from "$lib/registry/list";
+
+export const prerender = true;
+
+export async function entries(): Promise<{ path: string }[]> {
+	const items = await listRegistry("blocks");
+	return items.map((i) => ({ path: i.path }));
+}
 
 export async function GET({ params }: RequestEvent) {
 	const path = params.path;

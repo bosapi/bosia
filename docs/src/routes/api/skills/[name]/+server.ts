@@ -1,9 +1,16 @@
 import type { RequestEvent } from "bosia";
 import { realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
-import { SKILLS_ROOT } from "$lib/skills/list";
+import { SKILLS_ROOT, listSkills } from "$lib/skills/list";
 
 const NAME_RE = /^[a-z0-9-]+$/;
+
+export const prerender = true;
+
+export async function entries(): Promise<{ name: string }[]> {
+	const skills = await listSkills();
+	return skills.map((s) => ({ name: s.name }));
+}
 
 export async function GET({ params }: RequestEvent) {
 	const name = params.name;
