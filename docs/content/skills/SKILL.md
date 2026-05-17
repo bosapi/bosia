@@ -114,3 +114,11 @@ When emitting code:
 3. Pick a **page scaffold** or **flow** matching the user request.
 4. Compose with helpers (`bosia-empty-states`).
 5. Run **quality gates** before finalizing: design gates for UI, `bosia-security-review` for auth/data.
+
+## Registry install rule (applies to every skill)
+
+- `bosia_add`: **1–3 components per call.** Never 4+. Split into multiple calls.
+- `bosia_add_block`: **one block per call.** Never batch blocks.
+- `bosia_add_theme`: one theme per call (only one is active anyway).
+
+Reason: each call shells out to `bunx bosia add` which downloads + writes registry files. Big batches push tool execution past the chat streaming idle window and the user sees "Load failed" mid-flow. Prefer many small calls (the registry caches between calls; cumulative cost is similar).

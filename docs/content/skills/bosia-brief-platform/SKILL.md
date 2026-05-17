@@ -141,8 +141,8 @@ After answers locked:
 2. If `id_format` set: scaffold `src/lib/format/id.ts` with the format constants.
 3. If `number_format` set: scaffold `src/lib/format/num.ts`.
 4. If `date_format` set: scaffold `src/lib/format/date.ts`.
-5. **Batch** call `bosia_add` for any shared primitives needed by first screens (`ui/button`, `ui/input`, etc. — single batched call).
-6. **Batch** call `bosia_add_block` for each `first_screens` entry where it maps to a registered block, otherwise mark for in-skill scaffolding (e.g., `bosia-mobile-screen` is a skill not a block).
+5. Call `bosia_add` in **batches of 1–3 items** for shared primitives needed by first screens (`ui/button`, `ui/input`, etc.). Never pass ≥4 in a single call — split into multiple `bosia_add` calls. Larger batches blow past the streaming idle window and the user sees "Load failed".
+6. Call `bosia_add_block` **one block at a time** for each `first_screens` entry where it maps to a registered block, otherwise mark for in-skill scaffolding (e.g., `bosia-mobile-screen` is a skill not a block). Blocks pull more files than components — never batch blocks.
 7. For each first-screen skill: `read_skill({ name })` and follow its workflow.
 
 Confirm the queued additions in a single summary to the user before executing.

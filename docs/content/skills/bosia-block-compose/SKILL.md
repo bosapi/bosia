@@ -86,7 +86,7 @@ Don't paste components inline. Install via the CLI so:
 1. Read user intent. Identify sections (hero, features, pricing, data table…).
 2. `list_registry()` → find matching blocks first.
 3. For each section without a block → identify `ui/*` primitives that compose it.
-4. `bosia add <items…>` for everything new.
+4. `bosia add <items…>` for everything new — **1–3 components per call**, multiple calls if you need more. Blocks install one at a time (`bosia_add_block`). Big batches stall the streaming response and surface as "Load failed" to the user.
 5. Compose. Decorate with semantic tokens.
 6. Skip the "I'll write my own card div" instinct.
 
