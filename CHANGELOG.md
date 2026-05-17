@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Env baru `IDLE_TIMEOUT` (integer detik, maks 255) untuk mengatur `idleTimeout` Bun.serve. Default tetap 10 detik (sama dengan default Bun). Pola parsing & startup-log mengikuti `BODY_SIZE_LIMIT`. Dipakai kalau API route mengembalikan streaming response dengan jeda lama antar chunk (mis. chat endpoint yang menunggu AI menjalankan tool yang shell-out ke `bunx bosia add` / git). Tanpa override, perilaku tidak berubah dari versi sebelumnya — jadi tidak ada kejutan untuk app yang tidak butuh.
+
+### Changed
+
+- Skills `bosia-skills-catalog`, `bosia-block-compose`, dan `bosia-brief-platform` sekarang mewajibkan AI install komponen registry dalam **batch kecil (1–3 item per panggilan)** dan **satu block per panggilan**. Sebelumnya skill menyarankan "single batched call" untuk semua komponen sekaligus — pada batch ≥4 item, `bunx bosia add` sering memakan waktu cukup lama sehingga response chat streaming dianggap idle dan terputus ("Load failed"). Banyak panggilan kecil lebih aman, dan registry cache antar panggilan bikin biaya total mirip.
+
+### Added
+
 - Six new brief-intake skills (`bosia-brief-intake`, `bosia-brief-identity`, `bosia-brief-voice`, `bosia-brief-visual`, `bosia-brief-platform`, `bosia-brief-review`) under `docs/content/skills/`. When the AI starts a new Bosia app, it now walks the user through a quick product brief — name, audience, voice, palette, platform — and saves the answers to a `BRIEF.md` file at the app root. Every later UI it generates reads `BRIEF.md` first, so colors, tone, button labels, and sapaan stay consistent across the whole app instead of drifting between conversations.
 - `bosia-brief-visual` automatically installs the right theme (`bosia add theme/...`) once you pick a palette intent; `bosia-brief-platform` batched-installs the first screens you ask for; `bosia-brief-review` runs a checklist before any feature work to make sure nothing in the brief contradicts what's already on disk.
 

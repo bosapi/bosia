@@ -691,6 +691,24 @@ if (BODY_SIZE_LIMIT === 0) {
 	console.log(`📦 Body size limit: ${BODY_SIZE_LIMIT} bytes`);
 }
 
+// ─── Idle Timeout ─────────────────────────────────────────
+// Parsed once at startup from IDLE_TIMEOUT env var.
+// Integer seconds; Bun caps it at 255. Default: 10 (Bun's default).
+// Raise when API routes hold streaming responses with long gaps
+// between chunks (e.g. AI tool calls that shell out and wait).
+
+function parseIdleTimeout(value?: string): number {
+	if (!value) return 10;
+	const n = parseInt(value, 10);
+	if (!Number.isFinite(n) || n < 0) throw new Error(`Invalid IDLE_TIMEOUT: "${value}"`);
+	if (n > 255) throw new Error(`Invalid IDLE_TIMEOUT: "${value}" (max 255)`);
+	return n;
+}
+
+const IDLE_TIMEOUT = parseIdleTimeout(process.env.IDLE_TIMEOUT);
+
+console.log(`⏱  Idle timeout: ${IDLE_TIMEOUT}s`);
+
 // ─── Graceful Shutdown State ──────────────────────────────
 
 let shuttingDown = false;
@@ -737,13 +755,13 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : isDev ? 9001 : 
 
 // Elysia's chained generics drift when plugins add routes — track the app as a
 // loose `Elysia` so plugin-extended types stay assignable.
-let app: Elysia = new Elysia({ serve: { maxRequestBodySize: BODY_SIZE_LIMIT } }).onError(
-	({ error }) => {
-		if (isDev) console.error("Uncaught server error:", error);
-		else console.error("Uncaught server error:", (error as Error)?.message ?? error);
-		return Response.json({ error: "Internal Server Error" }, { status: 500 });
-	},
-) as unknown as Elysia;
+let app: Elysia = new Elysia({
+	serve: { maxRequestBodySize: BODY_SIZE_LIMIT, idleTimeout: IDLE_TIMEOUT },
+}).onError(({ error }) => {
+	if (isDev) console.error("Uncaught server error:", error);
+	else console.error("Uncaught server error:", (error as Error)?.message ?? error);
+	return Response.json({ error: "Internal Server Error" }, { status: 500 });
+}) as unknown as Elysia;
 
 // Plugins.backend.before — runs before framework middleware/routes.
 // Plugin-registered routes here BYPASS the framework (CSRF, hooks, etc.).
