@@ -28,6 +28,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Skills catalog (`docs/content/skills/SKILL.md`) updated from 25 to 31 skills. A new "Brief intake — design ✦" section lists the six new skills. The "Discovery order" now starts at step 0: "check `BRIEF.md` at app root — if missing, run intake first."
+- Skills catalog updated again from 31 to 32 skills to include the new `bosia-frontend-design` design convention (see Added below).
+
+### Added
+
+- New `bosia-frontend-design` skill under `docs/content/skills/`. Before the AI emits any UI, it now has to commit to a clear aesthetic direction — distinctive fonts, a dominant color with a sharp accent, and one memorable detail — instead of falling back on the generic "soft purple gradient + Inter" look. The skill writes the choice into your `BRIEF.md` so every later page stays on-stance, and ships with a catalog of 11 starter directions (editorial, brutalist, retro-futuristic, soft pastel, luxury, and more) you can pick from or remix.
+
+### Changed
+
+- `bosia-brief-intake` now runs the new `bosia-frontend-design` stance step automatically after the visual group, so the AI can't finish a brief without committing to a direction + a memorable detail. BRIEF.md gains a `## Aesthetic` section, and the quick-start opener bumps from 5 questions to 6 (adding "pick a direction"). `bosia-brief-visual` hands off to the stance step instead of treating type/palette as the final word.
+- `bosia-brief-review` adds three new P0 checks (B18 stance committed, B19 fonts wired in `app.css @theme` not per-component, B20 accent override applied to `:root`). Brief reviews now halt if the AI picks `Inter` / `Roboto` / `Space Grotesk` as the display or body font, or if the direction is filler like "modern, clean, professional".
+- `bosia-design-review` now also verifies that each emit honors the locked § Aesthetic stance — direction-appropriate composition, the named memorable detail present, fonts inherited from `app.css @theme` (not silently swapped to Inter). This skill does not pick the stance; it only catches drift.
+- All six page-scaffold skills (`bosia-landing`, `bosia-saas-landing`, `bosia-blog`, `bosia-pricing`, `bosia-mobile-screen`, `bosia-dashboard`) gain a workflow step 1: "Read BRIEF.md § Aesthetic and apply direction + memorable detail to this page". Each adds a matching P0 checklist item. Scaffolds consume the stance — they do not re-pick it.
+- `bosia-brief-intake` ships its first two reference files: `references/quick-start-script.md` (the 6-question opener with palette → direction inference defaults) and `references/example-brief.md` (a fully-filled Dombaku-style BRIEF with the new § Aesthetic section).
+- `bosia-frontend-design` and `bosia-brief-intake` frontmatter `targets.files` now declare `src/app.css` (and `BRIEF.md` for the stance skill), so tooling that indexes skill targets sees the font-wiring + accent-override files as real outputs of these skills.
 
 ---
 

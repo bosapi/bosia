@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 31 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
+description: Top-level index of 32 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
     mode: catalog
     category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-31 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+32 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -28,14 +28,16 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 ## Brief intake — design ✦ — run once per app before any UI emit
 
-| Name                   | Triggers                                        | Captures                                                                                                  |
-| ---------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `bosia-brief-intake`   | "new app", "first message", "brief"             | Orchestrator. Walks the four groups, writes `BRIEF.md`, runs `bosia-brief-review`.                        |
-| `bosia-brief-identity` | "identity", "audience", "language", "formality" | Name, tagline, audience, language, formality, self-reference. Locks sapaan + UI string language.          |
-| `bosia-brief-voice`    | "voice", "tone", "microcopy", "emoji policy"    | Tone adjectives, emoji/exclamation policy, microcopy spine table (empty/error/confirm/success/primary).   |
-| `bosia-brief-visual`   | "palette", "theme", "typography", "icons"       | Palette intent → theme pick, shape, density, type, icons. Runs `bosia_add_theme`.                         |
-| `bosia-brief-platform` | "platform", "id format", "first screens"        | Form factors, ID/number/date formatters, imagery, first screens, MVP features. Runs `bosia_add_block`.    |
-| `bosia-brief-review`   | "brief review", "before first build"            | Quality gate. Confirms BRIEF.md complete, theme installed, formatters scaffolded, no sapaan/policy drift. |
+| Name                   | Triggers                                        | Captures                                                                                                                                                              |
+| ---------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bosia-brief-intake`   | "new app", "first message", "brief"             | Orchestrator. Walks the four groups + frontend-design stance, writes `BRIEF.md`, runs `bosia-brief-review`.                                                           |
+| `bosia-brief-identity` | "identity", "audience", "language", "formality" | Name, tagline, audience, language, formality, self-reference. Locks sapaan + UI string language.                                                                      |
+| `bosia-brief-voice`    | "voice", "tone", "microcopy", "emoji policy"    | Tone adjectives, emoji/exclamation policy, microcopy spine table (empty/error/confirm/success/primary).                                                               |
+| `bosia-brief-visual`   | "palette", "theme", "typography", "icons"       | Palette intent → theme pick, shape, density, type, icons. Runs `bosia_add_theme`. Hands off to stance step.                                                           |
+| `bosia-brief-platform` | "platform", "id format", "first screens"        | Form factors, ID/number/date formatters, imagery, first screens, MVP features. Runs `bosia_add_block`.                                                                |
+| `bosia-brief-review`   | "brief review", "before first build"            | Quality gate. Confirms BRIEF.md complete (incl. § Aesthetic stance, distinctive fonts wired, accent override applied), formatters scaffolded, no sapaan/policy drift. |
+
+> Note: intake step 4 also invokes `bosia-frontend-design` (listed under design conventions). The stance step writes the `## Aesthetic` section of BRIEF.md and is what `bosia-brief-review` B18–B20 enforce.
 
 ## Page scaffolds — design ✦ — pick one as starting point for a new route
 
@@ -65,10 +67,11 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 ## Conventions — design ✦ — always-active design system rules
 
-| Name                  | Rule                                                                                                                             |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `bosia-theme-tokens`  | Semantic Tailwind tokens only — `bg-card`/`text-foreground`/`border-border`. Never raw colors. Theme swappable via `tokens.css`. |
-| `bosia-block-compose` | Registry-first — call `list_registry()`, prefer blocks over hand-rolling. If no block fits, compose from `ui/*` primitives.      |
+| Name                    | Rule                                                                                                                                               |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bosia-theme-tokens`    | Semantic Tailwind tokens only — `bg-card`/`text-foreground`/`border-border`. Never raw colors. Theme swappable via `tokens.css`.                   |
+| `bosia-block-compose`   | Registry-first — call `list_registry()`, prefer blocks over hand-rolling. If no block fits, compose from `ui/*` primitives.                        |
+| `bosia-frontend-design` | Commit to a BOLD aesthetic direction before any UI emit. Distinctive type, dominant color + sharp accent, one memorable detail. Avoid AI defaults. |
 
 ## Conventions — framework · — always-active code rules
 
@@ -108,9 +111,9 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 When emitting code:
 
-0. **First touch of a Bosia app?** Check for `BRIEF.md` at app root. If missing or `## Status: pending`: run `bosia-brief-intake` to completion BEFORE anything below. Re-read BRIEF.md at the start of every later session.
+0. **First touch of a Bosia app?** Check for `BRIEF.md` at app root. If missing or `## Status: pending`: run `bosia-brief-intake` to completion BEFORE anything below. Intake includes the `bosia-frontend-design` stance step — BRIEF.md must end with a populated `## Aesthetic` section. Re-read BRIEF.md at the start of every later session.
 1. Apply relevant **framework conventions** unconditionally (`bosia-routing`, `bosia-svelte-runes`, `bosia-elysia-routes`, `bosia-rbac-permission`, `bosia-drizzle-feature`).
-2. If emitting UI, apply **design conventions** (`bosia-theme-tokens`, `bosia-block-compose`) — both honor decisions locked in BRIEF.md.
+2. If emitting UI, apply **design conventions** (`bosia-theme-tokens`, `bosia-block-compose`, `bosia-frontend-design`) — all honor decisions locked in BRIEF.md. `bosia-frontend-design` commits the aesthetic stance before any scaffold runs.
 3. Pick a **page scaffold** or **flow** matching the user request.
 4. Compose with helpers (`bosia-empty-states`).
 5. Run **quality gates** before finalizing: design gates for UI, `bosia-security-review` for auth/data.

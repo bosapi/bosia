@@ -165,8 +165,21 @@ P1:
 - [ ] Custom marks queued; matching lucide stroke and viewbox.
 - [ ] Dark mode behaves (token-only, no `dark:bg-*` raw classes).
 
+## Hand-off to `bosia-frontend-design`
+
+This skill captures the **palette + theme + type defaults**. It does NOT pick the aesthetic stance (direction, distinctive font pair, memorable detail). That happens next inside `bosia-brief-intake` step 4 via `bosia-frontend-design`, which:
+
+- Reads this skill's outputs (palette intent, brand colors, theme choice).
+- Asks the user to commit to one direction (editorial, brutalist, retro-futuristic, etc.).
+- Replaces a generic `type: default-inter` with a distinctive display + body pair when the direction calls for it.
+- Names the one memorable detail.
+- Writes `## Aesthetic` to BRIEF.md.
+
+If a user accepts `type: default-inter` here but later the direction is `editorial` or `luxury`, the stance skill overrides the type field — record the override in `## Aesthetic`, not back here.
+
 ## References
 
 - `bosia-theme-tokens` — semantic token rules this skill enforces.
+- `bosia-frontend-design` — runs immediately after this skill; commits the aesthetic stance.
 - `bosia-brief-intake` — orchestrator.
 - `bosia-brief-platform` — runs after; uses `id_format` to drive mono pill components.

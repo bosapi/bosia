@@ -42,11 +42,12 @@ Anti-trigger: SaaS-style pricing or feature matrix → `bosia-saas-landing`.
 
 ## Workflow
 
-1. `list_registry()` → confirm `blocks/cards/feature-editorial`, `theme/editorial`, `ui/button`, `ui/badge`, `ui/typography`, `ui/separator`.
-2. `bosia add theme/editorial blocks/cards/feature-editorial ui/button ui/badge ui/typography ui/separator`.
-3. Create `src/routes/(public)/+page.svelte` (route group keeps it outside any auth shell).
-4. Compose hero → features → social proof → CTA → footer.
-5. Run `bosia-design-review` and `bosia-accessibility-review`.
+1. **Read `BRIEF.md § Aesthetic`.** Apply the locked `Direction` to hero composition (e.g. editorial → asymmetric grid + pull quote, brutalist → visible grid lines + hairline borders, brutally-minimal → oversized type + single accent). Place the named `Memorable detail` on the hero or in the footer — landing is the highest-leverage surface for it. Do NOT re-pick the stance here; that's `bosia-frontend-design` at intake.
+2. `list_registry()` → confirm `blocks/cards/feature-editorial`, `theme/editorial`, `ui/button`, `ui/badge`, `ui/typography`, `ui/separator`.
+3. `bosia add theme/editorial blocks/cards/feature-editorial ui/button ui/badge ui/typography ui/separator`.
+4. Create `src/routes/(public)/+page.svelte` (route group keeps it outside any auth shell).
+5. Compose hero → features → social proof → CTA → footer.
+6. Run `bosia-design-review` and `bosia-accessibility-review` (both verify stance compliance).
 
 ## Bosia conventions
 
@@ -71,6 +72,7 @@ P0:
 - [ ] All sections use semantic tokens.
 - [ ] Mobile-safe at 375px.
 - [ ] Feature cards installed via `bosia add`, not pasted.
+- [ ] BRIEF.md § Aesthetic direction visibly applied (hero composition matches direction); memorable detail present on hero or footer.
 - [ ] `bosia-design-review` + `bosia-accessibility-review` pass.
 
 P1:

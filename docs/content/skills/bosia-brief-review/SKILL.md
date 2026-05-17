@@ -1,6 +1,6 @@
 ---
 name: bosia-brief-review
-description: Quality gate after intake. Verifies BRIEF.md sections complete, theme installed matches `visual.theme_choice`, ID/number/date formatters scaffolded, first-screen blocks present, no contradictions. Run before any non-brief UI emit.
+description: Quality gate after intake. Verifies BRIEF.md sections complete (incl. § Aesthetic stance), theme installed matches `visual.theme_choice`, distinctive fonts wired in app.css `@theme`, accent override applied, ID/number/date formatters scaffolded, first-screen blocks present, no contradictions. Run before any non-brief UI emit.
 triggers:
     - brief review
     - intake review
@@ -48,9 +48,9 @@ Skip only inside an editing turn that explicitly _modifies_ the brief.
 
 ## P0 — must pass
 
-### B1 — All four sections populated
+### B1 — All five sections populated
 
-`## Identity`, `## Voice`, `## Visual`, `## Platform` all present and non-empty. No `TBD`, no empty bullet, no "see chat".
+`## Identity`, `## Voice`, `## Visual`, `## Aesthetic`, `## Platform` all present and non-empty. No `TBD`, no empty bullet, no "see chat".
 
 ### B2 — Microcopy spine table complete
 
@@ -97,6 +97,26 @@ If `emoji_policy: never`: scan microcopy ✅ column. Zero emoji allowed (even in
 
 If `self_reference: "Dombaku"`, microcopy ✅ column never says "kami" / "we". If `self_reference: "kami"`, microcopy never says the product name as a third-person actor.
 
+### B18 — Aesthetic stance committed
+
+`## Aesthetic` populated end-to-end:
+
+- `Direction` is a named extreme (one of the catalog or a custom **name** — not "modern", "clean", "professional", or other AI-default filler).
+- `Display font` AND `Body font` declared, neither one is `Inter`, `Roboto`, `Arial`, `system-ui`, or `Space Grotesk` (overused defaults).
+- `Memorable detail` is one specific sentence — not "polished interactions" or "smooth transitions".
+- `What we are NOT` is one specific rejection — not blank.
+- Direction is consistent with `## Identity` audience and `## Visual` palette intent (e.g. a children's product is not `luxury`; a compliance tool is not `maximalist` — unless the brief explicitly justifies it).
+
+If display or body font is one of the banned defaults, halt. The whole point of the stance is to avoid them.
+
+### B19 — Fonts wired in app.css, not per-component
+
+If `## Aesthetic` declares non-default fonts, `fs_read("src/app.css")` must show `@theme { --font-sans: ...; --font-serif: ...; }` (or matching) and a Fontsource / Google Fonts import. Per-component `style="font-family:"` is a fail.
+
+### B20 — Accent override applied
+
+If `## Aesthetic` declares an accent hex/hue distinct from the theme registry default, `src/app.css` must override `--accent` (and `--primary` if needed) under `:root`. The token override is what makes the stance survive across components — declaring it in BRIEF.md without the override is decorative, not load-bearing.
+
 ## P1 — should pass
 
 ### B11 — Domain glossary ≥3 entries
@@ -129,7 +149,7 @@ If 8+, gently push back: "v0.1 has 11 must-haves — trim to 5?"
 
 ## Halting failures
 
-If any of B1–B10 fail, stop. Do not proceed to feature work. Tell the user exactly what's missing:
+If any of B1–B10 or B18–B20 fail, stop. Do not proceed to feature work. Tell the user exactly what's missing:
 
 ```
 Brief review failed:
@@ -161,4 +181,5 @@ This skill IS a checklist gate. Its checks are the gate.
 ## References
 
 - `bosia-brief-intake` — runs this skill at the end.
+- `bosia-frontend-design` — the convention that B18–B20 enforce. Stance committed in BRIEF.md § Aesthetic, fonts wired in `app.css`, accent overridden in `:root`.
 - `bosia-design-review` — runs at every emit; this skill is the upstream pre-emit gate that ensures `design-review` has constraints to check against.

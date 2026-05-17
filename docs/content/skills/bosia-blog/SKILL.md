@@ -32,11 +32,12 @@ bosia:
 
 ## Workflow
 
-1. `bosia add theme/editorial ui/typography ui/card ui/separator ui/badge`.
-2. Create `src/routes/blog/+page.svelte` (list).
-3. Create `src/routes/blog/[slug]/+page.svelte` (post).
-4. Add `+page.server.ts` for each to load posts from MD/data source.
-5. Apply prose styles via `ui/typography`'s `prose` wrapper.
+1. **Read `BRIEF.md § Aesthetic`.** Apply the locked `Direction` to typography rhythm and post-page layout (e.g. editorial → drop caps + pull quotes + asymmetric image crops, brutalist → mono everywhere + visible grid lines, organic → hand-drawn dividers between sections). The blog is text-heavy, so the type pair from § Aesthetic does the heavy lifting — verify display + body fonts are wired in `app.css @theme` before drafting prose styles. Place the named `Memorable detail` on the post page (e.g. scroll-driven reading progress bar) or the list page (e.g. hand-set pull quote from the latest post).
+2. `bosia add theme/editorial ui/typography ui/card ui/separator ui/badge`.
+3. Create `src/routes/blog/+page.svelte` (list).
+4. Create `src/routes/blog/[slug]/+page.svelte` (post).
+5. Add `+page.server.ts` for each to load posts from MD/data source.
+6. Apply prose styles via `ui/typography`'s `prose` wrapper.
 
 ## Bosia conventions
 
@@ -63,6 +64,7 @@ P0:
 - [ ] Prose max-width ≤ 70ch.
 - [ ] Body line-height ≥ 1.5.
 - [ ] Mobile-safe at 375px.
+- [ ] BRIEF.md § Aesthetic direction applied to prose rhythm and post layout; memorable detail present on either list or post page.
 
 P1:
 

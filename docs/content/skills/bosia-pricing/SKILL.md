@@ -35,10 +35,11 @@ Optional billing toggle (monthly / annual with discount).
 
 ## Workflow
 
-1. `bosia add theme/editorial ui/card ui/table ui/badge ui/accordion ui/button ui/separator ui/switch`.
-2. Create `src/routes/pricing/+page.svelte`.
-3. Compose: tier row → comparison table → FAQ.
-4. Run design + a11y review.
+1. **Read `BRIEF.md § Aesthetic`.** Apply the locked `Direction` to tier-card style and comparison-table density (e.g. luxury → restrained palette + hairline rule on recommended card, brutalist → square corners + bordered cells, industrial → tabular numerics + minimal chrome). The recommended-tier accent must reuse `--accent` from `app.css`, not a fresh hex. Place the named `Memorable detail` somewhere visible — often on the recommended tier (e.g. an art-deco sunburst ornament, a gold-foil hover state).
+2. `bosia add theme/editorial ui/card ui/table ui/badge ui/accordion ui/button ui/separator ui/switch`.
+3. Create `src/routes/pricing/+page.svelte`.
+4. Compose: tier row → comparison table → FAQ.
+5. Run design + a11y review.
 
 ## Rules
 
@@ -76,6 +77,7 @@ P0:
 - [ ] Comparison table renders without horizontal scroll on desktop.
 - [ ] Mobile (375px): tier cards stack, table either collapses or scrolls inside its container.
 - [ ] FAQ uses `ui/accordion`, keyboard navigable.
+- [ ] BRIEF.md § Aesthetic direction applied to tier cards + table density; recommended-tier accent uses `--accent` (no fresh hex); memorable detail present.
 
 P1:
 
