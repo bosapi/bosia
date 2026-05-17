@@ -2,9 +2,7 @@
 	<div class="flex flex-col items-center gap-3 text-center">
 		<img src="/favicon.svg" alt="" class="size-16" />
 		<h1 class="text-4xl font-bold tracking-tight">Welcome to Bosia</h1>
-		<p class="text-muted-foreground text-lg">
-			A Bosia project — SSR + Svelte 5 + Bun + ElysiaJS
-		</p>
+		<p class="text-muted-foreground text-lg">A Bosia project — SSR + Svelte 5 + Bun + ElysiaJS</p>
 	</div>
 
 	<div class="mt-4 flex gap-3">
@@ -27,8 +25,7 @@
 	</div>
 
 	<p class="text-muted-foreground mt-6 text-sm">
-		Edit <code class="bg-muted rounded px-1 py-0.5 font-mono text-xs"
-			>src/routes/+page.svelte</code
-		> to get started
+		Edit <code class="bg-muted rounded px-1 py-0.5 font-mono text-xs">src/routes/+page.svelte</code> to
+		get started
 	</p>
 </main>

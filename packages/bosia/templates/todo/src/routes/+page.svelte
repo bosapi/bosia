@@ -49,7 +49,5 @@
 		</div>
 	</div>
 
-	<footer class="border-t py-4 text-center text-sm text-muted-foreground">
-		Powered by Bosia
-	</footer>
+	<footer class="border-t py-4 text-center text-sm text-muted-foreground">Powered by Bosia</footer>
 </div>
