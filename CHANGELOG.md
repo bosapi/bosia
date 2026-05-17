@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.4] - 2026-05-17
+
+### Added
+
+- Six new brief-intake skills (`bosia-brief-intake`, `bosia-brief-identity`, `bosia-brief-voice`, `bosia-brief-visual`, `bosia-brief-platform`, `bosia-brief-review`) under `docs/content/skills/`. When the AI starts a new Bosia app, it now walks the user through a quick product brief — name, audience, voice, palette, platform — and saves the answers to a `BRIEF.md` file at the app root. Every later UI it generates reads `BRIEF.md` first, so colors, tone, button labels, and sapaan stay consistent across the whole app instead of drifting between conversations.
+- `bosia-brief-visual` automatically installs the right theme (`bosia add theme/...`) once you pick a palette intent; `bosia-brief-platform` batched-installs the first screens you ask for; `bosia-brief-review` runs a checklist before any feature work to make sure nothing in the brief contradicts what's already on disk.
+
+### Changed
+
+- Skills catalog (`docs/content/skills/SKILL.md`) updated from 25 to 31 skills. A new "Brief intake — design ✦" section lists the six new skills. The "Discovery order" now starts at step 0: "check `BRIEF.md` at app root — if missing, run intake first."
+
+---
+
 ## [0.5.3] - 2026-05-16
 
 ### Added

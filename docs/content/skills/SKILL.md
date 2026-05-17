@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 25 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness.
+description: Top-level index of 31 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
     mode: catalog
     category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-25 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+31 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -25,6 +25,17 @@ od:
 Design skills carry a `references/design-principles.md` file tracing rules back to open-design upstreams (`frontend-design`, `ui-skills`).
 
 ---
+
+## Brief intake — design ✦ — run once per app before any UI emit
+
+| Name                   | Triggers                                        | Captures                                                                                                  |
+| ---------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `bosia-brief-intake`   | "new app", "first message", "brief"             | Orchestrator. Walks the four groups, writes `BRIEF.md`, runs `bosia-brief-review`.                        |
+| `bosia-brief-identity` | "identity", "audience", "language", "formality" | Name, tagline, audience, language, formality, self-reference. Locks sapaan + UI string language.          |
+| `bosia-brief-voice`    | "voice", "tone", "microcopy", "emoji policy"    | Tone adjectives, emoji/exclamation policy, microcopy spine table (empty/error/confirm/success/primary).   |
+| `bosia-brief-visual`   | "palette", "theme", "typography", "icons"       | Palette intent → theme pick, shape, density, type, icons. Runs `bosia_add_theme`.                         |
+| `bosia-brief-platform` | "platform", "id format", "first screens"        | Form factors, ID/number/date formatters, imagery, first screens, MVP features. Runs `bosia_add_block`.    |
+| `bosia-brief-review`   | "brief review", "before first build"            | Quality gate. Confirms BRIEF.md complete, theme installed, formatters scaffolded, no sapaan/policy drift. |
 
 ## Page scaffolds — design ✦ — pick one as starting point for a new route
 
@@ -97,8 +108,9 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 When emitting code:
 
+0. **First touch of a Bosia app?** Check for `BRIEF.md` at app root. If missing or `## Status: pending`: run `bosia-brief-intake` to completion BEFORE anything below. Re-read BRIEF.md at the start of every later session.
 1. Apply relevant **framework conventions** unconditionally (`bosia-routing`, `bosia-svelte-runes`, `bosia-elysia-routes`, `bosia-rbac-permission`, `bosia-drizzle-feature`).
-2. If emitting UI, apply **design conventions** (`bosia-theme-tokens`, `bosia-block-compose`).
+2. If emitting UI, apply **design conventions** (`bosia-theme-tokens`, `bosia-block-compose`) — both honor decisions locked in BRIEF.md.
 3. Pick a **page scaffold** or **flow** matching the user request.
 4. Compose with helpers (`bosia-empty-states`).
 5. Run **quality gates** before finalizing: design gates for UI, `bosia-security-review` for auth/data.

@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.5.3**
+> Current version: **0.5.4**
 
 ---
 
@@ -436,6 +436,20 @@
 
 - [x] 🟡 Add `bosia.config.ts` to `packages/bosia/templates/{default,demo,todo}/` enabling `inspector({ editor: "code" })`. `copyDir` in `cli/create.ts` copies it as-is (not in the exclusion list); no template substitutions needed. Production-safe (plugin self-disables under `NODE_ENV=production`)
 - [x] ⚪ Note preconfigured state in `docs/content/docs/guides/inspector.md` so existing-project users still find the manual setup steps
+
+---
+
+## v0.5.4 — Brief intake skills ✅ (shipped 2026-05-17)
+
+> Six new design-track skills that gather product brief (identity / voice / visual / platform) into `BRIEF.md` at app root before any UI emit. Closes the "agent invents palette + tone every turn" drift bug.
+
+- [x] 🟠 `bosia-brief-intake` — orchestrator. Walks the four group skills in order, writes `BRIEF.md`, chains `bosia-brief-review`. Auto-trigger surface: empty BRIEF.md.
+- [x] 🟡 `bosia-brief-identity` — name, tagline, audience, language, formality, self-reference. Locks sapaan + UI string language for the rest of the session.
+- [x] 🟡 `bosia-brief-voice` — tone adjectives, emoji/exclamation policy, microcopy spine table (5 rows: empty / error / confirm-destructive / success / primary action), domain glossary, copy no-go.
+- [x] 🟡 `bosia-brief-visual` — palette intent → theme pick decision matrix, shape, density, type, icons, custom marks. Runs `bosia_add_theme` + `--primary`/`--accent` override.
+- [x] 🟡 `bosia-brief-platform` — form factors, primary surface, ID format regex, number/date `Intl` formatters, imagery aspect ratios, first-screen scaffold queue, MVP feature list (cap 7).
+- [x] 🟡 `bosia-brief-review` — quality gate. P0/P1 checks: sections complete, theme installed matches brief, formatter modules scaffolded, sapaan consistent, no emoji leak in product strings, first-screen names resolve to real catalog entries.
+- [x] 🟡 Catalog `SKILL.md` index updated — 25 → 31, new section "Brief intake — design ✦", discovery order gains step 0 "check BRIEF.md".
 
 ---
 
