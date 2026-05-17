@@ -451,6 +451,10 @@
 - [x] 🟡 `bosia-brief-review` — quality gate. P0/P1 checks: sections complete, theme installed matches brief, formatter modules scaffolded, sapaan consistent, no emoji leak in product strings, first-screen names resolve to real catalog entries.
 - [x] 🟡 Catalog `SKILL.md` index updated — 25 → 31, new section "Brief intake — design ✦", discovery order gains step 0 "check BRIEF.md".
 
+### Hotfix (same-day, 2026-05-17)
+
+- [x] 🔴 Fix `bosia dev` build crashing with `Multiple files share the same output path` on apps with multiple style-less `+page.svelte` routes. `inspector`'s per-svelte virtual CSS chunk (`packages/bosia/src/core/plugins/inspector/bun-plugin.ts`) now skips emission when `result.css.code` is empty/whitespace, and replaces dots in the basename so Bun's `[name]-[hash].[ext]` chunk naming yields a unique `[name]` per route instead of collapsing every `+page.svelte` to `[name]="+page"`. Production builds were unaffected (inspector self-disables under `NODE_ENV=production`).
+
 ---
 
 ## v0.5.3 — API prerender ✅ (shipped 2026-05-16)

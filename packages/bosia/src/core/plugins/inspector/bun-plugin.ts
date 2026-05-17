@@ -121,8 +121,15 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 				});
 
 				let js = result.js.code;
-				if (result.css?.code && generate !== "server") {
-					const uid = `${basename(args.path)}-${fnv(args.path)}-style.css`;
+				// Skip empty CSS — multiple +page.svelte routes with no <style> would
+				// otherwise each emit an empty CSS chunk, all hashing to the same
+				// content → Bun fails with "Multiple files share the same output path".
+				// Also strip dots from basename: Bun's `[name]-[hash].[ext]` chunk
+				// naming treats the first `.` as the extension boundary, so
+				// `+page.svelte-…` collapses to `[name]="+page"` for every route.
+				if (result.css?.code?.trim() && generate !== "server") {
+					const safeBase = basename(args.path).replace(/\./g, "_");
+					const uid = `${safeBase}-${fnv(args.path)}-style.css`;
 					const virtualName = `${VIRTUAL_NS}:${uid}`;
 					virtualCss.set(virtualName, result.css.code);
 					js += `\nimport ${JSON.stringify(virtualName)};`;

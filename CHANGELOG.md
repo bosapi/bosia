@@ -8,17 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.5.4] - 2026-05-17
 
+### Fixed
+
+- Dev server (`bosia dev`) no longer crashes with a "multiple files share the same output path" error on apps that have several pages without their own styles. The Inspector plugin was creating identical empty CSS files for each page, which clashed during the build. Production builds were never affected — Inspector turns itself off in production.
+
 ### Added
 
-- Env baru `IDLE_TIMEOUT` (integer detik, maks 255) untuk mengatur `idleTimeout` Bun.serve. Default tetap 10 detik (sama dengan default Bun). Pola parsing & startup-log mengikuti `BODY_SIZE_LIMIT`. Dipakai kalau API route mengembalikan streaming response dengan jeda lama antar chunk (mis. chat endpoint yang menunggu AI menjalankan tool yang shell-out ke `bunx bosia add` / git). Tanpa override, perilaku tidak berubah dari versi sebelumnya — jadi tidak ada kejutan untuk app yang tidak butuh.
+- New `IDLE_TIMEOUT` setting (in seconds, up to 255) lets you tell the server to wait longer before dropping slow streaming responses. Default stays at 10 seconds. Useful for chat or streaming endpoints where the response can pause for a while between updates — for example a chat endpoint waiting on an AI tool call. Apps that don't set it behave exactly as before.
 
 ### Changed
 
-- Skills `bosia-skills-catalog`, `bosia-block-compose`, dan `bosia-brief-platform` sekarang mewajibkan AI install komponen registry dalam **batch kecil (1–3 item per panggilan)** dan **satu block per panggilan**. Sebelumnya skill menyarankan "single batched call" untuk semua komponen sekaligus — pada batch ≥4 item, `bunx bosia add` sering memakan waktu cukup lama sehingga response chat streaming dianggap idle dan terputus ("Load failed"). Banyak panggilan kecil lebih aman, dan registry cache antar panggilan bikin biaya total mirip.
+- The catalog, block-compose, and platform-brief skills now ask the AI to install registry components in **small batches (1–3 items per call)** and **one block per call**. Previously they suggested installing everything in a single big call, which sometimes took long enough that the chat response was dropped as idle ("Load failed"). Many small calls are safer, and the registry cache between calls keeps total install time roughly the same.
 
 ### Added
 
-- Six new brief-intake skills (`bosia-brief-intake`, `bosia-brief-identity`, `bosia-brief-voice`, `bosia-brief-visual`, `bosia-brief-platform`, `bosia-brief-review`) under `docs/content/skills/`. When the AI starts a new Bosia app, it now walks the user through a quick product brief — name, audience, voice, palette, platform — and saves the answers to a `BRIEF.md` file at the app root. Every later UI it generates reads `BRIEF.md` first, so colors, tone, button labels, and sapaan stay consistent across the whole app instead of drifting between conversations.
+- Six new brief-intake skills (`bosia-brief-intake`, `bosia-brief-identity`, `bosia-brief-voice`, `bosia-brief-visual`, `bosia-brief-platform`, `bosia-brief-review`) under `docs/content/skills/`. When the AI starts a new Bosia app, it now walks the user through a quick product brief — name, audience, voice, palette, platform — and saves the answers to a `BRIEF.md` file at the app root. Every later UI it generates reads `BRIEF.md` first, so colors, tone, button labels, and forms of address stay consistent across the whole app instead of drifting between conversations.
 - `bosia-brief-visual` automatically installs the right theme (`bosia add theme/...`) once you pick a palette intent; `bosia-brief-platform` batched-installs the first screens you ask for; `bosia-brief-review` runs a checklist before any feature work to make sure nothing in the brief contradicts what's already on disk.
 
 ### Changed
@@ -31,20 +35,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- `+server.ts` API routes can now opt into static prerendering by exporting `const prerender = true`, just like pages. The framework fetches the route at build time and writes the response body to `dist/prerendered{path}.json` (e.g. `/api/skills` → `dist/prerendered/api/skills.json`). Dynamic routes (`[name]`, `[...path]`) need an `entries()` export — same contract as page prerendering. Static hosts like GitHub Pages can now serve the JSON without a runtime server.
-- Dev server now also resolves `<path>.json` for any API route that exports `prerender = true`. The bare URL keeps working too, so `/api/skills` and `/api/skills.json` both return the same JSON in dev — matching the URL that static hosting will serve in prod. Non-prerender API routes are not aliased.
+- API routes (`+server.ts`) can now be turned into static JSON files at build time by adding `export const prerender = true`, the same way pages can. The framework fetches the route during the build and saves the result as a `.json` file. Dynamic routes need an `entries()` export, same as pages. Static hosts like GitHub Pages can now serve API data without needing a running server.
+- During development, prerender API routes also respond at the `.json` URL — so `/api/skills` and `/api/skills.json` both return the same JSON in dev, matching what the static host will serve in production. Regular API routes are not affected.
 
 ### Changed
 
-- Docs site `/api/skills`, `/api/skills/[name]`, `/api/components`, `/api/components/[...path]`, `/api/blocks`, `/api/blocks/[...path]` now use the new framework prerender. The hand-rolled JSON-emit block in `docs/scripts/post-build.ts` has been deleted; post-build returns to sitemap-only.
-- `/api/components/<path>` and `/api/blocks/<path>` detail responses now return the markdown body under `content` (was `mdFile`), matching `/api/skills/<name>`. Consumers should read `content` instead of `mdFile`.
-- API index entries for `/api/skills`, `/api/components`, `/api/blocks` now expose a `path` field whose value is the full detail-endpoint URL (e.g. `/api/components/ui/button.json`). Detail responses also normalize `path` to the same form, and `/api/skills/<name>` detail now includes `path`. **Breaking**: previously `/api/components` and `/api/blocks` entries had `path` set to the bare segment (e.g. `ui/button`); consumers must update.
+- Docs site API endpoints for skills, components, and blocks now use the new framework prerender. The hand-rolled JSON output in `docs/scripts/post-build.ts` has been removed; post-build now only handles the sitemap.
+- Component and block detail responses now return the markdown body under `content` (was `mdFile`), matching the skills endpoint. Update consumers to read `content`.
+- List entries for skills, components, and blocks now include a `path` field pointing to the full detail URL (e.g. `/api/components/ui/button.json`). The skills detail response now includes `path` too. **Breaking**: previously `/api/components` and `/api/blocks` entries had `path` set to the bare segment (e.g. `ui/button`); consumers must update.
 
 ### Fixed
 
-- Dev `<path>.json` URLs now resolve correctly for dynamic prerender API routes that have a catch-all sibling. Previously `/api/components/ui/button.json`, `/api/blocks/cards/feature-editorial.json`, and `/api/skills/<name>.json` returned 4xx because the catch-all `[...path]` route absorbed the `.json` suffix into its rest-segment param. The alias now tries the bare path first and prefers it when the route opted into `prerender = true`.
-- `/api/skills/<name>` now returns proper JSON `{ name, content }` instead of raw markdown. The framework prerenderer was writing the markdown body verbatim into `<name>.json` files, which broke any consumer that expected JSON over an `application/json` response from static hosting.
-- Docs pages with code blocks no longer crash with "createHighlighter is not a function" in production builds. The lazy `await import("shiki")` was producing a circular cross-chunk eval (Bun's code-splitter put shiki's engine into a chunk that referenced its parent before the parent's exports were ready). Switched to a static import so shiki is bundled inline with the docs renderer — no lazy split, no circular init.
+- Dev `.json` URLs now work correctly for dynamic prerender API routes that have a catch-all sibling. Previously some `.json` URLs returned 4xx errors because the catch-all route absorbed the `.json` suffix instead of treating it as the JSON form.
+- The skills detail endpoint now returns proper JSON instead of raw markdown. Previously the static file was the markdown body verbatim, which broke any consumer expecting JSON.
+- Docs pages with code blocks no longer crash in production builds. The syntax highlighter (Shiki) was being loaded in a way that confused Bun's bundler. It is now bundled directly with the docs renderer, so it always loads in the right order.
 
 ---
 
@@ -52,7 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Two new design skills for AI agents building chat interfaces: `bosia-chat-form` (composer with `ui/textarea`, Enter/Shift+Enter, IME-safe, disable-submit-on-stream) and `bosia-chat-message-list` (feed with role markers, `parts[]` rendering, respectful auto-scroll, and a minimal in-house inline-markdown renderer for `**bold**` / `*italic*` / `[link](url)` — no `marked`/`markdown-it` dependency). Catalog updated from 23 → 25 skills.
+- Two new design skills for AI agents building chat interfaces: one for the message composer (textarea with Enter to send, Shift+Enter for newline, safe for IME input like Japanese/Chinese, and auto-disable while a response is streaming) and one for the message feed (role markers, multi-part messages, polite auto-scroll, and a tiny built-in renderer for **bold**, _italic_, and links — no extra dependency). Catalog updated from 23 to 25 skills.
 - `bosia add` now accepts multiple component names in a single call — `bun x bosia@latest add button card input` installs all three (and their dependencies) in one go, instead of having to run the command three times.
 - New `-y` / `--yes` flag on `bosia add` auto-confirms the "component already exists, replace?" prompt. Makes the CLI usable in CI pipelines and shell scripts where there's no human to answer prompts.
 - Docs site now also exposes `/api/components` and `/api/blocks` JSON endpoints so AI agents can discover available UI primitives and blocks (and their install commands) the same way they already discover skills. Each list entry has the install command, dependencies, and category; each detail endpoint also includes the full markdown body.
@@ -80,7 +84,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Loader payloads (page data, layout data, form data) are now embedded in the SSR HTML as `<script type="application/json">` islands instead of inline JavaScript assignments to `window.*`. The browser parses them with `JSON.parse` (significantly faster than the JS parser on large payloads) and the escape surface shrinks to a single sequence (`</script` / `<!--`), so payloads without those substrings ship byte-for-byte the same as `JSON.stringify` output. Aligns with how Next.js, Nuxt, SvelteKit, and Remix ship their data. No app-facing API changes — `data` / `form` props in your pages and layouts still arrive the same way.
+- The data the server sends down to the page (page data, layout data, form data) is now embedded as JSON inside the HTML instead of as inline JavaScript. Browsers parse JSON faster than JavaScript on large payloads, and the new format is safer to escape. This matches how Next.js, Nuxt, SvelteKit, and Remix ship their data. No changes to your code — `data` and `form` props in your pages and layouts still arrive the same way.
 
 ### Added
 
@@ -92,7 +96,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Hover/viewport link prefetches now also send the loader cache mask, so layouts that are still cache-fresh no longer re-run on the server just because a user moused over a link. Without this fix, the new selective-reload work was undone by prefetch warming up the data endpoint with no mask.
+- Link prefetches (when you hover over a link or it scrolls into view) now also tell the server which loaders are still cached, so layouts that haven't changed don't re-run on the server just because a user moused over a link. Without this fix, the new selective-reload work was being undone by prefetches.
 
 ---
 
@@ -100,21 +104,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- New optional `CSP_DIRECTIVES` env var turns on a strict, nonce-based Content Security Policy. Set it (example: `CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'"`) and Bosia adds a matching `Content-Security-Policy` response header on every response — substituting `{nonce}` with a fresh per-request value — and stamps that nonce onto every `<script>` tag it emits so its own hydration scripts keep running. With `CSP_DIRECTIVES` unset (the default), neither the header nor the nonce attribute is emitted: no dead bytes, no surprise blocking of your inline scripts.
-- New `event.locals.nonce` request-event field exposes the per-request nonce to user code (load functions, hooks). Forward it to a page via `load()` and use it as `<script nonce={data.nonce}>…</script>` on your own inline scripts so they stay valid under CSP.
+- New optional `CSP_DIRECTIVES` environment variable turns on a strict Content Security Policy. Set it (example: `CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'"`) and Bosia adds the matching `Content-Security-Policy` header on every response — generating a fresh per-request token where `{nonce}` appears — and stamps that token onto every script tag it emits so its own scripts keep running. Without `CSP_DIRECTIVES` set, neither the header nor the token is emitted, so there is no overhead and no risk of accidentally blocking your inline scripts.
+- New `event.locals.nonce` field exposes the per-request token to your code (load functions, hooks). Pass it to a page via `load()` and use it as `<script nonce={data.nonce}>…</script>` on your own inline scripts so they stay valid under CSP.
 
 ### Changed
 
-- The per-request cryptographic nonce is now only generated when CSP is opted in (via `CSP_DIRECTIVES` env). With CSP disabled (the default) the call to `crypto.getRandomValues()` is skipped, saving a tiny amount of work on every request.
+- The per-request CSP token is now only generated when CSP is turned on. With CSP off (the default) the random-number call is skipped, saving a tiny amount of work on every request.
 
 ### Fixed
 
-- Server-side redirects now reject `javascript:`, `data:`, and `vbscript:` URLs even when the developer passes `{ allowExternal: true }` — those schemes are never legitimate redirect targets and could have been abused to inject script execution into a redirect chain.
-- CSRF origin checks no longer trust `X-Forwarded-Host` / `X-Forwarded-Proto` by default. They are only honoured when the operator sets `TRUST_PROXY=true`, which prevents a directly-exposed server from being tricked into accepting an attacker-supplied origin via spoofed forwarded headers.
-- Responses now always include `Vary: Origin` whenever CORS is configured, even when the request's origin isn't allowed. Stops CDNs and browser caches from accidentally serving a response with `Access-Control-Allow-Origin` for one site to a different site.
-- Prerender `entries()` now fails the build when a dynamic-segment value contains `..` or `\`, or when a non-catch-all segment value contains `/`. Prevents a typo or malicious data source from writing prerendered HTML outside the intended output directory.
-- CORS preflight (`OPTIONS`) now validates the requested method and headers against the configured allow-list. A request asking for a disallowed method or header is answered with a 403 (still carrying `Access-Control-Allow-Origin` and `Vary: Origin`) instead of being waved through with a permissive 204, so misconfigured clients fail loudly and the browser surfaces a clear "not allowed by CORS policy" message in devtools.
-- Dev mode no longer 403s same-origin `POST` / form submissions when the inner app is gated behind the dev proxy. The proxy now forwards `X-Forwarded-Host` / `X-Forwarded-Proto` and sets `TRUST_PROXY=true` on the spawned app process automatically, so the CSRF origin check reconstructs the public `http://localhost:<DEV_PORT>` URL the browser is actually using.
+- Server-side redirects now reject `javascript:`, `data:`, and `vbscript:` URLs even when you pass `{ allowExternal: true }` — those are never legitimate redirect targets and could have been abused to run scripts via a redirect.
+- CSRF origin checks no longer trust the `X-Forwarded-Host` / `X-Forwarded-Proto` headers by default. They are only honored when you set `TRUST_PROXY=true`. This prevents a directly-exposed server from being tricked into accepting a fake origin via spoofed headers.
+- Responses now always include `Vary: Origin` whenever CORS is configured, even when the request's origin isn't allowed. Stops CDNs and browser caches from accidentally serving a response meant for one site to a different site.
+- Prerendered builds now fail with a clear error if a dynamic route value contains `..` or `\`, or if a non-catch-all value contains `/`. Prevents a typo or bad data source from writing files outside the intended output folder.
+- CORS preflight (`OPTIONS`) requests now check the requested method and headers against the allow-list. A request asking for a disallowed method or header gets a clear 403 instead of being waved through, so misconfigured clients fail loudly and the browser shows a clear "not allowed by CORS policy" message in devtools.
+- Dev mode no longer rejects same-origin form submissions when the app is running behind the dev proxy. The proxy now forwards the right headers automatically so the CSRF check sees the public URL the browser is actually using.
 
 ---
 
@@ -182,19 +186,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Plugin system. Drop a `bosia.config.ts` at the project root and pass plugins to extend Bosia at the HTTP layer (Elysia before/after), build pipeline (preBuild, postScan, bunPlugins, postBuild), and SSR render pipeline (head and bodyEnd fragments). Empty config or no config means zero overhead.
-- New first-party plugin `bosia/plugins/server-timing`. Adds a `Server-Timing` header to every response so you can see how long the framework spent on each request in browser DevTools.
-- `defineConfig` helper exported from `bosia` for type-safe `bosia.config.ts` files. New types: `BosiaPlugin`, `BosiaConfig`, `BuildContext`, `DevContext`, `RenderContext`.
-- Demo app now ships an example `bosia.config.ts` wired with the server-timing plugin.
+- Plugin system. Drop a `bosia.config.ts` at the project root and use plugins to extend Bosia in three places: request handling, the build, and how pages are rendered. With no config (or an empty one) there is zero overhead.
+- New first-party plugin `bosia/plugins/server-timing`. Adds a `Server-Timing` header to every response so you can see how long the framework spent on each request in your browser's DevTools.
+- New `defineConfig` helper exported from `bosia` for type-safe `bosia.config.ts` files.
+- Demo app now ships an example `bosia.config.ts` wired up with the server-timing plugin.
 - New docs page: Plugins guide.
 
 ### Changed
 
-- `server-timing` plugin's default metric name changed from `total` to `handler`. The previous label was misleading: streaming SSR responses flush headers before the body finishes, so the value never represented full end-to-end time — only the handler chain. The new name reflects what's actually measured. Pass `serverTiming({ metric: "..." })` to override.
+- The `server-timing` plugin's default metric name changed from `total` to `handler`. The old name was misleading because streaming responses send headers before the body is done, so the value never covered the full request — only the handler part. The new name reflects what's actually measured. Pass `serverTiming({ metric: "..." })` to override.
 
 ### Fixed
 
-- `bosia.config.ts` loader now writes its compiled output inside the project's `.bosia/` directory instead of `/tmp`, so bare-specifier imports like `bosia/plugins/server-timing` resolve correctly via the project's `node_modules`.
+- The `bosia.config.ts` loader now writes its compiled output inside the project's `.bosia/` folder instead of `/tmp`, so plugin imports like `bosia/plugins/server-timing` resolve correctly via the project's `node_modules`.
 
 ---
 
