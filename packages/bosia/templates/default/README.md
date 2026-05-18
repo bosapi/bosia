@@ -19,7 +19,8 @@ src/
 ├── lib/                 # Shared utilities — import via $lib
 └── routes/              # Pages and API endpoints
     ├── +layout.svelte   # Root layout
-    └── +page.svelte     # Home page (/)
+    └── (public)/        # Public route group
+        └── +page.svelte # Home page (/)
 public/                  # Static assets
 ```
 
@@ -29,15 +30,18 @@ Add pages by creating `+page.svelte` files under `src/routes/`:
 
 ```
 src/routes/
-├── +page.svelte              # /
-├── about/
-│   └── +page.svelte          # /about
-└── blog/
-    ├── +page.svelte          # /blog
-    └── [slug]/
-        ├── +page.server.ts   # server loader
-        └── +page.svelte      # /blog/:slug
+└── (public)/                     # public route group — no URL segment
+    ├── +page.svelte              # /
+    ├── about/
+    │   └── +page.svelte          # /about
+    └── blog/
+        ├── +page.svelte          # /blog
+        └── [slug]/
+            ├── +page.server.ts   # server loader
+            └── +page.svelte      # /blog/:slug
 ```
+
+Bosia's convention: put public-facing pages under `(public)/`, and authenticated areas under their own group (e.g. `(app)/`, `(admin)/`). The parentheses make the segment a layout group — it groups routes without appearing in the URL.
 
 ### Server Loaders
 

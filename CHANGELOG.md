@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Route params are now passed as a separate `params` prop on `+page.svelte` and `+layout.svelte`, matching SvelteKit. Read `params.slug` from the `params` prop instead of `data.params.slug`. The `data.params` shim has been removed — update any page or layout that used the nested form to destructure `params` alongside `data`.
+- Starter templates (`default`, `todo`) now place public pages under a `(public)/` route group, matching the `demo` template. This is the convention you'll want as soon as you add an authenticated area (e.g. `(app)/`, `(admin)/`) — the public marketing pages stay grouped together without changing their URLs. Existing projects don't need to change anything; this only affects newly scaffolded projects.
 
 ---
 

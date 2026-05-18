@@ -25,7 +25,8 @@
 	</div>
 
 	<p class="text-muted-foreground mt-6 text-sm">
-		Edit <code class="bg-muted rounded px-1 py-0.5 font-mono text-xs">src/routes/+page.svelte</code> to
-		get started
+		Edit <code class="bg-muted rounded px-1 py-0.5 font-mono text-xs"
+			>src/routes/(public)/+page.svelte</code
+		> to get started
 	</p>
 </main>

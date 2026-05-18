@@ -466,6 +466,7 @@
 - [x] 🟠 `hydrate.ts` seeds `appState.pageData` without the merged `params` key (still seeds `appState.routeParams` from same payload)
 - [x] 🟠 `routeTypes.ts` codegen: `PageData` / `LayoutData` no longer intersect `{ params: Params }`; `PageProps` / `LayoutProps` declare `params: Params` as a sibling of `data`
 - [x] 🟡 Update demo + template `blog/[slug]/+page.svelte` and docs (`README.md`, `docs/content/docs/guides/routing.md`) to consume `params` as a top-level prop
+- [x] 🟡 Standardize `default` and `todo` starter templates on the `(public)/` route group convention used by `demo`, so scaffolded projects are ready to add authenticated areas (e.g. `(app)/`, `(admin)/`) without restructuring later
 
 ---
 
