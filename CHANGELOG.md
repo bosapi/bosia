@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.7] - 2026-05-19
+
+### Changed
+
+- Route params are now passed as a separate `params` prop on `+page.svelte` and `+layout.svelte`, matching SvelteKit. Read `params.slug` from the `params` prop instead of `data.params.slug`. The `data.params` shim has been removed — update any page or layout that used the nested form to destructure `params` alongside `data`.
+
+---
+
 ## [0.5.6] - 2026-05-18
 
 ### Fixed

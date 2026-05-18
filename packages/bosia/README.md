@@ -92,8 +92,8 @@ Data returned is passed as the `data` prop to `+page.svelte`:
 
 ```svelte
 <script lang="ts">
-	let { data } = $props();
-	// data.post, data.params ...
+	let { data, params } = $props();
+	// data.post, params.slug ...
 </script>
 ```
 

@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type { PageData } from "./$types";
+	import type { PageProps } from "./$types";
 
-	let { data }: { data: PageData } = $props();
+	let { data, params }: PageProps = $props();
 
 	const post = $derived(data.post);
-	const slug = $derived(data.slug ?? data.params.slug ?? "");
+	const slug = $derived(data.slug ?? params.slug ?? "");
 </script>
 
 <svelte:head>

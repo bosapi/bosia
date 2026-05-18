@@ -458,6 +458,31 @@
 
 ---
 
+## v0.5.7 — `params` as a top-level page/layout prop ✅ (shipped 2026-05-19)
+
+> Match SvelteKit: `+page.svelte` and `+layout.svelte` receive `params` as a sibling prop of `data`, not nested under `data.params`. Network protocol (data endpoint payload, SSR injection) is unchanged — `params` is stripped at the component boundary.
+
+- [x] 🟠 `App.svelte` passes `params` as a separate prop on pages and layouts; SSR branch strips merged `params` off `pageData` via local helper
+- [x] 🟠 `hydrate.ts` seeds `appState.pageData` without the merged `params` key (still seeds `appState.routeParams` from same payload)
+- [x] 🟠 `routeTypes.ts` codegen: `PageData` / `LayoutData` no longer intersect `{ params: Params }`; `PageProps` / `LayoutProps` declare `params: Params` as a sibling of `data`
+- [x] 🟡 Update demo + template `blog/[slug]/+page.svelte` and docs (`README.md`, `docs/content/docs/guides/routing.md`) to consume `params` as a top-level prop
+
+---
+
+## v0.5.8 — `$types` resolution inside `.svelte` files
+
+> `tsc --noEmit` resolves `./$types` from `.svelte` files via the `rootDirs: [".", ".bosia/types"]` trick, so `bun run check` and `bun run build` both type-check `params` / `PageProps` correctly. But `svelte-language-server` (used by Zed, VS Code w/ Svelte extension, etc.) runs `.svelte` script blocks through a preprocessor and doesn't honor `rootDirs` from inside that virtual TS document — the editor reports `Cannot find module './$types'` and `params` collapses to implicit `any`. SvelteKit avoids this by shipping a dedicated language-tools plugin (`@sveltejs/language-tools`) that **synthesizes** `$types` virtually at LSP time. Bosia needs the same.
+>
+> Acceptance: in a freshly scaffolded Bosia app, hovering `PageProps` in `+page.svelte` shows the generated type, autocomplete on `params.` lists only the route's dynamic segments, and no "module not found" diagnostic appears for `./$types`. Same behavior in Zed and VS Code.
+
+- [ ] 🟠 Investigate options: (a) TypeScript Language Service plugin that hooks `moduleResolution` for `$types` specifiers from `.svelte` files; (b) fork/extend `svelte-language-server` config; (c) shim by re-exporting from a plain `.ts` barrel the LSP already sees. Pick the lowest-friction path.
+- [ ] 🟠 Ship the plugin/shim from `packages/bosia` and wire it into the scaffolding templates' `tsconfig.json` (`compilerOptions.plugins` or `svelte.config.js`) so new apps work out of the box.
+- [ ] 🟡 Verify in Zed and VS Code on `apps/demo/src/routes/(public)/blog/[slug]/+page.svelte`: hover shows `Params = { slug: string }`, autocomplete on `params.` lists `slug`, typing `params.foo` red-squiggles.
+- [ ] 🟡 Document the editor setup step in `docs/content/docs/guides/routing.md` (or a new "Editor setup" guide) — what extension to install, what `tsconfig.json` looks like.
+- [ ] ⚪ Note the limitation + workaround in the meantime under `docs/content/docs/reference/sveltekit-differences.md`.
+
+---
+
 ## v0.5.4 — Brief intake skills ✅ (shipped 2026-05-17)
 
 > Six new design-track skills that gather product brief (identity / voice / visual / platform) into `BRIEF.md` at app root before any UI emit. Closes the "agent invents palette + tone every turn" drift bug.

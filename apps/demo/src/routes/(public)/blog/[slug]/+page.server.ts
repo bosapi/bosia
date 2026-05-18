@@ -28,7 +28,7 @@ This page lives at routes/(public)/blog/[slug]/+page.svelte but is served at /bl
 		tags: ["routing", "dynamic"],
 		content: `A directory named [slug] creates a dynamic route segment that matches any URL value.
 
-The matched value is available as params.slug inside +page.server.ts load() and inside the page component via data.params.slug.
+The matched value is available as params.slug inside +page.server.ts load() and inside the page component via the params prop.
 
 The route matcher uses 3-pass priority: exact matches first, then dynamic segments, then catch-all routes.`,
 	},
@@ -60,7 +60,6 @@ export const load = (async ({ params, parent, metadata }) => {
 
 	return {
 		post,
-		slug: params.slug,
 		appName: parentData.appName as string,
 	};
 }) satisfies PageServerLoad;

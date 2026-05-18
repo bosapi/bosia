@@ -31,12 +31,19 @@
 
 	let PageComponent = $state<any>(ssrPageComponent);
 	let layoutComponents = $state<any[]>(ssrLayoutComponents ?? []);
+	// Network protocol still ships `params` merged into pageData (see renderer.ts).
+	// Strip it at the component boundary so consumers receive `params` only via
+	// the dedicated prop, matching SvelteKit's surface.
+	const stripParams = (d: Record<string, any>) => {
+		const { params: _p, ...rest } = d;
+		return rest;
+	};
 	// In SSR mode, render directly from props (server module singletons must
 	// not hold per-request state). On the client, read/write through `appState`
 	// so `use:enhance` and other helpers can update the same cells.
-	const pageData = $derived(ssrMode ? (ssrPageData ?? {}) : appState.pageData);
+	const pageData = $derived(ssrMode ? stripParams(ssrPageData ?? {}) : appState.pageData);
 	const layoutData = $derived(ssrMode ? (ssrLayoutData ?? []) : appState.layoutData);
-	const routeParams = $derived(ssrMode ? (ssrPageData?.params ?? {}) : appState.routeParams);
+	const params = $derived(ssrMode ? (ssrPageData?.params ?? {}) : appState.routeParams);
 	const formData = $derived(ssrMode ? ssrFormData : appState.form);
 	const ErrorComponent = $derived(ssrMode ? ssrErrorComponent : appState.errorComponent);
 	const errorProps = $derived(ssrMode ? ssrErrorProps : appState.errorProps);
@@ -257,9 +264,7 @@
 				mergedPageData = {};
 			}
 
-			// Always overlay current match.params — cached pageData carries the
-			// stale params from when the loader ran, so trust the live match.
-			appState.pageData = { ...mergedPageData, params: match.params };
+			appState.pageData = mergedPageData;
 			appState.layoutData = mergedLayoutData;
 			appState.routeParams = match.params;
 			// Successful navigation — clear any prior error state.
@@ -314,7 +319,7 @@
 {:else if layoutComponents.length > 0}
 	{@render renderLayout(0, layoutComponents.length)}
 {:else if PageComponent}
-	<PageComponent data={{ ...pageData, params: routeParams }} form={formData} />
+	<PageComponent data={pageData} {params} form={formData} />
 {:else}
 	<p>Loading...</p>
 {/if}
@@ -324,15 +329,15 @@
 	{@const data = layoutData[index] ?? {}}
 
 	{#if index < leafDepth - 1}
-		<Layout {data}>
+		<Layout {data} {params}>
 			{@render renderLayout(index + 1, leafDepth)}
 		</Layout>
 	{:else}
-		<Layout {data}>
+		<Layout {data} {params}>
 			{#if ErrorComponent}
 				<ErrorComponent {...errorProps ?? {}} />
 			{:else if PageComponent}
-				<PageComponent data={{ ...pageData, params: routeParams }} form={formData} />
+				<PageComponent data={pageData} {params} form={formData} />
 			{:else}
 				<p>Loading...</p>
 			{/if}

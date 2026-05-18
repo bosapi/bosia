@@ -35,6 +35,16 @@ export async function load({ params }: LoadEvent) {
 }
 ```
 
+Inside `+page.svelte` and `+layout.svelte`, `params` is a top-level prop alongside `data` (same shape as SvelteKit):
+
+```svelte
+<script lang="ts">
+	import type { PageProps } from "./$types";
+	let { data, params }: PageProps = $props();
+	// params.slug — string typed from the route pattern
+</script>
+```
+
 ## Catch-All Routes
 
 Use `[...rest]` to match multiple path segments:

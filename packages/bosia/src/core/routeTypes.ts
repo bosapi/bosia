@@ -96,18 +96,16 @@ export function generateRouteTypes(manifest: RouteManifest): void {
 				`export type PageMetadataLoad = (event: _MetadataEvent) => Metadata | Promise<Metadata>;`,
 			);
 			lines.push(`export type Action = (event: _RequestEvent) => any;`);
-			lines.push(
-				`export type PageData = Awaited<ReturnType<typeof _pageLoad>> & { params: Params };`,
-			);
+			lines.push(`export type PageData = Awaited<ReturnType<typeof _pageLoad>>;`);
 		} else {
 			lines.push(``);
 			lines.push(
 				`export type PageMetadataLoad = (event: _MetadataEvent) => Metadata | Promise<Metadata>;`,
 			);
 			lines.push(`export type Action = (event: _RequestEvent) => any;`);
-			lines.push(`export type PageData = { params: Params };`);
+			lines.push(`export type PageData = {};`);
 		}
-		lines.push(`export type PageProps = { data: PageData };`);
+		lines.push(`export type PageProps = { data: PageData; params: Params };`);
 
 		if (info.hasErrorPage) {
 			lines.push(``);
@@ -135,10 +133,10 @@ export function generateRouteTypes(manifest: RouteManifest): void {
 		if (info.layoutServer) {
 			lines.push(`\nimport type { load as _layoutLoad } from '${srcBase}+layout.server.ts';`);
 			lines.push(`export type LayoutServerLoad = (event: _LoadEvent) => any;`);
+			lines.push(`export type LayoutData = Awaited<ReturnType<typeof _layoutLoad>>;`);
 			lines.push(
-				`export type LayoutData = Awaited<ReturnType<typeof _layoutLoad>> & { params: Params };`,
+				`export type LayoutProps = { data: LayoutData; params: Params; children: any };`,
 			);
-			lines.push(`export type LayoutProps = { data: LayoutData; children: any };`);
 		}
 
 		const outDir = join(process.cwd(), ".bosia", "types", "src", "routes", ...segments);

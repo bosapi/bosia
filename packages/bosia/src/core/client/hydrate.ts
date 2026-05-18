@@ -67,7 +67,10 @@ async function main() {
 
 	// Seed shared client state so `use:enhance` and other helpers
 	// start from the same values App.svelte renders during hydration.
-	appState.pageData = ssrPageData;
+	// Network protocol still ships `params` merged into pageData; strip it
+	// so the in-memory pageData mirrors what +page.svelte receives.
+	const { params: _p, ...pageDataNoParams } = ssrPageData ?? {};
+	appState.pageData = pageDataNoParams;
 	appState.layoutData = ssrLayoutData;
 	appState.routeParams = ssrPageData?.params ?? match?.params ?? {};
 	appState.form = ssrFormData;
