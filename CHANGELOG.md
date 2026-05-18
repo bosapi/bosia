@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.6] - 2026-05-18
+
+### Fixed
+
+- Running `bun run build` while `bun run dev` was live no longer crashes the dev server with `ENOENT` reading `+page-*.js` / `+error-*.js`. The build used to wipe the entire `.bosia/` folder at start — including the live dev process's compiled server under `.bosia/dev/`. The cleanup is now scoped to just the codegen files this build owns (`routes.ts`, `routes.client.ts`, `env.server.ts`, `env.client.ts`, `types/`) plus its own output directory.
+
+---
+
 ## [0.5.5] - 2026-05-18
 
 ### Changed

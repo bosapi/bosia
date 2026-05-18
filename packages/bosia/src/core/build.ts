@@ -45,13 +45,25 @@ const envMode = isProduction ? "production" : "development";
 const envVars = loadEnv(envMode);
 const classifiedEnv = classifyEnvVars(envVars);
 
-// 0b. Clean all generated output first
+// 0b. Clean generated output. Only OUT_DIR (this build's artifacts) and the
+// codegen files inside .bosia/ that this build owns. A blanket wipe of .bosia/
+// would clobber a concurrently-running `bosia dev` whose compiled server lives
+// at .bosia/dev/ — the codegen files (routes*.ts, env.*.ts, types/) are the
+// only things this build needs to clear to avoid stale entries on route renames.
 try {
 	rmSync(OUT_DIR, { recursive: true, force: true });
 } catch {}
-try {
-	rmSync("./.bosia", { recursive: true, force: true });
-} catch {}
+for (const p of [
+	".bosia/routes.ts",
+	".bosia/routes.client.ts",
+	".bosia/env.server.ts",
+	".bosia/env.client.ts",
+	".bosia/types",
+]) {
+	try {
+		rmSync(p, { recursive: true, force: true });
+	} catch {}
+}
 
 // 1. Scan routes
 const manifest = scanRoutes();

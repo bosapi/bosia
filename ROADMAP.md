@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.5.5**
+> Current version: **0.5.6**
 
 ---
 
@@ -447,6 +447,14 @@
 - [x] 🟠 `dev.ts` hardcodes `.bosia/dev` and passes `BOSIA_OUT_DIR` to spawned build + app-server children; never reads the env itself
 - [x] 🟠 `build.ts`, `prerender.ts`, `html.ts`, `server.ts`, `cli/start.ts` all read from `OUT_DIR` instead of hardcoded `./dist` literals
 - [x] 🟡 Verification path: `BOSIA_OUT_DIR=.bosia/verify bun run build` produces full artifacts (manifest, client, server, prerendered, static, route-manifest) without touching `./dist`. Catches what `tsc --noEmit` + `svelte-check` miss (route scan, prerender child, server-entry compile). Verified at `apps/demo`
+
+---
+
+## v0.5.6 — Build/dev `.bosia/` cleanup collision ✅ (shipped 2026-05-18)
+
+> Follow-up to v0.5.5. `OUT_DIR` was split, but `build.ts` still blanket-wiped `./.bosia` at startup — clobbering a concurrently-running `bosia dev` whose compiled server lives at `.bosia/dev/`. Cleanup is now scoped.
+
+- [x] 🔴 `build.ts` cleanup is scoped to `OUT_DIR` (this build's artifacts) plus only the codegen files this build owns (`.bosia/routes.ts`, `.bosia/routes.client.ts`, `.bosia/env.server.ts`, `.bosia/env.client.ts`, `.bosia/types`). No more blanket `.bosia/` rmSync. Fixes `ENOENT reading .bosia/dev/server/+page-*.js` mid-request when `bun run build` runs alongside `bun run dev`.
 
 ---
 
