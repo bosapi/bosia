@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.5.4**
+> Current version: **0.5.5**
 
 ---
 
@@ -439,6 +439,17 @@
 
 ---
 
+## v0.5.5 — Dev/Build dist collision ✅ (shipped 2026-05-18)
+
+> Dev and build no longer share `./dist`. Dev writes to `.bosia/dev/`; standalone `bun run build` keeps writing to `./dist/`.
+
+- [x] 🟠 Decouple URL namespace (`/dist/client/...`) from on-disk location via `OUT_DIR` in `paths.ts` (reads `BOSIA_OUT_DIR`, default `./dist`)
+- [x] 🟠 `dev.ts` hardcodes `.bosia/dev` and passes `BOSIA_OUT_DIR` to spawned build + app-server children; never reads the env itself
+- [x] 🟠 `build.ts`, `prerender.ts`, `html.ts`, `server.ts`, `cli/start.ts` all read from `OUT_DIR` instead of hardcoded `./dist` literals
+- [x] 🟡 Verification path: `BOSIA_OUT_DIR=.bosia/verify bun run build` produces full artifacts (manifest, client, server, prerendered, static, route-manifest) without touching `./dist`. Catches what `tsc --noEmit` + `svelte-check` miss (route scan, prerender child, server-entry compile). Verified at `apps/demo`
+
+---
+
 ## v0.5.4 — Brief intake skills ✅ (shipped 2026-05-17)
 
 > Six new design-track skills that gather product brief (identity / voice / visual / platform) into `BRIEF.md` at app root before any UI emit. Closes the "agent invents palette + tone every turn" drift bug.
@@ -610,36 +621,6 @@
 - [ ] Each route ships ≤ what it imports (verified by inspecting `dist/client/*.css` sizes)
 - [ ] Component `<style>` still scoped via `cssHash`
 - [ ] No regression in `test/svelte-build.test.ts` (CSS collision regression test)
-
----
-
-## v0.8.0 — Dev/Build dist collision
-
-> When `bun run build` runs while `bun run dev` is alive, both processes write to the same `./dist` folder. Build clobbers dev's manifest + hashed asset filenames; the running app server keeps serving old chunk URLs that no longer exist, so browser navigation 404s ("Load failed"). Surfaced by bosapi's AI agent calling `shell({ cmd: 'build' })` as a verification step while the live-preview dev server was still running.
-
-### Problem
-
-- `core/build.ts:50` hardcodes `rmSync("./dist", ...)` then writes fresh hashed chunks
-- `core/dev.ts:56-64` spawns the same `build.ts`, then `core/dev.ts:86` spawns the app server reading `dist/server/${entry}`
-- Any second build (manual or scripted) racing with dev → in-flight assets vanish under the running server
-- SvelteKit avoids this because Vite dev keeps the module graph in-memory (no disk writes); only `vite build` touches `.svelte-kit/output`
-
-### Goals
-
-- [ ] 🟠 Dev and verification builds must not share an output dir
-- [ ] 🟡 Verification path catches what `tsc --noEmit` + `svelte-check` miss (pre-render, route manifest, server entry compilation)
-- [ ] 🟡 Cheap enough that an AI agent (or human) can run it on every save without disrupting live preview
-
-### Approach Options
-
-1. **Configurable output dir** — `build.ts` honors `BOSIA_OUT_DIR` env (default `./dist`). Verification build runs with `BOSIA_OUT_DIR=.bosia/verify` → full bosia build, zero collision with dev. `dev.ts` also reads the same env so dev keeps writing to `./dist`.
-2. **Expose dev's last build status** — dev already runs a full build on every src change. Write `.bosia/dev-status.json` `{ exitCode, stderr, builtAt }` after each `runBuild()` in `dev.ts`. Consumers (AI agent, IDE) read it instead of running a second build. No extra build cost, mirrors how a human watches the dev terminal.
-3. **In-memory dev like Vite** — bigger rewrite; dev stops writing dist entirely, serves modules from memory. Eliminates the collision class, not just this instance.
-
-### Acceptance
-
-- [ ] Running `bun run build` while `bun run dev` is live does not break the running app's navigation
-- [ ] AI agent (bosapi) has a verification path that catches pre-render / SSR errors without touching dev's dist
 
 ---
 

@@ -22,6 +22,7 @@ import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
 import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } from "./csp.ts";
 import { isDev, compress, isStaticPath } from "./html.ts";
+import { OUT_DIR } from "./paths.ts";
 import { dedup, dedupKey } from "./dedup.ts";
 import {
 	loadRouteData,
@@ -288,7 +289,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		// dist/client: serve with cache headers based on whether filename is hashed
 		if (path.startsWith("/dist/client/")) {
 			const resolved = safePath(
-				"./dist/client",
+				`${OUT_DIR}/client`,
 				path.split("?")[0].slice("/dist/client".length),
 			);
 			if (resolved) {
@@ -308,12 +309,12 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			const pub = Bun.file(pubPath);
 			if (await pub.exists()) return new Response(pub);
 		}
-		const distPath = safePath("./dist", path);
+		const distPath = safePath(OUT_DIR, path);
 		if (distPath) {
 			const dist = Bun.file(distPath);
 			if (await dist.exists()) return new Response(dist);
 		}
-		const staticPath = safePath("./dist/static", path);
+		const staticPath = safePath(`${OUT_DIR}/static`, path);
 		if (staticPath) {
 			const staticFile = Bun.file(staticPath);
 			if (await staticFile.exists()) return new Response(staticFile);
@@ -326,7 +327,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 	const prerenderCandidates =
 		path === "/" ? ["index.html"] : [`${path}/index.html`, `${path.replace(/\/$/, "")}.html`];
 	for (const candidate of prerenderCandidates) {
-		const prerenderPath = safePath("./dist/prerendered", candidate);
+		const prerenderPath = safePath(`${OUT_DIR}/prerendered`, candidate);
 		if (!prerenderPath) continue;
 		const prerenderFile = Bun.file(prerenderPath);
 		if (await prerenderFile.exists()) {
@@ -724,7 +725,7 @@ if (plugins.length > 0) {
 
 // Read the build-time route manifest so plugins.backend.after can introspect routes.
 function loadBuiltManifest(): RouteManifest {
-	const path = "./dist/route-manifest.json";
+	const path = `${OUT_DIR}/route-manifest.json`;
 	if (existsSync(path)) {
 		try {
 			return JSON.parse(readFileSync(path, "utf-8"));

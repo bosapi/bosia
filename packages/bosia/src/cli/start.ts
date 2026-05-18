@@ -1,17 +1,17 @@
 import { spawn } from "bun";
 import { loadEnv } from "../core/env.ts";
-import { BOSIA_NODE_PATH } from "../core/paths.ts";
+import { BOSIA_NODE_PATH, OUT_DIR } from "../core/paths.ts";
 
 export async function runStart() {
 	loadEnv("production");
 
 	let serverEntry = "index.js";
 	try {
-		const manifest = await Bun.file("./dist/manifest.json").json();
+		const manifest = await Bun.file(`${OUT_DIR}/manifest.json`).json();
 		serverEntry = manifest.serverEntry ?? "index.js";
 	} catch {}
 
-	const proc = spawn(["bun", "run", `dist/server/${serverEntry}`], {
+	const proc = spawn(["bun", "run", `${OUT_DIR}/server/${serverEntry}`], {
 		stdout: "inherit",
 		stderr: "inherit",
 		cwd: process.cwd(),

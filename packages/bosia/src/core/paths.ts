@@ -18,6 +18,11 @@ const HOISTED_NM = isInstalledAsDep ? parentDir : null;
 /** NODE_PATH value covering both nested and hoisted dependency locations */
 export const BOSIA_NODE_PATH = HOISTED_NM ? [NESTED_NM, HOISTED_NM].join(":") : NESTED_NM;
 
+// On-disk output directory. URL namespace (/dist/client/...) stays stable;
+// only the on-disk location moves so dev (.bosia/dev) and a parallel
+// `bun run build` (./dist) don't clobber each other.
+export const OUT_DIR = process.env.BOSIA_OUT_DIR ?? "./dist";
+
 /** Find a binary from bosia's dependencies (handles hoisting) */
 export function resolveBosiaBin(name: string): string {
 	const nested = join(NESTED_NM, ".bin", name);

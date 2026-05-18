@@ -9,7 +9,7 @@ import { makeBosiaSvelteCompiler } from "./svelteCompiler.ts";
 import { prerenderStaticRoutes, generateStaticSite } from "./prerender.ts";
 import { loadEnv, classifyEnvVars } from "./env.ts";
 import { generateEnvModules } from "./envCodegen.ts";
-import { BOSIA_NODE_PATH, resolveBosiaBin } from "./paths.ts";
+import { BOSIA_NODE_PATH, OUT_DIR, resolveBosiaBin } from "./paths.ts";
 import { loadPlugins } from "./config.ts";
 import type { BuildContext } from "./types/plugin.ts";
 
@@ -47,7 +47,7 @@ const classifiedEnv = classifyEnvVars(envVars);
 
 // 0b. Clean all generated output first
 try {
-	rmSync("./dist", { recursive: true, force: true });
+	rmSync(OUT_DIR, { recursive: true, force: true });
 } catch {}
 try {
 	rmSync("./.bosia", { recursive: true, force: true });
@@ -125,7 +125,7 @@ for (const [key, value] of Object.entries(classifiedEnv.privateStatic)) {
 console.log("\n📦 Building Tailwind + client + server...");
 const clientPromise = Bun.build({
 	entrypoints: [join(CORE_DIR, "client", "hydrate.ts")],
-	outdir: "./dist/client",
+	outdir: `${OUT_DIR}/client`,
 	target: "browser",
 	splitting: true,
 	naming: { chunk: "[name]-[hash].[ext]" },
@@ -139,7 +139,7 @@ const clientPromise = Bun.build({
 
 const serverPromise = Bun.build({
 	entrypoints: [join(CORE_DIR, "server.ts")],
-	outdir: "./dist/server",
+	outdir: `${OUT_DIR}/server`,
 	target: "bun",
 	splitting: true,
 	naming: { entry: "index.[ext]", chunk: "[name]-[hash].[ext]" },
@@ -177,7 +177,7 @@ if (!serverResult.success) {
 const jsFiles: string[] = [];
 const cssFiles: string[] = [];
 for (const output of clientResult.outputs) {
-	const rel = relative("./dist/client", output.path);
+	const rel = relative(`${OUT_DIR}/client`, output.path);
 	if (output.path.endsWith(".js")) jsFiles.push(rel);
 	if (output.path.endsWith(".css")) cssFiles.push(rel);
 }
@@ -190,7 +190,7 @@ const serverEntry =
 		.pop() ?? "index.js";
 
 // 8. Write dist/manifest.json
-mkdirSync("./dist", { recursive: true });
+mkdirSync(OUT_DIR, { recursive: true });
 const distManifest = {
 	js: jsFiles,
 	css: cssFiles,
@@ -200,12 +200,12 @@ const distManifest = {
 		"hydrate.js",
 	serverEntry,
 };
-writeFileSync("./dist/manifest.json", JSON.stringify(distManifest, null, 2));
+writeFileSync(`${OUT_DIR}/manifest.json`, JSON.stringify(distManifest, null, 2));
 console.log(`✅ Client bundle: ${jsFiles.join(", ")}`);
-console.log(`✅ Server entry:  dist/server/${serverEntry}`);
+console.log(`✅ Server entry:  ${OUT_DIR}/server/${serverEntry}`);
 
 // 8b. Persist route manifest for runtime plugins (backend.after consumers like OpenAPI).
-writeFileSync("./dist/route-manifest.json", JSON.stringify(manifest, null, 2));
+writeFileSync(`${OUT_DIR}/route-manifest.json`, JSON.stringify(manifest, null, 2));
 
 // 9. Prerender static routes
 await prerenderStaticRoutes(manifest);

@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.5] - 2026-05-18
+
+### Changed
+
+- Dev server now writes its build output to `.bosia/dev/` instead of `./dist/`. If you start `bun run dev` and then run `bun run build` in another terminal (for example to verify a change, or because an AI agent triggered a build), the build no longer overwrites the files the live dev preview is serving — so browser navigation in the dev preview stops 404-ing on chunks that just got replaced. Production builds and the `bosia start` server still use `./dist/` exactly as before.
+
+### Added
+
+- New `BOSIA_OUT_DIR` setting lets you point `bosia build` at a custom output folder. Default is still `./dist/`. Mainly useful as a verification path: run `BOSIA_OUT_DIR=.bosia/verify bun run build` to do a full production build (route scan, prerender, server entry compile — things `tsc` alone won't catch) without touching the running dev preview's files. Documented in the Environment Variables guide.
+
+---
+
 ## [0.5.4] - 2026-05-17
 
 ### Fixed

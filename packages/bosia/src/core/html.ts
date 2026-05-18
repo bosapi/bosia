@@ -1,13 +1,14 @@
 import { existsSync, readFileSync } from "fs";
 import { getDeclaredEnvKeys } from "./env.ts";
 import { nonceAttr } from "./csp.ts";
+import { OUT_DIR } from "./paths.ts";
 
 // ─── Dist Manifest ───────────────────────────────────────
 // Maps hashed filenames → script/link tags.
 // Cached at startup; server restarts on rebuild in dev anyway.
 
 export const distManifest: { js: string[]; css: string[]; entry: string } = (() => {
-	const p = "./dist/manifest.json";
+	const p = `${OUT_DIR}/manifest.json`;
 	return existsSync(p)
 		? JSON.parse(readFileSync(p, "utf-8"))
 		: { js: [], css: [], entry: "hydrate.js" };

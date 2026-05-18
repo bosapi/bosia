@@ -3,7 +3,7 @@ import { createServer } from "net";
 import { join } from "path";
 import type { RouteManifest, TrailingSlash } from "./types.ts";
 
-import { BOSIA_NODE_PATH } from "./paths.ts";
+import { BOSIA_NODE_PATH, OUT_DIR } from "./paths.ts";
 
 /** Acquire an OS-assigned ephemeral port. Tiny TOCTOU race window; acceptable for build-time use. */
 export function getEphemeralPort(): Promise<number> {
@@ -78,9 +78,9 @@ export function canonicalRouteFor(routePath: string, ts: TrailingSlash): string 
  * mode so static hosts serve the right file on direct URL hits.
  */
 export function prerenderOutPath(routePath: string, ts: TrailingSlash): string {
-	if (routePath === "/") return "./dist/prerendered/index.html";
-	if (ts === "never") return `./dist/prerendered${routePath.replace(/\/$/, "")}.html`;
-	return `./dist/prerendered${routePath.replace(/\/$/, "")}/index.html`;
+	if (routePath === "/") return `${OUT_DIR}/prerendered/index.html`;
+	if (ts === "never") return `${OUT_DIR}/prerendered${routePath.replace(/\/$/, "")}.html`;
+	return `${OUT_DIR}/prerendered${routePath.replace(/\/$/, "")}/index.html`;
 }
 
 /** Data-payload filename for a prerendered route — matches client `dataUrl()`. */
@@ -94,7 +94,7 @@ export function prerenderDataPath(routePath: string): string {
  * `/api/foo.json` regardless of the request URL's slash).
  */
 export function prerenderApiOutPath(routePath: string): string {
-	return `./dist/prerendered${routePath.replace(/\/$/, "")}.json`;
+	return `${OUT_DIR}/prerendered${routePath.replace(/\/$/, "")}.json`;
 }
 
 async function detectPrerenderRoutes(manifest: RouteManifest): Promise<PrerenderTarget[]> {
@@ -179,7 +179,7 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 	console.log(`\n🖨️  Prerendering ${targets.length} route(s)...`);
 
 	const port = await getEphemeralPort();
-	const child = Bun.spawn(["bun", "run", "./dist/server/index.js"], {
+	const child = Bun.spawn(["bun", "run", `${OUT_DIR}/server/index.js`], {
 		env: {
 			...process.env,
 			NODE_ENV: "production",
@@ -219,7 +219,7 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 			return;
 		}
 
-		mkdirSync("./dist/prerendered", { recursive: true });
+		mkdirSync(`${OUT_DIR}/prerendered`, { recursive: true });
 
 		for (const { path: routePath, kind, trailingSlash: ts } of targets) {
 			try {
@@ -260,7 +260,7 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 				});
 				if (dataRes.ok) {
 					const dataJson = await dataRes.text();
-					const dataOutPath = `./dist/prerendered/__bosia/data${dataPath}`;
+					const dataOutPath = `${OUT_DIR}/prerendered/__bosia/data${dataPath}`;
 					mkdirSync(dataOutPath.substring(0, dataOutPath.lastIndexOf("/")), {
 						recursive: true,
 					});
@@ -295,24 +295,24 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 // ─── Static Site Output ──────────────────────────────────
 
 export function generateStaticSite(): void {
-	if (!existsSync("./dist/prerendered")) {
+	if (!existsSync(`${OUT_DIR}/prerendered`)) {
 		console.log("\n⏭️  No prerendered pages — skipping static site output");
 		return;
 	}
 
 	console.log("\n📦 Generating static site...");
-	mkdirSync("./dist/static", { recursive: true });
+	mkdirSync(`${OUT_DIR}/static`, { recursive: true });
 
 	// 1. HTML files from prerendering
-	cpSync("./dist/prerendered", "./dist/static", { recursive: true });
+	cpSync(`${OUT_DIR}/prerendered`, `${OUT_DIR}/static`, { recursive: true });
 
 	// 2. Client JS/CSS — preserves /dist/client/... absolute paths used in HTML
-	cpSync("./dist/client", "./dist/static/dist/client", { recursive: true });
+	cpSync(`${OUT_DIR}/client`, `${OUT_DIR}/static/dist/client`, { recursive: true });
 
 	// 3. Public assets (bosia-tw.css, favicon, etc.) — preserves /bosia-tw.css path
 	if (existsSync("./public")) {
-		cpSync("./public", "./dist/static", { recursive: true });
+		cpSync("./public", `${OUT_DIR}/static`, { recursive: true });
 	}
 
-	console.log("✅ Static site generated: dist/static/");
+	console.log(`✅ Static site generated: ${OUT_DIR}/static/`);
 }

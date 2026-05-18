@@ -2,6 +2,13 @@ import { spawn, type Subprocess } from "bun";
 import { watch } from "fs";
 import { join } from "path";
 import { loadEnv, resetDeclaredKeys } from "./env.ts";
+import { BOSIA_NODE_PATH } from "./paths.ts";
+
+// Dev always writes to .bosia/dev so a parallel `bun run build` (writing to ./dist)
+// can't clobber the live preview. Hardcoded — BOSIA_OUT_DIR is a build-mode knob,
+// not a dev knob; we pass it to spawned children to redirect build.ts/server output,
+// but dev.ts itself never reads it.
+const DEV_OUT_DIR = ".bosia/dev";
 
 // Snapshot pure shell env BEFORE any loadEnv call pollutes process.env.
 // On `.env*` change we restore from this snapshot, then re-run loadEnv,
@@ -49,8 +56,6 @@ function broadcastReload() {
 
 // ─── Build ────────────────────────────────────────────────
 
-import { BOSIA_NODE_PATH } from "./paths.ts";
-
 const BUILD_SCRIPT = join(import.meta.dir, "build.ts");
 
 async function runBuild(): Promise<boolean> {
@@ -59,6 +64,7 @@ async function runBuild(): Promise<boolean> {
 		stdout: "inherit",
 		stderr: "inherit",
 		cwd: process.cwd(),
+		env: { ...process.env, BOSIA_OUT_DIR: DEV_OUT_DIR },
 	});
 	return (await proc.exited) === 0;
 }
@@ -79,11 +85,11 @@ async function startAppServer() {
 	// Read the server entry filename from the manifest written by build.ts
 	let serverEntry = "index.js";
 	try {
-		const manifest = await Bun.file("./dist/manifest.json").json();
+		const manifest = await Bun.file(`${DEV_OUT_DIR}/manifest.json`).json();
 		serverEntry = manifest.serverEntry ?? "index.js";
 	} catch {}
 
-	appProcess = spawn(["bun", "run", `dist/server/${serverEntry}`], {
+	appProcess = spawn(["bun", "run", `${DEV_OUT_DIR}/server/${serverEntry}`], {
 		stdout: "inherit",
 		stderr: "inherit",
 		cwd: process.cwd(),
@@ -94,6 +100,8 @@ async function startAppServer() {
 			PORT: String(APP_PORT),
 			// Allow externalized deps (elysia, etc.) to resolve from bosia's node_modules
 			NODE_PATH: BOSIA_NODE_PATH,
+			// Point the server child at dev's output dir so its OUT_DIR reads match what build wrote.
+			BOSIA_OUT_DIR: DEV_OUT_DIR,
 			// Dev proxy injects X-Forwarded-Host/Proto reflecting the public DEV_PORT, so CSRF
 			// origin checks must honour them. Safe in dev because the proxy controls these
 			// headers — no untrusted client can spoof them.
