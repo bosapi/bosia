@@ -68,11 +68,14 @@ export function enhance(form: HTMLFormElement, submit?: SubmitFunction) {
 		const submitter = (event.submitter as HTMLElement | null) ?? null;
 		const formData = new FormData(form, submitter as HTMLElement | undefined);
 
-		// Resolve action URL — preserve `?/actionName` if the submitter or form sets it
-		const actionAttr =
-			(submitter as HTMLButtonElement | HTMLInputElement | null)?.formAction ||
-			form.action ||
-			window.location.href;
+		// Resolve action URL — preserve `?/actionName` if the submitter or form sets it.
+		// `submitter.formAction` reflects the document URL when no `formaction` attribute
+		// is set (HTML spec), which would silently drop the form's `action="?/foo"`. So
+		// only honor the submitter override when it actually has the attribute.
+		const submitterEl = submitter as HTMLButtonElement | HTMLInputElement | null;
+		const submitterAction =
+			submitterEl && submitterEl.hasAttribute("formaction") ? submitterEl.formAction : "";
+		const actionAttr = submitterAction || form.action || window.location.href;
 		const action = new URL(actionAttr, window.location.href);
 
 		let cancelled = false;
