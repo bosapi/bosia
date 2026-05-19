@@ -489,6 +489,7 @@
 > Dev pages using `<input bind:value={state}>` (or any `bind:*` on writable state) crashed the browser with `RangeError: Maximum call stack size exceeded` on first render. Root cause was a name collision between Svelte 5's dev compile output and Bun's bundler — Svelte wraps the binding in a named `function get()` for `$inspect` stack traces; Bun rewrites `$.get` to a named import `get`; the function name then shadows the import and recurses into itself. Production was unaffected (anonymous arrow functions).
 
 - [x] 🔴 Post-process Svelte compile output in `packages/bosia/src/core/plugins/inspector/bun-plugin.ts` and `packages/bosia/src/core/svelteCompiler.ts` to rename the inner `get` / `set` to `$$g` / `$$s` (length-preserving so cached source-map columns stay accurate, names absent from `svelte/internal/client` exports). Dev-only — prod compile uses anonymous arrows so the shim is skipped.
+- [x] 🔴 Inject Inspector-extracted component CSS via a runtime `<style>` element instead of a `loader: "css"` virtual module. Bun's `splitting: true` names CSS chunks after the importing JS chunk's `[name]` (not the virtual module's uid), so when ≥2 routes share a styled `.svelte` component the bundler emits identical `+page-<hash>.css` chunks and fails with `Multiple files share the same output path`. Runtime injection sidesteps CSS chunking entirely. Dev-only — Inspector is disabled in prod.
 
 ---
 

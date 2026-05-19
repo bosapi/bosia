@@ -159,12 +159,14 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 				}
 
 				let js = dev ? fixBindShadow(result.js.code) : result.js.code;
-				// Skip empty CSS — multiple +page.svelte routes with no <style> would
-				// otherwise each emit an empty CSS chunk, all hashing to the same
-				// content → Bun fails with "Multiple files share the same output path".
-				// Also strip dots from basename: Bun's `[name]-[hash].[ext]` chunk
-				// naming treats the first `.` as the extension boundary, so
-				// `+page.svelte-…` collapses to `[name]="+page"` for every route.
+				// Inject component <style> blocks via runtime JS, not CSS chunks.
+				// Bun's `splitting: true` names CSS chunks after the importing JS
+				// chunk's `[name]`, not the virtual module's uid — so when several
+				// routes (e.g. multiple `+page.svelte`) transitively import the same
+				// styled component, each route emits its own CSS sidecar named
+				// `+page-<contentHash>.css`. Identical content → identical hash →
+				// "Multiple files share the same output path". Runtime injection
+				// avoids CSS chunking entirely.
 				if (result.css?.code?.trim() && generate !== "server") {
 					const safeBase = basename(args.path).replace(/\./g, "_");
 					const uid = `${safeBase}-${fnv(args.path)}-style.css`;
@@ -184,7 +186,10 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 			build.onLoad({ filter: /.*/, namespace: VIRTUAL_NS }, (args) => {
 				const css = virtualCss.get(args.path) ?? "";
 				virtualCss.delete(args.path);
-				return { contents: css, loader: "css" };
+				const contents = css
+					? `(()=>{const s=document.createElement('style');s.textContent=${JSON.stringify(css)};document.head.appendChild(s);})();`
+					: "";
+				return { contents, loader: "js" };
 			});
 		},
 	};

@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Dev pages using `<input bind:value={state}>` (or any `bind:*` directive on a writable state) no longer crash the browser with `RangeError: Maximum call stack size exceeded` on first render. Svelte 5's dev compile wraps the binding in `function get() { return $.get(state) }` for nicer `$inspect` stack traces, but after Bun's bundler rewrites `$.get` to a named import `get`, the function name shadows the import and the body recurses into itself. The Svelte output is now rewritten before bundling so the inner names don't collide. Production builds were never affected (they use anonymous arrow functions).
+- Dev builds no longer fail with `Multiple files share the same output path` (`+page-<hash>.css`) when two or more routes share a `.svelte` component that has a `<style>` block. The Inspector's CSS extraction was emitting one CSS chunk per importing route, and Bun's chunk-splitter named all of them after the importing chunk (`+page`) — identical CSS content meant identical hashes and a collision. Component styles are now injected via a runtime `<style>` element instead of going through Bun's CSS chunking, eliminating the collision. Production builds were never affected (Inspector is dev-only).
 
 ---
 
