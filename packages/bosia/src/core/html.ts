@@ -97,6 +97,7 @@ export function buildHtml(
 	nonce?: string,
 	pageDeps: any = null,
 	layoutDeps: any[] | null = null,
+	bodyEndExtras?: string[],
 ): string {
 	const cssLinks = (distManifest.css ?? [])
 		.map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
@@ -135,6 +136,8 @@ export function buildHtml(
 			? `\n  <script${n}>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
 			: "";
 
+	const bodyEnd = bodyEndExtras?.length ? "\n  " + bodyEndExtras.join("\n  ") : "";
+
 	return `<!DOCTYPE html>
 <html lang="${safeLang(lang)}">
 <head>
@@ -148,7 +151,7 @@ export function buildHtml(
   <script${n}>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>
 </head>
 <body>
-  <div id="app">${body}</div>${scripts}
+  <div id="app">${body}</div>${scripts}${bodyEnd}
 </body>
 </html>`;
 }

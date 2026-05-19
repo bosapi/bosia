@@ -142,6 +142,7 @@ const clientPromise = Bun.build({
 	splitting: true,
 	naming: { chunk: "[name]-[hash].[ext]" },
 	minify: isProduction,
+	sourcemap: isProduction ? "none" : "linked",
 	define: {
 		"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "development"),
 		...staticDefines,
@@ -156,6 +157,7 @@ const serverPromise = Bun.build({
 	splitting: true,
 	naming: { entry: "index.[ext]", chunk: "[name]-[hash].[ext]" },
 	minify: isProduction,
+	sourcemap: isProduction ? "none" : "linked",
 	external: ["elysia"],
 	plugins: [serverPlugin, ...userServerBunPlugins, makeBosiaSvelteCompiler("bun")],
 });

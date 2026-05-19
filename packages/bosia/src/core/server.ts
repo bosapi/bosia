@@ -24,6 +24,7 @@ import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } f
 import { isDev, compress, isStaticPath } from "./html.ts";
 import { OUT_DIR } from "./paths.ts";
 import { dedup, dedupKey } from "./dedup.ts";
+import { reportDevErrorFromCatch } from "./devErrorReport.ts";
 import {
 	loadRouteData,
 	loadMetadata,
@@ -280,6 +281,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			}
 			if (isDev) console.error("Data endpoint error:", err);
 			else console.error("Data endpoint error:", (err as Error).message ?? err);
+			if (isDev) reportDevErrorFromCatch(err);
 			return Response.json({ error: "Internal Server Error" }, { status: 500 });
 		}
 	}
@@ -362,6 +364,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		} catch (err) {
 			if (isDev) console.error("API route error:", err);
 			else console.error("API route error:", (err as Error).message ?? err);
+			if (isDev) reportDevErrorFromCatch(err);
 			return Response.json({ error: "Internal Server Error" }, { status: 500 });
 		}
 	}
@@ -535,6 +538,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				}
 				if (isDev) console.error("Form action error:", err);
 				else console.error("Form action error:", (err as Error).message ?? err);
+				if (isDev) reportDevErrorFromCatch(err);
 				if (isEnhanced) {
 					return Response.json(
 						{ type: "error", status: 500, message: "Internal Server Error" },
@@ -639,6 +643,7 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 	} catch (err) {
 		if (isDev) console.error("Unhandled request error:", err);
 		else console.error("Unhandled request error:", (err as Error).message ?? err);
+		if (isDev) reportDevErrorFromCatch(err);
 		return Response.json({ error: "Internal Server Error" }, { status: 500 });
 	} finally {
 		inFlight--;
@@ -758,14 +763,15 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : isDev ? 9001 : 
 // loose `Elysia` so plugin-extended types stay assignable.
 let app: Elysia = new Elysia({
 	serve: { maxRequestBodySize: BODY_SIZE_LIMIT, idleTimeout: IDLE_TIMEOUT },
-}).onError(({ error }) => {
-	if (isDev) console.error("Uncaught server error:", error);
-	else console.error("Uncaught server error:", (error as Error)?.message ?? error);
-	return Response.json({ error: "Internal Server Error" }, { status: 500 });
 }) as unknown as Elysia;
 
 // Plugins.backend.before — runs before framework middleware/routes.
 // Plugin-registered routes here BYPASS the framework (CSRF, hooks, etc.).
+// Plugins register their own `.onError()` handlers here. Elysia fires onError
+// handlers in registration order; plugin handlers run first and (when they
+// return undefined) fall through to the base 500 responder chained after this
+// loop. Registering the base responder before the loop would short-circuit
+// every plugin handler.
 for (const plugin of plugins) {
 	if (plugin.backend?.before) {
 		try {
@@ -776,6 +782,12 @@ for (const plugin of plugins) {
 		}
 	}
 }
+
+app = app.onError(({ error }) => {
+	if (isDev) console.error("Uncaught server error:", error);
+	else console.error("Uncaught server error:", (error as Error)?.message ?? error);
+	return Response.json({ error: "Internal Server Error" }, { status: 500 });
+}) as unknown as Elysia;
 
 app = app
 	// Static files are served by resolve() with path traversal protection and security headers

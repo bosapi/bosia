@@ -468,6 +468,20 @@
 - [x] 🟡 Update demo + template `blog/[slug]/+page.svelte` and docs (`README.md`, `docs/content/docs/guides/routing.md`) to consume `params` as a top-level prop
 - [x] 🟡 Standardize `default` and `todo` starter templates on the `(public)/` route group convention used by `demo`, so scaffolded projects are ready to add authenticated areas (e.g. `(app)/`, `(admin)/`) without restructuring later
 
+### Same-day addition (2026-05-19) — Inspector runtime error capture
+
+> Inspector now captures live client + server runtime errors and surfaces them in a passive badge inside the running app. Manual "Send to AI" per row reuses the existing alt-click → `aiEndpoint` handoff. Live-only (no server buffer, no SSE replay), dev-only (production unaffected — plugin self-disables).
+
+- [x] 🟠 Server capture: Elysia `.onError()` hook + `uncaughtException` / `unhandledRejection` process listeners installed lazily inside `backend.before()`. `uncaughtException` rethrows so `dev.ts` crash-recovery still triggers. 500ms dedup window on `source:message:firstFrame` prevents render-loop floods (`packages/bosia/src/core/plugins/inspector/index.ts`)
+- [x] 🟠 SSE broadcaster at `/__bosia/errors` — module-scoped controller Set, `event: bosia-error` data frames, 25s `:ping` keepalive, abort-driven cleanup. No replay buffer (live-only contract)
+- [x] 🟠 Reorder Elysia onError chain in `server.ts`: base 500 responder now registered **after** `plugin.backend.before` loop so plugin handlers fire first. Without this fix the inspector handler would never run because the base handler returned a truthy Response and short-circuited the chain
+- [x] 🟠 Client capture in `overlay.ts`: `window.error` + `unhandledrejection` listeners + EventSource subscription to `/__bosia/errors`. Unified list, stable ids, UI dedup
+- [x] 🟠 Floating badge UI bottom-right (`● N errors`) → click → expandable panel with per-row stack details, Dismiss, and AI-only "Send to AI" button. Badge hidden when list empty
+- [x] 🟠 Sourcemap resolution dev-only — `build.ts` now emits `sourcemap: "linked"` in dev (`"none"` in production). New `inspector/sourcemap.ts` lazy-resolves compiled stack frames → source `(file, line, col)` via `@jridgewell/trace-mapping` at POST time only for the error the user clicks "Send to AI" on. Per-process `Map<path, TraceMap>` cache; cache resets on app respawn so edits are never stale. Graceful degradation when `.map` is missing
+- [x] 🟡 Last-interaction context: track the most recent `data-bosia-loc` the user clicked/keyed on and append `Last user interaction: <file>:<line>:<col>` to the comment payload. Helps the AI when the throw site is deep in framework code but the originating button/input is the relevant location
+- [x] 🟡 `errorsEnabled?: boolean` (default `true`) config flag on `InspectorOptions` — opt out of the whole feature without removing the plugin
+- [x] 🟡 AI-only action button — overlay still surfaces the badge for visibility without `aiEndpoint`, but the "Send to AI" button only renders when configured. Standalone bosia apps in editor-mode see display-only errors
+
 ---
 
 ## v0.5.8 — `$types` resolution inside `.svelte` files

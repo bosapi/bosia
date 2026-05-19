@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.5.7] - 2026-05-19
 
+### Added
+
+- The Inspector now surfaces runtime errors from your running app in a small badge in the bottom-right corner of the page. Both browser errors (uncaught exceptions, unhandled promise rejections) and server errors (Elysia handler errors, uncaught process errors, unhandled rejections) are captured live. Click the badge to see the list; click "Send to AI" on any row to hand the error off to your configured `aiEndpoint` with full source context. Source maps are generated automatically in dev, so the AI receives real `src/routes/...svelte:42` paths instead of compiled bundle paths. Errors are live-only — refresh the page for a clean slate. Production is unaffected (Inspector turns itself off). Apps that don't use the Inspector see no change.
+
 ### Changed
 
 - Route params are now passed as a separate `params` prop on `+page.svelte` and `+layout.svelte`, matching SvelteKit. Read `params.slug` from the `params` prop instead of `data.params.slug`. The `data.params` shim has been removed — update any page or layout that used the nested form to destructure `params` alongside `data`.

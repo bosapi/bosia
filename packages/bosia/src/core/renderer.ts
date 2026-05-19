@@ -18,6 +18,7 @@ import {
 } from "./html.ts";
 import type { Metadata } from "./hooks.ts";
 import { loadPlugins } from "./config.ts";
+import { reportDevErrorFromCatch } from "./devErrorReport.ts";
 import type { BosiaPlugin, RenderContext } from "./types/plugin.ts";
 
 // Plugins are loaded once per process at module init via top-level await elsewhere
@@ -362,6 +363,7 @@ export async function loadRouteData(
 			}
 			if (isDev) console.error("Layout server load error:", err);
 			else console.error("Layout server load error:", (err as Error).message ?? err);
+			if (isDev) reportDevErrorFromCatch(err);
 			const wrapped = new HttpError(500, "Internal Server Error");
 			stampErrorContext(
 				wrapped,
@@ -424,6 +426,7 @@ export async function loadRouteData(
 			}
 			if (isDev) console.error("Page server load error:", err);
 			else console.error("Page server load error:", (err as Error).message ?? err);
+			if (isDev) reportDevErrorFromCatch(err);
 			const wrapped = new HttpError(500, "Internal Server Error");
 			stampErrorContext(
 				wrapped,
@@ -552,6 +555,7 @@ export async function renderSSRStream(
 		}
 		if (isDev) console.error("SSR load error:", err);
 		else console.error("SSR load error:", (err as Error).message ?? err);
+		if (isDev) reportDevErrorFromCatch(err);
 		return renderErrorPage(
 			500,
 			"Internal Server Error",
@@ -828,6 +832,18 @@ export async function renderErrorPage(
 	// Strip the nonce from emitted scripts when CSP is off — the attribute
 	// is dead bytes without a matching policy header.
 	if (!CSP_ENABLED) nonce = undefined;
+
+	// Inspector overlay and other plugin bodyEnd fragments must be injected
+	// on error pages too — otherwise SSE never connects and runtime errors
+	// from the failing render are invisible in the UI.
+	const renderCtx: RenderContext = {
+		request: req,
+		url,
+		route: route ? { pattern: route.pattern } : { pattern: "" },
+		metadata: null,
+	};
+	const bodyEndExtras = await pluginRenderFragments("bodyEnd", renderCtx);
+
 	// 1. Nested boundary
 	if (route && errorDepth !== undefined && route.errorPages?.length) {
 		const origin = errorOrigin ?? "page";
@@ -868,6 +884,9 @@ export async function renderErrorPage(
 					undefined,
 					true,
 					nonce,
+					null,
+					null,
+					bodyEndExtras,
 				);
 				return compress(html, "text/html; charset=utf-8", req, status);
 			} catch (err) {
@@ -902,6 +921,9 @@ export async function renderErrorPage(
 				undefined,
 				true,
 				nonce,
+				null,
+				null,
+				bodyEndExtras,
 			);
 			return compress(html, "text/html; charset=utf-8", req, status);
 		} catch (err) {

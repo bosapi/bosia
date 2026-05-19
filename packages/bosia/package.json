@@ -51,6 +51,7 @@
 	},
 	"dependencies": {
 		"@clack/prompts": "^1.1.0",
+		"@jridgewell/trace-mapping": "^0.3.31",
 		"@tailwindcss/cli": "^4.2.1",
 		"elysia": "^1.4.26",
 		"magic-string": "^0.30.0",
