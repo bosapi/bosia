@@ -19,6 +19,12 @@ The CLI copies tokens to `src/lib/themes/<name>.css` and rewrites the active imp
 
 - [neutral](/docs/themes/neutral/) — default shadcn-inspired palette + system stack
 - [editorial](/docs/themes/editorial/) — warm cream + Instrument Serif display
+- [zinc](/docs/themes/zinc/) — cool blue-gray, developer-tool aesthetic
+- [stone](/docs/themes/stone/) — warm gray, document and publishing aesthetic
+- [claude](/docs/themes/claude/) — violet palette, AI assistant and productivity aesthetic
+- [ocean](/docs/themes/ocean/) — deep navy + teal, SaaS and data app aesthetic
+- [forest](/docs/themes/forest/) — earthy green + amber, nature and sustainability aesthetic
+- [rose](/docs/themes/rose/) — rose palette, creative and lifestyle aesthetic
 
 ## Authoring a theme
 

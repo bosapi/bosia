@@ -67,5 +67,5 @@
 	],
 	"features": ["drizzle", "todo"],
 	"blocks": ["cards/feature-editorial"],
-	"themes": ["neutral", "editorial"]
+	"themes": ["neutral", "editorial", "zinc", "stone", "claude", "ocean", "forest", "rose"]
 }

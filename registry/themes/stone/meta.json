@@ -1,0 +1,7 @@
+{
+	"name": "stone",
+	"description": "Warm gray palette. Document and publishing aesthetic.",
+	"files": ["tokens.css"],
+	"fonts": {},
+	"npmDeps": {}
+}

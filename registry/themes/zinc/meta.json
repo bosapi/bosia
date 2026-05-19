@@ -1,0 +1,7 @@
+{
+	"name": "zinc",
+	"description": "Cool blue-gray palette. Minimal developer-tool feel.",
+	"files": ["tokens.css"],
+	"fonts": {},
+	"npmDeps": {}
+}

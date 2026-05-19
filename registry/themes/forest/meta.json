@@ -1,0 +1,7 @@
+{
+	"name": "forest",
+	"description": "Earthy green palette with amber accents. Nature and sustainability aesthetic.",
+	"files": ["tokens.css"],
+	"fonts": {},
+	"npmDeps": {}
+}

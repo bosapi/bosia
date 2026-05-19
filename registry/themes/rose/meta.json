@@ -1,0 +1,7 @@
+{
+	"name": "rose",
+	"description": "Rose palette. Creative, fashion, and lifestyle aesthetic.",
+	"files": ["tokens.css"],
+	"fonts": {},
+	"npmDeps": {}
+}

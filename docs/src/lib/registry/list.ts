@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import matter from "gray-matter";
 
-export type RegistryKind = "components" | "blocks";
+export type RegistryKind = "components" | "blocks" | "themes";
 
 export type RegistrySummary = {
 	name: string;
@@ -85,10 +85,13 @@ function buildSummary(
 
 	if (meta) {
 		const metaName = typeof meta.name === "string" ? meta.name : name;
-		summary.install =
-			kind === "components"
-				? `bun x bosia@latest add ${metaName}`
-				: `bun x bosia@latest add block ${path}`;
+		if (kind === "components") {
+			summary.install = `bun x bosia@latest add ${metaName}`;
+		} else if (kind === "blocks") {
+			summary.install = `bun x bosia@latest add block ${path}`;
+		} else {
+			summary.install = `bun x bosia@latest add theme ${metaName}`;
+		}
 		if (Array.isArray(meta.dependencies)) {
 			summary.dependencies = meta.dependencies.filter(
 				(d): d is string => typeof d === "string",
@@ -116,6 +119,7 @@ export async function listRegistryWithContent(kind: RegistryKind): Promise<Regis
 	const details: RegistryDetail[] = [];
 	for (const { path, raw } of files) {
 		if (path === "overview") continue;
+		if (path === "creating-themes") continue;
 		const meta = await readRegistryMeta(kind, path);
 		const { summary, content } = buildSummary(kind, path, raw, meta);
 		details.push({ ...summary, content });

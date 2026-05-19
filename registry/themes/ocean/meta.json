@@ -1,0 +1,7 @@
+{
+	"name": "ocean",
+	"description": "Deep navy and teal palette. SaaS dashboard and data app aesthetic.",
+	"files": ["tokens.css"],
+	"fonts": {},
+	"npmDeps": {}
+}
