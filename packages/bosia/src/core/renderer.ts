@@ -20,6 +20,8 @@ import type { Metadata } from "./hooks.ts";
 import { loadPlugins } from "./config.ts";
 import { reportDevErrorFromCatch } from "./devErrorReport.ts";
 import type { BosiaPlugin, RenderContext } from "./types/plugin.ts";
+import { getAppHtmlSegments } from "./appHtml.ts";
+import type { AppHtmlSegments } from "./appHtml.ts";
 
 // Plugins are loaded once per process at module init via top-level await elsewhere
 // (server.ts), but renderer is also reachable from build/prerender contexts where
@@ -98,6 +100,11 @@ const INTERNAL_HOSTS: Set<string> = (() => {
 if (INTERNAL_HOSTS.size > 0) {
 	console.log(`🍪 Internal hosts (cookies forwarded): ${[...INTERNAL_HOSTS].join(", ")}`);
 }
+
+// ─── App HTML Template ───────────────────────────────────
+// Required; loaded once per process; cached singleton with invalidation for HMR
+
+const appHtmlSegments: AppHtmlSegments = getAppHtmlSegments();
 
 // ─── Session-Aware Fetch ─────────────────────────────────
 // Passed to load() functions so they can call internal APIs with the
@@ -607,8 +614,8 @@ export async function renderSSRStream(
 			);
 		}
 		const html =
-			buildHtmlShellOpen(metadata?.lang, nonce) +
-			buildMetadataChunk(metadata, headExtras) +
+			buildHtmlShellOpen(metadata?.lang, nonce, appHtmlSegments) +
+			buildMetadataChunk(metadata, headExtras, appHtmlSegments) +
 			buildHtmlTail(
 				"",
 				"",
@@ -621,6 +628,7 @@ export async function renderSSRStream(
 				nonce,
 				data.pageDeps,
 				data.layoutDeps,
+				appHtmlSegments,
 			);
 		return new Response(html, {
 			headers: { "Content-Type": "text/html; charset=utf-8" },
@@ -659,8 +667,8 @@ export async function renderSSRStream(
 
 	// Pre-compute all chunks; pull-based stream gives Bun native backpressure.
 	const chunks: Uint8Array[] = [
-		enc.encode(buildHtmlShellOpen(metadata?.lang, nonce)),
-		enc.encode(buildMetadataChunk(metadata, headExtras)),
+		enc.encode(buildHtmlShellOpen(metadata?.lang, nonce, appHtmlSegments)),
+		enc.encode(buildMetadataChunk(metadata, headExtras, appHtmlSegments)),
 		enc.encode(
 			buildHtmlTail(
 				body,
@@ -674,6 +682,7 @@ export async function renderSSRStream(
 				nonce,
 				data.pageDeps,
 				data.layoutDeps,
+				appHtmlSegments,
 			),
 		),
 	];
@@ -781,6 +790,8 @@ export async function renderPageWithFormData(
 			nonce,
 			data.pageDeps,
 			data.layoutDeps,
+			undefined,
+			appHtmlSegments,
 		);
 		return compress(html, "text/html; charset=utf-8", req, status);
 	}
@@ -808,6 +819,8 @@ export async function renderPageWithFormData(
 		nonce,
 		data.pageDeps,
 		data.layoutDeps,
+		undefined,
+		appHtmlSegments,
 	);
 	return compress(html, "text/html; charset=utf-8", req, status);
 }
@@ -887,6 +900,7 @@ export async function renderErrorPage(
 					null,
 					null,
 					bodyEndExtras,
+					appHtmlSegments,
 				);
 				return compress(html, "text/html; charset=utf-8", req, status);
 			} catch (err) {
@@ -924,6 +938,7 @@ export async function renderErrorPage(
 				null,
 				null,
 				bodyEndExtras,
+				appHtmlSegments,
 			);
 			return compress(html, "text/html; charset=utf-8", req, status);
 		} catch (err) {

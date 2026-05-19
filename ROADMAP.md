@@ -493,7 +493,22 @@
 
 ---
 
-## v0.5.9 — `$types` resolution inside `.svelte` files
+## v0.5.9 — `src/app.html` template ✅ (shipped 2026-05-20)
+
+> SvelteKit-style document shell customization. Users can create `src/app.html` with `%bosia.head%` and `%bosia.body%` placeholders to control HTML chrome (lang attribute, data attributes, favicon, analytics script placement). Immediate trigger: runtime lang mutation from metadata (honors cookie/header). Broader value: full chrome control without hardcoding.
+
+- [x] 🟠 `packages/bosia/src/core/appHtml.ts` — parse, validate, cache template with invalidation for HMR
+- [x] 🟠 Placeholders: `%bosia.head%`, `%bosia.body%` (required); `%bosia.lang%`, `%bosia.nonce%`, `%bosia.assets%`, `%bosia.env.PUBLIC_*%` (optional)
+- [x] 🟠 Update `html.ts` builders (`buildHtml`, `buildHtmlShellOpen`, `buildMetadataChunk`, `buildHtmlTail`) to accept optional segments and slot user chrome
+- [x] 🟠 Update `renderer.ts` to load template once per process and thread through 6 call sites
+- [x] 🟠 Validation at build time in `build.ts` — fail fast if required placeholders missing
+- [x] 🟡 Scaffold `src/app.html` in templates (`default`, `todo`) and demo with `%bosia.lang%` and `data-theme` attributes
+- [x] 🟡 Favicon detection: if user's `headOpen` contains `rel="icon"`, skip framework default favicon injection
+- [x] 🟡 Unit tests: template loading, validation, parsing, caching, interpolation, segment structure
+
+---
+
+## v0.5.10 — `$types` resolution inside `.svelte` files
 
 > `tsc --noEmit` resolves `./$types` from `.svelte` files via the `rootDirs: [".", ".bosia/types"]` trick, so `bun run check` and `bun run build` both type-check `params` / `PageProps` correctly. But `svelte-language-server` (used by Zed, VS Code w/ Svelte extension, etc.) runs `.svelte` script blocks through a preprocessor and doesn't honor `rootDirs` from inside that virtual TS document — the editor reports `Cannot find module './$types'` and `params` collapses to implicit `any`. SvelteKit avoids this by shipping a dedicated language-tools plugin (`@sveltejs/language-tools`) that **synthesizes** `$types` virtually at LSP time. Bosia needs the same.
 >

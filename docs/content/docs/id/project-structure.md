@@ -16,6 +16,7 @@ my-app/
 │   │       └── +page.server.ts
 │   ├── lib/               # Kode bersama (di-alias sebagai $lib)
 │   │   └── utils.ts
+│   ├── app.html           # Template dokumen HTML (opsional)
 │   ├── app.css            # Gaya global + token Tailwind
 │   ├── app.d.ts           # Deklarasi tipe
 │   └── hooks.server.ts    # Middleware (opsional)
@@ -37,6 +38,7 @@ my-app/
 | `+server.ts`        | Endpoint API — mengekspor fungsi HTTP verb                      |
 | `+error.svelte`     | Halaman error — dirender ketika loader melempar kesalahan       |
 | `hooks.server.ts`   | Middleware — mencegat setiap request                            |
+| `app.html`          | Template dokumen HTML — kustomisasi `<html>`, `<head>`, dll.    |
 | `app.css`           | Gaya global — direktif Tailwind dan design token                |
 
 ## Alias Path

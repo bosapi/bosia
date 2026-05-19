@@ -16,6 +16,7 @@ my-app/
 │   │       └── +page.server.ts
 │   ├── lib/               # Shared code (aliased as $lib)
 │   │   └── utils.ts
+│   ├── app.html           # HTML document template (optional)
 │   ├── app.css            # Global styles + Tailwind tokens
 │   ├── app.d.ts           # Type declarations
 │   └── hooks.server.ts    # Middleware (optional)
@@ -37,6 +38,7 @@ my-app/
 | `+server.ts`        | API endpoint — exports HTTP verb functions                   |
 | `+error.svelte`     | Error page — renders when a loader throws                    |
 | `hooks.server.ts`   | Middleware — intercepts every request                        |
+| `app.html`          | HTML document template — customize `<html>`, `<head>`, etc.  |
 | `app.css`           | Global styles — Tailwind directives and design tokens        |
 
 ## Path Aliases

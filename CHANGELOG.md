@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.9] - 2026-05-20
+
+### Added
+
+- SvelteKit-style `src/app.html` template support. Users can now create an optional `src/app.html` to customize the HTML shell with `%bosia.head%` and `%bosia.body%` placeholders for injection points, plus `%bosia.lang%` for dynamic language attributes (honors `metadata.lang`), `%bosia.nonce%` for CSP nonce injection, and `%bosia.env.PUBLIC_*%` for static environment variable substitution at build time. The framework ships a minimal default shell (no breaking change) and validates at build time.
+- Default project templates (`default`, `todo`) and the demo app now include a basic `src/app.html` scaffold with `%bosia.lang%` ready for customization.
+
+---
+
 ## [0.5.8] - 2026-05-19
 
 ### Fixed

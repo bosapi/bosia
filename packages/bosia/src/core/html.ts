@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from "fs";
 import { getDeclaredEnvKeys } from "./env.ts";
 import { nonceAttr } from "./csp.ts";
 import { OUT_DIR } from "./paths.ts";
+import type { AppHtmlSegments } from "./appHtml.ts";
+import { interpolateSegment } from "./appHtml.ts";
 
 // ─── Dist Manifest ───────────────────────────────────────
 // Maps hashed filenames → script/link tags.
@@ -98,6 +100,7 @@ export function buildHtml(
 	pageDeps: any = null,
 	layoutDeps: any[] | null = null,
 	bodyEndExtras?: string[],
+	segments?: AppHtmlSegments,
 ): string {
 	const cssLinks = (distManifest.css ?? [])
 		.map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
@@ -138,6 +141,31 @@ export function buildHtml(
 
 	const bodyEnd = bodyEndExtras?.length ? "\n  " + bodyEndExtras.join("\n  ") : "";
 
+	if (segments) {
+		const safeKey = safeLang(lang);
+		const headOpenInterpolated = interpolateSegment(segments.headOpen, {
+			lang: safeKey,
+			nonce,
+		});
+		const headCloseInterpolated = interpolateSegment(segments.headClose, { nonce });
+		const tailInterpolated = interpolateSegment(segments.tail, { nonce });
+		const faviconLine = segments.hasCustomFavicon
+			? ""
+			: `  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n`;
+
+		return (
+			headOpenInterpolated +
+			`\n  ${faviconLine}${cssLinks}\n` +
+			`  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
+			`  <script${n}>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>\n` +
+			`  ${fallbackTitle}${head}` +
+			headCloseInterpolated +
+			`\n${SPINNER}` +
+			`\n  <div id="app">${body}</div>${scripts}${bodyEnd}` +
+			tailInterpolated
+		);
+	}
+
 	return `<!DOCTYPE html>
 <html lang="${safeLang(lang)}">
 <head>
@@ -161,12 +189,31 @@ export function buildHtml(
 import type { Metadata } from "./hooks.ts";
 
 /** Chunk 1: everything from <!DOCTYPE> through CSS/modulepreload links (head still open) */
-export function buildHtmlShellOpen(lang?: string, nonce?: string): string {
+export function buildHtmlShellOpen(
+	lang?: string,
+	nonce?: string,
+	segments?: AppHtmlSegments,
+): string {
 	const key = safeLang(lang);
 	const n = nonceAttr(nonce);
 	const cssLinks = (distManifest.css ?? [])
 		.map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
 		.join("\n  ");
+
+	if (segments) {
+		const headOpenInterpolated = interpolateSegment(segments.headOpen, { lang: key, nonce });
+		const faviconLine = segments.hasCustomFavicon
+			? ""
+			: `  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n`;
+		return (
+			headOpenInterpolated +
+			`\n  ${faviconLine}${cssLinks}\n` +
+			`  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
+			`  <script${n}>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>\n` +
+			`  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`
+		);
+	}
+
 	return (
 		`<!DOCTYPE html>\n<html lang="${key}">\n<head>\n` +
 		`  <meta charset="UTF-8">\n` +
@@ -188,7 +235,11 @@ const SPINNER =
 	`@keyframes __bs__{to{transform:rotate(360deg)}}</style><i></i></div>`;
 
 /** Chunk 2: metadata tags + close </head> + open <body> + spinner */
-export function buildMetadataChunk(metadata: Metadata | null, headExtras?: string[]): string {
+export function buildMetadataChunk(
+	metadata: Metadata | null,
+	headExtras?: string[],
+	segments?: AppHtmlSegments,
+): string {
 	let out = "\n";
 	if (metadata) {
 		if (metadata.title) out += `  <title>${escapeHtml(metadata.title)}</title>\n`;
@@ -218,7 +269,14 @@ export function buildMetadataChunk(metadata: Metadata | null, headExtras?: strin
 			if (fragment) out += `  ${fragment}\n`;
 		}
 	}
-	out += `</head>\n<body>\n${SPINNER}`;
+
+	if (segments) {
+		const headCloseInterpolated = interpolateSegment(segments.headClose, {});
+		out += headCloseInterpolated + `\n${SPINNER}`;
+	} else {
+		out += `</head>\n<body>\n${SPINNER}`;
+	}
+
 	return out;
 }
 
@@ -246,6 +304,7 @@ export function buildHtmlTail(
 	nonce?: string,
 	pageDeps: any = null,
 	layoutDeps: any[] | null = null,
+	segments?: AppHtmlSegments,
 ): string {
 	const n = nonceAttr(nonce);
 	let out = `<script${n}>document.getElementById('__bs__').remove()</script>`;
@@ -279,7 +338,14 @@ export function buildHtmlTail(
 			if (fragment) out += `\n${fragment}`;
 		}
 	}
-	out += `\n</body>\n</html>`;
+
+	if (segments) {
+		const tailInterpolated = interpolateSegment(segments.tail, { nonce });
+		out += `\n${tailInterpolated}`;
+	} else {
+		out += `\n</body>\n</html>`;
+	}
+
 	return out;
 }
 

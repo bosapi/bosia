@@ -12,6 +12,7 @@ import { generateEnvModules } from "./envCodegen.ts";
 import { BOSIA_NODE_PATH, OUT_DIR, resolveBosiaBin } from "./paths.ts";
 import { loadPlugins } from "./config.ts";
 import type { BuildContext } from "./types/plugin.ts";
+import { loadAppHtmlTemplate } from "./appHtml.ts";
 
 // Resolved from this file's location inside the bosia package
 const CORE_DIR = import.meta.dir;
@@ -77,6 +78,20 @@ if (manifest.apis.length > 0) {
 	for (const r of manifest.apis) {
 		console.log(`   ${r.pattern} → ${r.server}`);
 	}
+}
+
+// 1b. Load & validate src/app.html template (required)
+let appHtml: any;
+try {
+	appHtml = loadAppHtmlTemplate(process.cwd());
+	console.log(
+		"📄 Loaded src/app.html (favicon override: " +
+			(appHtml.hasCustomFavicon ? "yes" : "no") +
+			")",
+	);
+} catch (err) {
+	console.error(`❌ src/app.html validation failed:\n${(err as Error).message}`);
+	process.exit(1);
 }
 
 for (const p of userPlugins) {

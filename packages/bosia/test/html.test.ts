@@ -8,7 +8,10 @@ import {
 	safeLang,
 	buildHtml,
 	buildHtmlTail,
+	buildHtmlShellOpen,
+	buildMetadataChunk,
 } from "../src/core/html.ts";
+import type { AppHtmlSegments } from "../src/core/appHtml.ts";
 
 describe("safeJsonStringify", () => {
 	test("escapes <, >, & for script-context safety", () => {
@@ -199,5 +202,80 @@ describe("safeLang", () => {
 
 	test("rejects too-long tags", () => {
 		expect(safeLang("a".repeat(36))).toBe("en");
+	});
+});
+
+describe("buildHtml — template segments", () => {
+	const segments: AppHtmlSegments = {
+		headOpen: `<!DOCTYPE html>\n<html lang="%bosia.lang%">\n<head>\n`,
+		headClose: `\n</head>\n<body>\n`,
+		tail: `\n</body>\n</html>`,
+		hasCustomFavicon: false,
+	};
+
+	test("buildHtml with segments uses template structure", () => {
+		const html = buildHtml(
+			"test body",
+			"<title>Test</title>",
+			{},
+			[],
+			false,
+			null,
+			"en",
+			true,
+			undefined,
+			null,
+			null,
+			undefined,
+			segments,
+		);
+
+		// Should contain interpolated version of headOpen with lang replaced
+		expect(html).toContain('lang="en"');
+		expect(html).toContain("test body");
+		expect(html).toContain(segments.tail);
+		expect(html).toContain("<title>Test</title>");
+	});
+
+	test("buildHtmlShellOpen replaces %bosia.lang% at call time", () => {
+		const html = buildHtmlShellOpen("id", undefined, segments);
+		expect(html).toContain("id");
+		expect(html).not.toContain("%bosia.lang%");
+	});
+
+	test("buildHtmlShellOpen skips favicon when hasCustomFavicon=true", () => {
+		const customSegments: AppHtmlSegments = {
+			...segments,
+			hasCustomFavicon: true,
+		};
+
+		const html = buildHtmlShellOpen("en", undefined, customSegments);
+		expect(html).not.toContain('rel="icon"');
+	});
+
+	test("buildMetadataChunk uses segments headClose", () => {
+		const html = buildMetadataChunk({ title: "Test" }, undefined, segments);
+		expect(html).toContain(segments.headClose);
+		expect(html).toContain("Test");
+	});
+
+	test("buildHtmlTail uses segments tail", () => {
+		const html = buildHtmlTail(
+			"<div>content</div>",
+			"",
+			{},
+			[],
+			false,
+			null,
+			true,
+			undefined,
+			undefined,
+			null,
+			null,
+			segments,
+		);
+
+		expect(html).toContain(segments.tail);
+		expect(html).toContain("content");
 	});
 });
