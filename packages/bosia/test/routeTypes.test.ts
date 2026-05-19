@@ -152,7 +152,7 @@ describe("generateRouteTypes() — exports", () => {
 		expect(out).toContain("import type { load as _pageLoad }");
 	});
 
-	test("without pageServer: PageData is just { params: Params }", () => {
+	test("without pageServer: PageData is empty, params in PageProps", () => {
 		const m: RouteManifest = {
 			pages: [
 				{
@@ -169,7 +169,8 @@ describe("generateRouteTypes() — exports", () => {
 		};
 		generateRouteTypes(m);
 		const out = readTypes("about");
-		expect(out).toContain("export type PageData = { params: Params };");
+		expect(out).toContain("export type PageData = {};");
+		expect(out).toContain("export type PageProps = { data: PageData; params: Params };");
 		expect(out).not.toContain("_pageLoad");
 		expect(out).not.toContain("ActionData");
 	});
