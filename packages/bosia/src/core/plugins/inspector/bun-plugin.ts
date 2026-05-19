@@ -2,6 +2,7 @@ import { parse, compile } from "svelte/compiler";
 import MagicString from "magic-string";
 import { basename, relative } from "node:path";
 import type { BunPlugin } from "bun";
+import { svelteMapCache } from "../../svelteCompiler.ts";
 
 const VIRTUAL_NS = "bosia-inspector-css";
 
@@ -119,6 +120,28 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 					preserveComments: dev,
 					cssHash: ({ css }) => `svelte-${fnv(css)}`,
 				});
+
+				// Store Svelte's compile-step map. Bun's bundler doesn't chain
+				// onLoad sourcemaps, so the final bundle map resolves stack frames
+				// to the post-svelte-compile JS intermediate (`$.next()` /
+				// `$.append()` calls) using the .svelte filename — line numbers
+				// land past EOF. The inspector's runtime resolver chases bundle
+				// map → this svelte map (with bias-interpolated lookup) to refine
+				// to original source. `injectLocs` only shifts column offsets
+				// inside HTML open tags, never script-block line numbers, so we
+				// accept the small column drift to skip a second map chain.
+				//
+				// Only cache for the client target — server (Bun) and client builds
+				// share `svelteMapCache` keyed by abs path, but their compile output
+				// line numbers differ. The resolver translates browser-side stack
+				// frames (delivered via SSE), which run client code.
+				if (dev && generate === "client" && result.js.map) {
+					const m =
+						typeof result.js.map === "string"
+							? JSON.parse(result.js.map)
+							: result.js.map;
+					svelteMapCache.set(args.path, m);
+				}
 
 				let js = result.js.code;
 				// Skip empty CSS — multiple +page.svelte routes with no <style> would

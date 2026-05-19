@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Route params are now passed as a separate `params` prop on `+page.svelte` and `+layout.svelte`, matching SvelteKit. Read `params.slug` from the `params` prop instead of `data.params.slug`. The `data.params` shim has been removed — update any page or layout that used the nested form to destructure `params` alongside `data`.
 - Starter templates (`default`, `todo`) now place public pages under a `(public)/` route group, matching the `demo` template. This is the convention you'll want as soon as you add an authenticated area (e.g. `(app)/`, `(admin)/`) — the public marketing pages stay grouped together without changing their URLs. Existing projects don't need to change anything; this only affects newly scaffolded projects.
 
+### Fixed
+
+- Inspector stack-trace resolution for `.svelte` files now lands on the original source line. Previously the bundler's source map labeled frames with the `.svelte` filename but used line numbers from the post-Svelte-compile intermediate (`$.next()` / `$.append()` calls), so a runtime error at `+page.svelte:3` would show up as something like `+page.svelte:638` — well past the end of the real file. The resolver now chains through Svelte's per-file compile map to recover the correct source position.
+
 ---
 
 ## [0.5.6] - 2026-05-18

@@ -5,7 +5,7 @@ import { scanRoutes } from "./scanner.ts";
 import { generateRoutesFile } from "./routeFile.ts";
 import { generateRouteTypes, ensureRootDirs } from "./routeTypes.ts";
 import { makeBosiaPlugin } from "./plugin.ts";
-import { makeBosiaSvelteCompiler } from "./svelteCompiler.ts";
+import { makeBosiaSvelteCompiler, svelteMapCache } from "./svelteCompiler.ts";
 import { prerenderStaticRoutes, generateStaticSite } from "./prerender.ts";
 import { loadEnv, classifyEnvVars } from "./env.ts";
 import { generateEnvModules } from "./envCodegen.ts";
@@ -185,6 +185,18 @@ if (!serverResult.success) {
 	console.error("❌ Server build failed:");
 	for (const msg of serverResult.logs) console.error(msg);
 	process.exit(1);
+}
+
+// Persist the per-file Svelte compile maps so the inspector's runtime stack
+// resolver can chain bundle-map → svelte-map to land on original source. We
+// cannot chain at bundle time because Bun's bundle maps reference intermediate
+// JS positions that are mostly absent from Svelte's sparse compile map —
+// post-build remapping nukes mappings. Instead we keep both maps separate and
+// do a two-stage lookup with `bias` interpolation in the resolver.
+if (!isProduction && svelteMapCache.size > 0) {
+	const entries: Record<string, unknown> = {};
+	for (const [k, v] of svelteMapCache) entries[k] = v;
+	writeFileSync(`${OUT_DIR}/svelte-maps.json`, JSON.stringify(entries));
 }
 
 // 6. Collect output files for dist/manifest.json

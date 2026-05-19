@@ -8,7 +8,8 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"lib": ["dom", "dom.iterable", "esnext"],
-		"types": ["bun"]
+		"types": ["bun"],
+		"rootDirs": [".", ".bosia/types"]
 	},
 	"include": ["src/**/*", "src/**/*.d.ts"]
 }

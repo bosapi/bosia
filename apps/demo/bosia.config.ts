@@ -7,7 +7,7 @@ export default defineConfig({
 		serverTiming(),
 		inspector({
 			editor: "zed",
-			aiEndpoint: "http://localhost:9000/api/inspector-ai",
+			aiEndpoint: "http://localhost:9900/api/inspector-ai",
 		}),
 	],
 });
