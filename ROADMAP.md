@@ -484,7 +484,15 @@
 
 ---
 
-## v0.5.8 — `$types` resolution inside `.svelte` files
+## v0.5.8 — `bind:*` shadow crash fix ✅ (shipped 2026-05-19)
+
+> Dev pages using `<input bind:value={state}>` (or any `bind:*` on writable state) crashed the browser with `RangeError: Maximum call stack size exceeded` on first render. Root cause was a name collision between Svelte 5's dev compile output and Bun's bundler — Svelte wraps the binding in a named `function get()` for `$inspect` stack traces; Bun rewrites `$.get` to a named import `get`; the function name then shadows the import and recurses into itself. Production was unaffected (anonymous arrow functions).
+
+- [x] 🔴 Post-process Svelte compile output in `packages/bosia/src/core/plugins/inspector/bun-plugin.ts` and `packages/bosia/src/core/svelteCompiler.ts` to rename the inner `get` / `set` to `$$g` / `$$s` (length-preserving so cached source-map columns stay accurate, names absent from `svelte/internal/client` exports). Dev-only — prod compile uses anonymous arrows so the shim is skipped.
+
+---
+
+## v0.5.9 — `$types` resolution inside `.svelte` files
 
 > `tsc --noEmit` resolves `./$types` from `.svelte` files via the `rootDirs: [".", ".bosia/types"]` trick, so `bun run check` and `bun run build` both type-check `params` / `PageProps` correctly. But `svelte-language-server` (used by Zed, VS Code w/ Svelte extension, etc.) runs `.svelte` script blocks through a preprocessor and doesn't honor `rootDirs` from inside that virtual TS document — the editor reports `Cannot find module './$types'` and `params` collapses to implicit `any`. SvelteKit avoids this by shipping a dedicated language-tools plugin (`@sveltejs/language-tools`) that **synthesizes** `$types` virtually at LSP time. Bosia needs the same.
 >

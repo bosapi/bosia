@@ -88,6 +88,21 @@ export interface InspectorBunPluginOptions {
 	dev: boolean;
 }
 
+// Svelte 5 dev compile emits named `function get()` / `function set($$value)`
+// expressions inside `$.bind_*` calls (for nicer `$inspect` stack traces). Bun's
+// bundler destructures `import * as $ from "svelte/internal/client"` into named
+// imports, so `$.get(search)` becomes plain `get(search)` — which collides with
+// the wrapping function name and recurses into itself → RangeError. Prod compile
+// uses anonymous arrow functions and is unaffected.
+//
+// Rename to `$$g` / `$$s` (3 chars — length-preserving so cached svelte source
+// map columns stay accurate). These names aren't present in svelte/internal/client.
+function fixBindShadow(code: string): string {
+	return code
+		.replace(/\bfunction get\(\)/g, () => "function $$g()")
+		.replace(/\bfunction set\(\$\$value\)/g, () => "function $$s($$value)");
+}
+
 const fnv = (s: string): string => {
 	let h = 2166136261;
 	for (let i = 0; i < s.length; i++) {
@@ -143,7 +158,7 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 					svelteMapCache.set(args.path, m);
 				}
 
-				let js = result.js.code;
+				let js = dev ? fixBindShadow(result.js.code) : result.js.code;
 				// Skip empty CSS — multiple +page.svelte routes with no <style> would
 				// otherwise each emit an empty CSS chunk, all hashing to the same
 				// content → Bun fails with "Multiple files share the same output path".

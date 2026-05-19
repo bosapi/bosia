@@ -11,6 +11,21 @@ const svelteHash = (s: string) => Bun.hash(s, 5381).toString(36);
 // the output `.map` files to chain back to original source positions.
 export const svelteMapCache = new Map<string, unknown>();
 
+// Svelte 5 dev compile emits named `function get()` / `function set($$value)`
+// expressions inside `$.bind_*` calls (for nicer `$inspect` stack traces). Bun's
+// bundler destructures `import * as $ from "svelte/internal/client"` into named
+// imports, so `$.get(search)` becomes plain `get(search)` — which collides with
+// the wrapping function name and recurses into itself → RangeError. Prod compile
+// uses anonymous arrow functions and is unaffected.
+//
+// Rename to `$$g` / `$$s` (3 chars — length-preserving so cached svelte source
+// map columns stay accurate). These names aren't present in svelte/internal/client.
+function fixBindShadow(code: string): string {
+	return code
+		.replace(/\bfunction get\(\)/g, () => "function $$g()")
+		.replace(/\bfunction set\(\$\$value\)/g, () => "function $$s($$value)");
+}
+
 export function makeBosiaSvelteCompiler(target: "browser" | "bun"): BunPlugin {
 	const generate = target === "browser" ? "client" : "server";
 	const dev = process.env.NODE_ENV !== "production";
@@ -44,7 +59,8 @@ export function makeBosiaSvelteCompiler(target: "browser" | "bun"): BunPlugin {
 							: result.js.map;
 					svelteMapCache.set(args.path, m);
 				}
-				return { contents: result.js.code, loader: "ts" };
+				const contents = dev ? fixBindShadow(result.js.code) : result.js.code;
+				return { contents, loader: "ts" };
 			});
 
 			build.onLoad({ filter: /\.svelte\.[tj]s$/ }, async (args) => {
