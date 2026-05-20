@@ -160,7 +160,7 @@ export function buildHtml(
 			`  <script${n}>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>\n` +
 			`  ${fallbackTitle}${head}` +
 			headCloseInterpolated +
-			`\n${SPINNER}` +
+			(body ? "" : `\n${SPINNER}`) +
 			`\n  <div id="app">${body}</div>${scripts}${bodyEnd}` +
 			tailInterpolated
 		);

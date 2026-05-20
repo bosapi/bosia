@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Hydration failures now log to the console instead of silently leaving the page on the loading spinner. Previously, an unhandled error in `hydrate.ts:main()` would leave `<p>Loading...</p>` stuck on screen with no signal — now the error surfaces in DevTools.
+- 404/error pages no longer show a stuck loading spinner that blocked clicking error page links. The spinner is now only injected when the body is empty (streaming SSR pre-paint gap); non-streaming responses with rendered content ship without it.
 
 ---
 

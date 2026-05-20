@@ -520,6 +520,7 @@
 - [x] 🟠 `router.navigate(path, { replace, source })` supports `history.replaceState` (used by `goto({ replaceState: true })`) and threads the source through to the Navigation object
 - [x] 🟡 `beforeunload` fires `beforeNavigate` with `willUnload: true` so listeners can observe (cancellation requires native `beforeunload` event — out of scope)
 - [x] 🟡 Hydration safety net — wrapped `main()` in `core/client/hydrate.ts` in a `.catch()` so any future hydrator failure logs to console instead of silently leaving "Loading…" on screen
+- [x] 🟠 404/error pages no longer ship a stuck `#__bs__` spinner that blocks clicking the "Go home" link. `buildHtml()` segments branch now gates spinner injection on empty `body` — non-streaming SSR responses (errors, form re-renders) skip it; streaming SSR and `ssr=false` paths still get it for the TTFB → first-paint gap
 - [x] 🟡 Demo route `apps/demo/src/routes/(public)/nav-test/+page.svelte` exercises all four patterns plus the cancel/event-log flow
 - [x] 🟡 New docs page `docs/content/docs/guides/navigation.md` covers the four patterns and the lifecycle hooks; added to the Guides sidebar in `docs/src/lib/docs/nav.ts`
 - [x] 🟡 New `bosia-navigation` skill (under `docs/content/skills/`) so AI agents pick the right navigation pattern and use the lifecycle hooks correctly. Catalog index (`docs/content/skills/SKILL.md`) bumped 34 → 35; cross-references added in `bosia-routing` and `bosia-auth-flow`
