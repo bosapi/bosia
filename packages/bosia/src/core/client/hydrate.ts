@@ -130,7 +130,11 @@ async function main() {
 	}
 }
 
-main();
+main().catch((err) => {
+	// Without this, a hydration failure leaves "Loading..." stuck on screen
+	// with no console signal. Surface it loudly instead.
+	console.error("[bosia] hydration failed", err);
+});
 
 // ─── Hot Reload (dev only) ────────────────────────────────
 

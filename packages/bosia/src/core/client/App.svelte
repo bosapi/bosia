@@ -6,6 +6,8 @@
 	import { appState, clearDirty } from "./appState.svelte.ts";
 	import { captureSnapshot, liveContext, shouldRerun, type CacheEntry } from "./loaderCache.ts";
 	import { pickErrorPage } from "../errorMatch.ts";
+	import { fireAfterNavigate, type Navigation } from "./navListeners.ts";
+	import { drainNavResolvers } from "./navigation.ts";
 
 	let {
 		ssrMode = false,
@@ -129,6 +131,18 @@
 						.catch(() => null)
 				: Promise.resolve(null);
 
+		const settle = (target: { url: URL; params: Record<string, string> } | null) => {
+			const nav: Navigation = {
+				from: null,
+				to: target,
+				type: router.lastNavType,
+				willUnload: false,
+				cancel: () => {},
+			};
+			fireAfterNavigate(nav);
+			drainNavResolvers();
+		};
+
 		Promise.all([
 			match.route.page(),
 			Promise.all(match.route.layouts.map((l: any) => l())),
@@ -184,7 +198,9 @@
 					appState.errorComponent = errMod.default;
 					appState.errorProps = { error: { status: errStatus, message: errMessage } };
 					appState.errorDepth = K;
-					if (router.isPush) window.scrollTo(0, 0);
+					if (router.isPush && !router.suppressScroll) window.scrollTo(0, 0);
+					router.suppressScroll = false;
+					settle({ url, params: match.params });
 				} catch {
 					window.location.href = path;
 				}
@@ -272,8 +288,10 @@
 			appState.errorProps = null;
 			appState.errorDepth = null;
 
-			// Scroll to top on forward navigation (not on popstate/back-forward)
-			if (router.isPush) window.scrollTo(0, 0);
+			// Scroll to top on forward navigation (not on popstate/back-forward).
+			// goto({ noScroll: true }) flips `router.suppressScroll` for one nav.
+			if (router.isPush && !router.suppressScroll) window.scrollTo(0, 0);
+			router.suppressScroll = false;
 
 			// Update document title and meta description from server metadata
 			if (result?.metadata) {
@@ -290,6 +308,8 @@
 					meta.content = result.metadata.description;
 				}
 			}
+
+			settle({ url, params: match.params });
 		});
 
 		return () => {

@@ -4,6 +4,17 @@
 
 import { findMatch, canonicalPathname } from "../matcher.ts";
 import { clientRoutes } from "bosia:routes";
+import { fireBeforeNavigate, type Navigation } from "./navListeners.ts";
+
+export type NavType = "link" | "goto" | "popstate" | "form" | "enter";
+
+function buildTarget(path: string): { url: URL; params: Record<string, string> } | null {
+	if (typeof window === "undefined") return null;
+	const pathname = path.split("?")[0].split("#")[0];
+	const match = findMatch(clientRoutes, pathname);
+	const url = new URL(path, window.location.origin);
+	return { url, params: match?.params ?? {} };
+}
 
 export const router = new (class Router {
 	currentRoute = $state(
@@ -14,8 +25,12 @@ export const router = new (class Router {
 	params = $state<Record<string, string>>({});
 	/** True when navigation was triggered by a link click / navigate() call, false on popstate (back/forward). */
 	isPush = $state(true);
+	/** Source of the most recent navigation — feeds the Navigation object passed to lifecycle hooks. */
+	lastNavType: NavType = "enter";
+	/** Set by `goto({ noScroll: true })`; consumed once by App.svelte after the next nav settles. */
+	suppressScroll = false;
 
-	navigate(path: string) {
+	navigate(path: string, opts: { replace?: boolean; source?: NavType } = {}) {
 		if (this.currentRoute === path) return;
 		// Unknown route — let the server handle it (renders +error.svelte with 404)
 		const queryHash = path.slice(path.split("?")[0].split("#")[0].length);
@@ -31,10 +46,28 @@ export const router = new (class Router {
 			(match.route as any).trailingSlash ?? "never",
 		);
 		const finalPath = canonical !== null ? canonical + queryHash : path;
+
+		const navType: NavType = opts.source ?? "link";
+		const fromTarget = buildTarget(this.currentRoute);
+		const toTarget = buildTarget(finalPath);
+		const nav: Navigation = {
+			from: fromTarget,
+			to: toTarget,
+			type: navType,
+			willUnload: false,
+			cancel: () => {},
+		};
+		if (!fireBeforeNavigate(nav)) return;
+
+		this.lastNavType = navType;
 		this.isPush = true;
 		this.currentRoute = finalPath;
 		if (typeof history !== "undefined") {
-			history.pushState({}, "", finalPath);
+			if (opts.replace) {
+				history.replaceState({}, "", finalPath);
+			} else {
+				history.pushState({}, "", finalPath);
+			}
 		}
 	}
 
@@ -57,14 +90,45 @@ export const router = new (class Router {
 			if (anchor.protocol !== "https:" && anchor.protocol !== "http:") return;
 
 			e.preventDefault();
-			this.navigate(anchor.pathname + anchor.search + anchor.hash);
+			this.navigate(anchor.pathname + anchor.search + anchor.hash, { source: "link" });
 		});
 
 		// Browser back/forward
 		window.addEventListener("popstate", () => {
-			this.isPush = false;
-			this.currentRoute =
+			const finalPath =
 				window.location.pathname + window.location.search + window.location.hash;
+			// Fire beforeNavigate listeners; popstate can't be reliably cancelled
+			// (browser history already advanced), so we surface the event for
+			// observation only — `cancel()` is a no-op for this source.
+			const fromTarget = buildTarget(this.currentRoute);
+			const toTarget = buildTarget(finalPath);
+			const nav: Navigation = {
+				from: fromTarget,
+				to: toTarget,
+				type: "popstate",
+				willUnload: false,
+				cancel: () => {},
+			};
+			fireBeforeNavigate(nav);
+
+			this.lastNavType = "popstate";
+			this.isPush = false;
+			this.currentRoute = finalPath;
+		});
+
+		// Full-page unload — fire beforeNavigate with willUnload=true so
+		// listeners can warn-on-leave (return value ignored; cancellation here
+		// requires `beforeunload`, not in scope).
+		window.addEventListener("beforeunload", () => {
+			const fromTarget = buildTarget(this.currentRoute);
+			const nav: Navigation = {
+				from: fromTarget,
+				to: null,
+				type: "link",
+				willUnload: true,
+				cancel: () => {},
+			};
+			fireBeforeNavigate(nav);
 		});
 	}
 })();

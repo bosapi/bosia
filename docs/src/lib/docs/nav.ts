@@ -26,6 +26,7 @@ export const sidebar: NavGroup[] = [
 		labelId: "Panduan",
 		items: [
 			{ label: "Routing", slug: "guides/routing" },
+			{ label: "Navigation", labelId: "Navigasi", slug: "guides/navigation" },
 			{ label: "Server Loaders", labelId: "Server Loader", slug: "guides/server-loaders" },
 			{
 				label: "Request Deduplication",

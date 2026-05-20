@@ -38,6 +38,10 @@ class AppState {
 	// Bumped by `invalidate*()` to wake the App.svelte nav effect, so calling
 	// `invalidate("k")` re-runs the loader pipeline without changing the URL.
 	invalidationTick = $state(0);
+	// Resolvers waiting for the next navigation to settle. Drained by
+	// App.svelte after each nav effect finishes (success or error). Used by
+	// `goto()` to return a Promise that mirrors SvelteKit's contract.
+	navResolvers: Array<() => void> = [];
 }
 
 export const appState = new AppState();

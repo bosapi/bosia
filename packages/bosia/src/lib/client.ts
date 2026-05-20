@@ -10,4 +10,11 @@
 
 export { enhance } from "../core/client/enhance.ts";
 export type { SubmitFunction, ActionResult } from "../core/client/enhance.ts";
-export { invalidate, invalidateAll } from "../core/client/navigation.ts";
+export {
+	afterNavigate,
+	beforeNavigate,
+	goto,
+	invalidate,
+	invalidateAll,
+} from "../core/client/navigation.ts";
+export type { GotoOptions, Navigation, NavigationTarget } from "../core/client/navigation.ts";

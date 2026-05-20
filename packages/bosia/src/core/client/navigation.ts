@@ -10,9 +10,46 @@
 //   await invalidate((url) => url.pathname.startsWith("/api/"));
 //   await invalidateAll();
 
+import { onDestroy } from "svelte";
 import { appState } from "./appState.svelte.ts";
+import { router } from "./router.svelte.ts";
+import {
+	afterListeners,
+	beforeListeners,
+	type AfterNavigateCallback,
+	type BeforeNavigateCallback,
+} from "./navListeners.ts";
 
 type InvalidateTarget = string | URL | ((url: URL) => boolean);
+
+export type { Navigation, NavigationTarget } from "./navListeners.ts";
+
+/**
+ * Register a callback that runs before each client-side navigation. The
+ * callback may call `nav.cancel()` to block the navigation. Auto-unregisters
+ * when the calling Svelte component is destroyed.
+ */
+export function beforeNavigate(fn: BeforeNavigateCallback): void {
+	beforeListeners.add(fn);
+	try {
+		onDestroy(() => beforeListeners.delete(fn));
+	} catch {
+		// Not inside a component — caller is responsible for lifetime.
+	}
+}
+
+/**
+ * Register a callback that runs after each client-side navigation settles.
+ * Auto-unregisters when the calling Svelte component is destroyed.
+ */
+export function afterNavigate(fn: AfterNavigateCallback): void {
+	afterListeners.add(fn);
+	try {
+		onDestroy(() => afterListeners.delete(fn));
+	} catch {
+		// Not inside a component — caller is responsible for lifetime.
+	}
+}
 
 function bumpTick() {
 	appState.invalidationTick = appState.invalidationTick + 1;
@@ -56,4 +93,66 @@ export function invalidateAll(): Promise<void> {
 	appState.dirty.all = true;
 	bumpTick();
 	return Promise.resolve();
+}
+
+// ─── goto ─────────────────────────────────────────────────
+// Programmatic SPA navigation. Counterpart to SvelteKit's `goto()`.
+//
+// Usage:
+//   import { goto } from "bosia/client";
+//   await goto("/dashboard");
+//   await goto("/login", { replaceState: true, invalidateAll: true });
+
+export interface GotoOptions {
+	/** Use `history.replaceState` instead of `history.pushState`. */
+	replaceState?: boolean;
+	/** Mark every loader dirty so the next nav re-runs all of them. */
+	invalidateAll?: boolean;
+	/** Skip the default scroll-to-top after navigation. */
+	noScroll?: boolean;
+	/** Reserved — not yet honored by the framework. */
+	keepFocus?: boolean;
+	/** Reserved — not yet honored (no shallow routing). */
+	state?: Record<string, unknown>;
+}
+
+/**
+ * Navigate to `url` via the client router. Returns a Promise that resolves
+ * after the navigation has settled (loaders ran, components mounted) or
+ * immediately if the URL matches the current route.
+ */
+export function goto(url: string, opts: GotoOptions = {}): Promise<void> {
+	if (typeof window === "undefined") return Promise.resolve();
+
+	if (opts.invalidateAll) {
+		appState.dirty.all = true;
+	}
+	if (opts.noScroll) {
+		router.suppressScroll = true;
+	}
+
+	const beforePath = router.currentRoute;
+
+	return new Promise<void>((resolve) => {
+		appState.navResolvers.push(resolve);
+		router.navigate(url, { replace: opts.replaceState, source: "goto" });
+		// `navigate()` short-circuits when `currentRoute === path` — the nav
+		// effect won't fire, so nothing will drain the resolver. Resolve now.
+		if (router.currentRoute === beforePath) {
+			drainNavResolvers();
+		}
+	});
+}
+
+/** Internal — App.svelte calls this after each nav effect settles. */
+export function drainNavResolvers(): void {
+	const queue = appState.navResolvers;
+	appState.navResolvers = [];
+	for (const fn of queue) {
+		try {
+			fn();
+		} catch (err) {
+			console.warn("[bosia] navResolver threw", err);
+		}
+	}
 }

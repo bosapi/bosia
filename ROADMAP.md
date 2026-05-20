@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.5.6**
+> Current version: **0.5.10**
 
 ---
 
@@ -510,7 +510,31 @@
 
 ---
 
-## v0.5.10 — `$types` resolution inside `.svelte` files
+## v0.5.10 — SvelteKit navigation parity ✅ (shipped 2026-05-20)
+
+> Closes the gap between Bosia's client navigation API and SvelteKit's `$app/navigation`. Userland apps were reaching for `window.location.href` for programmatic nav because `goto()` wasn't exported — and that escape hatch had its own caveats (full reload, lost SPA state). Now exposes `goto`, `beforeNavigate`, `afterNavigate` from `bosia/client` with the same shape SvelteKit ships.
+
+- [x] 🟠 `goto(url, opts?)` exported from `bosia/client`. Returns a Promise that resolves after the nav effect settles (loaders ran, components mounted). Honors `replaceState`, `invalidateAll`, `noScroll`; accepts `keepFocus` and `state` for forward compatibility but does not yet honor them. Routes through `router.navigate()` — no parallel code path
+- [x] 🟠 `beforeNavigate(fn)` / `afterNavigate(fn)` lifecycle hooks. `nav.cancel()` blocks SPA navigations; popstate (browser back/forward) cancellation is a no-op since history has already advanced. Auto-unregister on component destroy via `onDestroy`
+- [x] 🟠 Router exposes navigation `type` (`"link" | "goto" | "popstate" | "form" | "enter"`) and the `Navigation` object threading from `router.navigate()` into both lifecycle phases. Shared listener registry lives in `core/client/navListeners.ts` to break the ESM cycle between `navigation.ts` and `router.svelte.ts`
+- [x] 🟠 `router.navigate(path, { replace, source })` supports `history.replaceState` (used by `goto({ replaceState: true })`) and threads the source through to the Navigation object
+- [x] 🟡 `beforeunload` fires `beforeNavigate` with `willUnload: true` so listeners can observe (cancellation requires native `beforeunload` event — out of scope)
+- [x] 🟡 Hydration safety net — wrapped `main()` in `core/client/hydrate.ts` in a `.catch()` so any future hydrator failure logs to console instead of silently leaving "Loading…" on screen
+- [x] 🟡 Demo route `apps/demo/src/routes/(public)/nav-test/+page.svelte` exercises all four patterns plus the cancel/event-log flow
+- [x] 🟡 New docs page `docs/content/docs/guides/navigation.md` covers the four patterns and the lifecycle hooks; added to the Guides sidebar in `docs/src/lib/docs/nav.ts`
+
+### Deferred (logged for follow-up)
+
+- [ ] 🟡 `pushState(url, state)` / `replaceState(url, state)` for shallow routing
+- [ ] 🟡 `onNavigate(fn)` (runs between `beforeNavigate` and the actual nav)
+- [ ] 🟡 `preloadCode(...routes)` (preloads route module without data)
+- [ ] 🟡 `applyAction(result)` / `deserialize(result)` from `$app/forms`
+- [ ] 🟡 `disableScrollHandling()` for fine-grained scroll control
+- [ ] 🟠 Diagnose & fix `window.location.href` stall on static builds — needs a confirmed repro; safety-net try/catch is in place so the next occurrence surfaces a console error instead of staying on "Loading…"
+
+---
+
+## v0.5.11 — `$types` resolution inside `.svelte` files
 
 > `tsc --noEmit` resolves `./$types` from `.svelte` files via the `rootDirs: [".", ".bosia/types"]` trick, so `bun run check` and `bun run build` both type-check `params` / `PageProps` correctly. But `svelte-language-server` (used by Zed, VS Code w/ Svelte extension, etc.) runs `.svelte` script blocks through a preprocessor and doesn't honor `rootDirs` from inside that virtual TS document — the editor reports `Cannot find module './$types'` and `params` collapses to implicit `any`. SvelteKit avoids this by shipping a dedicated language-tools plugin (`@sveltejs/language-tools`) that **synthesizes** `$types` virtually at LSP time. Bosia needs the same.
 >

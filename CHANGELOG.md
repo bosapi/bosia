@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.10] - 2026-05-20
+
+### Added
+
+- `goto()` for programmatic SPA navigation, exported from `bosia/client`. Call `goto("/dashboard")` or `goto("/login", { replaceState: true, invalidateAll: true })` to navigate without a full page reload. Returns a Promise that resolves after the destination's loaders have run and the new page is mounted. Honors `replaceState`, `invalidateAll`, and `noScroll`. Mirrors SvelteKit's `goto()` so apps can use the same idiom they're used to instead of reaching for `window.location.href` (which tears down all client state).
+- `beforeNavigate(fn)` and `afterNavigate(fn)` lifecycle hooks, exported from `bosia/client`. Call `nav.cancel()` from a `beforeNavigate` listener to block a navigation (useful for unsaved-changes prompts). Both auto-unregister when the calling component is destroyed. The `Navigation` object passed to listeners carries `from`, `to`, `type` (`"link" | "goto" | "popstate" | "form" | "enter"`), and `willUnload` — same shape SvelteKit ships.
+- New `docs/guides/navigation` page documenting all four navigation patterns: `<a href>`, `goto()`, form-action `redirect()`, and the `window.location.href` escape hatch.
+- New demo route at `/nav-test` (in `apps/demo`) that exercises every navigation pattern plus the cancel/event-log flow.
+
+### Fixed
+
+- Hydration failures now log to the console instead of silently leaving the page on the loading spinner. Previously, an unhandled error in `hydrate.ts:main()` would leave `<p>Loading...</p>` stuck on screen with no signal — now the error surfaces in DevTools.
+
+---
+
 ## [0.5.9] - 2026-05-20
 
 ### Added
