@@ -48,6 +48,9 @@ async function main() {
 				const themeFlags = args.filter((a) => a.startsWith("--"));
 				const { runAddTheme } = await import("./theme.ts");
 				await runAddTheme(positional[1], themeFlags);
+			} else if (sub === "font") {
+				const { runAddFont } = await import("./font.ts");
+				await runAddFont(positional[1], positional[2]);
 			} else {
 				const { runAdd } = await import("./add.ts");
 				await runAdd(positional, flags);
@@ -77,6 +80,7 @@ Commands:
   add <component...> [-y]   Add one or more UI components from the registry
   add block <cat>/<name>    Add a composed block from the registry
   add theme <name>          Add a theme (tokens.css) from the registry
+  add font <family> <url>   Prepend an @import url(...) for a font family to src/app.css
   feat <feature>            Add a feature scaffold from the registry [--local]
 
 Examples:
@@ -94,6 +98,7 @@ Examples:
   bun x bosia@latest add shop/cart           → src/lib/components/shop/cart/
   bun x bosia@latest add block cards/feature-editorial
   bun x bosia@latest add theme editorial
+  bun x bosia@latest add font "Fredoka" "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap"
   bun x bosia@latest feat login
 `);
 			break;

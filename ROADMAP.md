@@ -505,6 +505,8 @@
 - [x] 🟡 Scaffold `src/app.html` in templates (`default`, `todo`) and demo with `%bosia.lang%` and `data-theme` attributes
 - [x] 🟡 Favicon detection: if user's `headOpen` contains `rel="icon"`, skip framework default favicon injection
 - [x] 🟡 Unit tests: template loading, validation, parsing, caching, interpolation, segment structure
+- [x] 🟡 New skill `bosia-app-css` documenting canonical `src/app.css` order and the Tailwind v4 / LightningCSS `@import url(...)` ordering rule (font imports must come before `@import "tailwindcss"`, else silently dropped from `public/bosia-tw.css`). Catalog index `docs/content/skills/SKILL.md` updated (33 → 34 skills); slotted under design conventions next to `bosia-theme-tokens`. Trigger: real-world incident in `toko-mainan-anak` where Fredoka font-family declarations rendered but the Google Fonts `@import` was stripped by LightningCSS because it sat after `@source "../src"`.
+- [x] 🟡 New CLI command `bosia add font "<Family>" "<url>"` (`packages/bosia/src/cli/font.ts` → reuses existing `mergeFontImports()` from `cli/fonts.ts`). Prepends `@import url(...)` to `src/app.css` with `/* bosia-font: <Family> */` marker so it survives Tailwind v4 / LightningCSS ordering. Idempotent. Wired into `cli/index.ts` (`add font` subcommand) with usage and example. Companion AI tool `bosia_add_font` added in Bosapi (`bosapi/src/features/ai/tools/bosia.ts`) so the agent stops hand-editing app.css and uses the safe path.
 
 ---
 

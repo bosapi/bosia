@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - SvelteKit-style `src/app.html` template support. Users can now create an optional `src/app.html` to customize the HTML shell with `%bosia.head%` and `%bosia.body%` placeholders for injection points, plus `%bosia.lang%` for dynamic language attributes (honors `metadata.lang`), `%bosia.nonce%` for CSP nonce injection, and `%bosia.env.PUBLIC_*%` for static environment variable substitution at build time. The framework ships a minimal default shell (no breaking change) and validates at build time.
 - Default project templates (`default`, `todo`) and the demo app now include a basic `src/app.html` scaffold with `%bosia.lang%` ready for customization.
+- New `bosia-app-css` skill (under `docs/content/skills/`) documents the canonical `src/app.css` order and the Tailwind v4 / LightningCSS rule that font `@import url(...)` lines must come before `@import "tailwindcss"` — otherwise the import is silently dropped and the font never loads. Catalog index (`docs/content/skills/SKILL.md`) updated to 34 skills.
+- New CLI command `bun x bosia@latest add font "<Family>" "<@import url>"` — prepends a Google-Fonts-style `@import url(...)` to `src/app.css` with a `/* bosia-font: <Family> */` marker. Idempotent (re-adding the same family is a no-op) and always places the import above `@import "tailwindcss"` so LightningCSS doesn't silently drop it. Help text and `--help` example updated.
 
 ---
 

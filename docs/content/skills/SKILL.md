@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 33 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
+description: Top-level index of 34 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
     mode: catalog
     category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-33 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+34 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -67,11 +67,12 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 ## Conventions — design ✦ — always-active design system rules
 
-| Name                    | Rule                                                                                                                                               |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bosia-theme-tokens`    | Semantic Tailwind tokens only — `bg-card`/`text-foreground`/`border-border`. Never raw colors. Theme swappable via `tokens.css`.                   |
-| `bosia-block-compose`   | Registry-first — call `list_registry()`, prefer blocks over hand-rolling. If no block fits, compose from `ui/*` primitives.                        |
-| `bosia-frontend-design` | Commit to a BOLD aesthetic direction before any UI emit. Distinctive type, dominant color + sharp accent, one memorable detail. Avoid AI defaults. |
+| Name                    | Rule                                                                                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bosia-theme-tokens`    | Semantic Tailwind tokens only — `bg-card`/`text-foreground`/`border-border`. Never raw colors. Theme swappable via `tokens.css`.                     |
+| `bosia-app-css`         | Canonical `src/app.css` order. `@import url(...)` (fonts) first or LightningCSS drops them. Fonts via theme tokens (`--font-display`/`--font-body`). |
+| `bosia-block-compose`   | Registry-first — call `list_registry()`, prefer blocks over hand-rolling. If no block fits, compose from `ui/*` primitives.                          |
+| `bosia-frontend-design` | Commit to a BOLD aesthetic direction before any UI emit. Distinctive type, dominant color + sharp accent, one memorable detail. Avoid AI defaults.   |
 
 ## Conventions — framework · — always-active code rules
 
