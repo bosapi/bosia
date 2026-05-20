@@ -92,6 +92,7 @@ export async function load({ parent }) {
 
 - `bosia-svelte-runes` — page components use `$props()`, not `export let`.
 - `bosia-elysia-routes` — `+server.ts` shape rules.
+- `bosia-navigation` — client navigation (`goto`, `beforeNavigate`, `afterNavigate`) from `bosia/client`.
 - `bosia-rbac-permission` — every private route enforces a permission.
 
 ## Checklist gate

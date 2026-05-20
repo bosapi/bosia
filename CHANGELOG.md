@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `beforeNavigate(fn)` and `afterNavigate(fn)` lifecycle hooks, exported from `bosia/client`. Call `nav.cancel()` from a `beforeNavigate` listener to block a navigation (useful for unsaved-changes prompts). Both auto-unregister when the calling component is destroyed. The `Navigation` object passed to listeners carries `from`, `to`, `type` (`"link" | "goto" | "popstate" | "form" | "enter"`), and `willUnload` — same shape SvelteKit ships.
 - New `docs/guides/navigation` page documenting all four navigation patterns: `<a href>`, `goto()`, form-action `redirect()`, and the `window.location.href` escape hatch.
 - New demo route at `/nav-test` (in `apps/demo`) that exercises every navigation pattern plus the cancel/event-log flow.
+- New `bosia-navigation` skill (under `docs/content/skills/`) so AI agents pick the right navigation pattern (`<a href>` / `goto()` / form-action `redirect()` / `window.location.href`) and use the lifecycle hooks correctly. Catalog index (`docs/content/skills/SKILL.md`) updated to 35 skills and cross-references added in `bosia-routing` and `bosia-auth-flow`.
 
 ### Fixed
 

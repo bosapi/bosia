@@ -5,9 +5,9 @@ triggers:
     - app.css
     - fonts
     - google fonts
-    - @import
-    - @theme
-    - @source
+    - "@import"
+    - "@theme"
+    - "@source"
     - font-family
     - tailwind setup
     - css build

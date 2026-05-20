@@ -100,6 +100,7 @@ GET logout is a CSRF hole (link-driven). Use `<form method="POST" action="/logou
 
 - `bosia-routing` — `(public)` group, action-only `/logout` as `+server.ts`.
 - `bosia-elysia-routes` — `+server.ts` shape rules.
+- `bosia-navigation` — post-submit nav via `redirect(303, …)` in form actions; hard logout uses `window.location.href`.
 - `bosia-rbac-permission` — bootstrap with wildcard, no role checks downstream.
 - `bosia-drizzle-feature` — additive seeds only.
 - `bosia-security-review` — mandatory before finalizing.

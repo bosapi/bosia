@@ -522,6 +522,7 @@
 - [x] 🟡 Hydration safety net — wrapped `main()` in `core/client/hydrate.ts` in a `.catch()` so any future hydrator failure logs to console instead of silently leaving "Loading…" on screen
 - [x] 🟡 Demo route `apps/demo/src/routes/(public)/nav-test/+page.svelte` exercises all four patterns plus the cancel/event-log flow
 - [x] 🟡 New docs page `docs/content/docs/guides/navigation.md` covers the four patterns and the lifecycle hooks; added to the Guides sidebar in `docs/src/lib/docs/nav.ts`
+- [x] 🟡 New `bosia-navigation` skill (under `docs/content/skills/`) so AI agents pick the right navigation pattern and use the lifecycle hooks correctly. Catalog index (`docs/content/skills/SKILL.md`) bumped 34 → 35; cross-references added in `bosia-routing` and `bosia-auth-flow`
 
 ### Deferred (logged for follow-up)
 

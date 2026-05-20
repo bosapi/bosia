@@ -12,7 +12,7 @@ Bosia ships four navigation patterns that mirror SvelteKit:
 
 The first three are SPA — they don't re-execute the entry script. The fourth tears down and re-hydrates.
 
-## `<a href>`
+## Anchor links
 
 ```svelte
 <a href="/dashboard">Dashboard</a>
@@ -41,7 +41,7 @@ await goto("/login", { replaceState: true, invalidateAll: true });
 | `keepFocus`     | `false` | Reserved — not yet honored.                                            |
 | `state`         | —       | Reserved — Bosia has no shallow routing yet.                           |
 
-If the URL matches the current route, `goto()` resolves immediately without re-running loaders (call `invalidateAll: true` to force a refresh).
+If the URL matches the current route, `goto()` resolves immediately without re-running loaders. The `invalidateAll: true` option is **not** honored on same-path calls — call `invalidateAll()` directly (imported from `bosia/client`) to refresh in place.
 
 ## Lifecycle hooks
 
