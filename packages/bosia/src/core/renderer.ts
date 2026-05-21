@@ -42,6 +42,7 @@ async function pluginRenderFragments(
 		} catch (err) {
 			if (isDev) console.error(`Plugin "${p.name}" render.${hook} failed:`, err);
 			else console.error(`Plugin "${p.name}" render.${hook} failed:`, (err as Error).message);
+			if (isDev) reportDevErrorFromCatch(err);
 		}
 	}
 	return out;
@@ -481,6 +482,7 @@ export async function loadMetadata(
 	} catch (err) {
 		if (isDev) console.error("Metadata load error:", err);
 		else console.error("Metadata load error:", (err as Error).message ?? err);
+		if (isDev) reportDevErrorFromCatch(err);
 	}
 	return null;
 }
@@ -524,6 +526,7 @@ export async function renderSSRStream(
 		}
 		if (isDev) console.error("Metadata load error:", err);
 		else console.error("Metadata load error:", (err as Error).message ?? err);
+		if (isDev) reportDevErrorFromCatch(err);
 		// Continue with null metadata — don't break the page for a metadata failure
 	}
 
@@ -651,6 +654,7 @@ export async function renderSSRStream(
 	} catch (err) {
 		if (isDev) console.error("SSR render error:", err);
 		else console.error("SSR render error:", (err as Error).message ?? err);
+		if (isDev) reportDevErrorFromCatch(err);
 		// Render-phase errors fall through to deepest boundary like a page error.
 		return renderErrorPage(
 			500,
@@ -910,6 +914,7 @@ export async function renderErrorPage(
 						"Nested error page render failed:",
 						(err as Error).message ?? err,
 					);
+				if (isDev) reportDevErrorFromCatch(err);
 				// fall through to global / text fallback
 			}
 		}
@@ -944,6 +949,7 @@ export async function renderErrorPage(
 		} catch (err) {
 			if (isDev) console.error("Error page render failed:", err);
 			else console.error("Error page render failed:", (err as Error).message ?? err);
+			if (isDev) reportDevErrorFromCatch(err);
 		}
 	}
 	return new Response(message, {

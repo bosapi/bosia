@@ -525,6 +525,15 @@
 - [x] 🟡 New docs page `docs/content/docs/guides/navigation.md` covers the four patterns and the lifecycle hooks; added to the Guides sidebar in `docs/src/lib/docs/nav.ts`
 - [x] 🟡 New `bosia-navigation` skill (under `docs/content/skills/`) so AI agents pick the right navigation pattern and use the lifecycle hooks correctly. Catalog index (`docs/content/skills/SKILL.md`) bumped 34 → 35; cross-references added in `bosia-routing` and `bosia-auth-flow`
 
+### Same-day addition (2026-05-20) — Surface dev-server errors to the inspector overlay
+
+> Inspector previously captured runtime errors only (Elysia handlers, client uncaughts, server `process.on` listeners). Dev-infrastructure errors — build failures after a file save, app-server crashes, `.env` reload failures, port conflicts — only reached the terminal, so the user (or an AI agent driving the editor) saw a stuck "App server is starting…" page or stale UI with no signal. These now flow through the same red badge UI as runtime errors, broadcast over the dev proxy's existing `/__bosia/sse` channel. When the proxy can't reach the app at all, browser HTML navigations get a fallback page that mounts the same overlay and replays buffered errors, then auto-reloads once the next build succeeds.
+
+- [x] 🟠 `packages/bosia/src/core/dev.ts` captures build/app-crash/dev-uncaught errors into a bounded ring (50 entries, 30s TTL) with a 500ms dedup window — mirroring `inspector/index.ts`'s replay buffer shape. Build and app-server stderr piped + tee'd so terminal output is unchanged, error summary lands in the buffer. `process.on("uncaughtException" | "unhandledRejection")` on the dev parent process surfaces watcher-callback and `Bun.serve` failures too
+- [x] 🟠 New `event: bosia-error` over `/__bosia/sse` (same wire shape as inspector's `ServerError`). SSE handler flushes recent buffered errors to newly-connecting clients so errors that fired before the EventSource opened (initial build failure, crash loop) are still visible. Overlay's IIFE adds a second `EventSource("/__bosia/sse")` listener so the same `pushError()` path handles dev errors without UI changes
+- [x] 🟠 New `packages/bosia/src/core/dev-error-page.ts` renders the fallback HTML page returned by the dev proxy when `fetch(app)` throws on an HTML navigation. Embeds the inspector overlay script, pre-seeds buffered errors via a global `window.__BOSIA_PUSH_ERROR__`, and subscribes to `/__bosia/sse` for the `reload` event so the page swaps itself out once the next build succeeds. Non-HTML (XHR/fetch/assets) requests keep the original plaintext 503 to avoid corrupting API responses
+- [x] 🟡 `.env` reload failures inside the dev watcher no longer crash the dev parent — caught, logged, and routed through the same buffer so the user sees the validation error in the badge instead of a dead process
+
 ### Deferred (logged for follow-up)
 
 - [ ] 🟡 `pushState(url, state)` / `replaceState(url, state)` for shallow routing

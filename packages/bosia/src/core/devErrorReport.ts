@@ -6,7 +6,7 @@
 // is a safe no-op otherwise.
 
 interface DevReportInput {
-	source?: "elysia" | "uncaught" | "rejection";
+	source?: "server" | "uncaught" | "rejection";
 	message: string;
 	stack?: string;
 }
@@ -22,7 +22,7 @@ export function reportDevErrorFromCatch(err: unknown): void {
 	const e = err as Error | undefined;
 	try {
 		fn({
-			source: "elysia",
+			source: "server",
 			message: e?.message ?? String(err),
 			stack: e?.stack,
 		});
