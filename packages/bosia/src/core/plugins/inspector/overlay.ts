@@ -267,5 +267,18 @@ if(ERR_ENABLED){
       try{pushError(JSON.parse(ev.data))}catch(_){}
     });
   }catch(_){/* EventSource not available — ignore */}
+
+  // Allow inline seed scripts on dev error pages (prerender output, the dev-500
+  // fallback, etc.) to surface errors that fired in a process the live SSE can't
+  // reach. Without this the badge stays empty whenever the error happened in a
+  // different process than the one serving /__bosia/errors.
+  window.__BOSIA_PUSH_ERROR__=pushError;
+  try{
+    var n=document.getElementById("__bosia-dev-errors__");
+    if(n){
+      var list=JSON.parse(n.textContent||"[]");
+      for(var i=0;i<list.length;i++)pushError(list[i]);
+    }
+  }catch(_){}
 }
 })();`;

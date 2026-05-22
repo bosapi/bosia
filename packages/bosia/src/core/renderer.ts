@@ -19,6 +19,7 @@ import {
 import type { Metadata } from "./hooks.ts";
 import { loadPlugins } from "./config.ts";
 import { reportDevErrorFromCatch } from "./devErrorReport.ts";
+import { dev500Response } from "./dev-500.ts";
 import type { BosiaPlugin, RenderContext } from "./types/plugin.ts";
 import { getAppHtmlSegments } from "./appHtml.ts";
 import type { AppHtmlSegments } from "./appHtml.ts";
@@ -951,6 +952,14 @@ export async function renderErrorPage(
 			else console.error("Error page render failed:", (err as Error).message ?? err);
 			if (isDev) reportDevErrorFromCatch(err);
 		}
+	}
+	// Dev: render an HTML 500 page that subscribes to /__bosia/sse so the browser
+	// auto-reloads the moment the next build succeeds. Without this the user stares
+	// at "Internal Server Error" forever even after fixing the source. Pass the
+	// already-computed bodyEndExtras so the inspector overlay (red error badge,
+	// pre-seeded buffered errors) stays attached even on this bare-fallback path.
+	if (isDev) {
+		return dev500Response({ request: req, status, message, bodyEndExtras });
 	}
 	return new Response(message, {
 		status,

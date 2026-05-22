@@ -22,6 +22,7 @@ import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
 import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } from "./csp.ts";
 import { isDev, compress, isStaticPath } from "./html.ts";
+import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
 import { dedup, dedupKey } from "./dedup.ts";
 import { reportDevErrorFromCatch } from "./devErrorReport.ts";
@@ -282,6 +283,15 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			if (isDev) console.error("Data endpoint error:", err);
 			else console.error("Data endpoint error:", (err as Error).message ?? err);
 			if (isDev) reportDevErrorFromCatch(err);
+			if (isDev) {
+				const detail = err instanceof Error ? (err.stack ?? err.message) : String(err);
+				return dev500WithPlugins({
+					request,
+					url,
+					message: "Internal Server Error",
+					detail,
+				});
+			}
 			return Response.json({ error: "Internal Server Error" }, { status: 500 });
 		}
 	}
@@ -324,21 +334,30 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		return new Response("Not Found", { status: 404 });
 	}
 
-	// Prerendered pages — serve static HTML built at build time
-	// Try both `<path>/index.html` (always/ignore mode) and `<path>.html` (never mode)
-	const prerenderCandidates =
-		path === "/" ? ["index.html"] : [`${path}/index.html`, `${path.replace(/\/$/, "")}.html`];
-	for (const candidate of prerenderCandidates) {
-		const prerenderPath = safePath(`${OUT_DIR}/prerendered`, candidate);
-		if (!prerenderPath) continue;
-		const prerenderFile = Bun.file(prerenderPath);
-		if (await prerenderFile.exists()) {
-			return new Response(prerenderFile, {
-				headers: {
-					"Content-Type": "text/html; charset=utf-8",
-					"Cache-Control": "public, max-age=3600",
-				},
-			});
+	// Prerendered pages — serve static HTML built at build time.
+	// SKIP in dev: prerender runs with NODE_ENV=production, which disables the
+	// inspector plugin and the dev-only error pipeline. Serving its output back
+	// in dev would mask errors (the badge stays empty, the SSE reload script
+	// isn't injected, and the page can't auto-recover when the source is fixed).
+	// Live SSR every request in dev so /about behaves like every other route.
+	if (!isDev) {
+		// Try both `<path>/index.html` (always/ignore mode) and `<path>.html` (never mode)
+		const prerenderCandidates =
+			path === "/"
+				? ["index.html"]
+				: [`${path}/index.html`, `${path.replace(/\/$/, "")}.html`];
+		for (const candidate of prerenderCandidates) {
+			const prerenderPath = safePath(`${OUT_DIR}/prerendered`, candidate);
+			if (!prerenderPath) continue;
+			const prerenderFile = Bun.file(prerenderPath);
+			if (await prerenderFile.exists()) {
+				return new Response(prerenderFile, {
+					headers: {
+						"Content-Type": "text/html; charset=utf-8",
+						"Cache-Control": "public, max-age=3600",
+					},
+				});
+			}
 		}
 	}
 
@@ -365,6 +384,15 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			if (isDev) console.error("API route error:", err);
 			else console.error("API route error:", (err as Error).message ?? err);
 			if (isDev) reportDevErrorFromCatch(err);
+			if (isDev) {
+				const detail = err instanceof Error ? (err.stack ?? err.message) : String(err);
+				return dev500WithPlugins({
+					request,
+					url,
+					message: "Internal Server Error",
+					detail,
+				});
+			}
 			return Response.json({ error: "Internal Server Error" }, { status: 500 });
 		}
 	}
@@ -545,6 +573,15 @@ async function resolve(event: RequestEvent): Promise<Response> {
 						{ status: 500 },
 					);
 				}
+				if (isDev) {
+					const detail = err instanceof Error ? (err.stack ?? err.message) : String(err);
+					return dev500WithPlugins({
+						request,
+						url,
+						message: "Internal Server Error",
+						detail,
+					});
+				}
 				return Response.json({ error: "Internal Server Error" }, { status: 500 });
 			}
 		}
@@ -644,6 +681,16 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		if (isDev) console.error("Unhandled request error:", err);
 		else console.error("Unhandled request error:", (err as Error).message ?? err);
 		if (isDev) reportDevErrorFromCatch(err);
+		if (isDev) {
+			const detail = err instanceof Error ? (err.stack ?? err.message) : String(err);
+			return dev500WithPlugins({
+				request,
+				url,
+				status: 500,
+				message: "Internal Server Error",
+				detail,
+			});
+		}
 		return Response.json({ error: "Internal Server Error" }, { status: 500 });
 	} finally {
 		inFlight--;

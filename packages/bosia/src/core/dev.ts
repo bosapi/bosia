@@ -1,5 +1,5 @@
 import { spawn, type Subprocess } from "bun";
-import { watch } from "fs";
+import { readdirSync, statSync, watch, type Dirent } from "fs";
 import { join } from "path";
 import { loadEnv, resetDeclaredKeys } from "./env.ts";
 import { BOSIA_NODE_PATH } from "./paths.ts";
@@ -34,9 +34,11 @@ let appProcess: Subprocess | null = null;
 let sseClients = new Set<ReadableStreamDefaultController>();
 let intentionalKill = false;
 let crashCount = 0;
-let lastCrashTime = 0;
-const MAX_RAPID_CRASHES = 3;
-const RAPID_CRASH_WINDOW = 5_000; // 5 seconds
+let restartTimer: ReturnType<typeof setTimeout> | null = null;
+let healthyTimer: ReturnType<typeof setTimeout> | null = null;
+const HEALTHY_AFTER_MS = 5_000;
+// Exponential backoff between successive crash restarts (capped at last value).
+const BACKOFF_SCHEDULE_MS = [500, 1_000, 2_000, 4_000, 5_000];
 
 // ─── SSE Broadcast ────────────────────────────────────────
 
@@ -89,6 +91,11 @@ async function startAppServer() {
 		serverEntry = manifest.serverEntry ?? "index.js";
 	} catch {}
 
+	if (healthyTimer) {
+		clearTimeout(healthyTimer);
+		healthyTimer = null;
+	}
+
 	appProcess = spawn(["bun", "run", `${DEV_OUT_DIR}/server/${serverEntry}`], {
 		stdout: "inherit",
 		stderr: "inherit",
@@ -109,30 +116,42 @@ async function startAppServer() {
 		},
 	});
 
-	// Monitor for unexpected crashes
+	// Once the child has stayed alive past HEALTHY_AFTER_MS, treat it as a successful
+	// boot and zero the backoff counter so the next crash starts at 500ms again.
 	const proc = appProcess;
+	healthyTimer = setTimeout(() => {
+		if (proc === appProcess && !intentionalKill) crashCount = 0;
+	}, HEALTHY_AFTER_MS);
+	healthyTimer.unref?.();
+
+	// Monitor for unexpected crashes. Never give up — backoff and keep trying.
+	// A real source-level crash bug will surface as repeated restart logs; the
+	// moment the user (or AI) fixes it, the next file event triggers a fresh
+	// rebuild and the loop unwinds naturally.
 	proc.exited.then((code) => {
 		if (proc !== appProcess || intentionalKill) return;
 		if (code === 0) return; // clean exit
 
-		const now = Date.now();
-		if (now - lastCrashTime < RAPID_CRASH_WINDOW) {
-			crashCount++;
-		} else {
-			crashCount = 1;
-		}
-		lastCrashTime = now;
-
-		if (crashCount >= MAX_RAPID_CRASHES) {
-			console.error(
-				`\n💥 App crashed ${crashCount} times in ${RAPID_CRASH_WINDOW / 1000}s — waiting for file change to restart\n`,
-			);
-			crashCount = 0;
-			return;
+		if (healthyTimer) {
+			clearTimeout(healthyTimer);
+			healthyTimer = null;
 		}
 
-		console.warn(`\n⚠️  App crashed (exit code ${code}). Restarting...\n`);
-		startAppServer();
+		const delay =
+			BACKOFF_SCHEDULE_MS[Math.min(crashCount, BACKOFF_SCHEDULE_MS.length - 1)] ??
+			BACKOFF_SCHEDULE_MS[BACKOFF_SCHEDULE_MS.length - 1]!;
+		crashCount++;
+
+		console.warn(
+			`\n⚠️  App crashed (exit code ${code}). Restart attempt #${crashCount} in ${delay}ms...\n`,
+		);
+
+		if (restartTimer) clearTimeout(restartTimer);
+		restartTimer = setTimeout(() => {
+			restartTimer = null;
+			startAppServer();
+		}, delay);
+		restartTimer.unref?.();
 	});
 }
 
@@ -276,13 +295,97 @@ function isGenerated(path: string): boolean {
 	return GENERATED.some((g) => path.startsWith(g));
 }
 
+// ─── mtime Poll Safety Net ────────────────────────────────
+// On macOS, fs.watch misses events from atomic writes (temp file + rename)
+// and frequently delivers `filename === null` for renames. AI agents that edit
+// via rename therefore slip past the fast path. Walk src/ every 5s and call
+// scheduleBuild() on any mtime delta or add/delete. The 300ms build debounce
+// in scheduleBuild() coalesces this with the fs.watch path when both fire.
+//
+// IMPORTANT: fs.watch must update mtimes[file] when it fires — otherwise the
+// next poll sweep sees the new mtime against a stale seed and fires a duplicate
+// scheduleBuild() for an edit that was already handled.
+
+const SRC_DIR = join(process.cwd(), "src");
+const MTIME_POLL_MS = 5_000;
+const mtimes = new Map<string, number>();
+
 const srcWatcher = watch(join(process.cwd(), "src"), { recursive: true }, (_event, filename) => {
 	if (!filename) return;
 	const abs = join(process.cwd(), "src", filename);
 	if (isGenerated(abs)) return;
 	console.log(`[watch] changed: ${filename}`);
+	try {
+		mtimes.set(abs, statSync(abs).mtimeMs);
+	} catch {
+		mtimes.delete(abs);
+	}
 	scheduleBuild();
 });
+
+function walkSrc(out: Map<string, number>): void {
+	const stack: string[] = [SRC_DIR];
+	while (stack.length > 0) {
+		const dir = stack.pop() as string;
+		if (isGenerated(dir)) continue;
+		let entries: Dirent[];
+		try {
+			entries = readdirSync(dir, { withFileTypes: true }) as Dirent[];
+		} catch {
+			continue;
+		}
+		for (const ent of entries) {
+			const name = String(ent.name);
+			const abs = join(dir, name);
+			if (isGenerated(abs)) continue;
+			if (ent.isDirectory()) {
+				stack.push(abs);
+				continue;
+			}
+			if (!ent.isFile()) continue;
+			try {
+				out.set(abs, statSync(abs).mtimeMs);
+			} catch {
+				// file vanished between readdir and stat — ignore
+			}
+		}
+	}
+}
+
+// Seed the map without firing — first sweep just records existing mtimes.
+walkSrc(mtimes);
+
+const mtimePoll = setInterval(() => {
+	const fresh = new Map<string, number>();
+	walkSrc(fresh);
+
+	let changed: string | null = null;
+
+	for (const [path, ts] of fresh) {
+		const prev = mtimes.get(path);
+		if (prev === undefined || prev !== ts) {
+			changed = path;
+			break;
+		}
+	}
+	if (!changed) {
+		for (const path of mtimes.keys()) {
+			if (!fresh.has(path)) {
+				changed = path;
+				break;
+			}
+		}
+	}
+
+	if (changed) {
+		const rel = changed.startsWith(SRC_DIR) ? changed.slice(SRC_DIR.length + 1) : changed;
+		console.log(`[poll] changed: ${rel}`);
+		mtimes.clear();
+		for (const [p, t] of fresh) mtimes.set(p, t);
+		scheduleBuild();
+	}
+}, MTIME_POLL_MS);
+mtimePoll.unref?.();
 
 // ─── .env Watcher ─────────────────────────────────────────
 // Reset to shell-env snapshot and re-run loadEnv so removed/renamed
@@ -313,6 +416,9 @@ async function shutdown() {
 	intentionalKill = true;
 
 	if (buildTimer) clearTimeout(buildTimer);
+	if (restartTimer) clearTimeout(restartTimer);
+	if (healthyTimer) clearTimeout(healthyTimer);
+	clearInterval(mtimePoll);
 	srcWatcher.close();
 	envWatcher.close();
 	devServer.stop(true); // closes SSE conns → abort listeners clear ping intervals

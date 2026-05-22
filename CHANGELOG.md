@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.12] - 2026-05-22
+
+### Fixed
+
+- Dev server no longer misses file edits made via atomic write (temp file + rename) on macOS. The previous `fs.watch(src, {recursive:true})` watcher dropped these events silently, so AI-driven edits could leave the preview without ever rebuilding. A 5-second mtime poll now walks `src/` as a safety net alongside the existing watcher — typical edits still react in under a second via the OS watcher, with a 5s ceiling for events the OS misses. The watcher and the poll share an mtime map, so a single edit that fs.watch catches no longer triggers a duplicate poll-driven build 5s later. Skips the generated `.bosia/` and `public/bosia-tw.css` paths so it can't loop.
+- Crash loop in dev no longer goes silent. Previously, after 3 crashes in 5 seconds bosia would print "waiting for file change to restart" and stop respawning — if the file watcher was also stuck (see above), the app would never come back without a manual stop/start. The new behavior retries forever with exponential backoff (500ms → 1s → 2s → 4s, capped at 5s) and resets the counter once a child has stayed alive for 5+ seconds. Each retry logs the attempt number and delay so it's visible in the terminal.
+- 500 responses in dev no longer leave the browser stuck on "Internal Server Error" after the source is fixed. The bare-text/JSON fallbacks (renderer error-page failure, top-level handler catch, data endpoint, API route, non-enhanced form action) now return a small HTML page with the same SSE reload listener that hydrated pages use, so the moment the next build succeeds the page auto-reloads to the recovered route. Production responses are unchanged — JSON/text 500s still ship as-is.
+
+### Changed
+
+- Dev server shutdown now also clears the new mtime poll, pending restart timer, and healthy-timer alongside the existing watchers and build timer.
+
+## [0.5.11] - 2026-05-21
+
+### Fixed
+
+- Surface dev mode inspector problem.
+
 ## [0.5.10] - 2026-05-20
 
 ### Added
@@ -21,8 +39,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Hydration failures now log to the console instead of silently leaving the page on the loading spinner. Previously, an unhandled error in `hydrate.ts:main()` would leave `<p>Loading...</p>` stuck on screen with no signal — now the error surfaces in DevTools.
 - 404/error pages no longer show a stuck loading spinner that blocked clicking error page links. The spinner is now only injected when the body is empty (streaming SSR pre-paint gap); non-streaming responses with rendered content ship without it.
 
----
-
 ## [0.5.9] - 2026-05-20
 
 ### Added
@@ -32,16 +48,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - New `bosia-app-css` skill (under `docs/content/skills/`) documents the canonical `src/app.css` order and the Tailwind v4 / LightningCSS rule that font `@import url(...)` lines must come before `@import "tailwindcss"` — otherwise the import is silently dropped and the font never loads. Catalog index (`docs/content/skills/SKILL.md`) updated to 34 skills.
 - New CLI command `bun x bosia@latest add font "<Family>" "<@import url>"` — prepends a Google-Fonts-style `@import url(...)` to `src/app.css` with a `/* bosia-font: <Family> */` marker. Idempotent (re-adding the same family is a no-op) and always places the import above `@import "tailwindcss"` so LightningCSS doesn't silently drop it. Help text and `--help` example updated.
 
----
-
 ## [0.5.8] - 2026-05-19
 
 ### Fixed
 
 - Dev pages using `<input bind:value={state}>` (or any `bind:*` directive on a writable state) no longer crash the browser with `RangeError: Maximum call stack size exceeded` on first render. Svelte 5's dev compile wraps the binding in `function get() { return $.get(state) }` for nicer `$inspect` stack traces, but after Bun's bundler rewrites `$.get` to a named import `get`, the function name shadows the import and the body recurses into itself. The Svelte output is now rewritten before bundling so the inner names don't collide. Production builds were never affected (they use anonymous arrow functions).
 - Dev builds no longer fail with `Multiple files share the same output path` (`+page-<hash>.css`) when two or more routes share a `.svelte` component that has a `<style>` block. The Inspector's CSS extraction was emitting one CSS chunk per importing route, and Bun's chunk-splitter named all of them after the importing chunk (`+page`) — identical CSS content meant identical hashes and a collision. Component styles are now injected via a runtime `<style>` element instead of going through Bun's CSS chunking, eliminating the collision. Production builds were never affected (Inspector is dev-only).
-
----
 
 ## [0.5.7] - 2026-05-19
 
@@ -58,15 +70,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Inspector stack-trace resolution for `.svelte` files now lands on the original source line. Previously the bundler's source map labeled frames with the `.svelte` filename but used line numbers from the post-Svelte-compile intermediate (`$.next()` / `$.append()` calls), so a runtime error at `+page.svelte:3` would show up as something like `+page.svelte:638` — well past the end of the real file. The resolver now chains through Svelte's per-file compile map to recover the correct source position.
 
----
-
 ## [0.5.6] - 2026-05-18
 
 ### Fixed
 
 - Running `bun run build` while `bun run dev` was live no longer crashes the dev server with `ENOENT` reading `+page-*.js` / `+error-*.js`. The build used to wipe the entire `.bosia/` folder at start — including the live dev process's compiled server under `.bosia/dev/`. The cleanup is now scoped to just the codegen files this build owns (`routes.ts`, `routes.client.ts`, `env.server.ts`, `env.client.ts`, `types/`) plus its own output directory.
-
----
 
 ## [0.5.5] - 2026-05-18
 
@@ -77,8 +85,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - New `BOSIA_OUT_DIR` setting lets you point `bosia build` at a custom output folder. Default is still `./dist/`. Mainly useful as a verification path: run `BOSIA_OUT_DIR=.bosia/verify bun run build` to do a full production build (route scan, prerender, server entry compile — things `tsc` alone won't catch) without touching the running dev preview's files. Documented in the Environment Variables guide.
-
----
 
 ## [0.5.4] - 2026-05-17
 
@@ -117,8 +123,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `bosia-brief-intake` ships its first two reference files: `references/quick-start-script.md` (the 6-question opener with palette → direction inference defaults) and `references/example-brief.md` (a fully-filled Dombaku-style BRIEF with the new § Aesthetic section).
 - `bosia-frontend-design` and `bosia-brief-intake` frontmatter `targets.files` now declare `src/app.css` (and `BRIEF.md` for the stance skill), so tooling that indexes skill targets sees the font-wiring + accent-override files as real outputs of these skills.
 
----
-
 ## [0.5.3] - 2026-05-16
 
 ### Added
@@ -138,8 +142,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The skills detail endpoint now returns proper JSON instead of raw markdown. Previously the static file was the markdown body verbatim, which broke any consumer expecting JSON.
 - Docs pages with code blocks no longer crash in production builds. The syntax highlighter (Shiki) was being loaded in a way that confused Bun's bundler. It is now bundled directly with the docs renderer, so it always loads in the right order.
 
----
-
 ## [0.5.2] - 2026-05-15
 
 ### Added
@@ -148,8 +150,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `bosia add` now accepts multiple component names in a single call — `bun x bosia@latest add button card input` installs all three (and their dependencies) in one go, instead of having to run the command three times.
 - New `-y` / `--yes` flag on `bosia add` auto-confirms the "component already exists, replace?" prompt. Makes the CLI usable in CI pipelines and shell scripts where there's no human to answer prompts.
 - Docs site now also exposes `/api/components` and `/api/blocks` JSON endpoints so AI agents can discover available UI primitives and blocks (and their install commands) the same way they already discover skills. Each list entry has the install command, dependencies, and category; each detail endpoint also includes the full markdown body.
-
----
 
 ## [0.5.1] - 2026-05-15
 
@@ -165,8 +165,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Dev mode no longer leaves the browser stuck on the "App server is starting..." page after a file save. The outer dev proxy now waits up to 10s for the freshly-respawned inner app to bind its port before giving up — so the HMR reload always lands on the new build, not a 503.
-
----
 
 ## [0.5.0] - 2026-05-14
 
@@ -185,8 +183,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Link prefetches (when you hover over a link or it scrolls into view) now also tell the server which loaders are still cached, so layouts that haven't changed don't re-run on the server just because a user moused over a link. Without this fix, the new selective-reload work was being undone by prefetches.
-
----
 
 ## [0.4.6] - 2026-05-13
 
@@ -208,8 +204,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - CORS preflight (`OPTIONS`) requests now check the requested method and headers against the allow-list. A request asking for a disallowed method or header gets a clear 403 instead of being waved through, so misconfigured clients fail loudly and the browser shows a clear "not allowed by CORS policy" message in devtools.
 - Dev mode no longer rejects same-origin form submissions when the app is running behind the dev proxy. The proxy now forwards the right headers automatically so the CSRF check sees the public URL the browser is actually using.
 
----
-
 ## [0.4.5] - 2026-05-11
 
 ### Added
@@ -220,15 +214,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - New `themes/neutral` and `themes/editorial` themes. Switching is one command — `app.css` is patched idempotently and Google Fonts are auto-imported when a theme needs them.
 - Docs site has new **Blocks** and **Themes** sections with previews and install instructions.
 
----
-
 ## [0.4.4] - 2026-05-09
 
 ### Fixed
 
 - Production builds for apps with many routes that share a common `app.css` (via the root layout) no longer fail with `Multiple files share the same output path` errors. The bundler now treats `app.css` as a JS no-op so Bun does not emit duplicate CSS chunks per route. Tailwind CLI still produces the real stylesheet at `public/bosia-tw.css` as before.
-
----
 
 ## [0.4.3] - 2026-05-09
 
@@ -247,8 +237,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - An internal pre-handler that double-checked API routes on every request has been removed. It was redundant — every HTTP method already routes through the same handler.
 - `bun-plugin-svelte` is no longer a dependency.
 
----
-
 ## [0.4.2] - 2026-05-07
 
 ### Fixed
@@ -260,15 +248,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - New `bun run check:templates` script (in the `bosia` package). It packs the package the same way `bun publish` would, extracts the tarball, and verifies every template still has the files we expect — no install, no scaffold. Prevents the kind of "template arrives broken" regression we just fixed from sneaking back in.
 
----
-
 ## [0.4.1] - 2026-05-06
 
 ### Added
 
 - New first-party plugin `bosia/plugins/inspector`. While running `bun run dev`, hold the Option (Alt) key and any element on the page lights up showing where in your code it lives. Click an element and the right `.svelte` file opens in your editor at the exact line — no more hunting through folders. Optionally, point it at an AI endpoint and the click opens a small comment box so you can describe a fix and hand the location plus your note off to your coding agent. Production builds are completely untouched: no attributes baked in, no overlay script, no extra endpoint.
-
----
 
 ## [0.4.0] - 2026-05-05
 
@@ -288,8 +272,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - The `bosia.config.ts` loader now writes its compiled output inside the project's `.bosia/` folder instead of `/tmp`, so plugin imports like `bosia/plugins/server-timing` resolve correctly via the project's `node_modules`.
 
----
-
 ## [0.3.4] - 2026-05-04
 
 ### Added
@@ -300,8 +282,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Pressing Ctrl+C to stop `bun run dev` no longer prints a misleading `error: script "dev" exited with code 130` line. The dev server now shuts down cleanly and exits with status 0, the same as `bun run start`.
-
----
 
 ## [0.3.3] - 2026-05-03
 
@@ -318,8 +298,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixed a crash that could happen after submitting a form without JavaScript when the page tried to redirect or show an error — the browser now follows the redirect or sees the error page as expected.
 
----
-
 ## [0.3.2] - 2026-05-02
 
 ### Fixed
@@ -328,8 +306,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The server now shows a proper error page if something goes wrong while loading a page, instead of displaying broken partial content.
 - The build process now cleans itself up properly and avoids port conflicts when running multiple builds at the same time.
 - Rapid file saves during development no longer cause the dev server to rebuild the same changes multiple times unnecessarily.
-
----
 
 ## [0.3.1] - 2026-05-01
 
@@ -349,8 +325,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixed a crash when creating a new project — the app name now loads correctly when the server renders pages.
 - Removing a variable from your `.env` file now takes effect immediately in the dev server — no manual restart needed after deleting a variable.
-
----
 
 ## [0.3.0] - 2026-04-30
 
@@ -374,8 +348,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added automatic code formatting with Prettier across the whole project and all new project templates.
 - Added a `trailingSlash` option to control whether URLs end with a `/` — the server automatically redirects visitors to the correct URL format.
 
----
-
 ## [0.2.3] - 2026-04-29
 
 ### Added
@@ -398,8 +370,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed compression for content with non-English characters (Chinese, Japanese, emoji, etc.) — they were sometimes sent uncompressed when they shouldn't be.
 - Fixed `.env` file parsing to correctly ignore inline comments — `KEY=value # note` now stores just `value` as expected.
 
----
-
 ## [0.2.2] - 2026-04-28
 
 ### Security
@@ -415,15 +385,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug where Cmd/Ctrl+click (open in new tab) and middle-click were being intercepted by the router instead of opening a new tab or window.
 
----
-
 ## [0.2.1] - 2026-04-26
 
 ### Changed
 
 - Route matching is now faster — URL patterns are compiled once at startup instead of being re-parsed on every request.
-
----
 
 ## [0.2.0] - 2026-04-25
 
@@ -436,8 +402,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Builds are now 500–1000ms faster by running the client and server bundles at the same time.
 - Tailwind CSS now compiles alongside the rest of the build, saving another 500–800ms.
 - Fixed a potential crash when many middleware handlers are used — they now run in a loop instead of deeply nested calls.
-
----
 
 ## [0.1.26] - 2026-04-24
 
@@ -454,8 +418,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - The `Kbd` component can now trigger actual keyboard shortcuts when the displayed keys are pressed.
 
----
-
 ## [0.1.25] - 2026-04-23
 
 ### Added
@@ -469,8 +431,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Restored missing previews for 5 components (sidebar, navbar, chart, data-table, icon).
 - Fixed floating UI elements (popovers, dropdowns, date pickers, etc.) being cut off inside component previews.
 
----
-
 ## [0.1.24] - 2026-04-22
 
 ### Added
@@ -479,8 +439,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added a configurable delay before a hover-triggered popover closes, so it doesn't disappear the moment you move your mouse.
 - Popovers can now be opened and closed programmatically from other parts of the page.
 - Sidebar menu items in collapsed mode can now open a sub-menu on hover instead of requiring a click.
-
----
 
 ## [0.1.23] - 2026-04-21
 
