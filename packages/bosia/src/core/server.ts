@@ -334,21 +334,30 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		return new Response("Not Found", { status: 404 });
 	}
 
-	// Prerendered pages — serve static HTML built at build time
-	// Try both `<path>/index.html` (always/ignore mode) and `<path>.html` (never mode)
-	const prerenderCandidates =
-		path === "/" ? ["index.html"] : [`${path}/index.html`, `${path.replace(/\/$/, "")}.html`];
-	for (const candidate of prerenderCandidates) {
-		const prerenderPath = safePath(`${OUT_DIR}/prerendered`, candidate);
-		if (!prerenderPath) continue;
-		const prerenderFile = Bun.file(prerenderPath);
-		if (await prerenderFile.exists()) {
-			return new Response(prerenderFile, {
-				headers: {
-					"Content-Type": "text/html; charset=utf-8",
-					"Cache-Control": "public, max-age=3600",
-				},
-			});
+	// Prerendered pages — serve static HTML built at build time.
+	// SKIP in dev: prerender runs with NODE_ENV=production, which disables the
+	// inspector plugin and the dev-only error pipeline. Serving its output back
+	// in dev would mask errors (the badge stays empty, the SSE reload script
+	// isn't injected, and the page can't auto-recover when the source is fixed).
+	// Live SSR every request in dev so /about behaves like every other route.
+	if (!isDev) {
+		// Try both `<path>/index.html` (always/ignore mode) and `<path>.html` (never mode)
+		const prerenderCandidates =
+			path === "/"
+				? ["index.html"]
+				: [`${path}/index.html`, `${path.replace(/\/$/, "")}.html`];
+		for (const candidate of prerenderCandidates) {
+			const prerenderPath = safePath(`${OUT_DIR}/prerendered`, candidate);
+			if (!prerenderPath) continue;
+			const prerenderFile = Bun.file(prerenderPath);
+			if (await prerenderFile.exists()) {
+				return new Response(prerenderFile, {
+					headers: {
+						"Content-Type": "text/html; charset=utf-8",
+						"Cache-Control": "public, max-age=3600",
+					},
+				});
+			}
 		}
 	}
 
