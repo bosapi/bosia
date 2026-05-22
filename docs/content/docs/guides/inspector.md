@@ -5,7 +5,7 @@ description: Alt+click any element in your dev page to jump to its source — or
 
 The inspector plugin turns every rendered element into a link to its source. Hold **Option** (Alt) to highlight elements; click one to open its `.svelte` file at the exact line in your editor. Optionally, configure an AI endpoint to send a short comment alongside the location for automated code-fixing handoff.
 
-It's a first-party plugin — no install. Works through compile-time attribute injection: every regular HTML element in your `.svelte` files is annotated with `data-bosia-loc="path:line:col"` during the dev build. Production builds inject nothing and mount no endpoint.
+It's a first-party plugin — no install. Works through compile-time attribute injection: every regular HTML element in your `.svelte` files is annotated with `data-bosia-loc="path:line:col"` during the dev build. The plugin additionally brackets every `<Component>`, `<svelte:component>`, and `<svelte:self>` invocation with `<!--bosia:o=…--> … <!--bosia:c-->` comment markers, so the overlay can reconstruct the full **component call-site chain** (e.g. `+page.svelte:42 → Button.svelte:5`) — useful when the clicked element actually lives inside a shared component but you want to edit the page that rendered it. Production builds inject nothing and mount no endpoint.
 
 ## Setup
 
@@ -26,8 +26,8 @@ Run `bun run dev` and you're done. Defaults: editor `code`, no AI endpoint.
 
 ## Usage
 
-- **Option + hover** — outline + tooltip showing `file:line`
-- **Option + click** — open the source location in your editor (or open the AI form, if `aiEndpoint` is set)
+- **Option + hover** — outline + tooltip showing the full component call-site chain (`+page.svelte:42 → Button.svelte:5`), or just `file:line` for elements that aren't nested inside a component
+- **Option + click** — open the leaf source location in your editor (or open the AI form, if `aiEndpoint` is set)
 - **Esc** — dismiss the AI form
 
 ## Options
@@ -48,16 +48,18 @@ For VS Code: install the "Shell Command: Install 'code' command in PATH" command
 
 ### `aiEndpoint`
 
-When set, Option+click opens an anchored form (textarea + Send/Cancel) instead of jumping to the editor. On submit, the overlay POSTs to your AI endpoint:
+When set, Option+click opens an anchored form (textarea + Send/Cancel) instead of jumping to the editor. The form header pre-fills with the full component call-site chain so you can see exactly which page/layout context the AI will receive. On submit, the overlay POSTs to your AI endpoint:
 
 ```json
 {
-	"file": "src/routes/+page.svelte",
-	"line": 42,
-	"col": 5,
-	"comment": "this button should be disabled when loading"
+	"file": "registry/components/ui/button/Button.svelte",
+	"line": 5,
+	"col": 1,
+	"comment": "Component tree (outer → leaf): src/routes/+page.svelte:42:5 → registry/components/ui/button/Button.svelte:5:1\n\nthis button should be disabled when loading"
 }
 ```
+
+The `file` / `line` / `col` still point at the leaf (where the actual `<button>` lives) so the editor-open fallback path is unchanged. The chain is prepended to `comment` so an AI agent receives the full render context and can edit the page rather than the shared component definition.
 
 If the user submits an empty comment, the request falls back to opening the editor — handy for "I just want to jump there" without changing modes.
 
@@ -65,9 +67,9 @@ The plugin makes no assumption about the AI service; you implement the endpoint.
 
 ## How It Works
 
-1. **Compile-time injection.** The plugin contributes a Bun build plugin that runs before `SveltePlugin()`. For each `.svelte` file, it parses the source with `svelte/compiler`'s `parse()`, walks `RegularElement` nodes, and uses `magic-string` to insert a `data-bosia-loc` attribute right after each tag name. Source maps are preserved so error stack traces in dev still point at the right line.
+1. **Compile-time injection.** The plugin contributes a Bun build plugin that runs before `SveltePlugin()`. For each `.svelte` file, it parses the source with `svelte/compiler`'s `parse()`, walks the AST, and uses `magic-string` to (a) insert a `data-bosia-loc` attribute right after each lowercase HTML tag name, and (b) bracket each `Component` / `SvelteComponent` / `SvelteSelf` invocation with `<!--bosia:o=path:line:col-->` / `<!--bosia:c-->` HTML comments. Comments survive into the rendered DOM because `preserveComments` is enabled in dev. Source maps are preserved so error stack traces in dev still point at the right line.
 
-2. **Skipped tags.** Capitalized component tags (`<MyButton>`), `<svelte:*>` special elements, and `<script>` / `<style>` blocks are skipped. Vite-style: clicking a `<button>` rendered inside a `<MyButton>` opens `MyButton.svelte` at the button's line, not the parent.
+2. **Skipped tags.** Capitalized component tags (`<MyButton>`), `<svelte:*>` special elements, and `<script>` / `<style>` blocks don't get the `data-bosia-loc` attribute. Vite-style: clicking a `<button>` rendered inside a `<MyButton>` opens `MyButton.svelte` at the button's line, not the parent. The hover tooltip and the AI form additionally show the `<MyButton>` call-site chain reconstructed from the comment markers, so you always know which page rendered the element you're inspecting.
 
 3. **Runtime overlay.** A small script is injected via `render.bodyEnd`. It listens for Alt-down + mousemove to draw the highlight, and Alt+click to trigger the action. The script reads `window.__BOSIA_INSPECTOR__` for config — no inline secrets.
 
@@ -81,4 +83,4 @@ The plugin no-ops when `NODE_ENV !== "development"`:
 - No overlay script in HTML
 - No `/__bosia/locate` endpoint mounted
 
-Verify with `bun run build && grep -r "data-bosia-loc" dist/` — should print nothing.
+Verify with `bun run build && grep -rE "data-bosia-loc|bosia:o=" dist/` — should print nothing (neither the attribute injector nor the comment-marker injector runs in production).

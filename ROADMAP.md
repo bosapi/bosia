@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.5.12**
+> Current version: **0.5.13**
 
 ---
 
@@ -544,6 +544,18 @@
 - [ ] 🟡 `applyAction(result)` / `deserialize(result)` from `$app/forms`
 - [ ] 🟡 `disableScrollHandling()` for fine-grained scroll control
 - [ ] 🟠 Diagnose & fix `window.location.href` stall on static builds — needs a confirmed repro; safety-net try/catch is in place so the next occurrence surfaces a console error instead of staying on "Loading…"
+
+---
+
+## v0.5.13 — Inspector component call-site chain ✅ (shipped 2026-05-23)
+
+> Alt-clicking a `<button>` rendered by a shared `Button.svelte` previously showed only `Button.svelte:5:1` — the definition site — which was misleading for the user and unusable for the "Send to AI" hand-off because the agent had no idea which page rendered the element. The overlay now shows the full call-site chain (e.g. `+page.svelte:42 → Button.svelte:5`) and ships the same chain inside the AI comment payload.
+
+- [x] 🟠 Compile-time injection of `<!--bosia:o=path:line:col-->` / `<!--bosia:c-->` markers around `Component` / `SvelteComponent` / `SvelteSelf` AST nodes in `injectLocs` (`packages/bosia/src/core/plugins/inspector/bun-plugin.ts`). Comments survive Svelte compile because `preserveComments: dev` is already set, and run for both `browser` and `bun` targets so SSR HTML matches client hydration.
+- [x] 🟠 Runtime `collectStack(el)` walks DOM ancestors + previous siblings with a depth counter that matches each `bosia:c` against its `bosia:o`, so sibling components on the same parent don't bleed into each other's stack. Returns outermost-first; wired into the hover tooltip, the AI form header, the AI comment payload (prepends `Component tree (outer → leaf): …\n\n`), and the runtime-error `lastInteraction` field (`packages/bosia/src/core/plugins/inspector/overlay.ts`).
+- [x] 🟡 Tooltip widened with `max-width:90vw` + ellipsis so long chains don't overflow the viewport.
+- [x] ⚪ `docs/content/docs/guides/inspector.md` updated to describe the chain feature and extend the prod-output grep to check for both markers.
+- [x] 🟡 `bosia-inspector-edit` skill (`docs/content/skills/bosia-inspector-edit/SKILL.md`) updated for the new payload — parses the `Component tree (outer → leaf): …` prefix, defaults the target to the outermost call-site, requires a one-sentence justification when the agent picks the leaf instead. Catalog entry in `docs/content/skills/SKILL.md` updated.
 
 ---
 

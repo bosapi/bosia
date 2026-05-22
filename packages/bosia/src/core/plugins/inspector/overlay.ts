@@ -26,7 +26,7 @@ function ensureOutline(){
   outline.style.cssText="position:fixed;pointer-events:none;border:2px solid #f73b27;background:rgba(247,59,39,.08);z-index:2147483646;border-radius:2px;transition:all .05s linear;display:none";
   document.body.appendChild(outline);
   tip=document.createElement("div");
-  tip.style.cssText="position:fixed;pointer-events:none;background:#111;color:#fff;font:11px/1.4 ui-monospace,monospace;padding:3px 6px;border-radius:3px;z-index:2147483647;display:none;white-space:nowrap";
+  tip.style.cssText="position:fixed;pointer-events:none;background:#111;color:#fff;font:11px/1.4 ui-monospace,monospace;padding:3px 6px;border-radius:3px;z-index:2147483647;display:none;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis";
   document.body.appendChild(tip);
 }
 function hideOutline(){if(outline)outline.style.display="none";if(tip)tip.style.display="none"}
@@ -42,6 +42,38 @@ function showOutline(el,loc){
 }
 function parseLoc(s){var m=/^(.+):(\\d+):(\\d+)$/.exec(s);if(!m)return null;return{file:m[1],line:+m[2],col:+m[3]}}
 function findTarget(e){var n=e.target;while(n&&n.nodeType===1){if(n.hasAttribute&&n.hasAttribute("data-bosia-loc"))return n;n=n.parentNode}return null}
+
+// Walk DOM ancestors collecting <Component> call-site markers (<!--bosia:o=…-->
+// / <!--bosia:c-->) into an outermost-first array. At each ancestor we scan
+// previous siblings tracking a depth counter so an earlier sibling component's
+// open marker doesn't get attributed to a later sibling's element.
+function collectStack(el){
+  var stack=[],cur=el;
+  while(cur){
+    var depth=0,sib=cur.previousSibling;
+    while(sib){
+      if(sib.nodeType===8){
+        var v=sib.nodeValue||"";
+        if(v==="bosia:c") depth++;
+        else if(v.lastIndexOf("bosia:o=",0)===0){
+          if(depth>0) depth--;
+          else stack.push(v.slice(8));
+        }
+      }
+      sib=sib.previousSibling;
+    }
+    var p=cur.parentNode;
+    if(!p||p.nodeType!==1) break;
+    cur=p;
+  }
+  return stack.reverse();
+}
+function chainString(el){
+  var stack=collectStack(el);
+  var leaf=el.getAttribute("data-bosia-loc")||"";
+  if(!stack.length) return leaf;
+  return stack.concat(leaf).join(" → ");
+}
 
 function toast(msg,err){
   var t=document.createElement("div");
@@ -62,10 +94,12 @@ function send(payload,onOk,onErr){
 function closeForm(){if(form){form.remove();form=null}}
 function openForm(loc,el){
   closeForm();
+  var chain=chainString(el);
   var r=el.getBoundingClientRect();
   form=document.createElement("div");
   form.style.cssText="position:fixed;left:"+r.left+"px;top:"+(r.bottom+6)+"px;background:#fff;color:#111;border:1px solid #d4d4d8;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:10px;width:340px;z-index:2147483647;font:13px ui-sans-serif,system-ui,sans-serif";
-  form.innerHTML='<div style="font-size:11px;color:#71717a;margin-bottom:6px;font-family:ui-monospace,monospace">'+loc.file+":"+loc.line+'</div>'+
+  var header='<div style="font-size:11px;color:#71717a;margin-bottom:6px;font-family:ui-monospace,monospace;word-break:break-all">'+chain+'</div>';
+  form.innerHTML=header+
     '<textarea placeholder="Describe a fix (Enter to send, Esc to cancel, empty = open in editor)" style="width:100%;min-height:64px;border:1px solid #e4e4e7;border-radius:4px;padding:6px;font:13px ui-sans-serif,system-ui,sans-serif;resize:vertical;box-sizing:border-box;outline:none"></textarea>'+
     '<div style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end">'+
     '<button data-cancel style="padding:4px 10px;border:1px solid #e4e4e7;background:#fff;border-radius:4px;cursor:pointer;font-size:12px">Cancel</button>'+
@@ -75,9 +109,12 @@ function openForm(loc,el){
   var ta=form.querySelector("textarea");
   ta.focus();
   function submit(){
-    var comment=ta.value.trim();
+    var userComment=ta.value.trim();
     var payload={file:loc.file,line:loc.line,col:loc.col};
-    if(comment)payload.comment=comment;
+    if(userComment){
+      var tree=chain.indexOf(" → ")>=0?("Component tree (outer → leaf): "+chain+"\\n\\n"):"";
+      payload.comment=tree+userComment;
+    }
     send(payload,function(j){toast(j.mode==="ai"?"sent to AI":"opened "+loc.file+":"+loc.line)});
     closeForm();
   }
@@ -100,7 +137,7 @@ window.addEventListener("mousemove",function(e){
   if(!altDown||form){hideOutline();return}
   var el=findTarget(e);
   if(!el){hideOutline();return}
-  showOutline(el,el.getAttribute("data-bosia-loc"));
+  showOutline(el,chainString(el));
 },true);
 
 window.addEventListener("click",function(e){
@@ -137,7 +174,7 @@ if(ERR_ENABLED){
     var t=e.target;
     if(!t||!t.closest)return;
     var el=t.closest("[data-bosia-loc]");
-    if(el)lastInteraction=el.getAttribute("data-bosia-loc");
+    if(el)lastInteraction=chainString(el);
   }
   window.addEventListener("mousedown",trackInteraction,true);
   window.addEventListener("keydown",trackInteraction,true);

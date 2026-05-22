@@ -66,18 +66,40 @@ function injectLocs(source: string, relPath: string): string {
 	if (!ast.fragment) return source;
 
 	const ms = new MagicString(source);
+	const safeAttr = relPath.replace(/"/g, "&quot;");
+	// HTML comment data cannot contain `--`; neutralise defensively. (Almost no
+	// real path contains it, but a stray `--foo` directory shouldn't break parsing.)
+	const safeComment = relPath.replace(/--/g, "__");
 	walk(ast.fragment, (node) => {
-		if (node.type !== "RegularElement") return;
-		const name = node.name ?? "";
-		if (!name) return;
-		if (name === "script" || name === "style") return;
-		if (/^[A-Z]/.test(name)) return;
-		if (name.includes(":")) return;
-		if (typeof node.start !== "number") return;
-		const insertAt = node.start + 1 + name.length;
-		const { line, col } = lineColFromOffset(source, node.start);
-		const safe = relPath.replace(/"/g, "&quot;");
-		ms.appendLeft(insertAt, ` data-bosia-loc="${safe}:${line}:${col}"`);
+		if (node.type === "RegularElement") {
+			const name = node.name ?? "";
+			if (!name) return;
+			if (name === "script" || name === "style") return;
+			if (/^[A-Z]/.test(name)) return;
+			if (name.includes(":")) return;
+			if (typeof node.start !== "number") return;
+			const insertAt = node.start + 1 + name.length;
+			const { line, col } = lineColFromOffset(source, node.start);
+			ms.appendLeft(insertAt, ` data-bosia-loc="${safeAttr}:${line}:${col}"`);
+			return;
+		}
+		// Bracket component invocations with HTML comments so the runtime can
+		// walk DOM siblings to reconstruct the call-site chain (Page → Layout →
+		// Button). Without this the per-element `data-bosia-loc` only points at
+		// the component's *definition* file, which is misleading when the user
+		// (or an AI agent) wants to edit the page that rendered it. Comments
+		// survive into the rendered DOM because `preserveComments: dev` is set
+		// on the compile call below.
+		if (
+			node.type === "Component" ||
+			node.type === "SvelteComponent" ||
+			node.type === "SvelteSelf"
+		) {
+			if (typeof node.start !== "number" || typeof node.end !== "number") return;
+			const { line, col } = lineColFromOffset(source, node.start);
+			ms.appendLeft(node.start, `<!--bosia:o=${safeComment}:${line}:${col}-->`);
+			ms.appendRight(node.end, `<!--bosia:c-->`);
+		}
 	});
 	return ms.toString();
 }

@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.13] - 2026-05-23
+
+### Changed
+
+- Inspector overlay now shows the full component call-site chain (e.g. `+page.svelte:42 → Layout.svelte:10 → Button.svelte:5`) instead of only the file where the clicked element was defined. Hovering with Alt held shows the whole chain in the tooltip; the "Send to AI" form pre-fills the same chain in its header and prepends it to the comment payload, so the AI agent can edit the actual page/layout that rendered the element rather than the shared component definition.
+- `bosia-inspector-edit` skill updated for the new payload shape. AI agents now parse the `Component tree (outer → leaf): …` prefix in the comment, default to editing the **outermost call-site** (page/layout) rather than the shared component definition, and must justify in one sentence when they choose the leaf instead. New rules R6/R7 + checklist entries cover the decision.
+
+### Added
+
+- Compile-time injection of `<!--bosia:o=path:line:col-->` / `<!--bosia:c-->` HTML comments around every `<Component>`, `<svelte:component>`, and `<svelte:self>` invocation in `.svelte` source. The overlay walks DOM siblings to reconstruct the call-site stack from these markers. Comments are only emitted in dev (inspector plugin self-disables under `NODE_ENV=production`) and survive Svelte compile because `preserveComments: dev` is already set.
+
+---
+
 ## [0.5.12] - 2026-05-22
 
 ### Fixed
