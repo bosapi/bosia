@@ -909,4 +909,22 @@ async function shutdown() {
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
 
+// Prod-only fatal handlers. The dev inspector plugin installs its own
+// uncaughtException/unhandledRejection listeners that route errors into the
+// overlay and let the dev runner's crash-backoff restart the process. In prod
+// there's no inspector — without these handlers an unhandled rejection from a
+// background timer or plugin hook orphans the process with no log context.
+// Log + exit(1) lets the orchestrator (Podman/k8s) restart cleanly.
+if (!isDev) {
+	process.on("uncaughtException", (err: Error) => {
+		console.error("[FATAL] uncaughtException:", err?.stack ?? err);
+		process.exit(1);
+	});
+	process.on("unhandledRejection", (reason: unknown) => {
+		const e = reason as Error | undefined;
+		console.error("[FATAL] unhandledRejection:", e?.stack ?? reason);
+		process.exit(1);
+	});
+}
+
 export { app };
