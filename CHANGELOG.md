@@ -16,8 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Compile-time injection of `<!--bosia:o=path:line:col-->` / `<!--bosia:c-->` HTML comments around every `<Component>`, `<svelte:component>`, and `<svelte:self>` invocation in `.svelte` source. The overlay walks DOM siblings to reconstruct the call-site stack from these markers. Comments are only emitted in dev (inspector plugin self-disables under `NODE_ENV=production`) and survive Svelte compile because `preserveComments: dev` is already set.
-
----
+- Production process-level error handlers — Bosia now installs `uncaughtException` and `unhandledRejection` listeners in production builds. Previously these only existed via the dev inspector, so a stray async error from a background timer or plugin hook could silently kill the prod process with no log. The new handlers print a `[FATAL]` line with the stack and exit `1`, letting your container orchestrator (Podman, k8s, Fly, Railway…) restart the process cleanly. Dev is unchanged — the inspector overlay still owns error display there.
+- New `MAX_INFLIGHT` env var — soft cap on concurrent in-flight requests. When set, requests above the cap get a fast `503 Service Unavailable` with `Retry-After: 1` before any work is done, protecting single-replica container deploys from OOM under traffic spikes. `/_health` is always exempt so orchestrator liveness probes keep working while the app sheds load. Default is `Infinity` (off, no behavior change for existing apps) — pick a value below what your container's memory can support per concurrent SSR render (a safe starting point is `500`; tune from there). Reuses the existing graceful-shutdown counter, so the check is essentially free. Documented in `guides/environment-variables` and added (commented out) to the demo + default templates' `.env.example`.
 
 ## [0.5.12] - 2026-05-22
 

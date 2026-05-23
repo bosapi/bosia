@@ -630,6 +630,16 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		});
 	}
 
+	// Shed load above MAX_INFLIGHT. Checked before any work so the 503 is
+	// cheap. /_health stays available so the orchestrator can still tell the
+	// process is alive (and decide whether to restart or scale out).
+	if (inFlight >= MAX_INFLIGHT && url.pathname !== "/_health") {
+		return new Response("Service Unavailable", {
+			status: 503,
+			headers: { "Retry-After": "1" },
+		});
+	}
+
 	inFlight++;
 	try {
 		// Handle CORS preflight before CSRF check (OPTIONS is CSRF-exempt)
@@ -761,6 +771,29 @@ function parseIdleTimeout(value?: string): number {
 const IDLE_TIMEOUT = parseIdleTimeout(process.env.IDLE_TIMEOUT);
 
 console.log(`⏱  Idle timeout: ${IDLE_TIMEOUT}s`);
+
+// ─── Concurrency Ceiling ──────────────────────────────────
+// Soft cap on in-flight requests, parsed from MAX_INFLIGHT env var.
+// Default is unlimited so existing apps see no behavior change. When set,
+// requests above the cap get a fast 503 + Retry-After before any work is
+// done — protects single-replica container deploys from OOM under spike
+// traffic. /_health is exempt so orchestrator liveness probes still work
+// while the app sheds load.
+
+function parseMaxInflight(value?: string): number {
+	if (!value) return Infinity;
+	const trimmed = value.trim();
+	if (trimmed === "" || trimmed.toLowerCase() === "infinity") return Infinity;
+	const n = parseInt(trimmed, 10);
+	if (!Number.isFinite(n) || n <= 0) throw new Error(`Invalid MAX_INFLIGHT: "${value}"`);
+	return n;
+}
+
+const MAX_INFLIGHT = parseMaxInflight(process.env.MAX_INFLIGHT);
+
+if (Number.isFinite(MAX_INFLIGHT)) {
+	console.log(`🚦 Max in-flight requests: ${MAX_INFLIGHT}`);
+}
 
 // ─── Graceful Shutdown State ──────────────────────────────
 
