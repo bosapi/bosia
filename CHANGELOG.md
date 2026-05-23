@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.5.13] - 2026-05-23
 
+### Added
+
+- Two new skills for AI agents that build Bosia apps: `bosia-env` covers how to choose between the four env prefixes (`PUBLIC_STATIC_`/`PUBLIC_`/`STATIC_`/none) and where each kind is read from, and `bosia-cors` shows the right env recipe for cross-origin browser callers. The CORS skill also includes a triage table that tells real CORS failures apart from CSRF rejections that print a similar "Cross-origin request blocked" message — preview-proxy apps (e.g. those served via `a-<uuid>.lvh.me:9000`) need the preview host(s) added to `CSRF_ALLOWED_ORIGINS` in the child `.env`, not CORS. Skills catalog index updated from 35 to 37 entries.
+
 ### Changed
 
 - Inspector overlay now shows the full component call-site chain (e.g. `+page.svelte:42 → Layout.svelte:10 → Button.svelte:5`) instead of only the file where the clicked element was defined. Hovering with Alt held shows the whole chain in the tooltip; the "Send to AI" form pre-fills the same chain in its header and prepends it to the comment payload, so the AI agent can edit the actual page/layout that rendered the element rather than the shared component definition.

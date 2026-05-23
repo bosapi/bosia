@@ -568,6 +568,14 @@
 - [x] ⚪ `docs/content/docs/guides/inspector.md` updated to describe the chain feature and extend the prod-output grep to check for both markers.
 - [x] 🟡 `bosia-inspector-edit` skill (`docs/content/skills/bosia-inspector-edit/SKILL.md`) updated for the new payload — parses the `Component tree (outer → leaf): …` prefix, defaults the target to the outermost call-site, requires a one-sentence justification when the agent picks the leaf instead. Catalog entry in `docs/content/skills/SKILL.md` updated.
 
+### Same-day addition (2026-05-23) — Env + CORS skills for AI agents
+
+> Bosapi-spawned preview apps (served via `a-<uuid>.lvh.me:9000`) were surfacing `403 Cross-origin request blocked: Origin "…lvh.me…" is not allowed` and the AI agent kept reaching for CORS env vars to "fix" it — but the message comes from the CSRF check (`packages/bosia/src/core/csrf.ts:51`), not CORS, so changing CORS env never helped. The actual fix is allow-listing the preview host(s) in `CSRF_ALLOWED_ORIGINS` in the child `.env` (verified against working app `toko-mainan-anak` which carries `CSRF_ALLOWED_ORIGINS=http://lvh.me:9000,http://a-<uuid>.lvh.me:9000`). Skills now teach the agent both the env-prefix system and the CSRF-vs-CORS triage explicitly.
+
+- [x] 🟡 New `bosia-env` skill (`docs/content/skills/bosia-env/SKILL.md`) — four-tier prefix (`PUBLIC_STATIC_` / `PUBLIC_` / `STATIC_` / none), `$env` virtual module for user vars, `process.env` for framework-reserved vars (full table covering `PORT`, `BODY_SIZE_LIMIT`, `IDLE_TIMEOUT`, `MAX_INFLIGHT`, `CORS_*`, `CSRF_ALLOWED_ORIGINS`, `TRUST_PROXY`, `DISABLE_X_FRAME_OPTIONS`, `CSP_DIRECTIVES`, `BOSIA_OUT_DIR`). `.env.example` as the contract; `.env*` load order rules.
+- [x] 🟡 New `bosia-cors` skill (`docs/content/skills/bosia-cors/SKILL.md`) — CORS env recipe (`CORS_ALLOWED_ORIGINS` + methods/headers/exposed/credentials/max-age), `Vary: Origin` invariant, and a triage table that distinguishes a real CORS failure (browser console "blocked by CORS policy", no response body in JS) from Bosia's CSRF rejection (`403` response body with `Cross-origin request blocked: Origin "…"`). Preview-proxy workflow lists the lvh.me preview origin(s) in `CSRF_ALLOWED_ORIGINS` (primary) with `TRUST_PROXY=true` documented as the alternative for proxies that need forwarded headers reflected.
+- [x] 🟡 Catalog `docs/content/skills/SKILL.md` updated 35 → 37 skills; both entries added under framework conventions and into the discovery-order step 2; cross-references wired in both directions and to `bosia-security-review` / `bosia-elysia-routes`.
+
 ---
 
 ## v0.5.11 — `$types` resolution inside `.svelte` files
