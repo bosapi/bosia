@@ -6,11 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [0.6.0] - 2026-05-24
+## [0.6.1] - 2026-05-24
 
 ### Changed
 
-- Updated SvelteKit differences documentation to reflect v0.5.10+ features
+- Updated SvelteKit differences documentation.
+
+## [0.6.0] - 2026-05-24
 
 ### Added
 
