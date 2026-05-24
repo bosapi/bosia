@@ -56,10 +56,11 @@ Skip only if `fs_read("BRIEF.md")` succeeds AND `## Status` line is `complete`.
     2. **Display + body fonts** — distinctive pair, NOT Inter / Roboto / Space Grotesk. Wire later via `app.css` `@theme`.
     3. **Memorable detail** — one named element (staggered headline reveal, custom cursor, grain overlay, oversized footer wordmark, etc.). If user can't name one, the stance isn't locked.
     4. **What we are NOT** — one sentence rejecting the default (e.g. "not a soft purple gradient SaaS landing").
-5. `fs_write("BRIEF.md", ...)` with the consolidated answers, including the new `## Aesthetic` section (template under `bosia-frontend-design`).
-6. `read_skill({ name: "bosia-brief-review" })` and walk its checklist (B18 covers the aesthetic stance).
-7. Set `## Status: complete` in BRIEF.md.
-8. Only now: greet user with a recap and the suggested first build step. The recap MUST name the direction + the memorable detail so the user can confirm.
+5. `read_skill({ name: "bosia-brief-database" })` and run its question set. Append the `## Database` block to the BRIEF.md draft (between `## Aesthetic` and `## Platform`).
+6. `fs_write("BRIEF.md", ...)` with the consolidated answers, including the new `## Aesthetic` and `## Database` sections (templates under `bosia-frontend-design` and `bosia-brief-database`).
+7. `read_skill({ name: "bosia-brief-review" })` and walk its checklist (B18 covers the aesthetic stance).
+8. Set `## Status: complete` in BRIEF.md.
+9. Only now: greet user with a recap and the suggested first build step. The recap MUST name the direction + the memorable detail so the user can confirm.
 
 ## Modes
 
@@ -73,6 +74,7 @@ Ask **six** questions in one turn, infer the rest with named defaults the user c
 4. Vibe in 2–4 words ("disciplined, warm, agrarian" / "playful, bright, consumer" / "minimal, technical, calm").
 5. Palette intent (`warm-earthy` / `cool-tech` / `minimal-mono` / `playful-bright` / `dark-luxury`).
 6. Aesthetic direction (`editorial` / `brutally-minimal` / `brutalist` / `retro-futuristic` / `maximalist` / `soft-pastel` / `luxury` / `industrial` / `organic` / `playful` / `art-deco` / custom). Pair this with the vibe — don't blend two directions.
+7. Database engine (`postgres` / `mysql` / `sqlite-file` / `sqlite-memory` / `none`). Default `postgres` for multi-user apps; `sqlite-file` for embedded/demo; `none` only for pure marketing pages. `sqlite-memory` flushes on restart — confirm out loud.
 
 Then fill the remaining fields with sensible defaults (see each group skill + `bosia-frontend-design`) and confirm in one block before writing BRIEF.md. The agent proposes a default memorable detail given the direction; user can swap it.
 
@@ -141,6 +143,16 @@ complete
 - Light or dark default: {light | dark}
 - Memorable detail: {one sentence — the thing a viewer will remember}
 - What we are NOT: {one sentence — the default we are rejecting}
+
+## Database
+
+- Engine: {postgres | mysql | sqlite-file | sqlite-memory | none}
+- DATABASE_URL: {scheme://user:\*\*\*@host:port/db — password masked, real value in .env.local}
+- Host: {host or n/a for sqlite}
+- Database name: {name or n/a for sqlite}
+- ORM: drizzle + Bun built-in driver (Bun.SQL / bun:sqlite)
+- Persistence: {yes | no (in-memory)}
+- Initial tables: {list or "none yet"}
 
 ## Platform
 
@@ -223,4 +235,4 @@ P1:
 
 - `references/example-brief.md` — Dombaku-style fully-filled BRIEF.md.
 - `references/quick-start-script.md` — exact 6-question opener.
-- `bosia-brief-identity`, `bosia-brief-voice`, `bosia-brief-visual`, `bosia-brief-platform`, `bosia-frontend-design`, `bosia-brief-review`.
+- `bosia-brief-identity`, `bosia-brief-voice`, `bosia-brief-visual`, `bosia-brief-platform`, `bosia-brief-database`, `bosia-frontend-design`, `bosia-brief-review`.

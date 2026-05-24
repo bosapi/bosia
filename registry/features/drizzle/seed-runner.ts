@@ -1,7 +1,6 @@
 import { sql } from "drizzle-orm";
-import { db } from "../index";
+import { db, engine } from "../index";
 
-// Seed tracking table in the "drizzle" schema (same schema Drizzle Kit uses for migrations)
 const SEEDS_TABLE = "__bosia_seeds";
 
 interface SeedModule {
@@ -9,38 +8,78 @@ interface SeedModule {
 }
 
 async function ensureSeedsTable() {
-	await db.execute(sql`
-        CREATE SCHEMA IF NOT EXISTS drizzle
-    `);
-	await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS drizzle.${sql.identifier(SEEDS_TABLE)} (
-            id SERIAL PRIMARY KEY,
+	if (engine === "postgres") {
+		await db.execute(sql`CREATE SCHEMA IF NOT EXISTS drizzle`);
+		await db.execute(sql`
+            CREATE TABLE IF NOT EXISTS drizzle.${sql.identifier(SEEDS_TABLE)} (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                applied_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            )
+        `);
+		return;
+	}
+	if (engine === "mysql") {
+		await db.execute(sql`
+            CREATE TABLE IF NOT EXISTS ${sql.identifier(SEEDS_TABLE)} (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL UNIQUE,
+                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+		return;
+	}
+	// sqlite (file or memory)
+	await db.run(sql`
+        CREATE TABLE IF NOT EXISTS ${sql.identifier(SEEDS_TABLE)} (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL UNIQUE,
-            applied_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            applied_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     `);
 }
 
 async function getAppliedSeeds(): Promise<Set<string>> {
-	const rows = await db.execute<{ name: string }>(
-		sql`SELECT name FROM drizzle.${sql.identifier(SEEDS_TABLE)} ORDER BY id`,
-	);
+	if (engine === "postgres") {
+		const rows = await db.execute<{ name: string }>(
+			sql`SELECT name FROM drizzle.${sql.identifier(SEEDS_TABLE)} ORDER BY id`,
+		);
+		return new Set(rows.map((r) => r.name));
+	}
+	if (engine === "mysql") {
+		const rows = await db.execute<{ name: string }>(
+			sql`SELECT name FROM ${sql.identifier(SEEDS_TABLE)} ORDER BY id`,
+		);
+		return new Set(rows.map((r) => r.name));
+	}
+	const rows = (await db.all(
+		sql`SELECT name FROM ${sql.identifier(SEEDS_TABLE)} ORDER BY id`,
+	)) as Array<{
+		name: string;
+	}>;
 	return new Set(rows.map((r) => r.name));
 }
 
 async function markSeedApplied(name: string) {
-	await db.execute(
-		sql`INSERT INTO drizzle.${sql.identifier(SEEDS_TABLE)} (name) VALUES (${name})`,
-	);
+	if (engine === "postgres") {
+		await db.execute(
+			sql`INSERT INTO drizzle.${sql.identifier(SEEDS_TABLE)} (name) VALUES (${name})`,
+		);
+		return;
+	}
+	if (engine === "mysql") {
+		await db.execute(sql`INSERT INTO ${sql.identifier(SEEDS_TABLE)} (name) VALUES (${name})`);
+		return;
+	}
+	await db.run(sql`INSERT INTO ${sql.identifier(SEEDS_TABLE)} (name) VALUES (${name})`);
 }
 
 async function run() {
-	console.log("Running seeds...\n");
+	console.log(`Running seeds (engine: ${engine})...\n`);
 
 	await ensureSeedsTable();
 	const applied = await getAppliedSeeds();
 
-	// Discover seed files (*.ts, excluding runner.ts)
 	const glob = new Bun.Glob("*.ts");
 	const seedDir = import.meta.dir;
 	const files = Array.from(glob.scanSync(seedDir))

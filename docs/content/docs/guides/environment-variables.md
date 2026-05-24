@@ -80,6 +80,10 @@ PUBLIC_STATIC_VERSION=1.0.0
 
 # Private — server only
 DATABASE_URL=postgres://localhost:5432/mydb
+# Also supported (see /guides/database):
+#   DATABASE_URL=mysql://user:pass@host:3306/mydb
+#   DATABASE_URL=sqlite://./data/app.db
+#   DATABASE_URL=sqlite://:memory:     # dev/test only — flushes on restart
 API_SECRET=sk_live_abc123
 
 # Framework config
