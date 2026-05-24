@@ -10,776 +10,669 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **Updated SvelteKit differences documentation.** The `sveltekit-differences` reference now correctly lists navigation API (`goto`, `beforeNavigate`, `afterNavigate`) and plugin system as shipped features. Response caching added to the "Different from SvelteKit" table; i18n and shallow routing clarified as out-of-scope (both are user responsibility in SvelteKit and Bosia alike). Reflects actual shipped state as of v0.5.10 (navigation) and v0.4.0 (plugins).
+- Updated SvelteKit differences documentation to reflect v0.5.10+ features
 
 ### Added
 
-- **Multi-engine database support.** `bunx bosia feat drizzle` now installs a single Drizzle adapter that works with postgres, mysql, sqlite (file), and sqlite (in-memory) — picked by the `DATABASE_URL` scheme. No more "postgres-only" feat: the scaffolded `src/features/drizzle/index.ts`, `drizzle.config.ts`, and seed-runner all branch on engine. The `postgres` npm dep is dropped — Bun's built-in `Bun.SQL` and `bun:sqlite` cover all four engines via Drizzle's `bun-sql` and `bun-sqlite` wrappers. New guide at `docs/guides/database` (EN + ID) covers setup, switching, and the in-memory caveat; `environment-variables` shows the four valid URL forms.
-- **`bosia-brief-database` skill.** Captures DB choice during brief intake — engine, connection target, provisioning, initial tables — and writes a `## Database` block to BRIEF.md. `bosia-brief-intake` chains it after the aesthetic stance and before review; Quick Start gained a 7th question for the engine choice. Apps that say "no database" get a one-line `Engine: none` block and skip the rest.
-- **Server response cache (skip-render).** Bosia now caches rendered HTML pages and `+server.ts` GET responses in memory and serves them as pre-compressed bytes (brotli or gzip) on subsequent requests, with no `load()`, no `render()`, and no per-request compression. Per-user safety is automatic: the cache key includes a hash of cookies and headers named in `CACHE_KEYS` (default `session,sid,auth,token,jwt,Authorization`), so two users with different session cookies always get different cache entries. Tune capacity with `CACHE_MAX_ENTRIES` (default `500`; set to `0` to disable the cache entirely).
-- **`invalidate()` / `invalidateAll()` from the main `bosia` entry.** Call from form actions or any server code after a write to drop matching cache entries: `invalidate("app:user")` evicts every cached page whose loader called `depends("app:user")`; `invalidate("/api/posts")` evicts cached pages whose loader fetched `/api/posts` plus the cached `/api/posts` API response itself; `invalidateAll("/products/")` evicts every entry whose path starts with the prefix. The names deliberately mirror the existing browser-side `invalidate()` from `bosia/client`.
-- **Per-route opt-out.** Add `export const cache = false;` to a `+page.ts`, `+page.server.ts`, or `+server.ts` to skip the cache for routes that need to render fresh on every request (live tickers, per-request cookie writes, etc.). Generated `$types.d.ts` files now export a `CacheOption` type alias for IDE hints.
-- **Brotli compression.** Cached entries include both gzip and brotli copies; `Accept-Encoding: br` requests now get brotli automatically. Uncached responses are unchanged.
-- New `bosia-response-cache` skill teaches AI agents when and how to call `invalidate()` server-side, when to tag loaders with `depends()`, and when to opt a route out of the cache.
-- New response-cache guide (EN + ID) under `docs/guides/response-cache`. The existing data-invalidation guide (EN + ID) gained a "Server-side `invalidate()` for the response cache" section. `environment-variables` docs gained `CACHE_KEYS` and `CACHE_MAX_ENTRIES` rows. Templates and `apps/demo/.env.example` carry commented examples.
+- Database drizzle feature now supports postgres, mysql, and sqlite (choose via URL)
+- New database intake skill guides users through engine selection during app setup
+- Server response caching with automatic compression (gzip + brotli)
+- Invalidate specific cached pages using `invalidate()` and `invalidateAll()` helpers
+- Per-route cache opt-out with `export const cache = false`
+- New response-cache guide with setup instructions and examples
 
 ### Changed
 
-- `Content-Security-Policy` deploys (`CSP_DIRECTIVES` env var set) automatically forfeit the response cache. Each request needs a fresh nonce baked into both the HTML and the CSP header, which a cached response can't reproduce — so we skip the cache rather than ship broken pages. Operators who don't use CSP get the cache transparently.
-- Server-side `invalidate` / `invalidateAll` moved to `bosia/server` to keep them out of browser bundles.
+- CSP-enabled apps now skip caching to avoid nonce conflicts
+- Server-side invalidate functions moved to bosia/server (browser bundle cleanup)
 
 ### Fixed
 
-- Safari failed to open pages under `bosia dev` ("cannot decode raw data") — dev proxy fixed.
-- Browser hydration crash: `ReferenceError: Can't find variable: process` from the cache module.
-- Type error in inspector dev-error reporter (`source` union mismatch) blocking `bun run check`.
+- Safari dev server now works (fixed proxy encoding issue)
+- Browser hydration no longer crashes from missing process variable
+- Type checking now passes on inspector error reporter
 
 ## [0.5.13] - 2026-05-23
 
 ### Added
 
-- Two new skills for AI agents that build Bosia apps: `bosia-env` covers how to choose between the four env prefixes (`PUBLIC_STATIC_`/`PUBLIC_`/`STATIC_`/none) and where each kind is read from, and `bosia-cors` shows the right env recipe for cross-origin browser callers. The CORS skill also includes a triage table that tells real CORS failures apart from CSRF rejections that print a similar "Cross-origin request blocked" message — preview-proxy apps (e.g. those served via `a-<uuid>.lvh.me:9000`) need the preview host(s) added to `CSRF_ALLOWED_ORIGINS` in the child `.env`, not CORS. Skills catalog index updated from 35 to 37 entries.
+- New skills: bosia-env (environment variable prefixes) and bosia-cors (cross-origin config)
 
 ### Changed
 
-- Inspector overlay now shows the full component call-site chain (e.g. `+page.svelte:42 → Layout.svelte:10 → Button.svelte:5`) instead of only the file where the clicked element was defined. Hovering with Alt held shows the whole chain in the tooltip; the "Send to AI" form pre-fills the same chain in its header and prepends it to the comment payload, so the AI agent can edit the actual page/layout that rendered the element rather than the shared component definition.
-- `bosia-inspector-edit` skill updated for the new payload shape. AI agents now parse the `Component tree (outer → leaf): …` prefix in the comment, default to editing the **outermost call-site** (page/layout) rather than the shared component definition, and must justify in one sentence when they choose the leaf instead. New rules R6/R7 + checklist entries cover the decision.
+- Inspector now shows full component chain (outer page → inner component) so AI edits right file
 
 ### Added
 
-- Compile-time injection of `<!--bosia:o=path:line:col-->` / `<!--bosia:c-->` HTML comments around every `<Component>`, `<svelte:component>`, and `<svelte:self>` invocation in `.svelte` source. The overlay walks DOM siblings to reconstruct the call-site stack from these markers. Comments are only emitted in dev (inspector plugin self-disables under `NODE_ENV=production`) and survive Svelte compile because `preserveComments: dev` is already set.
-- Production process-level error handlers — Bosia now installs `uncaughtException` and `unhandledRejection` listeners in production builds. Previously these only existed via the dev inspector, so a stray async error from a background timer or plugin hook could silently kill the prod process with no log. The new handlers print a `[FATAL]` line with the stack and exit `1`, letting your container orchestrator (Podman, k8s, Fly, Railway…) restart the process cleanly. Dev is unchanged — the inspector overlay still owns error display there.
-- New `MAX_INFLIGHT` env var — soft cap on concurrent in-flight requests. When set, requests above the cap get a fast `503 Service Unavailable` with `Retry-After: 1` before any work is done, protecting single-replica container deploys from OOM under traffic spikes. `/_health` is always exempt so orchestrator liveness probes keep working while the app sheds load. Default is `Infinity` (off, no behavior change for existing apps) — pick a value below what your container's memory can support per concurrent SSR render (a safe starting point is `500`; tune from there). Reuses the existing graceful-shutdown counter, so the check is essentially free. Documented in `guides/environment-variables` and added (commented out) to the demo + default templates' `.env.example`.
+- HTML comments track component call-sites for inspector overlay reconstruction
+- Production now handles uncaught errors (logs and exits cleanly for restart)
+- New MAX_INFLIGHT env var limits concurrent requests to prevent OOM under load
 
 ## [0.5.12] - 2026-05-22
 
 ### Fixed
 
-- Dev server no longer misses file edits made via atomic write (temp file + rename) on macOS. The previous `fs.watch(src, {recursive:true})` watcher dropped these events silently, so AI-driven edits could leave the preview without ever rebuilding. A 5-second mtime poll now walks `src/` as a safety net alongside the existing watcher — typical edits still react in under a second via the OS watcher, with a 5s ceiling for events the OS misses. The watcher and the poll share an mtime map, so a single edit that fs.watch catches no longer triggers a duplicate poll-driven build 5s later. Skips the generated `.bosia/` and `public/bosia-tw.css` paths so it can't loop.
-- Crash loop in dev no longer goes silent. Previously, after 3 crashes in 5 seconds bosia would print "waiting for file change to restart" and stop respawning — if the file watcher was also stuck (see above), the app would never come back without a manual stop/start. The new behavior retries forever with exponential backoff (500ms → 1s → 2s → 4s, capped at 5s) and resets the counter once a child has stayed alive for 5+ seconds. Each retry logs the attempt number and delay so it's visible in the terminal.
-- 500 responses in dev no longer leave the browser stuck on "Internal Server Error" after the source is fixed. The bare-text/JSON fallbacks (renderer error-page failure, top-level handler catch, data endpoint, API route, non-enhanced form action) now return a small HTML page with the same SSE reload listener that hydrated pages use, so the moment the next build succeeds the page auto-reloads to the recovered route. Production responses are unchanged — JSON/text 500s still ship as-is.
-
-### Changed
-
-- Dev server shutdown now also clears the new mtime poll, pending restart timer, and healthy-timer alongside the existing watchers and build timer.
+- Dev server no longer misses file edits via atomic writes (added 5s mtime poll safety net)
+- Dev crash loop no longer hangs (now retries with exponential backoff forever)
+- Error pages now auto-reload when source is fixed (instead of stuck on error screen)
 
 ## [0.5.11] - 2026-05-21
 
 ### Fixed
 
-- Surface dev mode inspector problem.
+- Fixed inspector in dev mode
 
 ## [0.5.10] - 2026-05-20
 
 ### Added
 
-- `goto()` for programmatic SPA navigation, exported from `bosia/client`. Call `goto("/dashboard")` or `goto("/login", { replaceState: true, invalidateAll: true })` to navigate without a full page reload. Returns a Promise that resolves after the destination's loaders have run and the new page is mounted. Honors `replaceState`, `invalidateAll`, and `noScroll`. Mirrors SvelteKit's `goto()` so apps can use the same idiom they're used to instead of reaching for `window.location.href` (which tears down all client state).
-- `beforeNavigate(fn)` and `afterNavigate(fn)` lifecycle hooks, exported from `bosia/client`. Call `nav.cancel()` from a `beforeNavigate` listener to block a navigation (useful for unsaved-changes prompts). Both auto-unregister when the calling component is destroyed. The `Navigation` object passed to listeners carries `from`, `to`, `type` (`"link" | "goto" | "popstate" | "form" | "enter"`), and `willUnload` — same shape SvelteKit ships.
-- New `docs/guides/navigation` page documenting all four navigation patterns: `<a href>`, `goto()`, form-action `redirect()`, and the `window.location.href` escape hatch.
-- New demo route at `/nav-test` (in `apps/demo`) that exercises every navigation pattern plus the cancel/event-log flow.
-- New `bosia-navigation` skill (under `docs/content/skills/`) so AI agents pick the right navigation pattern (`<a href>` / `goto()` / form-action `redirect()` / `window.location.href`) and use the lifecycle hooks correctly. Catalog index (`docs/content/skills/SKILL.md`) updated to 35 skills and cross-references added in `bosia-routing` and `bosia-auth-flow`.
+- New `goto()` function for programmatic page navigation without full reload
+- New `beforeNavigate()` and `afterNavigate()` hooks to hook into navigation lifecycle
+- New navigation guide documenting all navigation patterns (link, goto, form redirect)
+- New bosia-navigation skill for AI agents building navigation features
 
 ### Fixed
 
-- Hydration failures now log to the console instead of silently leaving the page on the loading spinner. Previously, an unhandled error in `hydrate.ts:main()` would leave `<p>Loading...</p>` stuck on screen with no signal — now the error surfaces in DevTools.
-- 404/error pages no longer show a stuck loading spinner that blocked clicking error page links. The spinner is now only injected when the body is empty (streaming SSR pre-paint gap); non-streaming responses with rendered content ship without it.
+- Hydration errors now log to console (previously silent with stuck loading spinner)
+- Error pages no longer show loading spinner that blocks clicking links
 
 ## [0.5.9] - 2026-05-20
 
 ### Added
 
-- SvelteKit-style `src/app.html` template support. Users can now create an optional `src/app.html` to customize the HTML shell with `%bosia.head%` and `%bosia.body%` placeholders for injection points, plus `%bosia.lang%` for dynamic language attributes (honors `metadata.lang`), `%bosia.nonce%` for CSP nonce injection, and `%bosia.env.PUBLIC_*%` for static environment variable substitution at build time. The framework ships a minimal default shell (no breaking change) and validates at build time.
-- Default project templates (`default`, `todo`) and the demo app now include a basic `src/app.html` scaffold with `%bosia.lang%` ready for customization.
-- New `bosia-app-css` skill (under `docs/content/skills/`) documents the canonical `src/app.css` order and the Tailwind v4 / LightningCSS rule that font `@import url(...)` lines must come before `@import "tailwindcss"` — otherwise the import is silently dropped and the font never loads. Catalog index (`docs/content/skills/SKILL.md`) updated to 34 skills.
-- New CLI command `bun x bosia@latest add font "<Family>" "<@import url>"` — prepends a Google-Fonts-style `@import url(...)` to `src/app.css` with a `/* bosia-font: <Family> */` marker. Idempotent (re-adding the same family is a no-op) and always places the import above `@import "tailwindcss"` so LightningCSS doesn't silently drop it. Help text and `--help` example updated.
+- New `src/app.html` template support for customizing HTML shell
+- New `bosia add font` command to add Google Fonts to src/app.css
+- New bosia-app-css skill teaching font import order for Tailwind
 
 ## [0.5.8] - 2026-05-19
 
 ### Fixed
 
-- Dev pages using `<input bind:value={state}>` (or any `bind:*` directive on a writable state) no longer crash the browser with `RangeError: Maximum call stack size exceeded` on first render. Svelte 5's dev compile wraps the binding in `function get() { return $.get(state) }` for nicer `$inspect` stack traces, but after Bun's bundler rewrites `$.get` to a named import `get`, the function name shadows the import and the body recurses into itself. The Svelte output is now rewritten before bundling so the inner names don't collide. Production builds were never affected (they use anonymous arrow functions).
-- Dev builds no longer fail with `Multiple files share the same output path` (`+page-<hash>.css`) when two or more routes share a `.svelte` component that has a `<style>` block. The Inspector's CSS extraction was emitting one CSS chunk per importing route, and Bun's chunk-splitter named all of them after the importing chunk (`+page`) — identical CSS content meant identical hashes and a collision. Component styles are now injected via a runtime `<style>` element instead of going through Bun's CSS chunking, eliminating the collision. Production builds were never affected (Inspector is dev-only).
+- Dev no longer crashes on bind directives in Svelte components (fixed shadow variable)
+- Dev no longer fails when multiple routes import same component with styles
 
 ## [0.5.7] - 2026-05-19
 
 ### Added
 
-- The Inspector now surfaces runtime errors from your running app in a small badge in the bottom-right corner of the page. Both browser errors (uncaught exceptions, unhandled promise rejections) and server errors (Elysia handler errors, uncaught process errors, unhandled rejections) are captured live. Click the badge to see the list; click "Send to AI" on any row to hand the error off to your configured `aiEndpoint` with full source context. Source maps are generated automatically in dev, so the AI receives real `src/routes/...svelte:42` paths instead of compiled bundle paths. Errors are live-only — refresh the page for a clean slate. Production is unaffected (Inspector turns itself off). Apps that don't use the Inspector see no change.
+- Inspector now shows runtime error badge in corner; click to see list and send to AI
 
 ### Changed
 
-- Route params are now passed as a separate `params` prop on `+page.svelte` and `+layout.svelte`, matching SvelteKit. Read `params.slug` from the `params` prop instead of `data.params.slug`. The `data.params` shim has been removed — update any page or layout that used the nested form to destructure `params` alongside `data`.
-- Starter templates (`default`, `todo`) now place public pages under a `(public)/` route group, matching the `demo` template. This is the convention you'll want as soon as you add an authenticated area (e.g. `(app)/`, `(admin)/`) — the public marketing pages stay grouped together without changing their URLs. Existing projects don't need to change anything; this only affects newly scaffolded projects.
+- Route params now passed as separate `params` prop (not nested in `data.params`)
+- Starter templates now organize public pages under `(public)/` route group
 
 ### Fixed
 
-- Inspector stack-trace resolution for `.svelte` files now lands on the original source line. Previously the bundler's source map labeled frames with the `.svelte` filename but used line numbers from the post-Svelte-compile intermediate (`$.next()` / `$.append()` calls), so a runtime error at `+page.svelte:3` would show up as something like `+page.svelte:638` — well past the end of the real file. The resolver now chains through Svelte's per-file compile map to recover the correct source position.
+- Inspector stack traces now point to correct source line in .svelte files
 
 ## [0.5.6] - 2026-05-18
 
 ### Fixed
 
-- Running `bun run build` while `bun run dev` was live no longer crashes the dev server with `ENOENT` reading `+page-*.js` / `+error-*.js`. The build used to wipe the entire `.bosia/` folder at start — including the live dev process's compiled server under `.bosia/dev/`. The cleanup is now scoped to just the codegen files this build owns (`routes.ts`, `routes.client.ts`, `env.server.ts`, `env.client.ts`, `types/`) plus its own output directory.
+- Build and dev can now run simultaneously (build no longer deletes dev output)
 
 ## [0.5.5] - 2026-05-18
 
 ### Changed
 
-- Dev server now writes its build output to `.bosia/dev/` instead of `./dist/`. If you start `bun run dev` and then run `bun run build` in another terminal (for example to verify a change, or because an AI agent triggered a build), the build no longer overwrites the files the live dev preview is serving — so browser navigation in the dev preview stops 404-ing on chunks that just got replaced. Production builds and the `bosia start` server still use `./dist/` exactly as before.
+- Dev server now writes to .bosia/dev/ instead of ./dist/ to avoid conflicts with prod builds
 
 ### Added
 
-- New `BOSIA_OUT_DIR` setting lets you point `bosia build` at a custom output folder. Default is still `./dist/`. Mainly useful as a verification path: run `BOSIA_OUT_DIR=.bosia/verify bun run build` to do a full production build (route scan, prerender, server entry compile — things `tsc` alone won't catch) without touching the running dev preview's files. Documented in the Environment Variables guide.
+- New BOSIA_OUT_DIR env var lets you build to a custom output folder
 
 ## [0.5.4] - 2026-05-17
 
 ### Fixed
 
-- Dev server (`bosia dev`) no longer crashes with a "multiple files share the same output path" error on apps that have several pages without their own styles. The Inspector plugin was creating identical empty CSS files for each page, which clashed during the build. Production builds were never affected — Inspector turns itself off in production.
+- Dev no longer crashes on pages with multiple routes but no component styles
 
 ### Added
 
-- New `IDLE_TIMEOUT` setting (in seconds, up to 255) lets you tell the server to wait longer before dropping slow streaming responses. Default stays at 10 seconds. Useful for chat or streaming endpoints where the response can pause for a while between updates — for example a chat endpoint waiting on an AI tool call. Apps that don't set it behave exactly as before.
+- New IDLE_TIMEOUT setting for slow streaming responses (chat, etc)
+- Six new brief-intake skills guide users through app design questions (name, audience, colors)
+- New bosia-frontend-design skill forces aesthetic consistency (fonts, colors, memorable detail)
+- Brief-intake now collects design direction and stores in BRIEF.md for consistency
 
 ### Changed
 
-- The catalog, block-compose, and platform-brief skills now ask the AI to install registry components in **small batches (1–3 items per call)** and **one block per call**. Previously they suggested installing everything in a single big call, which sometimes took long enough that the chat response was dropped as idle ("Load failed"). Many small calls are safer, and the registry cache between calls keeps total install time roughly the same.
-
-### Added
-
-- Six new brief-intake skills (`bosia-brief-intake`, `bosia-brief-identity`, `bosia-brief-voice`, `bosia-brief-visual`, `bosia-brief-platform`, `bosia-brief-review`) under `docs/content/skills/`. When the AI starts a new Bosia app, it now walks the user through a quick product brief — name, audience, voice, palette, platform — and saves the answers to a `BRIEF.md` file at the app root. Every later UI it generates reads `BRIEF.md` first, so colors, tone, button labels, and forms of address stay consistent across the whole app instead of drifting between conversations.
-- `bosia-brief-visual` automatically installs the right theme (`bosia add theme/...`) once you pick a palette intent; `bosia-brief-platform` batched-installs the first screens you ask for; `bosia-brief-review` runs a checklist before any feature work to make sure nothing in the brief contradicts what's already on disk.
-
-### Changed
-
-- Skills catalog (`docs/content/skills/SKILL.md`) updated from 25 to 31 skills. A new "Brief intake — design ✦" section lists the six new skills. The "Discovery order" now starts at step 0: "check `BRIEF.md` at app root — if missing, run intake first."
-- Skills catalog updated again from 31 to 32 skills to include the new `bosia-frontend-design` design convention (see Added below).
-
-### Added
-
-- New `bosia-frontend-design` skill under `docs/content/skills/`. Before the AI emits any UI, it now has to commit to a clear aesthetic direction — distinctive fonts, a dominant color with a sharp accent, and one memorable detail — instead of falling back on the generic "soft purple gradient + Inter" look. The skill writes the choice into your `BRIEF.md` so every later page stays on-stance, and ships with a catalog of 11 starter directions (editorial, brutalist, retro-futuristic, soft pastel, luxury, and more) you can pick from or remix.
-
-### Changed
-
-- `bosia-brief-intake` now runs the new `bosia-frontend-design` stance step automatically after the visual group, so the AI can't finish a brief without committing to a direction + a memorable detail. BRIEF.md gains a `## Aesthetic` section, and the quick-start opener bumps from 5 questions to 6 (adding "pick a direction"). `bosia-brief-visual` hands off to the stance step instead of treating type/palette as the final word.
-- `bosia-brief-review` adds three new P0 checks (B18 stance committed, B19 fonts wired in `app.css @theme` not per-component, B20 accent override applied to `:root`). Brief reviews now halt if the AI picks `Inter` / `Roboto` / `Space Grotesk` as the display or body font, or if the direction is filler like "modern, clean, professional".
-- `bosia-design-review` now also verifies that each emit honors the locked § Aesthetic stance — direction-appropriate composition, the named memorable detail present, fonts inherited from `app.css @theme` (not silently swapped to Inter). This skill does not pick the stance; it only catches drift.
-- All six page-scaffold skills (`bosia-landing`, `bosia-saas-landing`, `bosia-blog`, `bosia-pricing`, `bosia-mobile-screen`, `bosia-dashboard`) gain a workflow step 1: "Read BRIEF.md § Aesthetic and apply direction + memorable detail to this page". Each adds a matching P0 checklist item. Scaffolds consume the stance — they do not re-pick it.
-- `bosia-brief-intake` ships its first two reference files: `references/quick-start-script.md` (the 6-question opener with palette → direction inference defaults) and `references/example-brief.md` (a fully-filled Dombaku-style BRIEF with the new § Aesthetic section).
-- `bosia-frontend-design` and `bosia-brief-intake` frontmatter `targets.files` now declare `src/app.css` (and `BRIEF.md` for the stance skill), so tooling that indexes skill targets sees the font-wiring + accent-override files as real outputs of these skills.
+- Component installation now batches 1-3 items per call (faster, avoids timeouts)
+- All page scaffolds now read BRIEF.md to inherit design direction
+- Brief review now checks that design direction was committed and applied
 
 ## [0.5.3] - 2026-05-16
 
 ### Added
 
-- API routes (`+server.ts`) can now be turned into static JSON files at build time by adding `export const prerender = true`, the same way pages can. The framework fetches the route during the build and saves the result as a `.json` file. Dynamic routes need an `entries()` export, same as pages. Static hosts like GitHub Pages can now serve API data without needing a running server.
-- During development, prerender API routes also respond at the `.json` URL — so `/api/skills` and `/api/skills.json` both return the same JSON in dev, matching what the static host will serve in production. Regular API routes are not affected.
+- API routes can now be prerendered as static .json files at build time
 
 ### Changed
 
-- Docs site API endpoints for skills, components, and blocks now use the new framework prerender. The hand-rolled JSON output in `docs/scripts/post-build.ts` has been removed; post-build now only handles the sitemap.
-- Component and block detail responses now return the markdown body under `content` (was `mdFile`), matching the skills endpoint. Update consumers to read `content`.
-- List entries for skills, components, and blocks now include a `path` field pointing to the full detail URL (e.g. `/api/components/ui/button.json`). The skills detail response now includes `path` too. **Breaking**: previously `/api/components` and `/api/blocks` entries had `path` set to the bare segment (e.g. `ui/button`); consumers must update.
+- Docs API endpoints now use framework prerender instead of hand-rolled JSON generation
+- API response field changed from `mdFile` to `content` for consistency
 
 ### Fixed
 
-- Dev `.json` URLs now work correctly for dynamic prerender API routes that have a catch-all sibling. Previously some `.json` URLs returned 4xx errors because the catch-all route absorbed the `.json` suffix instead of treating it as the JSON form.
-- The skills detail endpoint now returns proper JSON instead of raw markdown. Previously the static file was the markdown body verbatim, which broke any consumer expecting JSON.
-- Docs pages with code blocks no longer crash in production builds. The syntax highlighter (Shiki) was being loaded in a way that confused Bun's bundler. It is now bundled directly with the docs renderer, so it always loads in the right order.
+- Dev .json URLs now work correctly for dynamic routes with catch-all siblings
+- Docs pages no longer crash with syntax highlighter in production builds
 
 ## [0.5.2] - 2026-05-15
 
 ### Added
 
-- Two new design skills for AI agents building chat interfaces: one for the message composer (textarea with Enter to send, Shift+Enter for newline, safe for IME input like Japanese/Chinese, and auto-disable while a response is streaming) and one for the message feed (role markers, multi-part messages, polite auto-scroll, and a tiny built-in renderer for **bold**, _italic_, and links — no extra dependency). Catalog updated from 23 to 25 skills.
-- `bosia add` now accepts multiple component names in a single call — `bun x bosia@latest add button card input` installs all three (and their dependencies) in one go, instead of having to run the command three times.
-- New `-y` / `--yes` flag on `bosia add` auto-confirms the "component already exists, replace?" prompt. Makes the CLI usable in CI pipelines and shell scripts where there's no human to answer prompts.
-- Docs site now also exposes `/api/components` and `/api/blocks` JSON endpoints so AI agents can discover available UI primitives and blocks (and their install commands) the same way they already discover skills. Each list entry has the install command, dependencies, and category; each detail endpoint also includes the full markdown body.
+- New chat design skills: message composer and message feed with built-in markdown renderer
+- `bosia add` now accepts multiple components in one call
+- New `-y` / `--yes` flag on `bosia add` for CI/script automation
+- Docs site now has /api/components and /api/blocks JSON endpoints
 
 ## [0.5.1] - 2026-05-15
 
 ### Added
 
-- New `DISABLE_X_FRAME_OPTIONS=true` environment variable lets you turn off the framework's `X-Frame-Options: SAMEORIGIN` header. Useful when your app is intentionally embedded as an iframe by another origin — preview hubs, design tools, sandbox runners. Other security headers stay on. The framework prints a startup line (`🪟  X-Frame-Options disabled`) when the override is active so it's never silent.
-- Docs site now serves a public skills API at `/api/skills` (index) and `/api/skills/<name>` (raw `SKILL.md`). Skill files live under `docs/content/skills/<name>/SKILL.md` — outside the docs sidebar — so editing a skill instantly updates every Bosapi instance and any third-party agent that consumes the endpoint.
+- New DISABLE_X_FRAME_OPTIONS env var lets apps be embedded as iframes
+- Docs site now has public /api/skills endpoint for AI agents to read guides
 
 ### Changed
 
-- New projects scaffolded with `bun create bosia` now ship a starter `bosia.config.ts` with the Inspector plugin enabled by default — across all three templates (`default`, `demo`, `todo`). Hold **Option** (Alt) and click any element on your dev page to jump straight to its source line in VS Code — no setup, no docs hunt. Edit the file to swap `editor: "code"` for `"cursor"` or `"zed"` if you use a different editor. Production builds are unaffected: Inspector self-disables under `NODE_ENV=production`, so nothing extra ends up in your shipped bundle.
+- New projects ship with Inspector plugin enabled by default (Alt+click to edit)
 
 ### Fixed
 
-- Dev mode no longer leaves the browser stuck on the "App server is starting..." page after a file save. The outer dev proxy now waits up to 10s for the freshly-respawned inner app to bind its port before giving up — so the HMR reload always lands on the new build, not a 503.
+- Dev no longer gets stuck on "App server is starting" after file save
 
 ## [0.5.0] - 2026-05-14
 
 ### Changed
 
-- The data the server sends down to the page (page data, layout data, form data) is now embedded as JSON inside the HTML instead of as inline JavaScript. Browsers parse JSON faster than JavaScript on large payloads, and the new format is safer to escape. This matches how Next.js, Nuxt, SvelteKit, and Remix ship their data. No changes to your code — `data` and `form` props in your pages and layouts still arrive the same way.
+- Page data now embedded as JSON in HTML (faster parsing than JavaScript)
 
 ### Added
 
-- Pages and layouts now skip reloading their data when nothing they care about changed, making client-side navigation much faster. A navbar that only reads the current user no longer fires a database query every time you click a link — its loader runs once on first load and then sits cached until something explicitly invalidates it.
-- New `depends()` API on `LoadEvent` lets a loader declare custom dependency keys (e.g. `depends("app:user")`). Combine with the new `invalidate("app:user")` / `invalidateAll()` helpers exported from `bosia/client` to force selective re-runs from anywhere on the client — useful after WebSocket updates, manual refresh buttons, or cross-page mutations.
-- Loaders now track their reads (params, search params, cookies, `fetch()` URLs, URL pathname) automatically. The next navigation only re-fetches the loaders whose tracked inputs actually changed.
-- Form actions via `use:enhance` now invalidate **only the page loader** by default — layouts stay cached. Call `invalidate("app:key")` from your submit handler if a mutation needs to refresh a layout too.
-- New docs page `Guides → Data Invalidation` (English + Indonesian) covering `depends()`, the three forms of `invalidate()`, and the form-action default.
+- Pages/layouts now skip reloading data when dependencies didn't change
+- New `depends()` API lets loaders declare custom dependencies
+- New `invalidate()` / `invalidateAll()` helpers for selective cache invalidation
+- Loaders now auto-track reads and only re-fetch when inputs change
+- New data invalidation guide with examples
 
 ### Fixed
 
-- Link prefetches (when you hover over a link or it scrolls into view) now also tell the server which loaders are still cached, so layouts that haven't changed don't re-run on the server just because a user moused over a link. Without this fix, the new selective-reload work was being undone by prefetches.
+- Link prefetches now tell server which loaders are cached (no unnecessary re-runs)
 
 ## [0.4.6] - 2026-05-13
 
 ### Added
 
-- New optional `CSP_DIRECTIVES` environment variable turns on a strict Content Security Policy. Set it (example: `CSP_DIRECTIVES="default-src 'self'; script-src 'self' 'nonce-{nonce}'"`) and Bosia adds the matching `Content-Security-Policy` header on every response — generating a fresh per-request token where `{nonce}` appears — and stamps that token onto every script tag it emits so its own scripts keep running. Without `CSP_DIRECTIVES` set, neither the header nor the token is emitted, so there is no overhead and no risk of accidentally blocking your inline scripts.
-- New `event.locals.nonce` field exposes the per-request token to your code (load functions, hooks). Pass it to a page via `load()` and use it as `<script nonce={data.nonce}>…</script>` on your own inline scripts so they stay valid under CSP.
+- New CSP_DIRECTIVES env var for strict Content Security Policy with nonces
+- New event.locals.nonce field to use nonces on custom inline scripts
 
 ### Changed
 
-- The per-request CSP token is now only generated when CSP is turned on. With CSP off (the default) the random-number call is skipped, saving a tiny amount of work on every request.
+- CSP nonce only generated when CSP is enabled (performance improvement when off)
 
 ### Fixed
 
-- Server-side redirects now reject `javascript:`, `data:`, and `vbscript:` URLs even when you pass `{ allowExternal: true }` — those are never legitimate redirect targets and could have been abused to run scripts via a redirect.
-- CSRF origin checks no longer trust the `X-Forwarded-Host` / `X-Forwarded-Proto` headers by default. They are only honored when you set `TRUST_PROXY=true`. This prevents a directly-exposed server from being tricked into accepting a fake origin via spoofed headers.
-- Responses now always include `Vary: Origin` whenever CORS is configured, even when the request's origin isn't allowed. Stops CDNs and browser caches from accidentally serving a response meant for one site to a different site.
-- Prerendered builds now fail with a clear error if a dynamic route value contains `..` or `\`, or if a non-catch-all value contains `/`. Prevents a typo or bad data source from writing files outside the intended output folder.
-- CORS preflight (`OPTIONS`) requests now check the requested method and headers against the allow-list. A request asking for a disallowed method or header gets a clear 403 instead of being waved through, so misconfigured clients fail loudly and the browser shows a clear "not allowed by CORS policy" message in devtools.
-- Dev mode no longer rejects same-origin form submissions when the app is running behind the dev proxy. The proxy now forwards the right headers automatically so the CSRF check sees the public URL the browser is actually using.
+- Redirects now reject javascript:/data:/vbscript: URLs (security)
+- CSRF checks no longer trust forwarded headers by default (set TRUST_PROXY to enable)
+- CORS responses now always include Vary: Origin header (cache safety)
+- Prerender now validates dynamic routes don't escape output folder
+- CORS preflight now checks methods and headers against allow-list
+- Dev CSRF checks now work correctly behind proxy
 
 ## [0.4.5] - 2026-05-11
 
 ### Added
 
-- Two new registry kinds: **Blocks** and **Themes**. Blocks are ready-made UI sections (cards, hero, pricing) with hardcoded copy and tuned typography you can install with a single command. Themes are token packs (colors, fonts, radii) that restyle every block and primitive at once.
-- New CLI commands. `bun x bosia@latest add block cards/feature-editorial` drops a polished feature card into `src/lib/blocks/`, pulling in any primitive components it needs. `bun x bosia@latest add theme editorial` installs a warm cream + serif theme and wires the imports into `app.css`.
-- First block ships: `cards/feature-editorial` — magazine-style card with a serif title, eyebrow numeral, and circular CTA. Designed to look great on the new editorial theme, but works on any theme.
-- New `themes/neutral` and `themes/editorial` themes. Switching is one command — `app.css` is patched idempotently and Google Fonts are auto-imported when a theme needs them.
-- Docs site has new **Blocks** and **Themes** sections with previews and install instructions.
+- Two new registry kinds: Blocks (ready-made UI sections) and Themes (color/font packs)
+- New `bosia add block` and `bosia add theme` commands
+- First theme ships: editorial (serif + warm cream)
+- Docs site has Blocks and Themes sections with previews
 
 ## [0.4.4] - 2026-05-09
 
 ### Fixed
 
-- Production builds for apps with many routes that share a common `app.css` (via the root layout) no longer fail with `Multiple files share the same output path` errors. The bundler now treats `app.css` as a JS no-op so Bun does not emit duplicate CSS chunks per route. Tailwind CLI still produces the real stylesheet at `public/bosia-tw.css` as before.
+- Production builds no longer fail with CSS duplication errors on many routes
 
 ## [0.4.3] - 2026-05-09
 
 ### Changed
 
-- Bosia now resolves each page route only once per request, instead of looking it up three or four times. Page loads, form submissions, and trailing-slash redirects are all slightly faster.
-- Layout data merging is now linear in the number of layouts. Apps with deeply nested layouts will see a small speed-up on every page load.
-- The list of public environment variables (those starting with `PUBLIC_`) is now built once when the server starts, instead of being recomputed on every response.
+- Page route resolution now happens once per request (not 3-4 times) — slightly faster
 
 ### Fixed
 
-- Production builds with many Svelte components no longer fail with duplicate CSS output errors. Bosia now compiles Svelte files itself with inline style injection, avoiding the upstream bug.
+- Production builds no longer fail with CSS errors from Svelte inline styles
 
 ### Removed
 
-- An internal pre-handler that double-checked API routes on every request has been removed. It was redundant — every HTTP method already routes through the same handler.
-- `bun-plugin-svelte` is no longer a dependency.
+- Removed redundant API route pre-handler, removed bun-plugin-svelte dependency
 
 ## [0.4.2] - 2026-05-07
 
 ### Fixed
 
-- Newly created projects (`bun x bosia@latest create`) now ship with a working `.gitignore`. npm strips files named `.gitignore` from published packages, so the template was arriving without one — meaning `node_modules`, `dist`, `.bosia`, and your local `.env` were not ignored out of the box. The template now ships the file as `_gitignore` and the create command restores the proper dotfile name when scaffolding.
-- `bun run check` now passes on a freshly created project. The generated Tailwind output (`public/bosia-tw.css`) was being picked up by Prettier and reported as a formatting issue. It is now ignored by both Prettier and Git as a build artifact.
+- New projects now ship with working .gitignore file
+- `bun run check` now passes on freshly created projects
 
 ### Added
 
-- New `bun run check:templates` script (in the `bosia` package). It packs the package the same way `bun publish` would, extracts the tarball, and verifies every template still has the files we expect — no install, no scaffold. Prevents the kind of "template arrives broken" regression we just fixed from sneaking back in.
+- New `bun run check:templates` script validates template integrity
 
 ## [0.4.1] - 2026-05-06
 
 ### Added
 
-- New first-party plugin `bosia/plugins/inspector`. While running `bun run dev`, hold the Option (Alt) key and any element on the page lights up showing where in your code it lives. Click an element and the right `.svelte` file opens in your editor at the exact line — no more hunting through folders. Optionally, point it at an AI endpoint and the click opens a small comment box so you can describe a fix and hand the location plus your note off to your coding agent. Production builds are completely untouched: no attributes baked in, no overlay script, no extra endpoint.
+- New inspector plugin: Alt+click any element to jump to its source code in your editor
 
 ## [0.4.0] - 2026-05-05
 
 ### Added
 
-- Plugin system. Drop a `bosia.config.ts` at the project root and use plugins to extend Bosia in three places: request handling, the build, and how pages are rendered. With no config (or an empty one) there is zero overhead.
-- New first-party plugin `bosia/plugins/server-timing`. Adds a `Server-Timing` header to every response so you can see how long the framework spent on each request in your browser's DevTools.
-- New `defineConfig` helper exported from `bosia` for type-safe `bosia.config.ts` files.
-- Demo app now ships an example `bosia.config.ts` wired up with the server-timing plugin.
-- New docs page: Plugins guide.
+- New plugin system with bosia.config.ts (zero overhead if unused)
+- New server-timing plugin shows request timing in browser DevTools
+- New defineConfig helper for type-safe configs
 
 ### Changed
 
-- The `server-timing` plugin's default metric name changed from `total` to `handler`. The old name was misleading because streaming responses send headers before the body is done, so the value never covered the full request — only the handler part. The new name reflects what's actually measured. Pass `serverTiming({ metric: "..." })` to override.
+- server-timing metric name changed from `total` to `handler`
 
 ### Fixed
 
-- The `bosia.config.ts` loader now writes its compiled output inside the project's `.bosia/` folder instead of `/tmp`, so plugin imports like `bosia/plugins/server-timing` resolve correctly via the project's `node_modules`.
+- Plugin imports now resolve correctly from node_modules
 
 ## [0.3.4] - 2026-05-04
 
 ### Added
 
-- You can now drop a `+error.svelte` file into any route folder, not just the project root. When something goes wrong in that section of the site, the matching error page shows up wrapped in the same layouts as the page above it — so your header, sidebar, and other navigation stay visible while the broken bit is replaced. If a folder has no `+error.svelte`, the next one up the tree is used; if none exist, the root error page is used as before.
-- Errors hit during in-app navigation no longer trigger a full page reload when a nearby `+error.svelte` can handle them — the surrounding layout stays mounted and only the broken page is swapped out.
+- Error pages can now be nested in any route folder (not just root)
+- In-app errors now use nearest error page without full reload
 
 ### Fixed
 
-- Pressing Ctrl+C to stop `bun run dev` no longer prints a misleading `error: script "dev" exited with code 130` line. The dev server now shuts down cleanly and exits with status 0, the same as `bun run start`.
+- Ctrl+C now cleanly stops dev server (no misleading error code)
 
 ## [0.3.3] - 2026-05-03
 
 ### Added
 
-- Added a Testing guide in the docs that shows how to write and run tests in your app with `bun test`, including file naming, env variables, and what to test today.
-- Error pages can now import `ErrorProps` and `PageError` from `./$types` instead of declaring the prop shape by hand — same pattern as `PageProps` for regular pages.
+- New testing guide with bun test examples
+- Error pages now have type hints via ./$types
 
 ### Changed
 
-- The build now stops with a clear error if your `tsconfig.json` is malformed, pointing to the file and the parse problem — instead of continuing with broken `$lib` / `$registry` / `./$types` imports.
+- Build now fails clearly on malformed tsconfig.json
 
 ### Fixed
 
-- Fixed a crash that could happen after submitting a form without JavaScript when the page tried to redirect or show an error — the browser now follows the redirect or sees the error page as expected.
+- Form submissions without JavaScript now work correctly
 
 ## [0.3.2] - 2026-05-02
 
 ### Fixed
 
-- Pressing Ctrl+C once now properly stops the server — you no longer need to press it twice to quit `bun run dev` or `bun run start`.
-- The server now shows a proper error page if something goes wrong while loading a page, instead of displaying broken partial content.
-- The build process now cleans itself up properly and avoids port conflicts when running multiple builds at the same time.
-- Rapid file saves during development no longer cause the dev server to rebuild the same changes multiple times unnecessarily.
+- Ctrl+C now stops server on first press (not requiring second press)
+- Server now shows proper error page instead of broken partial content
+- Build cleanup prevents port conflicts when building multiple times
+- Rapid file saves no longer trigger duplicate rebuilds
 
 ## [0.3.1] - 2026-05-01
 
 ### Added
 
-- Pages that look the same for all visitors now share a single server request instead of making duplicate calls — faster responses with less server load. Pages with personal content (like dashboards or account pages) are kept separate per user by placing them in a `(private)` folder.
+- Public pages now share single server request (faster, less load)
+- New `(private)` folder pattern for per-user pages (dashboards, etc)
 
 ### Fixed
 
-- 🔴 Fixed a security issue where one user could accidentally receive another user's data when multiple users visited the same page at the same time. Use `(private)` folders for any page that shows personal content.
-
-### Removed
-
-- Removed the previous approach of identifying users by their cookies for request sharing — replaced by the simpler and safer `(private)` folder system above.
-
-### Fixed
-
-- Fixed a crash when creating a new project — the app name now loads correctly when the server renders pages.
-- Removing a variable from your `.env` file now takes effect immediately in the dev server — no manual restart needed after deleting a variable.
+- Fixed security issue where users could see each other's data
+- Fixed crash when creating new projects
+- .env deletions now take effect immediately in dev server
 
 ## [0.3.0] - 2026-04-30
 
 ### Added
 
-- Added a `bosia test` command that runs your tests with the correct environment and settings automatically configured.
-- Added `test`, `test:watch`, and `test:coverage` scripts so you can run tests from anywhere in the project.
-- Added 90 automated tests covering the framework's internal utilities to help catch bugs early.
-- Added 77 more automated tests for the build and code generation tools (167 tests total).
+- New `bosia test` command with auto-configured environment
+- 167 automated tests for framework utilities and build tools
+- Automatic code formatting with Prettier across all templates
+- New `trailingSlash` option to control URL format
 
 ### Fixed
 
-- Fixed a bug where the `trailingSlash` setting in your route files was being silently ignored.
+- Fixed trailingSlash setting being silently ignored
 
 ### Changed
 
-- Route parameters like `[slug]` now have proper TypeScript types — accessing a parameter that doesn't exist will show a type error instead of crashing at runtime.
-
-### Added
-
-- Added automatic code formatting with Prettier across the whole project and all new project templates.
-- Added a `trailingSlash` option to control whether URLs end with a `/` — the server automatically redirects visitors to the correct URL format.
+- Route params now have proper TypeScript types (errors on wrong param names)
 
 ## [0.2.3] - 2026-04-29
 
 ### Added
 
-- The `bosia feat` install command now handles shared files more carefully — it can add to existing files instead of replacing them, so installing a new feature no longer risks overwriting your customizations.
-- Forms now submit in the background without a full page reload — the page updates smoothly while still working normally if JavaScript is disabled.
-- Added an `ssr = false` option for pages that don't need server rendering — useful for pages with browser-only features like charts or auth-protected dashboards.
+- Feature install now merges files instead of replacing them (preserves customizations)
+- Forms now submit without full page reload (progressive enhancement)
+- New `ssr = false` option for client-only pages
 
 ### Security
 
-- The page language tag is now validated to prevent a security issue where an attacker could inject malicious code through the `lang` attribute.
-- The `CORS_MAX_AGE` setting is now validated at startup — invalid values cause a clear error instead of silently breaking cross-origin request caching.
+- Page language tag validation (prevents code injection via lang attribute)
+- CORS_MAX_AGE validation at startup
 
 ### Changed
 
-- Compression now only kicks in for responses larger than 2KB instead of 1KB — small responses are faster without it.
+- Compression threshold raised to 2KB (small responses faster without compression)
 
 ### Fixed
 
-- Fixed compression for content with non-English characters (Chinese, Japanese, emoji, etc.) — they were sometimes sent uncompressed when they shouldn't be.
-- Fixed `.env` file parsing to correctly ignore inline comments — `KEY=value # note` now stores just `value` as expected.
+- Non-English character compression now works correctly
+- .env comment parsing now ignores inline comments after value
 
 ## [0.2.2] - 2026-04-28
 
 ### Security
 
-- Fixed a security issue where your users' session cookies were being sent to third-party APIs during server-side data loading. Cookies are now only forwarded to your own server by default — use `INTERNAL_HOSTS` to allowlist trusted internal services. **Behavior change:** existing `load()` calls to external APIs will need to pass credentials explicitly.
+- Fixed cookies being sent to third-party APIs (only forwarded to own server now)
 
 ### Changed
 
-- The link prefetch cache is now limited to 50 entries to prevent memory from growing without bound on pages with many links.
-- Prefetched page data now expires after 30 seconds so visitors always see fresh content after being idle for a while.
+- Link prefetch cache limited to 50 entries (prevent unbounded memory growth)
+- Prefetch data expires after 30 seconds (shows fresh content when idle)
 
 ### Fixed
 
-- Fixed a bug where Cmd/Ctrl+click (open in new tab) and middle-click were being intercepted by the router instead of opening a new tab or window.
+- Cmd/Ctrl+click and middle-click no longer intercepted by router
 
 ## [0.2.1] - 2026-04-26
 
 ### Changed
 
-- Route matching is now faster — URL patterns are compiled once at startup instead of being re-parsed on every request.
+- Route matching now faster (patterns compiled once at startup)
 
 ## [0.2.0] - 2026-04-25
 
 ### Added
 
-- Multiple simultaneous visitors requesting the same page data now share a single server call instead of each triggering a separate one — reduces server load during traffic spikes.
+- Multiple visitors to same page now share single server call (less load)
 
 ### Changed
 
-- Builds are now 500–1000ms faster by running the client and server bundles at the same time.
-- Tailwind CSS now compiles alongside the rest of the build, saving another 500–800ms.
-- Fixed a potential crash when many middleware handlers are used — they now run in a loop instead of deeply nested calls.
+- Builds now 500–1000ms faster (client + server bundles in parallel)
+- Tailwind compiles during build (saves another 500–800ms)
+- Middleware handlers now loop instead of nesting (prevent call stack issues)
 
 ## [0.1.26] - 2026-04-24
 
 ### Added
 
-- Added a `Direction` component for setting text direction (left-to-right or right-to-left) for the content inside it.
-- Added a `Kbd` component for displaying keyboard shortcuts with a keycap visual style.
-- Added a `ScrollArea` component — a scrollable container with a custom styled scrollbar.
-- Added a `Resizable` component — panels that users can drag to resize.
-- Added a `Menubar` component — a horizontal menu bar with dropdown menus, similar to the File/Edit/View bar in desktop apps.
-- Added a `ContextMenu` component — a right-click menu that appears at the cursor position.
+- Direction, Kbd, ScrollArea, Resizable, Menubar, ContextMenu components
 
 ### Changed
 
-- The `Kbd` component can now trigger actual keyboard shortcuts when the displayed keys are pressed.
+- Kbd component can now trigger actual keyboard shortcuts
 
 ## [0.1.25] - 2026-04-23
 
 ### Added
 
-- Added an `AspectRatio` component for displaying content (like images or videos) within a fixed ratio, such as 16:9.
-- Added a `RangeCalendar` component for selecting a start and end date range.
+- AspectRatio and RangeCalendar components
 
 ### Fixed
 
-- Fixed component previews in the docs — they now appear in the right place next to the `## Preview` heading instead of floating above the content.
-- Restored missing previews for 5 components (sidebar, navbar, chart, data-table, icon).
-- Fixed floating UI elements (popovers, dropdowns, date pickers, etc.) being cut off inside component previews.
+- Component previews now display in correct position in docs
+- Restored missing previews for sidebar, navbar, chart, data-table, icon
+- Floating UI elements no longer cut off in preview containers
 
 ## [0.1.24] - 2026-04-22
 
 ### Added
 
-- The `Popover` component can now open on hover in addition to click — useful for tooltips and preview cards.
-- Added a configurable delay before a hover-triggered popover closes, so it doesn't disappear the moment you move your mouse.
-- Popovers can now be opened and closed programmatically from other parts of the page.
-- Sidebar menu items in collapsed mode can now open a sub-menu on hover instead of requiring a click.
+- Popover now supports hover trigger with configurable close delay
+- Popovers can now be controlled programmatically
+- Sidebar submenus open on hover when collapsed
 
 ## [0.1.23] - 2026-04-21
 
 ### Added
 
-- Added 12 pre-styled text components (`TypographyH1`–`TypographyH4`, `TypographyP`, `TypographyBlockquote`, and more) for consistent heading, paragraph, and text styling.
-- Added 6 new icons: `terminal`, `book`, `package`, `hash`, `map`, and `circle`.
-- Added a standalone `SidebarTrigger` button for collapsing and expanding the sidebar — place it anywhere in your layout.
-- Components inside the sidebar can now read the collapsed state and toggle the sidebar programmatically.
-- When the sidebar is collapsed to icon-only mode, clicking a parent menu item now shows a popover with its child links.
+- 12 Typography components (H1–H4, P, Blockquote, etc) for consistent text styling
+- 6 new icons: terminal, book, package, hash, map, circle
+- SidebarTrigger button for programmatic sidebar control
+- Sidebar now has collapsed icon-only mode with hover submenus
 
 ### Changed
 
-- Updated the sidebar demo to a more polished design with a company header, expandable menus, and a user avatar footer.
+- Sidebar demo redesigned with company header and user avatar footer
 
 ### Fixed
 
-- Fixed the sidebar so text labels, group headers, and chevrons are all properly hidden when collapsed to icon-only mode.
-- Moved the sidebar toggle button outside the sidebar so it no longer overlaps the icons.
-- Fixed text overflowing outside the sidebar boundary during the collapse and expand animation.
-- Fixed icon alignment in collapsed sidebar — icons are now properly centered.
-- Fixed orphaned sub-menu lists appearing when the sidebar is collapsed.
+- Sidebar text/labels properly hidden in icon-only mode
+- Text no longer overflows during collapse animation
+- Icons now properly centered in collapsed sidebar
 
 ## [0.1.22] - 2026-04-20
 
 ### Added
 
-- Added an `Empty` component for displaying a placeholder when there is no content to show — useful for empty lists, search results, and similar states.
-- Added a `Carousel` component for sliding through a series of items, with optional autoplay, keyboard navigation, and previous/next buttons.
+- Empty component for no-content states
+- Carousel component with autoplay and keyboard navigation
 
 ## [0.1.21] - 2026-04-19
 
 ### Added
 
-- Added a `Form` component that manages validation state — connect it to any validation library (Zod, Valibot, etc.) and field errors appear automatically without extra wiring.
+- Form component with validation state management (Zod/Valibot compatible)
 
 ## [0.1.20] - 2026-04-18
 
 ### Added
 
-- Added an `Item` component — a flexible layout block for displaying content with an icon, title, description, and action buttons.
-- Added a `Collapsible` component for showing and hiding content with a toggle button.
-- Added a `DatePicker` component combining a calendar popup with a text input for selecting dates.
+- Item, Collapsible, DatePicker components
 
 ## [0.1.19] - 2026-04-17
 
 ### Added
 
-- Added styled `Table` components (`Table`, `TableHeader`, `TableBody`, `TableRow`, `TableCell`, and more) for displaying data in a table layout.
-- Added a full `Calendar` component with month/year navigation, keyboard support, and configurable date constraints.
-
-### Changed
-
-- Updated the `DataTable` component to use the new `Table` components internally — no change to its API or behavior.
+- Table components (Table, Header, Body, Row, Cell) for data display
+- Calendar component with month/year nav and date constraints
 
 ### Removed
 
-- Removed the `clsx` package as an external dependency — the same functionality is now built into the `cn()` utility.
+- Removed clsx dependency (functionality moved to cn() utility)
 
 ## [0.1.18] - 2026-04-16
 
 ### Added
 
-- Added a `NativeSelect` component — a styled version of the browser's built-in dropdown that works great on mobile and in forms.
-- Added an `InputOTP` component for one-time password entry — supports copy-paste, SMS autofill, and displays individual character slots.
+- NativeSelect component (styled native dropdown for mobile/forms)
+- InputOTP component with copy-paste and SMS autofill
 
 ## [0.1.17] - 2026-04-14
 
 ### Added
 
-- Added a `ButtonGroup` component for joining multiple buttons into a single connected row or column.
+- ButtonGroup component for connected button rows/columns
 
 ## [0.1.16] - 2026-04-12
 
 ### Added
 
-- Added an `InputGroup` component for building inputs with attached prefix/suffix text, icons, or buttons (for example, a URL field with an `https://` prefix).
-- Added a `Combobox` component — a searchable dropdown that filters options as you type.
-- Added a `Command` component — a filterable command palette for searching and selecting items using the keyboard.
+- InputGroup component with prefix/suffix text and icons
+- Combobox component with searchable filtering
+- Command component for keyboard-driven palette search
 
 ## [0.1.15] - 2026-04-11
 
 ### Added
 
-- Added an `Accordion` component for showing and hiding sections of content — supports single or multiple sections open at once.
-- Added a `Pagination` component for navigating between pages of content.
-- Added a `Breadcrumb` component for showing where the current page sits in the site's hierarchy.
-- Added a `NavigationMenu` component — a horizontal nav bar with hover-triggered dropdown panels.
+- Accordion, Pagination, Breadcrumb, NavigationMenu components
 
 ## [0.1.14] - 2026-04-10
 
 ### Added
 
-- Added a `Tabs` component for switching between different views using a tab bar.
-- Added a `HoverCard` component — a floating panel that appears when you hover over a link.
-- Added a `Popover` component — a floating panel that opens when you click a trigger.
-- Added a `Progress` component — a visual bar showing how much of a task is complete.
-- Added an `Alert` component for displaying important messages, with a `destructive` variant for errors.
-- Added an `AlertDialog` component — a modal that requires the user to confirm or cancel before continuing.
-- Added a `Sonner` toast notification system — shows brief success, error, info, or warning messages that disappear automatically after a few seconds.
-- Added a `Tooltip` component — a small label that appears when you hover over an element.
-- Added a `Spinner` component — an animated loading indicator.
-- Added a `Skeleton` component — an animated placeholder shown while content is loading.
+- Tabs, HoverCard, Popover, Progress, Alert, AlertDialog components
+- Sonner toast notification system
+- Tooltip, Spinner, Skeleton components
 
 ## [0.1.13] - 2026-04-09
 
 ### Added
 
-- Added a `Toggle` component — a button that stays pressed until clicked again, useful for toolbar actions like bold or italic.
-- Added a `Textarea` component — a multi-line text input that grows automatically as you type.
-- Added a `Switch` component — an on/off toggle for settings and preferences.
-- Added a `Field` component that automatically wires up labels, helper text, and error messages to form inputs for better accessibility.
-- Added a `ToggleGroup` component — a set of toggles where one or many can be active at once.
-- Added a `Slider` component for selecting a number (or range) by dragging a handle.
+- Toggle, Textarea, Switch, Field, ToggleGroup, Slider components
 
 ## [0.1.12] - 2026-04-08
 
 ### Added
 
-- Added a `Select` component — a styled dropdown for picking one option from a list.
-- Added a `RadioGroup` component — a set of radio buttons for selecting one option from a group.
-- Added a `Label` component — an accessible label for form inputs.
-- Added a `Dialog` component — a modal window that overlays the page and keeps focus trapped until dismissed.
-- Added a `Checkbox` component — a styled checkbox that supports checked, unchecked, and indeterminate states.
+- Select, RadioGroup, Label, Dialog, Checkbox components
 
 ## [0.1.11] - 2026-04-07
 
 ### Changed
 
-- The `--template drizzle` option is now `--template todo` — the name now reflects what the template actually builds (a todo app).
+- `--template drizzle` renamed to `--template todo`
 
 ## [0.1.10] - 2026-04-06
 
 ### Changed
 
-- The todo registry components are now organized into subfolders, matching the same structure as UI components.
-- `bun x bosia@latest add todo` installs all todo sub-components at once; use `bun x bosia@latest add todo/todo-form` to install individual pieces.
-- Moved component documentation into dedicated subfolders and added todo component docs.
-- The docs sidebar now shows UI and Todo components as separate sub-groups under Components.
+- Todo components now organized in subfolders like UI components
+- Component docs moved to dedicated subfolders
+- Docs sidebar shows UI and Todo as separate groups
 
 ## [0.1.9] - 2026-04-05
 
 ### Added
 
-- The server now automatically sets the right cache headers — pages that read user cookies are marked private, while public pages can be cached by CDNs.
-- Added a dedicated documentation page for the `metadata()` function, covering Open Graph tags, social sharing, and more.
-- Added SEO improvements — each page can now have its own language tag and canonical/hreflang link tags in the HTML head.
-- Added Open Graph, Twitter card, and canonical URL tags to all documentation pages.
-- Added a `robots.txt` file to the docs site.
-- Added automatic `sitemap.xml` generation at build time, with language alternates for English and Indonesian pages.
+- Auto cache headers (private for user content, cacheable for public)
+- Metadata documentation page for SEO/social sharing
+- Open Graph, Twitter card, canonical tags on all docs
+- Automatic sitemap.xml generation with language alternates
 
 ## [0.1.8] - 2026-04-04
 
 ### Changed
 
-- The `--template drizzle` scaffold now installs features from the registry instead of duplicating files — keeping templates and the registry in sync automatically.
-- Feature and component install functions now support a non-interactive mode for use in scripts and automated tooling.
-- The Drizzle database connection now shows a clear warning instead of crashing when `DATABASE_URL` is not set.
+- Drizzle template now uses registry features (keeps in sync automatically)
+- Feature/component install now supports non-interactive mode for scripts
+- Missing DATABASE_URL now shows clear warning
 
 ## [0.1.7] - 2026-04-04
 
 ### Added
 
-- Cookies are now created with secure defaults (`httpOnly`, `secure`, `SameSite: Lax`) automatically — you no longer need to specify these on every `cookies.set()` call.
+- Cookies now have secure defaults (httpOnly, secure, SameSite: Lax)
 
 ### Changed
 
-- The todo feature code is now split into cleaner layers — data access, business logic, and route handlers each live in their own file.
+- Todo feature split into cleaner data/logic/handler layers
 
 ## [0.1.6] - 2026-04-03
 
 ### Fixed
 
-- Fixed cookie name handling to follow the HTTP standard — cookies with special characters now work correctly with other servers and libraries.
-- Invalid variable names in `.env` files (like `MY-VAR` or `123BAD`) now show a clear error with the filename and line number instead of silently producing broken code.
-- Double-quoted values in `.env` files now support escape sequences like `\n` (newline), `\t` (tab), and `\\`.
+- Cookie names now follow HTTP standard (work with other servers)
+- Invalid .env variable names now show clear error with line number
+- .env double-quoted values now support escape sequences (\n, \t, \\)
 
 ## [0.1.5] - 2026-04-01
 
 ### Added
 
-- The server now waits for active requests to finish before stopping — visitors in the middle of a request get up to 10 seconds to complete, and new visitors during shutdown receive a friendly "service unavailable" response.
+- Server graceful shutdown (waits up to 10s for in-flight requests)
 
 ### Fixed
 
-- Rapid file saves no longer trigger multiple overlapping builds — only one build runs at a time, with another queued if files change during the current build.
+- Rapid file saves no longer trigger multiple builds (queued instead)
 
 ## [0.1.4] - 2026-03-30
 
 ### Added
 
-- The `redirect()` function now blocks redirects to external websites by default, protecting against open redirect attacks. Pass `{ allowExternal: true }` to allow external redirects intentionally.
+- redirect() now blocks external URLs by default (security)
 
 ### Fixed
 
-- Navigating to a new page now scrolls back to the top, as expected.
-- Using the browser's back and forward buttons no longer forces a scroll to the top.
-- Fixed a bug where stylesheets and scripts were being duplicated in the page `<head>` after server-side rendering.
+- Page navigation now scrolls to top as expected
+- Back/forward buttons no longer force scroll to top
+- Stylesheets/scripts no longer duplicated in page head
 
 ## [0.1.3] - 2026-03-29
 
 ### Added
 
-- Fixed `bosia add` so top-level components like `todo` install to the right path instead of being incorrectly prefixed with `ui/`.
-- `bosia feat` now automatically installs required dependencies — for example, `bosia feat todo` also installs `drizzle` if it isn't already present.
-- `bosia feat` now asks before replacing files you've already customized.
-- Added a `--template drizzle` starter with PostgreSQL, Drizzle ORM, a full CRUD todo demo, and seed data.
-- Added `bosia feat drizzle` to scaffold a database connection, schema, migrations, and seed runner.
-- Added `bosia feat todo` to scaffold todo routes, form actions, API, components, and seed data (requires the `drizzle` feature).
-- Added `bun x bosia@latest add todo` to install the todo UI components.
-- The component registry now also supports features — `registry/index.json` has a new `features` array.
+- `bosia add` now installs top-level components to correct path
+- `bosia feat` auto-installs required dependencies and asks before overwriting
+- New `--template drizzle` with PostgreSQL + todo demo
+- New `bosia feat drizzle` and `bosia feat todo` features
+- Component registry now supports features
 
 ## [0.1.2] - 2026-03-28
 
 ### Added
 
-- Rebuilt the documentation site using Bosia itself — replacing the previous Astro + Starlight setup.
-- The docs site now parses Markdown with syntax highlighting powered by Shiki.
-- Documentation content lives in `docs/content/docs/` as Markdown files and is cached for fast loads.
-- The docs site now has a sidebar, navbar, dark mode toggle, and table of contents.
-- The docs site now supports English and Indonesian (via the `/id/` URL prefix) with a language switcher.
-- Documentation pages for UI components now show live, interactive demos.
-- Added a landing page with a hero section, feature highlights, and a quick-start code block.
-- Dynamic routes can now be prerendered at build time by exporting an `entries()` function that lists the URL parameters to generate.
-- Added `generateStaticSite()` for exporting the site as fully static HTML files for hosting on GitHub Pages, Netlify, etc.
-- Added a GitHub Actions workflow to automatically deploy the docs to GitHub Pages.
+- Docs rebuilt using Bosia with Markdown parsing and Shiki syntax highlighting
+- Docs now have sidebar, navbar, dark mode, i18n (EN/ID)
+- Live component demos in documentation
+- Landing page with hero and quick-start
+- Dynamic route prerendering with `entries()` export
+- `generateStaticSite()` for static hosting
+- GitHub Actions deployment workflow for GitHub Pages
 
 ### Changed
 
-- The internal data endpoint URL format changed from `?path=...` to a path-based URL — required for static hosting to work.
-- Prerendered pages now also include data files for client-side navigation — the site works fully statically without a running server.
-- Removed duplicated URL-building code by extracting a shared `dataUrl()` helper.
-- Removed duplicated version lookup code by extracting a shared `getVersion()` utility.
-- Removed duplicated URL localization logic in the docs sidebar by using a shared `localizeUrl()` helper.
-- Documentation pages now use the Markdown frontmatter `title` for the browser tab title.
-- The `bosia add` command now fetches components directly from GitHub instead of the docs site API.
-
-### Removed
-
-- Removed the registry API routes from the docs app — components are now served directly from GitHub.
+- Data endpoint now uses path-based URLs (for static hosting)
+- Prerendered pages include data files for client-side navigation
+- `bosia add` now fetches from GitHub directly
 
 ### Fixed
 
-- Fixed mobile rendering by adding a viewport meta tag to the root layout.
-- Fixed silent errors in the syntax highlighter — errors now log the language name that caused the issue.
+- Mobile rendering now works with viewport meta tag
+- Syntax highlighter errors now logged with language name
 
 ## [0.1.1] - 2026-03-27
 
 ### Added
 
-- Added a component registry with 12 ready-to-use UI components: avatar, badge, button, card, chart, data-table, dropdown-menu, icon, input, navbar, separator, and sidebar.
-- Added live, interactive demos on 7 component documentation pages.
-- Added a `--local` flag to `bosia add` for installing components from your local registry during development.
-- `bosia add` now automatically creates the `cn()` utility file if it doesn't exist yet.
-- Components can now be installed to custom paths — `bosia add shop/cart` installs to `src/lib/components/shop/cart/`; names without a path go to `ui/` by default.
-- `bosia add` now asks whether to replace or skip a component that already exists in your project.
-- Added documentation pages for all 12 components.
+- Component registry with 12 UI components (avatar, badge, button, card, etc)
+- Live, interactive component demos in docs
+- `bosia add --local` for local registry during development
+- Custom component paths (`bosia add shop/cart`)
+- `cn()` utility auto-created by `bosia add`
+- Confirm/skip prompt when component already exists
 
 ## [0.1.0] - 2026-03-26
 
 ### Changed
 
-- Renamed the framework from `bosbun` to `bosia` — all package names, CLI commands, virtual modules, and internal references updated.
-- The template picker in `bosia create` now uses arrow keys to navigate instead of requiring you to type the template name.
+- Renamed framework from bosbun to bosia
+- Template picker now uses arrow keys for navigation
 
 ## [0.0.8] - 2026-03-26
 
 ### Changed
 
-- The environment variable import path changed from `bosbun:env` to `$env`, matching the SvelteKit convention.
+- Environment import path changed from bosbun:env to $env
 
 ### Added
 
-- The dev server now automatically restarts the app if it crashes — stops retrying after 3 rapid crashes within 5 seconds to avoid a crash loop.
-- Added a documentation site with 14 pages covering all major framework features.
-- Added automated deployment of the docs to GitHub Pages on every push to `main`.
-- Added full Indonesian (Bahasa Indonesia) translations for all 15 documentation pages.
+- Dev server now auto-restarts on crash (stops after 3 rapid crashes)
+- Added docs site with 14 pages
+- Full Indonesian documentation translations
+- Automated GitHub Pages deployment
 
 ### Removed
 
-- Removed the unused `renderSSR` function — it was fully replaced by `renderSSRStream`.
-- Removed the unused `buildHtmlShell` function and its cache from `html.ts`.
-- Removed a leftover import of `buildHtmlShell` in `renderer.ts`.
-- Made `STATIC_EXTS`, `DEFAULT_CSRF_CONFIG`, and `matchPattern` internal — they were never part of the public API.
-
-### Changed
-
-- Removed duplicate comma-separated environment variable parsing by using a shared `splitCsvEnv` helper.
+- Removed unused renderSSR and buildHtmlShell functions
+- Made internal APIs private (STATIC_EXTS, DEFAULT_CSRF_CONFIG, etc)
 
 ### Fixed
 
-- Fixed PUT, PATCH, and DELETE requests — they now go through the same middleware pipeline as GET and POST (CSRF, CORS, security headers, cookies, and hooks).
-- Fixed a timer memory leak that could occur when requests finished before their timeout.
-- Removed a duplicate static file server — all static files now go through a single consistent handler.
-- Fixed a caching bug where old HTML shells were being reused after a dev server rebuild.
-- Fixed client-side navigation for URLs with query strings or hash fragments — features like pagination now work without falling back to full page reloads.
+- PUT/PATCH/DELETE now use full middleware pipeline
+- Fixed timer memory leak on request timeout
+- Fixed caching bug with old HTML shells
+- Client navigation with query strings/fragments now works
 
 ## [0.0.7] - 2026-03-25
 
@@ -807,139 +700,110 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Renamed the framework from `bunia` to `bosbun` — all package names, CLI commands, and internal references updated.
+- Renamed framework from bunia to bosbun
 
 ## [0.0.5] - 2026-03-24
 
 ### Added
 
-- Added link prefetching — hovering over a link starts loading that page in the background before you click it. Links that scroll into view also prefetch automatically. Data is cached for 5 seconds.
+- Link prefetching on hover and scroll (5s cache)
 
 ## [0.0.4] - 2026-03-23
 
 ### Added
 
-- Added timeouts for data loading — `load()` automatically cancels after 5 seconds and `metadata()` after 3 seconds by default. Set `LOAD_TIMEOUT` or `METADATA_TIMEOUT` to change these values.
-- Added a build timeout for static prerendering to prevent builds from hanging indefinitely on slow routes.
+- Data loading timeouts (load: 5s, metadata: 3s; configurable)
+- Build timeout for static prerendering
 
 ### Fixed
 
-- Fixed a security issue where system environment variables starting with `PUBLIC_` were being leaked to the browser — only variables declared in `.env` files are now exposed to the client.
-- Fixed error handling during streaming page rendering — errors now return the correct HTTP status code and a properly structured error page instead of broken partial HTML.
-- Fixed a crash in JSON serialization when data contains circular references.
-- Added protection against path traversal attacks on all static file serving.
-- Fixed a crash when parsing cookies with invalid percent-encoding — falls back to the raw value.
-- Fixed cookie `set()` to reject invalid `domain` and `path` values that could be used for header injection.
+- System PUBLIC\_ env vars no longer leaked to browser
+- Streaming errors now return proper status and error page
+- JSON serialization no longer crashes on circular references
+- Path traversal attacks now blocked on static files
+- Invalid cookie percent-encoding now fails gracefully
+- Cookie domain/path validation prevents header injection
 
 ### Changed
 
-- Routes are now sorted and matched more efficiently — exact routes take priority over dynamic ones, and matching is faster with early exit.
+- Routes now sorted and matched more efficiently
 
 ## [0.0.3] - 2026-03-21
 
 ### Added
 
-- Added a `metadata()` function for server-side page metadata — page titles and meta tags are included in the initial HTML before the main content finishes loading, making pages SEO-friendly and fast for search crawlers.
-- Added form actions (SvelteKit-style) — handle form submissions on the server using `actions` in `+page.server.ts`, with support for validation errors and named actions.
+- metadata() function for server-side page metadata (SEO-friendly)
+- Form actions in +page.server.ts with validation and named actions
 
 ## [0.0.2] - 2026-03-20
 
 ### Added
 
-- Added `.env` file support — environment variables are loaded automatically with prefix-based access control (`PUBLIC_*` for the browser, `STATIC_*` for build time, and unprefixed variables for server-only use).
-- Added graceful shutdown — the server waits for in-progress requests to finish before exiting, with a 10-second safety net.
-- Added a configurable request body size limit (default 512KB) — oversized requests are rejected with a 413 error before reaching your handlers.
-- Added CSRF protection — form submissions and API mutations are validated against the Origin and Referer headers. Blocked requests return a 403 error.
-- Added CORS support — configure which external origins can access your server using the `CORS_ALLOWED_ORIGINS` environment variable.
-- In production, error responses now only show the error message instead of the full stack trace, to avoid leaking internal details.
-
-### Removed
-
-- Removed duplicate type definitions from the project template — use `import type { LoadEvent } from 'bosbun'` instead.
+- .env file support with prefix-based access control (PUBLIC*, STATIC*, server-only)
+- Graceful shutdown with 10s safety net for in-progress requests
+- Configurable request body size limit (default 512KB)
+- CSRF protection on form submissions and API mutations
+- CORS support via CORS_ALLOWED_ORIGINS env var
+- Error responses now hide stack traces in production
 
 ### Fixed
 
-- Fixed an XSS vulnerability — special characters in server-injected JSON data are now properly escaped.
-- Fixed a server-side request forgery risk on the internal data endpoint by validating the `path` parameter.
+- XSS vulnerability: special chars in JSON now properly escaped
+- SSRF risk: internal data endpoint now validates path parameter
 
 ## [0.0.1] - 2026-03-19
 
 ### Added
 
-#### Core Framework
+#### Core
 
-- **SSR + Svelte 5 Runes** — Pages are rendered on the server with full support for Svelte 5's new reactive syntax (`$props`, `$state`, etc.)
-- **File-based routing** — Routes are created automatically by adding files to `src/routes/` (`+page.svelte`, `+page.server.ts`, `+layout.svelte`, `+layout.server.ts`, `+server.ts`)
-- **Dynamic routes** — Support for `[param]` URL segments with typed parameters
-- **Catch-all routes** — Support for `[...catchall]` segments to match any URL
-- **Route groups** — `(group)` folder syntax to share layouts without adding URL segments
-- **API routes** — `+server.ts` files for building REST endpoints (GET, POST, etc.)
-- **Error pages** — `+error.svelte` for custom error handling with HTTP status codes
+- SSR with Svelte 5 Runes support
+- File-based routing (+page.svelte, +layout.ts, +server.ts)
+- Dynamic and catch-all routes with typed parameters
+- Route groups for shared layouts
+- Error pages with HTTP status codes
 
 #### Data Loading
 
-- **`load()` function** — Fetch data for a page with a plain `export async function load({ params, cookies })` — no wrapper required
-- **`$types` codegen** — TypeScript types for page data are generated automatically per route so you get autocomplete and type checking out of the box
-    - `PageData`, `PageProps` for pages
-    - `LayoutData`, `LayoutProps` for layouts
-    - `import type { PageData } from './$types'` just works via `tsconfig.json` path mapping
+- load() function with auto-typed $types codegen
+- PageData/PageProps and LayoutData/LayoutProps types
 
 #### Server
 
-- **ElysiaJS server** — Runs on port 3001 in development and 3000 in production
-- **Gzip compression** — Responses are compressed automatically
-- **Static file caching** — Assets are served with proper cache headers
-- **`/_health` endpoint** — Returns `{ status: "ok", timestamp }` for health checks
-- **Cookie support** — Read and write cookies easily via the `cookies` object on `RequestEvent` and `LoadEvent`
-    - `cookies.get(name)` / `cookies.set(name, value, options)` / `cookies.delete(name)`
-    - `Set-Cookie` headers are applied automatically in the response
+- ElysiaJS server (port 3001 dev, 3000 prod)
+- Gzip compression, static file caching
+- /\_health endpoint for monitoring
+- Cookie support with Set-Cookie headers
 
 #### Client
 
-- **Client-side hydration** — The server-rendered page is made interactive in the browser without a full reload
-- **Client-side router** — Navigating between pages happens instantly without a full page reload
-- **Navigation progress bar** — A visual loading bar shows during page transitions
-- **HMR** — Changes in development are reflected in the browser instantly
-- **CSR opt-out** — Disable client-side rendering per page with `export const csr = false`
+- Client-side hydration and router (instant page navigation)
+- Navigation progress bar and HMR
+- CSR opt-out with `export const csr = false`
 
 #### Build
 
-- **Bun build pipeline** — Fast builds powered by Bun with a Svelte plugin
-- **Client bundle** — Output to `dist/client/`
-- **Server bundle** — Output to `dist/server/index.js`
-- **Manifest** — `dist/manifest.json` maps routes to their assets
-- **Static prerendering** — Opt in to generating static HTML files at build time with `export const prerender = true`
-- **Tailwind CSS v4** — Built-in Tailwind CSS support via `@tailwindcss/cli`
-- **`$lib` alias** — `$lib/*` maps to `src/lib/*` for clean imports
-- **`bosbun:routes` virtual module** — A route registry is generated automatically at build time
+- Bun build pipeline with Svelte plugin
+- Client/server bundles with manifest
+- Static prerendering with `export const prerender = true`
+- Tailwind CSS v4 built-in
+- $lib alias for clean imports
 
 #### CLI
 
-- **`bosbun dev`** — Start the dev server with file watching and hot reload
-- **`bosbun build`** — Build for production
-- **`bosbun start`** — Start the production server from `dist/server/index.js`
-- **`bosbun create`** — Create a new project from the default template
-
-#### Hooks
-
-- **`hooks.server.ts`** — Middleware interface with a `sequence()` helper for chaining handlers
-- **`RequestEvent`** — Access `request`, `params`, `url`, `cookies`, and `locals` in middleware
-- **`LoadEvent`** — Access `params`, `url`, `cookies`, and `locals` in data loaders
+- bosbun dev/build/start/create commands
 
 #### Developer Experience
 
-- **Default project template** — A starter template for `bosbun create`
-- **Dockerfile** — A multi-stage Docker build for the demo app
-- **TypeScript** — Full type coverage with `tsconfig.json` patched automatically on first build
-- **README** — Documentation for the monorepo, framework, demo app, and template
+- Project template with Dockerfile
+- Full TypeScript support with auto-patched tsconfig
+- Hooks middleware system with sequence() helper
 
 ## [0.0.0] - 2026-03-19
 
 ### Added
 
-- Initial framework scaffolding: `matcher.ts`, `scanner.ts`, `types.ts`
-- Core SSR server (`server.ts`) and client router (`App.svelte`, `router.svelte.ts`)
-- Client-side hydration with HMR support (`hydrate.ts`)
-- Dev server with proxy and file watcher (`dev.ts`)
-- CLI entry point with `dev`, `build`, `start`, `create` commands
-- Demo application (`apps/demo/`)
+- Initial framework scaffolding and core SSR/client infrastructure
+- Dev server with proxy and file watcher
+- CLI with dev/build/start/create commands
+- Demo application
