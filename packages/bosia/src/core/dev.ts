@@ -247,6 +247,12 @@ const devServer = Bun.serve({
 		const forwardedHeaders = new Headers(req.headers);
 		forwardedHeaders.set("x-forwarded-host", reqUrl.host);
 		forwardedHeaders.set("x-forwarded-proto", reqUrl.protocol.replace(":", ""));
+		// Force inner app to respond uncompressed. Bun's `fetch()` auto-decodes
+		// gzip/br bodies but leaves the original `Content-Encoding` header on
+		// the Response, so passing it through made Safari throw -1015 ("cannot
+		// decode raw data") on every HTML navigation. Identity on the dev wire
+		// is fine — it's localhost.
+		forwardedHeaders.set("accept-encoding", "identity");
 
 		// HMR-driven reloads can land on the proxy before the freshly-respawned
 		// inner has bound APP_PORT. Retry for a few seconds on idempotent HTML

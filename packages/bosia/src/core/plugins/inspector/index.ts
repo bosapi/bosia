@@ -20,7 +20,7 @@ export interface InspectorOptions {
 interface ServerError {
 	id: string;
 	ts: number;
-	source: "elysia" | "uncaught" | "rejection";
+	source: "server" | "uncaught" | "rejection";
 	message: string;
 	stack?: string;
 	file?: string;
@@ -147,7 +147,7 @@ function installProcessListeners() {
 function installGlobalReporter() {
 	globalThis.__BOSIA_REPORT_ERROR__ = (e) => {
 		pushServerError({
-			source: e.source ?? "elysia",
+			source: e.source ?? "server",
 			message: e.message,
 			stack: e.stack,
 		});
@@ -282,7 +282,7 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 					chained = chained.onError(({ error }) => {
 						const e = error as Error;
 						pushServerError({
-							source: "elysia",
+							source: "server",
 							message: e?.message ?? String(error),
 							stack: e?.stack,
 						});

@@ -102,10 +102,10 @@ Wipes every cache entry. Every loader re-runs on the next nav.
 
 ## Server-side `invalidate()` for the response cache
 
-The browser-side `invalidate()` evicts the per-browser loader cache. Since v0.6 Bosia also keeps a **server-side** response cache that skips `load()` + `render()` + compression on cache hits. It's evicted with a parallel API exported from the main entry:
+The browser-side `invalidate()` evicts the per-browser loader cache. Since v0.6 Bosia also keeps a **server-side** response cache that skips `load()` + `render()` + compression on cache hits. It's evicted with a parallel API exported from the server-only subpath:
 
 ```ts
-import { invalidate, invalidateAll } from "bosia";
+import { invalidate, invalidateAll } from "bosia/server";
 
 // Form action — re-render the next GET of any page that called depends("app:user")
 export const actions = {

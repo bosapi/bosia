@@ -28,16 +28,26 @@ function parseMaxEntries(raw: string | undefined): number {
 	return n;
 }
 
-export const CACHE_KEYS: readonly string[] = parseCacheKeys(process.env.CACHE_KEYS);
-export const CACHE_MAX_ENTRIES = parseMaxEntries(process.env.CACHE_MAX_ENTRIES);
+// `invalidate` / `invalidateAll` are re-exported from the public `bosia`
+// barrel, so this module also evaluates in the browser bundle. Guard every
+// `process.env` read — otherwise hydration throws `ReferenceError: Can't
+// find variable: process` (Safari) the moment the barrel is imported.
+const env: Record<string, string | undefined> =
+	typeof process !== "undefined" && process.env ? process.env : {};
+const isServer = typeof process !== "undefined";
+
+export const CACHE_KEYS: readonly string[] = parseCacheKeys(env.CACHE_KEYS);
+export const CACHE_MAX_ENTRIES = parseMaxEntries(env.CACHE_MAX_ENTRIES);
 export const CACHE_ENABLED = CACHE_MAX_ENTRIES > 0;
 
-if (CACHE_ENABLED) {
-	console.log(
-		`💾 Response cache: max ${CACHE_MAX_ENTRIES} entries, identity keys [${CACHE_KEYS.join(", ")}]`,
-	);
-} else {
-	console.log("💾 Response cache: disabled (CACHE_MAX_ENTRIES=0)");
+if (isServer) {
+	if (CACHE_ENABLED) {
+		console.log(
+			`💾 Response cache: max ${CACHE_MAX_ENTRIES} entries, identity keys [${CACHE_KEYS.join(", ")}]`,
+		);
+	} else {
+		console.log("💾 Response cache: disabled (CACHE_MAX_ENTRIES=0)");
+	}
 }
 
 // ─── Entry shape ─────────────────────────────────────────

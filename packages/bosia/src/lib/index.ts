@@ -6,7 +6,9 @@
 export { cn, getServerTime } from "./utils.ts";
 export { sequence } from "../core/hooks.ts";
 export { error, redirect, fail } from "../core/errors.ts";
-export { invalidate, invalidateAll } from "../core/cache.ts";
+// `invalidate` / `invalidateAll` (server response-cache eviction) live in
+// "bosia/server" — they touch server-process state and pulling them into
+// the shared barrel leaks `process.env` reads into client bundles.
 export type { HttpError, Redirect, RedirectOptions, ActionFailure } from "../core/errors.ts";
 export type {
 	RequestEvent,

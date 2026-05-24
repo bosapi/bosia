@@ -57,7 +57,7 @@ R1. **Call `invalidate()` after every server-side write.** If you `UPDATE users 
 
 ```ts
 // +page.server.ts
-import { invalidate } from "bosia";
+import { invalidate } from "bosia/server";
 import { fail } from "bosia";
 
 export const actions = {

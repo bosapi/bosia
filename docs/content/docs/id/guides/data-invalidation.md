@@ -102,10 +102,10 @@ Menghapus seluruh entri cache. Semua loader dijalankan ulang pada navigasi berik
 
 ## `invalidate()` sisi server untuk response cache
 
-`invalidate()` sisi browser membersihkan cache loader per-browser. Sejak v0.6 Bosia juga punya **response cache sisi server** yang melewatkan `load()` + `render()` + kompresi saat cache hit. Cache ini dihapus dengan API paralel yang diekspos dari entry utama:
+`invalidate()` sisi browser membersihkan cache loader per-browser. Sejak v0.6 Bosia juga punya **response cache sisi server** yang melewatkan `load()` + `render()` + kompresi saat cache hit. Cache ini dihapus dengan API paralel yang diekspos dari subpath khusus server:
 
 ```ts
-import { invalidate, invalidateAll } from "bosia";
+import { invalidate, invalidateAll } from "bosia/server";
 
 // Form action — re-render GET berikutnya untuk page mana pun yang depends("app:user")
 export const actions = {

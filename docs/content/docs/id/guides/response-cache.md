@@ -61,7 +61,7 @@ Pakai ini untuk data live (ticker, counter per detik) atau halaman yang personal
 Setelah write, hapus entry cache yang cocok supaya bacaan berikutnya menyajikan HTML segar:
 
 ```ts
-import { invalidate } from "bosia";
+import { invalidate } from "bosia/server";
 
 export const actions = {
 	rename: async ({ request, locals }) => {

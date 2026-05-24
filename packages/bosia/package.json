@@ -33,6 +33,7 @@
 	"exports": {
 		".": "./src/lib/index.ts",
 		"./client": "./src/lib/client.ts",
+		"./server": "./src/lib/server.ts",
 		"./plugins/server-timing": "./src/core/plugins/server-timing.ts",
 		"./plugins/inspector": "./src/core/plugins/inspector/index.ts"
 	},

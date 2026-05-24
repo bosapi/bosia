@@ -26,6 +26,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - `Content-Security-Policy` deploys (`CSP_DIRECTIVES` env var set) automatically forfeit the response cache. Each request needs a fresh nonce baked into both the HTML and the CSP header, which a cached response can't reproduce — so we skip the cache rather than ship broken pages. Operators who don't use CSP get the cache transparently.
+- Server-side `invalidate` / `invalidateAll` moved to `bosia/server` to keep them out of browser bundles.
+
+### Fixed
+
+- Safari failed to open pages under `bosia dev` ("cannot decode raw data") — dev proxy fixed.
+- Browser hydration crash: `ReferenceError: Can't find variable: process` from the cache module.
+- Type error in inspector dev-error reporter (`source` union mismatch) blocking `bun run check`.
 
 ## [0.5.13] - 2026-05-23
 

@@ -63,7 +63,7 @@ After a write, evict any matching cache entries so the next read serves fresh HT
 
 ```ts
 // +page.server.ts
-import { invalidate } from "bosia";
+import { invalidate } from "bosia/server";
 
 export const actions = {
 	rename: async ({ request, locals }) => {
