@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.5.13**
+> Current version: **0.6.0**
 
 ---
 
@@ -271,7 +271,7 @@
 - [ ] 🟡 Trie-based route matcher — replace linear O(n) route scan with radix trie for O(k) matching (k = URL segments). Matters when route count exceeds ~100
 - [x] 🟡 Compiled route regex — pre-compile route patterns to `RegExp` at startup instead of parsing on every match
 - [x] 🟠 Concurrency / backpressure ceiling — Bun currently accepts unlimited concurrent connections (`server.ts:812` only sets `idleTimeout`/`maxRequestBodySize`). Under load spike or slow-loris, memory + FD exhaustion is possible before idleTimeout kicks in — the most likely OOM vector for single-replica container deploys. Add a soft cap (env-gated, e.g. `MAX_INFLIGHT`) that reuses the existing in-flight counter (`server.ts:633,696`) and returns 503 when exceeded. Until shipped, deployments must front Bosia with a reverse proxy that enforces connection limits. Source: 2026-05-23 pre-prod audit. Shipped in v0.5.13 (`server.ts:765-784, 638-646`) — `MAX_INFLIGHT` env var, default `Infinity` (off, no behavior change); `/_health` exempt; cap-check runs before all work so the 503 is cheap. Docs + `.env.example` files updated
-- [ ] 🟡 Response cache + brotli — `Bun.gzipSync()` runs on every HTML response >2 KB in prod (`html.ts:354-378`) with no precompressed cache; brotli not implemented. (a) Add an LRU response cache keyed by `(path, status, content-hash)` for compressed bodies on routes with no per-user data; (b) add brotli via `Bun.brotliCompressSync` gated on `Accept-Encoding: br`. Source: 2026-05-23 pre-prod audit
+- [x] 🟡 Response cache + brotli — `Bun.gzipSync()` runs on every HTML response >2 KB in prod (`html.ts:354-378`) with no precompressed cache; brotli not implemented. (a) Add an LRU response cache keyed by `(path, status, content-hash)` for compressed bodies on routes with no per-user data; (b) add brotli via `Bun.brotliCompressSync` gated on `Accept-Encoding: br`. Source: 2026-05-23 pre-prod audit. Shipped in v0.6.0 — skip-render response cache (`cache.ts`) keyed on URL + identity hash (cookies/headers from `CACHE_KEYS`), per-route opt-out via `export const cache = false`, server-side `invalidate(key)` / `invalidateAll(prefix)` from `bosia` mirroring the client API, brotli + gzip pre-compressed per entry, CSP disables the cache. Follow-ups deferred to v0.7+: TTL expiry, layout-level cascade, multi-replica pub/sub invalidation, stale-while-revalidate, key-based invalidation for `+server.ts` endpoints
 - [ ] 🟡 Static-asset fallthrough cost — every static hit calls `Bun.file().exists()` up to 4× across `/dist/client/`, `/public/`, `/dist/`, `/dist/static/` (`server.ts:299-335`). Build a manifest at boot so prod lookups become a Map check; doc nginx/Caddy offload for high-traffic deploys. Source: 2026-05-23 pre-prod audit
 - [ ] 🟡 Collapse SSR `render()` calls — root `App.svelte` + error pages are rendered in separate Svelte `render()` invocations (`renderer.ts:646,804,884,931`). Profile under representative load before changing — error pages have different layouts so collapsing isn't trivial. Source: 2026-05-23 pre-prod audit
 
@@ -555,6 +555,29 @@
 - [ ] 🟡 `applyAction(result)` / `deserialize(result)` from `$app/forms`
 - [ ] 🟡 `disableScrollHandling()` for fine-grained scroll control
 - [ ] 🟠 Diagnose & fix `window.location.href` stall on static builds — needs a confirmed repro; safety-net try/catch is in place so the next occurrence surfaces a console error instead of staying on "Loading…"
+
+---
+
+## v0.6.0 — Server response cache (skip-render) ✅ (shipped 2026-05-24)
+
+> Before v0.6, every HTML response re-ran `metadata()`, every layout `load()`, the page `load()`, `render()`, and `Bun.gzipSync()` — even when the result was byte-identical to the previous request. The new in-memory response cache short-circuits all of that and serves pre-compressed bytes (brotli or gzip) directly. Per-user safety comes from an identity hash of cookies/headers named in `CACHE_KEYS`, so logged-in users never see each other's HTML.
+
+- [x] 🟠 New `packages/bosia/src/core/cache.ts` — tiny LRU + `tagIndex` + `pathIndex`, `computeCacheKey(url, req, cookies)`, `serveCached(entry, req)` with `Accept-Encoding: br | gzip | identity` negotiation, `buildCompressedVariants()` (brotli + gzip), tag/path-based eviction.
+- [x] 🟠 Renderer integration (`renderer.ts`) — cache read before metadata/load/render, cache write after chunks are built, streaming preserved on miss. CSP-enabled deploys skip the cache (per-request nonce is incompatible with cached bytes).
+- [x] 🟠 API endpoint integration (`server.ts`) — `+server.ts` GET handlers cached with the same key rules. v0.6 invalidates API entries by URL/prefix only (no `depends()` for API yet).
+- [x] 🟠 Public API — `invalidate(key)` / `invalidateAll(prefix)` from `bosia` mirror the existing browser-side `invalidate()` semantics. Form actions call them after a write.
+- [x] 🟡 Per-route opt-out — `export const cache = false;` in `+page.ts`, `+page.server.ts`, or `+server.ts`. Generated `$types.d.ts` exports a `CacheOption` type alias for IDE support.
+- [x] 🟡 Env vars — `CACHE_KEYS` (default `session,sid,auth,token,jwt,Authorization`) controls identity-hash inputs; `CACHE_MAX_ENTRIES` (default `500`, `0` disables). Documented in `guides/environment-variables` (EN + ID) and the response-cache guide (EN + ID).
+- [x] 🟡 Author guidance — new `bosia-response-cache` skill (`docs/content/skills/bosia-response-cache/SKILL.md`) walks AI agents through when to call `invalidate()` from server code, how to tag loaders with `depends()`, and when to opt a route out. Data-invalidation guides (EN + ID) gained a "Server-side `invalidate()` for the response cache" section.
+
+### Deferred to v0.7+
+
+- [ ] 🟡 Key-based invalidation for `+server.ts` endpoints — give API handlers a `depends()` argument or support `export const tags = [...]` so `invalidate("app:user")` evicts API responses too.
+- [ ] 🟡 TTL-based expiry — author wants pure-invalidate today, but TTL is useful for "refresh every N seconds" pages.
+- [ ] 🟡 Layout-level `cache = false` cascade — a layout opting out should make its child routes uncached too.
+- [ ] 🟡 Multi-replica cache (pub/sub invalidation) — single-replica only in v0.6.
+- [ ] 🟡 Soft-purge / stale-while-revalidate.
+- [ ] 🟡 Custom key function — `export const cache = { key: (req) => string }`.
 
 ---
 

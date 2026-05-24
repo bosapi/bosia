@@ -99,3 +99,29 @@ Menghapus seluruh entri cache. Semua loader dijalankan ulang pada navigasi berik
 - **`metadata()`**: `metadata()` di level page selalu berjalan di setiap navigasi. Cakupan cache hanya untuk loader.
 - **Hard refresh**: cache hidup di memori browser dan terhapus saat reload penuh. Navigasi berikutnya akan berperilaku seperti pemuatan pertama.
 - **Rute privat**: cache hidup per-browser, jadi rute `(private)` aman — tidak ada kebocoran antar pengguna. Server-side request dedup tetap dinonaktifkan untuk rute `(private)` seperti sebelumnya.
+
+## `invalidate()` sisi server untuk response cache
+
+`invalidate()` sisi browser membersihkan cache loader per-browser. Sejak v0.6 Bosia juga punya **response cache sisi server** yang melewatkan `load()` + `render()` + kompresi saat cache hit. Cache ini dihapus dengan API paralel yang diekspos dari entry utama:
+
+```ts
+import { invalidate, invalidateAll } from "bosia";
+
+// Form action — re-render GET berikutnya untuk page mana pun yang depends("app:user")
+export const actions = {
+	default: async ({ request }) => {
+		await updateUserName(request);
+		invalidate("app:user");
+	},
+};
+```
+
+- `invalidate("app:user")` menghapus semua page yang loader-nya memanggil `depends("app:user")`.
+- `invalidate("/api/posts")` menghapus semua page yang loader-nya fetch `/api/posts`, plus response API `/api/posts` yang di-cache.
+- `invalidateAll("/products/")` menghapus semua entri yang path-nya diawali `/products/`.
+
+Form action adalah titik invalidasi paling umum — setelah mutasi, panggil `invalidate()` supaya pembacaan berikutnya disajikan HTML segar. Fungsi ini sinkron (tidak perlu `await`).
+
+Endpoint API (`+server.ts`) di v0.6 hanya bisa di-invalidasi berdasarkan URL/prefix. Invalidasi berbasis tag untuk handler API ada di roadmap.
+
+Matikan response cache per-rute dengan `export const cache = false;` di `+page.ts`, `+page.server.ts`, atau `+server.ts`. Detail lengkap di [Response cache](/id/guides/response-cache).

@@ -84,6 +84,10 @@ export function generateRouteTypes(manifest: RouteManifest): void {
 		lines.push(``);
 		lines.push(`export type Params = ${paramsType};`);
 		lines.push(``);
+		lines.push(`/** Set \`export const cache: CacheOption = false;\` in +page(.server).ts`);
+		lines.push(` *  or +server.ts to opt the route out of the server response cache. */`);
+		lines.push(`export type CacheOption = false;`);
+		lines.push(``);
 		lines.push(`type _LoadEvent = Omit<LoadEvent, 'params'> & { params: Params };`);
 		lines.push(`type _MetadataEvent = Omit<MetadataEvent, 'params'> & { params: Params };`);
 		lines.push(`type _RequestEvent = Omit<RequestEvent, 'params'> & { params: Params };`);

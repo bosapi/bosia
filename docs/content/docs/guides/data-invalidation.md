@@ -99,3 +99,29 @@ Wipes every cache entry. Every loader re-runs on the next nav.
 - **`metadata()`**: page-level `metadata()` always runs on every navigation. Cache scope is loaders only.
 - **Hard refresh**: the cache lives in browser memory and is wiped on full reload. The next navigation behaves like a first-load.
 - **Private routes**: cache lives per-browser, so `(private)` routes are safe — there is no cross-user leakage. Server-side request dedup remains disabled for `(private)` routes as before.
+
+## Server-side `invalidate()` for the response cache
+
+The browser-side `invalidate()` evicts the per-browser loader cache. Since v0.6 Bosia also keeps a **server-side** response cache that skips `load()` + `render()` + compression on cache hits. It's evicted with a parallel API exported from the main entry:
+
+```ts
+import { invalidate, invalidateAll } from "bosia";
+
+// Form action — re-render the next GET of any page that called depends("app:user")
+export const actions = {
+	default: async ({ request }) => {
+		await updateUserName(request);
+		invalidate("app:user");
+	},
+};
+```
+
+- `invalidate("app:user")` evicts every cached page whose loader called `depends("app:user")`.
+- `invalidate("/api/posts")` evicts every cached page whose loader fetched `/api/posts`, plus the cached `/api/posts` API response itself.
+- `invalidateAll("/products/")` evicts every cached entry whose path starts with `/products/`.
+
+Form actions are the most common invalidation point — after a mutation, call `invalidate()` so the next read serves fresh HTML. The function returns synchronously (no `await` needed).
+
+API endpoints (`+server.ts`) are invalidated by URL/prefix only in v0.6. Tag-based invalidation for API handlers is on the roadmap.
+
+Opt a route out of the server cache entirely with `export const cache = false;` in `+page.ts`, `+page.server.ts`, or `+server.ts`. See [Response cache](/guides/response-cache) for the full design.

@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.0] - 2026-05-24
+
+### Added
+
+- **Server response cache (skip-render).** Bosia now caches rendered HTML pages and `+server.ts` GET responses in memory and serves them as pre-compressed bytes (brotli or gzip) on subsequent requests, with no `load()`, no `render()`, and no per-request compression. Per-user safety is automatic: the cache key includes a hash of cookies and headers named in `CACHE_KEYS` (default `session,sid,auth,token,jwt,Authorization`), so two users with different session cookies always get different cache entries. Tune capacity with `CACHE_MAX_ENTRIES` (default `500`; set to `0` to disable the cache entirely).
+- **`invalidate()` / `invalidateAll()` from the main `bosia` entry.** Call from form actions or any server code after a write to drop matching cache entries: `invalidate("app:user")` evicts every cached page whose loader called `depends("app:user")`; `invalidate("/api/posts")` evicts cached pages whose loader fetched `/api/posts` plus the cached `/api/posts` API response itself; `invalidateAll("/products/")` evicts every entry whose path starts with the prefix. The names deliberately mirror the existing browser-side `invalidate()` from `bosia/client`.
+- **Per-route opt-out.** Add `export const cache = false;` to a `+page.ts`, `+page.server.ts`, or `+server.ts` to skip the cache for routes that need to render fresh on every request (live tickers, per-request cookie writes, etc.). Generated `$types.d.ts` files now export a `CacheOption` type alias for IDE hints.
+- **Brotli compression.** Cached entries include both gzip and brotli copies; `Accept-Encoding: br` requests now get brotli automatically. Uncached responses are unchanged.
+- New `bosia-response-cache` skill teaches AI agents when and how to call `invalidate()` server-side, when to tag loaders with `depends()`, and when to opt a route out of the cache.
+- New response-cache guide (EN + ID) under `docs/guides/response-cache`. The existing data-invalidation guide (EN + ID) gained a "Server-side `invalidate()` for the response cache" section. `environment-variables` docs gained `CACHE_KEYS` and `CACHE_MAX_ENTRIES` rows. Templates and `apps/demo/.env.example` carry commented examples.
+
+### Changed
+
+- `Content-Security-Policy` deploys (`CSP_DIRECTIVES` env var set) automatically forfeit the response cache. Each request needs a fresh nonce baked into both the HTML and the CSP header, which a cached response can't reproduce — so we skip the cache rather than ship broken pages. Operators who don't use CSP get the cache transparently.
+
 ## [0.5.13] - 2026-05-23
 
 ### Added

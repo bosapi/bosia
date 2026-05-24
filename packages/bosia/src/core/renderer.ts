@@ -5,6 +5,16 @@ import { serverRoutes, errorPage } from "bosia:routes";
 import type { RouteMatch } from "./types.ts";
 import type { Cookies, LoaderDeps } from "./hooks.ts";
 import { CSP_ENABLED } from "./csp.ts";
+import {
+	CACHE_ENABLED,
+	buildCompressedVariants,
+	cacheGet,
+	cacheSet,
+	collectTags,
+	computeCacheKey,
+	concatChunks,
+	serveCached,
+} from "./cache.ts";
 import { HttpError, Redirect } from "./errors.ts";
 import { pickErrorPage, type ErrorOrigin } from "./errorMatch.ts";
 import App from "./client/App.svelte";
@@ -503,6 +513,28 @@ export async function renderSSRStream(
 	const { route, params } = match;
 	const nonce = CSP_ENABLED && typeof locals.nonce === "string" ? locals.nonce : undefined;
 
+	// ── Response cache: short-circuit on hit ──
+	// Look up cached HTML before doing anything expensive (metadata, load,
+	// render, compress). Key includes URL + identity hash (cookies/headers
+	// from CACHE_KEYS), so per-user pages stay isolated. Routes opt out via
+	// `export const cache = false`. See cache.ts and docs/guides/response-cache.md.
+	const pageMod: any = await route.pageModule();
+	const cacheBypass = url.searchParams.has("_invalidated");
+	// CSP is incompatible with response cache — the per-request nonce is baked
+	// into the cached HTML but the CSP header is re-derived each request, so a
+	// cached page would ship with a dead nonce and the browser would block its
+	// inline scripts. Operators who turn on CSP_DIRECTIVES forfeit the cache.
+	const cacheable =
+		CACHE_ENABLED && !CSP_ENABLED && pageMod.cache !== false && req.method === "GET";
+	let cacheKey: string | null = null;
+	if (cacheable) {
+		cacheKey = computeCacheKey(url, req, cookies);
+		if (!cacheBypass) {
+			const hit = cacheGet(cacheKey);
+			if (hit) return serveCached(hit, req);
+		}
+	}
+
 	// ── Pre-stream phase: resolve metadata before committing to a 200 ──
 	// Errors here return a proper error response with correct status code.
 	let metadata: Metadata | null = null;
@@ -535,13 +567,11 @@ export async function renderSSRStream(
 	// This ensures HttpError/Redirect from load() can return a proper response before any bytes are sent.
 	const metadataData = metadata?.data ?? null;
 	let data: Awaited<ReturnType<typeof loadRouteData>>;
-	let pageMod: any;
 	let layoutMods: any[];
 
 	try {
-		[data, pageMod, layoutMods] = await Promise.all([
+		[data, layoutMods] = await Promise.all([
 			loadRouteData(url, locals, req, cookies, metadataData, match),
-			route.pageModule(),
 			Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
 		]);
 	} catch (err) {
@@ -691,6 +721,28 @@ export async function renderSSRStream(
 			),
 		),
 	];
+
+	// ── Response cache: write after chunks built, before stream creation ──
+	// Skip if the handler set cookies — cached response can't reproduce
+	// per-request Set-Cookie headers. Compression runs in a microtask so
+	// the response goes out first.
+	if (cacheable && cacheKey && (cookies as any).outgoing?.length === 0) {
+		const fullBody = concatChunks(chunks);
+		const tags = collectTags(data.layoutDeps ?? null, data.pageDeps ?? null);
+		const keyForWrite = cacheKey;
+		queueMicrotask(() => {
+			const { gzip, brotli } = buildCompressedVariants(fullBody);
+			cacheSet(keyForWrite, {
+				raw: fullBody,
+				gzip,
+				brotli,
+				contentType: "text/html; charset=utf-8",
+				status: 200,
+				extraHeaders: {},
+				tags,
+			});
+		});
+	}
 
 	let i = 0;
 	let cancelled = false;

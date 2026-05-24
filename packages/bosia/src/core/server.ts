@@ -25,6 +25,14 @@ import { isDev, compress, isStaticPath } from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
 import { dedup, dedupKey } from "./dedup.ts";
+import {
+	CACHE_ENABLED,
+	buildCompressedVariants,
+	cacheGet,
+	cacheSet,
+	computeCacheKey,
+	serveCached,
+} from "./cache.ts";
 import { reportDevErrorFromCatch } from "./devErrorReport.ts";
 import {
 	loadRouteData,
@@ -55,6 +63,27 @@ if (existsSync(hooksPath)) {
 }
 
 // ─── Env Helpers ─────────────────────────────────────────
+
+// Headers that must not be baked into a cache entry. Content-Length is
+// recomputed by Bun, content-encoding/transfer-encoding depend on the chosen
+// variant, and security/CORS/Set-Cookie headers are applied by handleRequest.
+const NON_CACHEABLE_HEADERS = new Set([
+	"content-length",
+	"content-encoding",
+	"transfer-encoding",
+	"content-type",
+	"set-cookie",
+	"vary",
+	"x-bosia-cache",
+]);
+
+function captureCacheableHeaders(headers: Headers): Record<string, string> {
+	const out: Record<string, string> = {};
+	for (const [k, v] of headers) {
+		if (!NON_CACHEABLE_HEADERS.has(k.toLowerCase())) out[k] = v;
+	}
+	return out;
+}
 
 function splitCsvEnv(key: string): string[] | undefined {
 	return (
@@ -379,7 +408,63 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			}
 
 			event.params = apiMatch.params;
-			return await handler({ request, params: apiMatch.params, url, locals, cookies });
+
+			// ── Response cache for +server.ts GET handlers ──
+			// CSP is skipped because cached responses would ship with a stale
+			// nonce (see renderer.ts for the same gate). The cache key includes
+			// URL + identity so per-user responses stay isolated.
+			const apiCacheable =
+				CACHE_ENABLED && !CSP_ENABLED && (mod as any).cache !== false && method === "GET";
+			let apiCacheKey: string | null = null;
+			if (apiCacheable) {
+				apiCacheKey = computeCacheKey(url, request, cookies);
+				if (!url.searchParams.has("_invalidated")) {
+					const hit = cacheGet(apiCacheKey);
+					if (hit) return serveCached(hit, request);
+				}
+			}
+
+			const response = await handler({
+				request,
+				params: apiMatch.params,
+				url,
+				locals,
+				cookies,
+			});
+
+			if (
+				apiCacheable &&
+				apiCacheKey &&
+				response.status === 200 &&
+				(cookies as CookieJar).outgoing.length === 0
+			) {
+				const cloned = response.clone();
+				const extraHeaders = captureCacheableHeaders(response.headers);
+				const contentType =
+					response.headers.get("content-type") ?? "application/octet-stream";
+				const keyForWrite = apiCacheKey;
+				queueMicrotask(async () => {
+					try {
+						const buf = new Uint8Array(await cloned.arrayBuffer());
+						const { gzip, brotli } = buildCompressedVariants(buf);
+						// API endpoints have no LoaderDeps in v0.6 — invalidation is
+						// URL/prefix only. See ROADMAP for deferred tag support.
+						cacheSet(keyForWrite, {
+							raw: buf,
+							gzip,
+							brotli,
+							contentType,
+							status: 200,
+							extraHeaders,
+							tags: [],
+						});
+					} catch {
+						/* drop silently — cache population is best-effort */
+					}
+				});
+			}
+
+			return response;
 		} catch (err) {
 			if (isDev) console.error("API route error:", err);
 			else console.error("API route error:", (err as Error).message ?? err);
