@@ -19,6 +19,9 @@ Hal-hal berikut bekerja dengan cara yang sama seperti yang Anda harapkan:
 - **Cookie API** — `get()`, `getAll()`, `set()`, `delete()`
 - **Alias `$lib`** — memetakan ke `src/lib/`
 - **Perlindungan CSRF** — pemeriksaan berbasis origin pada metode non-safe
+- **Invalidasi data** — `depends()` pada `LoadEvent`, plus `invalidate()` / `invalidateAll()` dari `bosia/client`
+- **Navigation API** — `goto()`, `beforeNavigate()`, `afterNavigate()` dari `bosia/client`
+- **Sistem plugin** — `bosia.config.ts` dengan hooks untuk lifecycle backend, build, render, dan klien
 
 ## Berbeda dari SvelteKit
 
@@ -30,13 +33,13 @@ Hal-hal berikut bekerja dengan cara yang sama seperti yang Anda harapkan:
 | **Adapters**           | Diperlukan (node, vercel, dll.)  | Tidak ada — satu server Bun              |
 | **Universal load**     | `+page.ts` / `+layout.ts`        | Tidak didukung — hanya server loaders    |
 | **Stores**             | `$app/stores`                    | Tidak tersedia — gunakan `$props()`      |
-| **Navigation**         | `$app/navigation`                | Router klien bawaan                      |
 | **Env vars**           | `$env/static/public`, dll.       | `$env` dengan prefix empat tingkat       |
 | **HMR**                | Vite HMR (granular)              | SSE full-page reload                     |
 | **Direktori generate** | `.svelte-kit/`                   | `.bosia/`                                |
 | **Registry komponen**  | Tidak ada                        | `bosia add` (gaya shadcn)                |
 | **Scaffolding fitur**  | Tidak ada                        | `bosia feat`                             |
 | **Metadata**           | Via `<svelte:head>`              | Fungsi `metadata()` di `+page.server.ts` |
+| **Response caching**   | Tidak bawaan                     | Cache server dengan LRU + brotli/gzip    |
 
 ### Penjelasan Perbedaan Utama
 
@@ -75,12 +78,9 @@ Fitur-fitur SvelteKit berikut tidak tersedia di Bosia:
 
 - `+page.ts` / `+layout.ts` (universal load functions)
 - `$app/stores` (`page`, `navigating`, `updated`)
-- `$app/navigation` (`goto`, `beforeNavigate`, `afterNavigate`)
-- `depends()` / `invalidate()` / `invalidateAll()`
 - Optimisasi gambar (`@sveltejs/enhanced-img`)
 - Service workers
 - Snapshots
-- Shallow routing
-- i18n
-- Sistem adapter / sistem plugin
+- Shallow routing (`pushState` / `replaceState`)
+- Sistem adapter (terikat pada Bun + ElysiaJS)
 - `<svelte:head>` untuk metadata (gunakan `metadata()` sebagai gantinya)

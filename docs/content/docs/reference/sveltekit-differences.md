@@ -20,6 +20,8 @@ These work the same way you'd expect:
 - **`$lib` alias** — maps to `src/lib/`
 - **CSRF protection** — origin-based checking on non-safe methods
 - **Data invalidation** — `depends()` on `LoadEvent`, plus `invalidate()` / `invalidateAll()` exported from `bosia/client`
+- **Navigation API** — `goto()`, `beforeNavigate()`, `afterNavigate()` from `bosia/client`
+- **Plugin system** — `bosia.config.ts` with hooks for backend, build, render, and client lifecycle
 
 ## Different from SvelteKit
 
@@ -31,13 +33,13 @@ These work the same way you'd expect:
 | **Adapters**            | Required (node, vercel, etc.) | None — single Bun server                   |
 | **Universal load**      | `+page.ts` / `+layout.ts`     | Not supported — server loaders only        |
 | **Stores**              | `$app/stores`                 | Not available — use `$props()`             |
-| **Navigation**          | `$app/navigation`             | Built-in client router                     |
 | **Env vars**            | `$env/static/public`, etc.    | `$env` with four-tier prefix               |
 | **HMR**                 | Vite HMR (granular)           | SSE full-page reload                       |
 | **Generated dir**       | `.svelte-kit/`                | `.bosia/`                                  |
 | **Component registry**  | None                          | `bosia add` (shadcn-style)                 |
 | **Feature scaffolding** | None                          | `bosia feat`                               |
 | **Metadata**            | Via `<svelte:head>`           | `metadata()` function in `+page.server.ts` |
+| **Response caching**    | Not built-in                  | Server-side cache with LRU + brotli/gzip   |
 
 ### Key Differences Explained
 
@@ -76,11 +78,9 @@ These SvelteKit features are not available in Bosia:
 
 - `+page.ts` / `+layout.ts` (universal load functions)
 - `$app/stores` (`page`, `navigating`, `updated`)
-- `$app/navigation` (`goto`, `beforeNavigate`, `afterNavigate`)
 - Image optimization (`@sveltejs/enhanced-img`)
 - Service workers
 - Snapshots
-- Shallow routing
-- i18n
-- Adapter system / plugin system
+- Shallow routing (`pushState` / `replaceState`)
+- Adapter system (tied to Bun + ElysiaJS)
 - `<svelte:head>` for metadata (use `metadata()` instead)

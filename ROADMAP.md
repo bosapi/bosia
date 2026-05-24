@@ -613,7 +613,7 @@
 - [ ] 🟠 Ship the plugin/shim from `packages/bosia` and wire it into the scaffolding templates' `tsconfig.json` (`compilerOptions.plugins` or `svelte.config.js`) so new apps work out of the box.
 - [ ] 🟡 Verify in Zed and VS Code on `apps/demo/src/routes/(public)/blog/[slug]/+page.svelte`: hover shows `Params = { slug: string }`, autocomplete on `params.` lists `slug`, typing `params.foo` red-squiggles.
 - [ ] 🟡 Document the editor setup step in `docs/content/docs/guides/routing.md` (or a new "Editor setup" guide) — what extension to install, what `tsconfig.json` looks like.
-- [ ] ⚪ Note the limitation + workaround in the meantime under `docs/content/docs/reference/sveltekit-differences.md`.
+- [x] ⚪ Note the limitation + workaround in the meantime under `docs/content/docs/reference/sveltekit-differences.md`. (Updated 2026-05-24 to reflect shipped features: navigation API, plugin system, response caching)
 
 ---
 

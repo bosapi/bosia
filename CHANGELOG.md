@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.6.0] - 2026-05-24
 
+### Changed
+
+- **Updated SvelteKit differences documentation.** The `sveltekit-differences` reference now correctly lists navigation API (`goto`, `beforeNavigate`, `afterNavigate`) and plugin system as shipped features. Response caching added to the "Different from SvelteKit" table; i18n and shallow routing clarified as out-of-scope (both are user responsibility in SvelteKit and Bosia alike). Reflects actual shipped state as of v0.5.10 (navigation) and v0.4.0 (plugins).
+
 ### Added
 
 - **Multi-engine database support.** `bunx bosia feat drizzle` now installs a single Drizzle adapter that works with postgres, mysql, sqlite (file), and sqlite (in-memory) — picked by the `DATABASE_URL` scheme. No more "postgres-only" feat: the scaffolded `src/features/drizzle/index.ts`, `drizzle.config.ts`, and seed-runner all branch on engine. The `postgres` npm dep is dropped — Bun's built-in `Bun.SQL` and `bun:sqlite` cover all four engines via Drizzle's `bun-sql` and `bun-sqlite` wrappers. New guide at `docs/guides/database` (EN + ID) covers setup, switching, and the in-memory caveat; `environment-variables` shows the four valid URL forms.
