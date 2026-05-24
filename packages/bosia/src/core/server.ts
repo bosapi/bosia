@@ -432,16 +432,31 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				cookies,
 			});
 
+			const responseContentType = response.headers.get("content-type") ?? "";
+			// SSE responses are long-lived pub/sub streams — caching the buffered
+			// bytes would serve a stale finite snapshot to future subscribers and
+			// bypass the handler's subscribe() call entirely. Skip them.
+			const isEventStream = responseContentType.toLowerCase().includes("text/event-stream");
+
+			// Respect handler opt-out via Cache-Control. Standard HTTP semantics:
+			// no-store / private / no-cache all signal "don't reuse this response".
+			const cacheControl = (response.headers.get("cache-control") ?? "").toLowerCase();
+			const noStore =
+				cacheControl.includes("no-store") ||
+				cacheControl.includes("private") ||
+				cacheControl.includes("no-cache");
+
 			if (
 				apiCacheable &&
 				apiCacheKey &&
 				response.status === 200 &&
+				!isEventStream &&
+				!noStore &&
 				(cookies as CookieJar).outgoing.length === 0
 			) {
 				const cloned = response.clone();
 				const extraHeaders = captureCacheableHeaders(response.headers);
-				const contentType =
-					response.headers.get("content-type") ?? "application/octet-stream";
+				const contentType = responseContentType || "application/octet-stream";
 				const keyForWrite = apiCacheKey;
 				queueMicrotask(async () => {
 					try {

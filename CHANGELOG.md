@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.2] - 2026-05-24
+
+### Fixed
+
+- Response cache no longer breaks SSE endpoints (auto-skips `text/event-stream`).
+- Response cache now respects `Cache-Control: no-store|private|no-cache` headers.
+
 ## [0.6.1] - 2026-05-24
 
 ### Changed
