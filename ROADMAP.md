@@ -596,6 +596,16 @@
 - [x] 🟡 `GET /api/skills/[name]` response gained `references: SkillReference[]` so agents discover the available reference files in one round-trip.
 - [x] 🟡 New route `docs/src/routes/api/skills/[name]/references/[file]/+server.ts` — prerendered, `entries()` enumerates `(name, file)` pairs across all skills, `realpath` traversal guard mirrors the existing `[name]` route. Returns `{ name, file, path, content }` with `cache-control: public, max-age=60`. Raw markdown body — no frontmatter parsing on references.
 
+### Same-day addition (2026-05-25) — Clean-architecture skill for generated apps
+
+> Bosapi-generated apps (e.g. `data/users/.../warung-nasi/`) were putting `db.select(...)` directly in `+page.server.ts` loaders, importing tables out of `features/drizzle/tables/`, and skipping a service/repository layer entirely. The existing `bosia-drizzle-usage` skill's "Quick Start" example actually taught this anti-pattern. New skill `bosia-clean-architecture` defines the strict controller → service → repository split, prescribes the six-file feature folder (table, validator, dto, repository, service, index), and the existing drizzle skills now teach the same shape and cross-link to it.
+
+- [x] 🟡 New `bosia-clean-architecture` skill (`docs/content/skills/bosia-clean-architecture/SKILL.md`) — eight rules (R1–R8) covering no `db` in routes, repository ownership, service-owned validation, derived valibot validators via `drizzle-valibot`, one entity per feature, cross-feature via service namespace, table home, barrel exports. Three workflows (scaffold, refactor, new-table decision). P0/P1 checklist gate.
+- [x] 🟡 Three companion references — `feature-template.md` (copy-adapt for all six files + caller examples), `refactor-recipe.md` (grep → extract → swap-import using `warung-nasi`'s `+page.server.ts` as before/after), `shared-folder.md` (what belongs in `features/shared/` and what does not).
+- [x] 🟡 `bosia-drizzle-feature` updated — folder diagram gained `*.repository.ts`, `*.validator.ts`, `*.dto.ts`; R2 split into repository + service with examples; workflow updated to 9 steps; new anti-patterns and P1 items for the repo/service split.
+- [x] 🟡 `bosia-drizzle-usage` updated — Quick Start rewritten so loaders call `CatalogService.summary()` not `db.select(...)`; Workflow now writes the repository first, then service; new red flags for `db` in routes and `db.*` in services; P0 tightened to forbid `db` imports under `src/routes/**`.
+- [x] 🟡 Catalog `docs/content/skills/SKILL.md` bumped 38 → 39 skills; `bosia-clean-architecture` added under framework conventions and into the discovery-order step 2.
+
 ---
 
 ## v0.5.13 — Inspector component call-site chain ✅ (shipped 2026-05-23)

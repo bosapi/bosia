@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 38 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
+description: Top-level index of 39 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
     mode: catalog
     category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-38 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+39 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -84,8 +84,9 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 | `bosia-svelte-runes`           | Svelte 5 Runes — `$state` / `$derived` / `$effect` / `$props`. Never legacy `let`-reactivity, `$:`, or stores when runes work.                        |
 | `bosia-elysia-routes`          | `+server.ts` shape — `{ body }: { body: T }` parsing, return plain objects or `new Response()` for status codes. No Express idioms.                   |
 | `bosia-rbac-permission`        | Always `can('resource.action', scope?)`. Never `if (role === 'admin')`. Resources in `lib/rbac/resources.ts`.                                         |
-| `bosia-drizzle-feature`        | `*.table.ts` + service + idempotent numbered seeds. Never edit applied seeds — add a new numbered file.                                               |
-| `bosia-drizzle-usage`          | Consumer side of `db`: `await db.select()...`, never `db.all` direct, never raw `bun:sqlite`. Pre-flight `db_test_connection` before first read.      |
+| `bosia-clean-architecture`     | Strict controller → service → repository per feature. No `db` in routes. Valibot validators derived from drizzle tables via `drizzle-valibot`.        |
+| `bosia-drizzle-feature`        | `*.table.ts` + repository + service + idempotent numbered seeds. Never edit applied seeds — add a new numbered file.                                  |
+| `bosia-drizzle-usage`          | Consumer side of `db`: repositories only. Routes/services never call `db.*` directly. Pre-flight `db_test_connection` before first read.              |
 | `bosia-env`                    | Four-tier prefix (`PUBLIC_STATIC_`/`PUBLIC_`/`STATIC_`/none). User vars via `$env`, framework vars via `process.env`. `.env.example` is the contract. |
 | `bosia-cors`                   | CORS env recipe (`CORS_ALLOWED_ORIGINS` + friends) and CSRF-vs-CORS triage. Preview-proxy apps usually need `TRUST_PROXY=true`, not CORS.             |
 
@@ -119,7 +120,7 @@ When emitting code:
 
 0. **Always-on behavioral guardrails.** `bosia-engineering-discipline` applies to every emit — think before coding, minimal scope, surgical edits, verifiable goals.
 1. **First touch of a Bosia app?** Check for `BRIEF.md` at app root. If missing or `## Status: pending`: run `bosia-brief-intake` to completion BEFORE anything below. Intake includes the `bosia-frontend-design` stance step — BRIEF.md must end with a populated `## Aesthetic` section. Re-read BRIEF.md at the start of every later session.
-2. Apply relevant **framework conventions** unconditionally (`bosia-routing`, `bosia-navigation`, `bosia-svelte-runes`, `bosia-elysia-routes`, `bosia-rbac-permission`, `bosia-drizzle-feature`, `bosia-env`, `bosia-cors`).
+2. Apply relevant **framework conventions** unconditionally (`bosia-routing`, `bosia-navigation`, `bosia-svelte-runes`, `bosia-elysia-routes`, `bosia-rbac-permission`, `bosia-clean-architecture`, `bosia-drizzle-feature`, `bosia-env`, `bosia-cors`).
 3. If emitting UI, apply **design conventions** (`bosia-theme-tokens`, `bosia-block-compose`, `bosia-frontend-design`) — all honor decisions locked in BRIEF.md. `bosia-frontend-design` commits the aesthetic stance before any scaffold runs.
 4. Pick a **page scaffold** or **flow** matching the user request.
 5. Compose with helpers (`bosia-empty-states`).

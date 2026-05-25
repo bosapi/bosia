@@ -13,10 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - New skill teaches the AI how to query the database correctly without breaking.
 - Skills API now lists each skill's reference files with URLs so AI agents can fetch them.
 - Drizzle skill now covers migrations, dev-server restart, and the common AI failure modes.
+- New skill enforces clean controller → service → repository layout so the AI stops putting database calls in pages.
 
 ### Changed
 
 - `db:migrate` now runs bun-native instead of needing `better-sqlite3`/`@libsql/client`.
+- Drizzle skills updated so each feature gets its own repository, service, and validator files.
 
 ## [0.6.2] - 2026-05-24
 

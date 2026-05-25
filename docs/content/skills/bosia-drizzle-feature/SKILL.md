@@ -1,6 +1,6 @@
 ---
 name: bosia-drizzle-feature
-description: Feature-folder layout for Drizzle — `*.table.ts` + service + idempotent numbered seeds. Seeds are immutable once applied; add a new numbered file for changes.
+description: Feature-folder layout for Drizzle — `*.table.ts` + `*.repository.ts` + `*.service.ts` + `*.validator.ts` + `*.dto.ts` + idempotent numbered seeds. Layered split is mandatory (see `bosia-clean-architecture`). Seeds are immutable once applied; add a new numbered file for changes.
 triggers:
     - new feature
     - db schema
@@ -26,18 +26,22 @@ bosia:
 
 ## What it builds
 
-A feature folder containing tables, service functions, and seed data wired into the Drizzle runtime.
+A feature folder containing tables, derived validators, DTOs, a pure repository, a service layer, and seed data wired into the Drizzle runtime.
 
 ```
 src/features/<feature>/
 ├── <feature>.table.ts        # Drizzle schema
-├── <feature>.service.ts      # query functions
-├── repository.ts (optional)  # multi-table queries
-├── schemas/                  # additional related tables
-└── index.ts                  # re-exports for consumers
+├── <feature>.validator.ts    # createInsertSchema / createSelectSchema via drizzle-valibot
+├── <feature>.dto.ts          # Public Input/Output types inferred from validators
+├── <feature>.repository.ts   # Pure DB layer — drizzle calls only
+├── <feature>.service.ts      # Business logic + valibot parse, calls repository
+├── schemas/                  # additional related tables (when an aggregate has many tables)
+└── index.ts                  # re-exports Service, Repository, table, validators, DTOs
 ```
 
 Seeds live in `src/features/drizzle/seeds/NNN_*.ts`.
+
+The repository/service split is mandatory. See [`bosia-clean-architecture`](../bosia-clean-architecture/SKILL.md) for layering rules, the full template, and refactor recipes.
 
 ## When to use
 
@@ -60,18 +64,37 @@ export const students = pgTable("students", {
 });
 ```
 
-### R2 — Service exports pure async functions
+### R2 — Repository owns DB calls; service owns logic
 
-Service functions accept `db` (or use the singleton import) and a typed argument record. No HTTP, no `locals`, no auth.
+Two files, two responsibilities. The repository is the **only** place that calls `db.select/insert/update/delete` for a feature. The service parses input with valibot, then calls repository functions. Auth checks, error mapping, and transaction orchestration live in the service. Auth contextual data (user id, scope) is passed in from the caller — the service does not read `locals`.
 
 ```ts
-// students.service.ts
-export async function listBySchool(db: Db, schoolId: string) {
+// students.repository.ts — pure DB layer
+import type { Database } from "../shared";
+import { eq } from "drizzle-orm";
+import { students } from "./students.table";
+
+export async function listBySchool(db: Database, schoolId: string) {
 	return db.select().from(students).where(eq(students.schoolId, schoolId));
 }
 ```
 
-Auth lives in the caller (`+server.ts` / loader).
+```ts
+// students.service.ts — business logic + validation
+import * as v from "valibot";
+import { db } from "../drizzle";
+import { uuidSchema } from "../shared";
+import * as StudentsRepository from "./students.repository";
+
+export async function listBySchool(rawSchoolId: unknown) {
+	const schoolId = v.parse(uuidSchema, rawSchoolId);
+	return StudentsRepository.listBySchool(db, schoolId);
+}
+```
+
+Auth lives in the caller (`+server.ts` / loader) and is passed into the service as arguments — never read from `locals` inside service code.
+
+Full template: [`bosia-clean-architecture` → feature-template](../bosia-clean-architecture/references/feature-template.md).
 
 ### R3 — Seeds: immutable & numbered
 
@@ -109,16 +132,20 @@ Don't add FKs in seeds. Declare in `*.table.ts` via `.references(() => other.id,
 1. Add `*.table.ts` with schema.
 2. Run `bun run db:generate`.
 3. Apply: `bun run db:migrate`.
-4. Add service functions in `*.service.ts`.
-5. If demo / bootstrap data needed → new numbered seed.
-6. Run `bun run db:seed` to apply.
-7. Re-export from `index.ts` for consumers.
+4. Add `*.validator.ts` (derived via `drizzle-valibot`) and `*.dto.ts`.
+5. Add `*.repository.ts` with pure DB functions taking `(db, …args)`.
+6. Add `*.service.ts` that parses inputs with valibot and calls the repository.
+7. If demo / bootstrap data needed → new numbered seed.
+8. Run `bun run db:seed` to apply.
+9. Re-export Service, Repository, table, validators, and DTOs from `index.ts`.
 
 ## Anti-patterns
 
 - Editing `001_rbac_bootstrap.ts` to change the admin email (add `004_change_admin.ts` instead).
 - Renumbering seed files to "reorder".
-- Putting auth checks in service functions.
+- Combining DB calls and business logic in one `*.service.ts` file (no separate repository). The split is mandatory; see [`bosia-clean-architecture`](../bosia-clean-architecture/SKILL.md).
+- Hand-writing a valibot schema that mirrors a drizzle table instead of using `createInsertSchema` / `createSelectSchema` from `drizzle-valibot`.
+- Putting auth checks (`if (locals.user.role !== 'admin')`) in service functions. Pass authorization decisions in from the caller.
 - Defining FKs in seeds rather than tables.
 - Skipping idempotency — "it'll only run once anyway".
 
@@ -133,6 +160,13 @@ P0:
 
 P1:
 
-- [ ] Service functions are pure (no `locals`, no HTTP).
+- [ ] Repository functions are pure DB calls (no `locals`, no HTTP, no business logic).
+- [ ] Service functions parse untrusted input via `v.parse(...)` before calling the repository.
+- [ ] Validators are derived from drizzle tables, not hand-written.
 - [ ] Many-to-many seeds use `onConflictDoNothing()`.
 - [ ] Feature folder re-exports through `index.ts`.
+
+## See also
+
+- [`bosia-clean-architecture`](../bosia-clean-architecture/SKILL.md) — the layering rules this skill conforms to, plus refactor recipes for legacy features that combined repo + service.
+- [`bosia-drizzle-usage`](../bosia-drizzle-usage/SKILL.md) — the `db` consumer rules that apply inside repository functions.
