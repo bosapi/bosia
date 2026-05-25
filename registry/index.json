@@ -65,7 +65,7 @@
 		"ui/sidebar",
 		"ui/slider"
 	],
-	"features": ["drizzle", "todo"],
+	"features": ["drizzle", "todo", "file-upload"],
 	"blocks": ["cards/feature-editorial", "files/crop-image", "files/upload-area"],
 	"themes": ["neutral", "editorial", "zinc", "stone", "claude", "ocean", "forest", "rose"]
 }

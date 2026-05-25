@@ -54,6 +54,7 @@ export const sidebar: NavGroup[] = [
 			{ label: "Security", labelId: "Keamanan", slug: "guides/security" },
 			{ label: "Testing", slug: "guides/testing" },
 			{ label: "Plugins", labelId: "Plugin", slug: "guides/plugins" },
+			{ label: "File Upload", labelId: "Unggah Berkas", slug: "guides/file-upload" },
 		],
 	},
 	{

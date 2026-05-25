@@ -10,6 +10,10 @@ export interface InstallOptions {
 	skipInstall?: boolean; // write deps to package.json instead of `bun add`
 	skipPrompts?: boolean; // auto-overwrite, no interactive prompts
 	cwd?: string; // override process.cwd() for file operations
+	/** Pre-resolved feature-specific option values, keyed by `featureName.optionName`. */
+	featureOptions?: Record<string, string>;
+	/** Remaining argv tokens to be parsed as the root feature's own options. */
+	featureArgs?: string[];
 }
 
 // ─── Local registry resolution ────────────────────────────

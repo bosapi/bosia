@@ -1,0 +1,98 @@
+{
+	"name": "file-upload",
+	"description": "Server-side image uploads with Bun.Image compression. Local FS or S3 via STORAGE_DRIVER. Drizzle-backed metadata. Pick dialect at install via -d sqlite|postgres|mysql (or -y for sqlite default).",
+	"features": ["drizzle"],
+	"components": ["files/upload-area", "files/crop-image"],
+	"options": [
+		{
+			"name": "dialect",
+			"flag": "-d",
+			"long": "--dialect",
+			"prompt": "Which database dialect should file-upload use?",
+			"choices": [
+				{
+					"value": "sqlite",
+					"label": "SQLite",
+					"hint": "default — zero-config, local file"
+				},
+				{ "value": "postgres", "label": "Postgres" },
+				{ "value": "mysql", "label": "MySQL" }
+			],
+			"default": "sqlite"
+		}
+	],
+	"files": [
+		{
+			"src": "file.pg.table.ts",
+			"target": "src/features/file-upload/schemas/file.table.ts",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "file.mysql.table.ts",
+			"target": "src/features/file-upload/schemas/file.table.ts",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "file.sqlite.table.ts",
+			"target": "src/features/file-upload/schemas/file.table.ts",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "types.ts",
+			"target": "src/features/file-upload/types.ts"
+		},
+		{
+			"src": "file.repository.ts",
+			"target": "src/features/file-upload/file.repository.ts"
+		},
+		{
+			"src": "file.service.ts",
+			"target": "src/features/file-upload/file.service.ts"
+		},
+		{
+			"src": "storage.ts",
+			"target": "src/features/file-upload/storage/index.ts"
+		},
+		{
+			"src": "storage-local.ts",
+			"target": "src/features/file-upload/storage/local.storage.ts"
+		},
+		{
+			"src": "storage-s3.ts",
+			"target": "src/features/file-upload/storage/s3.storage.ts"
+		},
+		{
+			"src": "file-index.ts",
+			"target": "src/features/file-upload/index.ts"
+		},
+		{
+			"src": "schemas.ts",
+			"target": "src/features/drizzle/schemas.ts",
+			"strategy": "append-line"
+		},
+		{
+			"src": "api-files-server.ts",
+			"target": "src/routes/api/files/+server.ts"
+		},
+		{
+			"src": "api-files-id-server.ts",
+			"target": "src/routes/api/files/[id]/+server.ts"
+		},
+		{
+			"src": "uploads-static-server.ts",
+			"target": "src/routes/uploads/[...path]/+server.ts",
+			"strategy": "skip-if-exists"
+		}
+	],
+	"npmDeps": {},
+	"envVars": {
+		"STORAGE_DRIVER": "local",
+		"UPLOAD_DIR": "./uploads",
+		"PUBLIC_BASE_URL": "http://localhost:3000",
+		"S3_BUCKET": "",
+		"S3_ACCESS_KEY_ID": "",
+		"S3_SECRET_ACCESS_KEY": "",
+		"S3_ENDPOINT": "",
+		"S3_REGION": "auto"
+	}
+}

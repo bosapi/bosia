@@ -59,9 +59,14 @@ async function main() {
 		}
 		case "feat": {
 			const { runFeat } = await import("./feat.ts");
-			const featName = args.find((a) => !a.startsWith("--"));
-			const featFlags = args.filter((a) => a.startsWith("--"));
-			await runFeat(featName, featFlags);
+			// First non-flag token is the feature name; everything else flows through to the
+			// feature's own option parser. Global flags (-y, --local) are also accepted here
+			// and get split out inside runFeat.
+			const nameIdx = args.findIndex((a) => !a.startsWith("-"));
+			const featName = nameIdx === -1 ? undefined : args[nameIdx];
+			const rest =
+				nameIdx === -1 ? args : [...args.slice(0, nameIdx), ...args.slice(nameIdx + 1)];
+			await runFeat(featName, rest);
 			break;
 		}
 		default: {
@@ -81,7 +86,9 @@ Commands:
   add block <cat>/<name>    Add a composed block from the registry
   add theme <name>          Add a theme (tokens.css) from the registry
   add font <family> <url>   Prepend an @import url(...) for a font family to src/app.css
-  feat <feature>            Add a feature scaffold from the registry [--local]
+  feat [-y] <feature> [feature options...]   Add a feature scaffold from the registry [--local]
+                            -y / --yes auto-confirms prompts and uses each feature's default option values
+                            Feature-specific options (e.g. file-upload's -d) follow the feature name
 
 Examples:
   bun x bosia@latest create my-app

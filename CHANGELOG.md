@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Tiny `/api/demo-upload` endpoint in docs so the upload demo completes end-to-end without a 500.
+- New `file-upload` feature: a ready backend for the upload block — shrinks images and saves locally or to S3.
+- `bun x bosia feat` now lets each feature declare its own flags — `file-upload` exposes `-d sqlite|postgres|mysql`; `-y` (auto-confirm, use defaults) stays a feat-level flag.
 
 ## [0.6.3] - 2026-05-25
 

@@ -28,6 +28,17 @@ interface FileEntry {
 	target: string;
 	strategy?: FileStrategy;
 	marker?: string; // unique id within target (default = feature name)
+	when?: Record<string, string>; // install only if every option value matches
+}
+
+interface FeatureOption {
+	name: string; // option key, also used in FileEntry.when
+	flag?: string; // short flag, e.g. "-d"
+	long?: string; // long flag, e.g. "--dialect"
+	prompt?: string; // interactive prompt label
+	choices?: { value: string; label?: string; hint?: string }[]; // enum picker
+	default?: string; // fallback when -y is set or user accepts default
+	required?: boolean; // when true, missing value with no default errors out
 }
 
 interface FeatureMeta {
@@ -40,6 +51,7 @@ interface FeatureMeta {
 	npmDevDeps?: Record<string, string>;
 	scripts?: Record<string, string>; // package.json scripts to add
 	envVars?: Record<string, string>; // env vars to append to .env if missing
+	options?: FeatureOption[]; // feature-specific CLI flags (e.g. file-upload's -d)
 }
 
 let registryRoot: string | null = null;
@@ -47,15 +59,18 @@ let registryRoot: string | null = null;
 // Track installed features to prevent circular dependencies
 const installedFeats = new Set<string>();
 
-export async function runFeat(name: string | undefined, flags: string[] = []) {
+export async function runFeat(name: string | undefined, args: string[] = []) {
+	// Strip global flags (-y/--yes, --local); everything else is feature args.
+	const { autoYes, local, featureArgs } = splitGlobalFlags(args);
+
 	if (!name) {
 		console.error(
-			"❌ Please provide a feature name.\n   Usage: bun x bosia@latest feat <feature> [--local]",
+			"❌ Please provide a feature name.\n   Usage: bun x bosia@latest feat [-y] [--local] <feature> [feature options...]",
 		);
 		process.exit(1);
 	}
 
-	if (flags.includes("--local")) {
+	if (local) {
 		registryRoot = resolveLocalRegistryOrExit();
 		console.log(`⬡ Using local registry: ${registryRoot}\n`);
 	}
@@ -63,7 +78,119 @@ export async function runFeat(name: string | undefined, flags: string[] = []) {
 	// Initialize add.ts registry context so addComponent resolves paths correctly
 	await initAddRegistry(registryRoot);
 
-	await installFeature(name, true);
+	await installFeature(name, true, { skipPrompts: autoYes, featureArgs });
+}
+
+function splitGlobalFlags(args: string[]): {
+	autoYes: boolean;
+	local: boolean;
+	featureArgs: string[];
+} {
+	let autoYes = false;
+	let local = false;
+	const featureArgs: string[] = [];
+	for (const a of args) {
+		if (a === "-y" || a === "--yes") autoYes = true;
+		else if (a === "--local") local = true;
+		else featureArgs.push(a);
+	}
+	return { autoYes, local, featureArgs };
+}
+
+/**
+ * Parse `args` against `options` (the feature's declared schema). Unknown flags abort.
+ * Returns a `{name: value}` map; missing entries are filled by prompt or `default`.
+ */
+async function resolveFeatureOptions(
+	featName: string,
+	options: FeatureOption[],
+	args: string[],
+	skipPrompts: boolean,
+): Promise<Record<string, string>> {
+	const values: Record<string, string> = {};
+	const byFlag = new Map<string, FeatureOption>();
+	for (const opt of options) {
+		if (opt.flag) byFlag.set(opt.flag, opt);
+		if (opt.long) byFlag.set(opt.long, opt);
+	}
+
+	for (let i = 0; i < args.length; i++) {
+		const tok = args[i];
+		const opt = byFlag.get(tok);
+		if (!opt) {
+			console.error(`❌ Unknown option "${tok}" for feature "${featName}".`);
+			if (options.length > 0) {
+				const valid = options
+					.map((o) => [o.flag, o.long].filter(Boolean).join("/"))
+					.filter(Boolean)
+					.join(", ");
+				console.error(`   Valid options: ${valid}`);
+			}
+			process.exit(1);
+		}
+		const val = args[++i];
+		if (val === undefined) {
+			console.error(`❌ Option "${tok}" requires a value.`);
+			process.exit(1);
+		}
+		if (opt.choices && !opt.choices.some((c) => c.value === val)) {
+			console.error(
+				`❌ Invalid value "${val}" for "${tok}". Expected: ${opt.choices.map((c) => c.value).join(", ")}`,
+			);
+			process.exit(1);
+		}
+		values[opt.name] = val;
+	}
+
+	for (const opt of options) {
+		if (opt.name in values) continue;
+		if (skipPrompts) {
+			if (opt.default !== undefined) {
+				values[opt.name] = opt.default;
+				continue;
+			}
+			if (opt.required) {
+				console.error(
+					`❌ Feature "${featName}" requires "${opt.flag ?? opt.long ?? opt.name}".`,
+				);
+				process.exit(1);
+			}
+			continue;
+		}
+		values[opt.name] = await promptOption(featName, opt);
+	}
+
+	return values;
+}
+
+async function promptOption(featName: string, opt: FeatureOption): Promise<string> {
+	const message = opt.prompt ?? `Choose "${opt.name}" for "${featName}"`;
+	if (opt.choices && opt.choices.length > 0) {
+		const selected = await p.select({
+			message,
+			options: opt.choices.map((c) => ({
+				value: c.value,
+				label: c.label ?? c.value,
+				hint: c.hint,
+			})),
+			initialValue: opt.default ?? opt.choices[0].value,
+		});
+		if (p.isCancel(selected)) {
+			p.cancel("Operation cancelled.");
+			process.exit(0);
+		}
+		return selected as string;
+	}
+	const typed = await p.text({
+		message,
+		initialValue: opt.default,
+		validate: (v) => (opt.required && !v ? "Required" : undefined),
+	});
+	if (p.isCancel(typed)) {
+		p.cancel("Operation cancelled.");
+		process.exit(0);
+	}
+	return (typed as string) ?? "";
 }
 
 /** Set the registry root for feature resolution. Called by create.ts for template features. */
@@ -83,10 +210,39 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 
 	const meta = await readRegistryJSON<FeatureMeta>(registryRoot, "features", name, "meta.json");
 
+	// Resolve this feature's own options (from `featureArgs` if root, else from `featureOptions`).
+	const inheritedOptions = options?.featureOptions ?? {};
+	let myOptions: Record<string, string> = {};
+	if (meta.options && meta.options.length > 0) {
+		myOptions = isRoot
+			? await resolveFeatureOptions(
+					name,
+					meta.options,
+					options?.featureArgs ?? [],
+					options?.skipPrompts ?? false,
+				)
+			: // Dependency features inherit any caller-provided values; prompt only for unresolved required opts.
+				await resolveFeatureOptions(name, meta.options, [], options?.skipPrompts ?? false);
+		for (const [k, v] of Object.entries(inheritedOptions)) {
+			const [feat, optName] = k.split(".");
+			if (feat === name && !(optName in myOptions)) myOptions[optName] = v;
+		}
+	}
+
+	// Merge into the namespaced map for downstream dependency features.
+	const featureOptions = { ...inheritedOptions };
+	for (const [k, v] of Object.entries(myOptions)) featureOptions[`${name}.${k}`] = v;
+
+	const nextOptions: InstallOptions = {
+		...options,
+		featureOptions,
+		featureArgs: undefined, // already consumed by the root feature
+	};
+
 	// Install required feature dependencies first (recursive)
 	if (meta.features && meta.features.length > 0) {
 		for (const feat of meta.features) {
-			await installFeature(feat, false, options);
+			await installFeature(feat, false, nextOptions);
 		}
 	}
 
@@ -99,9 +255,10 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 		console.log("");
 	}
 
-	// Apply each file entry per its strategy
+	// Apply each file entry per its strategy. Skip entries whose `when` clause doesn't match.
 	const createdDirs = new Set<string>();
 	for (const entry of meta.files) {
+		if (entry.when && !whenMatches(entry.when, myOptions)) continue;
 		const dest = join(cwd, entry.target);
 		const strategy: FileStrategy = entry.strategy ?? "write";
 		const dir = dirname(dest);
@@ -117,7 +274,7 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 			strategy,
 			feat: name,
 			marker: entry.marker ?? name,
-			skipPrompts: options?.skipPrompts ?? false,
+			skipPrompts: nextOptions.skipPrompts ?? false,
 		});
 	}
 
@@ -283,6 +440,13 @@ async function applyStrategy(args: StrategyArgs): Promise<void> {
 			throw new Error(`Unknown file strategy: ${_exhaustive}`);
 		}
 	}
+}
+
+function whenMatches(when: Record<string, string>, values: Record<string, string>): boolean {
+	for (const [k, expected] of Object.entries(when)) {
+		if (values[k] !== expected) return false;
+	}
+	return true;
 }
 
 function blockDelim(ext: string): { start: string; end: string } {

@@ -298,7 +298,7 @@
 - [ ] 🟡 `bosia feat <name> --dry-run` — preview file actions (write/skip/append/merge) without touching disk
 - [ ] 🟡 Validation: error early when two installed features write to the same target with `write` strategy (force one to declare append-line/append-block)
 - [ ] 🟠 `auth` feature scaffold — uses `append-block` to register hooks in `src/hooks.server.ts` and routes barrel
-- [ ] 🟡 `s3` / `storage` feature — bucket client + upload route using new strategies
+- [x] 🟡 `s3` / `storage` feature — bucket client + upload route using new strategies → shipped as `file-upload` in v0.6.4 (2026-05-26): `bun x bosia@latest feat [-y] file-upload [-d sqlite|postgres|mysql]` scaffolds Drizzle-backed metadata + local/S3 adapter + `/api/files` POST that pipes through `Bun.Image` compression (WebP @ 0.85, fit-inside 1920×1080). Install-time dialect selection via the new **per-feature options** mechanism — `-d` is declared in `file-upload`'s own `meta.json`, not hard-coded in the CLI
 - [ ] 🟡 Track installed features per project (`.bosia/installed.json`) — enable `bosia feat list` and uninstall
 
 ---
@@ -598,6 +598,17 @@
 - [x] 🟡 `registry/blocks/files/crop-image/block.svelte` — switched the 400px viewport from `h-[400px]` to `style="height: 400px;"`. The class itself works for end-users (their Tailwind scans their own `src/`), but in the docs preview the cropper area sometimes collapsed before/until the docs' Tailwind picked up the registry/blocks source on the next rebuild. Inline style is the safe cross-host fallback for fixed dimensions registry blocks rely on.
 - [x] 🟡 `docs/src/app.css` — added `@source "../../registry/blocks/**/*.{svelte,ts,js}"` so utility classes declared inside registry blocks are emitted into `bosia-tw.css` from the docs build alongside `registry/components/ui`.
 - [x] 🟠 `docs/src/lib/docs/content.ts` — `contentDir` and `demoFile` no longer resolve relative to `import.meta.dir`. In dev, the server bundle lives at `.bosia/dev/server/*.js` (three levels deep), in prod at `dist/server/*.js` (two levels deep); the old `../../content/docs` traversal silently missed the content dir in dev, making every catch-all docs page 404 via the `loadDoc → null → error(404)` path. Both paths now anchor on `process.cwd()` (same approach `[...slug]/+page.server.ts:12` already uses), making dev and prod resolution identical.
+
+### Same-day addition (2026-05-26) — `file-upload` feature + CLI dialect flags
+
+> The `files/upload-area` block has shipped since v0.6.3 but bosia had no server-side counterpart — every user had to write their own `POST /api/files`. Closes the gap with a full backend feature, and adds install-time DB dialect selection to `bun x bosia feat` so the same feature can ship Postgres / MySQL / SQLite Drizzle tables without a runtime selector.
+
+- [x] 🟠 `registry/features/file-upload/` — full backend scaffold. `file.service.ts` validates MIME (image/jpeg|png|webp|heic|avif), decodes via `Bun.Image`, fit-inside resizes to 1920×1080 (no upscale), re-encodes WebP @ 0.85, persists `(id, key, url, mime, size, width, height, createdAt)` via Drizzle, returns the row. Three dialect-specific table files (`file.pg.table.ts`, `file.mysql.table.ts`, `file.sqlite.table.ts`) all target the same install path `src/features/file-upload/schemas/file.table.ts` — install-time dialect filter picks one. `storage/` adapter pattern: `LocalStorage` (`Bun.write` + `UPLOAD_DIR`/`PUBLIC_BASE_URL` env) and `S3Storage` (`Bun.s3.file().write/delete`). `src/routes/api/files/+server.ts` (`GET` list, `POST` upload) + `[id]/+server.ts` (`DELETE` cascades to storage) + `src/routes/uploads/[...path]/+server.ts` (path-traversal-guarded local static stream, `Cache-Control: immutable`).
+- [x] 🟠 `packages/bosia/src/cli/feat.ts` — **per-feature options** system. Top-level only handles `-y` / `--yes` and `--local`; everything after the feature name flows to `resolveFeatureOptions()` which parses against the feature's own `meta.json` `options: FeatureOption[]` schema (each entry: `{ name, flag?, long?, prompt?, choices?, default?, required? }`). Unknown flags abort with a list of valid ones. Missing values prompt via `@clack/prompts.select` (when `choices`) or `.text`; with `-y`, fall back to `default`. `FileEntry.when?: Record<string, string>` filters which files install. Resolved option values thread through `InstallOptions.featureOptions` namespaced as `featureName.optionName` so dependency features can read them; the root feature also receives raw `featureArgs` for its own parse.
+- [x] ⚪ `packages/bosia/src/cli/index.ts` — feat subcommand argv handler simplified: first non-flag token is the name, everything else (including pre-name `-y`) flows to `runFeat`. Help text updated to reflect that feature-specific flags follow the feature name.
+- [x] ⚪ `packages/bosia/src/cli/registry.ts` — `InstallOptions` gained `featureOptions` (resolved values) and `featureArgs` (raw tokens for the root feature). No CLI-level dialect type — dialect is now `file-upload`-specific.
+- [x] ⚪ `registry/index.json` — `features` array gains `file-upload`.
+- [x] 🟡 `docs/content/docs/guides/file-upload.md` — install / env / wiring / S3 swap docs; cross-link added from `blocks/files/upload-area.md`. Nav entry under Guides.
 
 ---
 

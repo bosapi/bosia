@@ -30,7 +30,7 @@ Pulls `ui/button`, `ui/label`, `ui/progress`, `ui/icon`, `ui/sonner`. No npm dep
 <UploadArea uploadUrl="/api/upload" onUploaded={(res) => console.log(res.url)} />
 ```
 
-The server is expected to return JSON shaped like `{ "url": "https://...", ... }`.
+The server is expected to return JSON shaped like `{ "url": "https://...", ... }`. Need a ready-made backend? Install the [`file-upload` feature](/docs/guides/file-upload) — it ships `/api/files` with `Bun.Image` compression and local/S3 storage and matches this response shape.
 
 ## Props
 
