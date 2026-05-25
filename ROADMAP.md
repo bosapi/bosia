@@ -587,6 +587,16 @@
 
 ---
 
+## v0.6.3 — Skills API exposes references ✅ (shipped 2026-05-25)
+
+> AI agents fetching `/api/skills/<name>.json` could see `SKILL.md` body but not the companion reference files (`references/checklist.md`, `references/design-principles.md`, …) that carry the actionable detail. They had to guess paths or scrape the docs site. The skill detail response now lists every reference with its fetch URL, and each reference has a dedicated JSON endpoint.
+
+- [x] 🟡 `listSkillReferences(name)` in `docs/src/lib/skills/list.ts` — reads `<SKILLS_ROOT>/<name>/references/`, filters to `.md` files, validates slugs against `^[a-z0-9-]+$`, returns `{ file, path }[]` sorted by file. Silent `[]` on missing dir.
+- [x] 🟡 `GET /api/skills/[name]` response gained `references: SkillReference[]` so agents discover the available reference files in one round-trip.
+- [x] 🟡 New route `docs/src/routes/api/skills/[name]/references/[file]/+server.ts` — prerendered, `entries()` enumerates `(name, file)` pairs across all skills, `realpath` traversal guard mirrors the existing `[name]` route. Returns `{ name, file, path, content }` with `cache-control: public, max-age=60`. Raw markdown body — no frontmatter parsing on references.
+
+---
+
 ## v0.5.13 — Inspector component call-site chain ✅ (shipped 2026-05-23)
 
 > Alt-clicking a `<button>` rendered by a shared `Button.svelte` previously showed only `Button.svelte:5:1` — the definition site — which was misleading for the user and unusable for the "Send to AI" hand-off because the agent had no idea which page rendered the element. The overlay now shows the full call-site chain (e.g. `+page.svelte:42 → Button.svelte:5`) and ships the same chain inside the AI comment payload.

@@ -10,7 +10,32 @@ export type SkillSummary = {
 	category?: string;
 };
 
+export type SkillReference = { file: string; path: string };
+
 export const SKILLS_ROOT = resolve(process.cwd(), "content", "skills");
+
+const SLUG_RE = /^[a-z0-9-]+$/;
+
+export async function listSkillReferences(name: string): Promise<SkillReference[]> {
+	if (!SLUG_RE.test(name)) return [];
+	const dir = join(SKILLS_ROOT, name, "references");
+	let entries: { name: string; isFile: () => boolean }[];
+	try {
+		entries = await readdir(dir, { withFileTypes: true });
+	} catch {
+		return [];
+	}
+	const refs: SkillReference[] = [];
+	for (const entry of entries) {
+		if (!entry.isFile()) continue;
+		if (!entry.name.endsWith(".md")) continue;
+		const slug = entry.name.slice(0, -3);
+		if (!SLUG_RE.test(slug)) continue;
+		refs.push({ file: entry.name, path: `/api/skills/${name}/references/${slug}.json` });
+	}
+	refs.sort((a, b) => a.file.localeCompare(b.file));
+	return refs;
+}
 
 export async function listSkills(): Promise<SkillSummary[]> {
 	let entries: { name: string; isDirectory: () => boolean }[];

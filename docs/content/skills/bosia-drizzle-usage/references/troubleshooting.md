@@ -15,6 +15,52 @@ The failure modes the agent has historically looped on, with the recovery flow f
 | `Cannot read properties of undefined (reading 'id')` in a loader                 | Bare `db.select().from(t)` was treated as a single row instead of an array.                                                                                                         | Drizzle returns an array. Either index `.then(r => r[0])` or `const [row] = await db.select().from(t).where(...).limit(1)`.                                                                                    |
 | TypeScript: `Property 'select' does not exist on type 'BaseSQLiteDatabase<...>'` | Old import path or stale type cache.                                                                                                                                                | Re-import from `src/features/drizzle` (the aggregator), then run `bun run check`. Restart the TS server in your editor if it persists.                                                                         |
 
+## Where the SQLite file actually lives (Bosapi-hosted apps)
+
+> If you are an AI agent editing inside Bosapi, **read this twice** — this is the single most common path-resolution loop.
+
+Bosapi (the host) lives at `/Users/jekibus/products/bosapi/code/bosapi`. Each generated user app runs in its **own** directory under Bosapi's `data/users/` tree:
+
+```
+/Users/jekibus/products/bosapi/code/bosapi/                            ← Bosapi host (the editor itself)
+└── data/
+    └── users/
+        └── <userId>/                                                  ← e.g. 14e04fd8-d925-469b-9fe3-194716ae43fa
+            └── <projectSlug>/                                         ← e.g. proyek-satu
+                └── <appSlug>/                                         ← e.g. toko-preloved   ← THIS is the app's cwd
+                    ├── .env                                           ← contains DATABASE_URL
+                    ├── data/
+                    │   └── app.db                                     ← sqlite file lives HERE
+                    ├── drizzle/
+                    └── src/
+```
+
+When the app's `.env` says `DATABASE_URL=sqlite://./data/app.db`, the path resolves relative to **the app's own directory**, not Bosapi's:
+
+- ✅ Correct: `…/data/users/14e04fd8-…/proyek-satu/toko-preloved/data/app.db`
+- ❌ Wrong (real observed mistake): `…/code/bosapi/data/toko-preloved.db` — that's the host's data dir, not the app's. The app will never find it.
+
+The path `./data/app.db` in the `.env` is **already correct**. Don't "fix" it. Don't put the DB file at Bosapi's root data dir. Don't try absolute paths. Don't append the app slug to the filename to "namespace" it across apps — each app has its own folder and its own `data/`.
+
+If the connection fails:
+
+1. `db_status` reports the resolved cwd + url. Compare against the structure above.
+2. If `db_test_connection` is red, the fix is almost never an `.env` edit. It's that `bun run dev` was started from the wrong directory or the `data/` subfolder was deleted by an earlier "fix attempt".
+3. To recreate the DB file: `db_migrate` from inside the app dir. Migrations rebuild the schema; seeds repopulate.
+
+Inside the app, code should still import the singleton — never re-derive the path:
+
+```ts
+// ✅ Inside any +page.server.ts / service in the app
+import { db } from "../../features/drizzle";
+
+// ❌ Never inside a user-app file
+import { Database } from "bun:sqlite";
+const db = new Database("/Users/jekibus/products/bosapi/code/bosapi/data/toko-preloved.db");
+```
+
+The Bosapi-side `db_*` tools (`db_status`, `db_test_connection`, `db_schema`, `db_migrate`) already know to run against the active app's cwd. Use them — don't replicate path logic in the app.
+
 ## Recovery flow
 
 When a DB-touching change throws at runtime:

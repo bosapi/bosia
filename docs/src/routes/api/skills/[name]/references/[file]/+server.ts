@@ -1,24 +1,34 @@
 import type { RequestEvent } from "bosia";
 import { realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
-import matter from "gray-matter";
 import { SKILLS_ROOT, listSkills, listSkillReferences } from "$lib/skills/list";
 
 const NAME_RE = /^[a-z0-9-]+$/;
 
 export const prerender = true;
 
-export async function entries(): Promise<{ name: string }[]> {
+export async function entries(): Promise<{ name: string; file: string }[]> {
 	const skills = await listSkills();
-	return skills.map((s) => ({ name: s.name }));
+	const out: { name: string; file: string }[] = [];
+	for (const skill of skills) {
+		const refs = await listSkillReferences(skill.name);
+		for (const ref of refs) {
+			out.push({ name: skill.name, file: ref.file.slice(0, -3) });
+		}
+	}
+	return out;
 }
 
 export async function GET({ params }: RequestEvent) {
 	const name = params.name;
+	const fileSlug = params.file;
 	if (!name || !NAME_RE.test(name)) {
 		return new Response("bad name", { status: 400 });
 	}
-	const file = join(SKILLS_ROOT, name, "SKILL.md");
+	if (!fileSlug || !NAME_RE.test(fileSlug)) {
+		return new Response("bad file", { status: 400 });
+	}
+	const file = join(SKILLS_ROOT, name, "references", `${fileSlug}.md`);
 	let real: string;
 	let root: string;
 	try {
@@ -30,11 +40,14 @@ export async function GET({ params }: RequestEvent) {
 	if (real !== root && !real.startsWith(root + sep)) {
 		return new Response("not found", { status: 404 });
 	}
-	const raw = await Bun.file(real).text();
-	const { content } = matter(raw);
-	const references = await listSkillReferences(name);
+	const content = await Bun.file(real).text();
 	return Response.json(
-		{ name, path: `/api/skills/${name}.json`, content, references },
+		{
+			name,
+			file: `${fileSlug}.md`,
+			path: `/api/skills/${name}/references/${fileSlug}.json`,
+			content,
+		},
 		{ headers: { "cache-control": "public, max-age=60" } },
 	);
 }

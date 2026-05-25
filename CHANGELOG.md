@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - New skill teaches the AI how to query the database correctly without breaking.
+- Skills API now lists each skill's reference files with URLs so AI agents can fetch them.
 
 ## [0.6.2] - 2026-05-24
 

@@ -79,12 +79,33 @@ export async function load() {
 
 Pure `await` on the builder. No `.all()`. No `db.all(sql\`...\`)`. No `bun:sqlite` import.
 
+## Where the SQLite file lives (Bosapi-hosted apps)
+
+Read this **before** writing path code. Single biggest source of looped failures.
+
+Each generated app has its own cwd under Bosapi's host tree:
+
+```
+<bosapi-host>/data/users/<userId>/<projectSlug>/<appSlug>/
+├── .env                          ← DATABASE_URL=sqlite://./data/app.db
+└── data/
+    └── app.db                    ← the sqlite file
+```
+
+- ✅ Correct (relative to the app's own dir): `…/data/users/<userId>/<projectSlug>/<appSlug>/data/app.db`
+- ❌ Wrong (real observed loop): `<bosapi-host>/data/<appSlug>.db` — that's Bosapi's host data dir, not the app's.
+
+The `./data/app.db` path in `.env` is **already correct**. Don't rewrite it. Don't use absolute paths. Don't `import.meta.dir`. The `db_*` tools resolve against the active app's cwd — let them.
+
+Full path-resolution recipe + the host-vs-app diagram: `references/troubleshooting.md` § "Where the SQLite file actually lives".
+
 ## P0 — must pass
 
 - [ ] `db_test_connection` ran green this session before the first loader/service read.
 - [ ] `db` imported only from `src/features/drizzle`. No `import { Database } from "bun:sqlite"` outside `src/features/drizzle/index.ts`.
 - [ ] All consumer queries use `await db.select(...)...` or `await db.execute(sql\`...\`)`. No top-level `db.all(...)`/`db.get(...)` in consumer code.
 - [ ] No `process.cwd()` / `import.meta.dir` path-resolution helpers added to "find" the DB file.
+- [ ] No absolute or hand-rolled SQLite path. The DB file lives at `./data/app.db` relative to the **app's own** cwd (see § "Where the SQLite file lives").
 
 ## P1 — should pass
 
@@ -104,6 +125,7 @@ Stop and reconsider if you see any of these:
 - Building `sqlAll` / `sqlGet` / `ensureSqlite` helpers that open `bun:sqlite` directly.
 - `import.meta.dir` / `process.cwd()` fallback loops trying to "find" the DB file.
 - Moving the DB file to project root because the path "won't resolve" — the path is fine; the cwd was wrong (you ran `bun run dev` from the wrong directory).
+- Putting the sqlite file under Bosapi's host `data/` dir (e.g. `<bosapi-host>/data/<appSlug>.db`) instead of the app's own `data/app.db`. See § "Where the SQLite file lives".
 - Writing loader code before any `db_test_connection` this session.
 - Mixing chained `.all()` terminals with `await` on the same builder in one file.
 - Improvising `.env` rewrites when the connection test fails — confirm with the user first.
