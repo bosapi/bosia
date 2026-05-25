@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.3] - 2026-05-25
+
+### Added
+
+- New skill teaches the AI how to query the database correctly without breaking.
+
 ## [0.6.2] - 2026-05-24
 
 ### Fixed

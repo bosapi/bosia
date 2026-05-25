@@ -1,0 +1,47 @@
+# Troubleshooting
+
+The failure modes the agent has historically looped on, with the recovery flow for each. Drawn from real Bosapi chat transcripts where the agent jumped from drizzle → raw `bun:sqlite` → path-resolution hacks and never recovered.
+
+## Symptoms → causes → fixes
+
+| Symptom                                                                          | Cause                                                                                                                                                                               | Fix                                                                                                                                                                                                            |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TypeError: db.all is not a function`                                            | Called the sqlite-only sync API (`.all(sql\`...\`)`) on the top-level `db`. Bosia's `db`is the engine-aware drizzle instance, not the raw`bun:sqlite` `Database`.                   | Rewrite to `await db.select(...)...` or `await db.execute(sql\`...\`)`.                                                                                                                                        |
+| `TypeError: db.select(...).from(...)...all is not a function`                    | Chained the sync `.all()` terminal on the builder. Drizzle exposes it on some shapes and not others; don't rely on it in bosia.                                                     | Drop `.all()`. `await` the builder directly — `await db.select(...).from(...)` returns the rows.                                                                                                               |
+| `Error: SQLite not initialized`                                                  | A helper module (e.g. `sqlAll`, `sqlGet`, `ensureSqlite`) opened a parallel `bun:sqlite` connection lazily, and was called before its `ensureSqlite()` ran.                         | Delete the parallel helper. There is exactly one `db` per app — the one exported from `src/features/drizzle`. Everything else is the symptom.                                                                  |
+| `Error: unable to open database file` (sqlite-file)                              | `DATABASE_URL=sqlite://./data/app.db` resolves relative to the bun process's cwd. `bun run dev` was started from a subdirectory, or a previous "fix attempt" deleted `data/app.db`. | (1) Restart `bun run dev` from the project root. (2) If the file is genuinely missing, run `db_migrate` to recreate it via migrations. Do **not** loop through `import.meta.dir` / `process.cwd()` candidates. |
+| Engine appears to change between turns                                           | `.env` `DATABASE_URL` was hand-edited mid-session (e.g. swapped from sqlite to postgres without restart).                                                                           | Confirm with the user. One engine per app — `bosia-brief-database` R1. After any `.env` change, restart dev server and re-run `db_test_connection`.                                                            |
+| Migrations regenerated unexpectedly                                              | The agent deleted `data/` (or `drizzle/migrations/`) to "force a fresh start".                                                                                                      | Don't. Migrations + the DB file are **user state**. Reset only with explicit user approval. Recover from git if possible.                                                                                      |
+| `Cannot read properties of undefined (reading 'id')` in a loader                 | Bare `db.select().from(t)` was treated as a single row instead of an array.                                                                                                         | Drizzle returns an array. Either index `.then(r => r[0])` or `const [row] = await db.select().from(t).where(...).limit(1)`.                                                                                    |
+| TypeScript: `Property 'select' does not exist on type 'BaseSQLiteDatabase<...>'` | Old import path or stale type cache.                                                                                                                                                | Re-import from `src/features/drizzle` (the aggregator), then run `bun run check`. Restart the TS server in your editor if it persists.                                                                         |
+
+## Recovery flow
+
+When a DB-touching change throws at runtime:
+
+1. **Stop editing.** Don't add a new helper. Don't import `bun:sqlite`.
+2. Run `db_status`. Confirm engine matches what the user picked.
+3. Run `db_test_connection`. Green = connection fine, problem is in your loader. Red = connection issue; see the table above.
+4. Re-read the loader file you just wrote. Look for `.all()`, `.get()`, raw `bun:sqlite` imports, ad-hoc path resolution — that's almost always the cause.
+5. Rewrite using the pattern in `SKILL.md` Quick Start. Pure `await` on the builder.
+6. `shell({ cmd: "build" })` to surface type errors before reloading.
+
+## Anti-patterns observed in real sessions
+
+These are the loops to **not** repeat:
+
+- **The `bun:sqlite` reach.** When drizzle "doesn't work", the agent reaches for `new Database(path)` directly. This always makes things worse: it opens a second handle to the same file (sqlite-file), it bypasses the schema metadata that `db.query.*` relies on, and it requires manual path resolution that gets wrong every time.
+- **The `process.cwd()` shell game.** Trying `data/app.db`, then `./data/app.db`, then `../data/app.db`, then `import.meta.dir + "/data/app.db"`, then writing a helper that tries all of them. The file is fine. The cwd is wrong. The fix is to restart the dev server from the project root, not to make the code more clever.
+- **The `.env` rewrite.** When `db_test_connection` fails, the agent edits `DATABASE_URL`. Don't. Confirm with the user before touching `.env` — engine choice is a brief decision, not a debugging knob.
+- **The `data/` purge.** When sqlite says "unable to open database file", the agent deletes `data/` and recreates it. The user just lost their seed data. Never delete user state to make an error go away.
+- **The `.all()` retry.** First call fails with "not a function" → agent tries `.all({})`, then `.all([])`, then `(db as any).all(...)`. The terminal does not exist on this builder shape. Drop it; `await` is the terminal.
+- **The double drizzle factory.** Importing `drizzle` from `drizzle-orm/bun-sqlite` and constructing a second instance "to be sure". You now have two query loggers, two schema registrations, two prepared-statement caches, and identical bugs in two places. There is one `db`. Import it.
+
+## When to ask the user instead of guessing
+
+- Engine change suspected (`.env` edits, fresh repo clone) → confirm intended engine.
+- DB file missing → confirm whether to restore from migrations/seeds or treat as data loss.
+- Migration appears to be diverged from schema → confirm before regenerating; never delete applied migrations.
+- Query returns unexpected shape → ask which projection the user wanted, don't reshape silently.
+
+Asking once is cheaper than three turns of `import.meta.dir` candidates.
