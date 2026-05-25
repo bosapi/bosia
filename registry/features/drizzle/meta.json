@@ -24,6 +24,11 @@
 			"strategy": "skip-if-exists"
 		},
 		{
+			"src": "drizzle-migrate.ts",
+			"target": "src/features/drizzle/migrate.ts",
+			"strategy": "skip-if-exists"
+		},
+		{
 			"src": "drizzle.config.ts",
 			"target": "drizzle.config.ts",
 			"strategy": "skip-if-exists"
@@ -37,7 +42,7 @@
 	},
 	"scripts": {
 		"db:generate": "drizzle-kit generate",
-		"db:migrate": "drizzle-kit migrate",
+		"db:migrate": "bun run src/features/drizzle/migrate.ts",
 		"db:seed": "bun run src/features/drizzle/seeds/runner.ts"
 	},
 	"envVars": {

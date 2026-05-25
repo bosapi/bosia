@@ -79,6 +79,13 @@ export async function load() {
 
 Pure `await` on the builder. No `.all()`. No `db.all(sql\`...\`)`. No `bun:sqlite` import.
 
+## Migrations & dev-server lifecycle
+
+- Flow is always `db_generate` (writes SQL into `src/features/drizzle/migrations/`) → `db_migrate` (applies via the bun-native runner at `src/features/drizzle/migrate.ts`) → `runtime_restart` (drops the stale `db` singleton in the dev server). Never skip the restart — the running app cached its sqlite handle from before the migration ran.
+- All DDL lives in migration files. Never inline `CREATE TABLE IF NOT EXISTS` (or any `ALTER`/`CREATE INDEX`) inside `+page.server.ts` `load()`, a `+server.ts` handler, or a service function. It runs on every request, races between concurrent requests, and means the real migration never gets stored.
+- Seeds are one-shot via `db_seed` (the runner in `src/features/drizzle/seeds/runner.ts` records applied seeds in `__bosia_seeds`). Never seed inside a loader.
+- If `bun run db:migrate` errors with `Please install either 'better-sqlite3' or '@libsql/client'` (sqlite), `please install either of 'pg' / 'postgres' / …` (postgres), or the equivalent for mysql: the app's `package.json` `db:migrate` script is the legacy `drizzle-kit migrate` line. Bosia 0.6.3+ ships a bun-native runner. Update the script to `bun run src/features/drizzle/migrate.ts`. Do **not** install the Node drivers — that defeats the bun-only stance. See `references/troubleshooting.md`.
+
 ## Where the SQLite file lives (Bosapi-hosted apps)
 
 Read this **before** writing path code. Single biggest source of looped failures.
@@ -106,6 +113,8 @@ Full path-resolution recipe + the host-vs-app diagram: `references/troubleshooti
 - [ ] All consumer queries use `await db.select(...)...` or `await db.execute(sql\`...\`)`. No top-level `db.all(...)`/`db.get(...)` in consumer code.
 - [ ] No `process.cwd()` / `import.meta.dir` path-resolution helpers added to "find" the DB file.
 - [ ] No absolute or hand-rolled SQLite path. The DB file lives at `./data/app.db` relative to the **app's own** cwd (see § "Where the SQLite file lives").
+- [ ] After `db_migrate` succeeds, call `runtime_restart` before reading from the new schema.
+- [ ] No DDL or seed logic inside `load()` / `+server.ts` / service functions.
 
 ## P1 — should pass
 
@@ -129,6 +138,9 @@ Stop and reconsider if you see any of these:
 - Writing loader code before any `db_test_connection` this session.
 - Mixing chained `.all()` terminals with `await` on the same builder in one file.
 - Improvising `.env` rewrites when the connection test fails — confirm with the user first.
+- `raw` (or any `bun:sqlite` instance) re-exported from `src/features/drizzle/index.ts` to bypass drizzle.
+- `CREATE TABLE IF NOT EXISTS` / seed inserts inside a request handler.
+- Calling `db_query` to "verify data exists" while the running app throws `no such table` — that's a missing `runtime_restart`, not a data problem.
 
 ## References
 

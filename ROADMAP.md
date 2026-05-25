@@ -118,6 +118,7 @@
 - [x] 🟠 `todo` template (formerly `drizzle`) — PostgreSQL + Drizzle ORM with full CRUD todo demo
 - [x] 🟠 `drizzle` feature — `bosia feat drizzle` scaffolds DB connection, schema aggregator, migrations dir, seed runner
 - [x] 🟠 Multi-engine `drizzle` feature — adapter, `drizzle.config.ts`, and seed-runner branch on `DATABASE_URL` scheme (postgres, mysql, sqlite file, sqlite in-memory) over Bun's built-in drivers (no per-engine npm dep)
+- [x] 🟠 Bun-native drizzle migrate runner — `src/features/drizzle/migrate.ts` replaces `drizzle-kit migrate` for sqlite/postgres/mysql apps (drizzle-kit's sqlite migrate requires `better-sqlite3`/`@libsql/client`; bun-native runner uses `drizzle-orm/bun-sqlite/migrator` + `drizzle-orm/bun-sql/migrator`).
 - [x] 🟠 `bosia-brief-database` skill + hook into `bosia-brief-intake` — captures DB engine + connection during brief intake, writes `## Database` block to BRIEF.md
 - [x] 🟠 `todo` feature — `bosia feat todo` scaffolds todo schema, repository, service, routes, components, and seed data
 - [x] 🟡 `todo` component — `bun x bosia@latest add todo` installs todo-form, todo-item, todo-list components
