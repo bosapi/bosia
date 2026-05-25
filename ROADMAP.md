@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.3**
+> Current version: **0.6.4**
 
 ---
 
@@ -588,6 +588,19 @@
 
 ---
 
+## v0.6.4 — Combined files demo, CORS-safe ✅ (shipped 2026-05-26)
+
+> The crop block's docs demo was loading a remote Unsplash URL with `crossorigin="anonymous"`. The browser blocked it as a CORS failure and the cropper rendered blank. Replaced the two separate demos (one cropper, one uploader) with a single combined demo that mirrors the reference CMS UploadTab — pick a file via `UploadArea`, then click the crop button to overlay `CropImage` against the file's object URL. Object URLs are same-origin, so the `crossOrigin` attribute is no longer needed and the cropper just works.
+
+- [x] 🟡 `docs/src/lib/components/demos/FilesUploadCropDemo.svelte` — single combined demo. `UploadArea` (`enableCrop`, `uploadUrl="/api/demo-upload"`) → on crop button, captures the `(file, done)` pair, opens `CropImage` against `URL.createObjectURL(file)`, wraps the returned Blob as a `File` and calls `done(file)`. Replaces the two earlier per-block demos.
+- [x] 🟡 `docs/src/routes/api/demo-upload/+server.ts` — tiny `POST` returning `{ url, ok }` so the demo Upload button doesn't 500.
+- [x] ⚪ Both `docs/content/docs/blocks/files/{crop-image,upload-area}.md` frontmatter `demo:` now points at `FilesUploadCropDemo`. `[...slug]/+page.svelte` imports the new demo only; deleted `FilesCropImageDemo.svelte` and `FilesUploadAreaDemo.svelte`.
+- [x] 🟡 `registry/blocks/files/crop-image/block.svelte` — switched the 400px viewport from `h-[400px]` to `style="height: 400px;"`. The class itself works for end-users (their Tailwind scans their own `src/`), but in the docs preview the cropper area sometimes collapsed before/until the docs' Tailwind picked up the registry/blocks source on the next rebuild. Inline style is the safe cross-host fallback for fixed dimensions registry blocks rely on.
+- [x] 🟡 `docs/src/app.css` — added `@source "../../registry/blocks/**/*.{svelte,ts,js}"` so utility classes declared inside registry blocks are emitted into `bosia-tw.css` from the docs build alongside `registry/components/ui`.
+- [x] 🟠 `docs/src/lib/docs/content.ts` — `contentDir` and `demoFile` no longer resolve relative to `import.meta.dir`. In dev, the server bundle lives at `.bosia/dev/server/*.js` (three levels deep), in prod at `dist/server/*.js` (two levels deep); the old `../../content/docs` traversal silently missed the content dir in dev, making every catch-all docs page 404 via the `loadDoc → null → error(404)` path. Both paths now anchor on `process.cwd()` (same approach `[...slug]/+page.server.ts:12` already uses), making dev and prod resolution identical.
+
+---
+
 ## v0.6.3 — Skills API exposes references ✅ (shipped 2026-05-25)
 
 > AI agents fetching `/api/skills/<name>.json` could see `SKILL.md` body but not the companion reference files (`references/checklist.md`, `references/design-principles.md`, …) that carry the actionable detail. They had to guess paths or scrape the docs site. The skill detail response now lists every reference with its fetch URL, and each reference has a dedicated JSON endpoint.
@@ -595,6 +608,17 @@
 - [x] 🟡 `listSkillReferences(name)` in `docs/src/lib/skills/list.ts` — reads `<SKILLS_ROOT>/<name>/references/`, filters to `.md` files, validates slugs against `^[a-z0-9-]+$`, returns `{ file, path }[]` sorted by file. Silent `[]` on missing dir.
 - [x] 🟡 `GET /api/skills/[name]` response gained `references: SkillReference[]` so agents discover the available reference files in one round-trip.
 - [x] 🟡 New route `docs/src/routes/api/skills/[name]/references/[file]/+server.ts` — prerendered, `entries()` enumerates `(name, file)` pairs across all skills, `realpath` traversal guard mirrors the existing `[name]` route. Returns `{ name, file, path, content }` with `cache-control: public, max-age=60`. Raw markdown body — no frontmatter parsing on references.
+
+### Same-day addition (2026-05-25) — Files blocks (crop + upload)
+
+> Registry had no file-handling blocks. Ported two from a working CMS: an interactive image cropper and a drag-and-drop upload area. Both installable standalone — `upload-area` accepts an optional `onCropRequest` callback so callers wire `crop-image` in only when they want cropping. New `files/` category, two icons added (`crop`, `zoom-in`).
+
+- [x] 🟡 `registry/blocks/files/crop-image/` — Svelte 5 cropper wrapping `svelte-easy-crop` (^5.0.0); aspect/shape presets, zoom slider, returns `Blob` via `onCropComplete`. Inlined canvas crop helper (no separate util file). Uses `ui/button`, `ui/label`, `ui/slider`, `ui/icon`, `ui/sonner`. Cropped output is resized to fit `maxWidth × maxHeight` (default 1920×1080, never upscales) and re-encoded at `quality` (default 0.85). New `format` prop with `"auto"` default — round crops and PNG sources go to WebP (with PNG fallback when WebP isn't encodable) so a JPEG → round crop no longer balloons from a forced PNG re-encode.
+- [x] 🟡 `registry/blocks/files/upload-area/` — drag-drop + click-to-pick with preview, size validation, `XMLHttpRequest` progress, `Progress` bar. Props: `uploadUrl` (required), `accept`, `maxSizeMB`, `fieldName`, `extraFields`, `headers`, `enableCrop` + `onCropRequest`, `onUploaded`, `onError`. Expects JSON `{ url, ... }` response.
+- [x] ⚪ `registry/components/ui/icon/icons.ts` — added `crop` and `zoom-in` paths (lucide-static).
+- [x] ⚪ `registry/index.json` — `blocks` array gains `files/crop-image` and `files/upload-area`.
+- [x] ⚪ Docs pages `docs/content/docs/blocks/files/crop-image.md` and `upload-area.md`; Files group added to `docs/src/lib/docs/nav.ts`; `FilesCropImageDemo` and `FilesUploadAreaDemo` registered in `[...slug]/+page.svelte`.
+- [x] 🟡 `packages/bosia/src/core/build.ts` — added `conditions: ["svelte"]` to both client and server `Bun.build` calls so Svelte component libraries (like `svelte-easy-crop`) resolve to their `svelte` export entry. Initial attempt used a generic `onResolve` handler in the framework plugin that walked package.json for a `svelte` field; even when it returned `undefined` for non-Svelte packages, it broke shiki's chunked CommonJS interop at runtime (`b0 is not defined` / `bundle_full_exports is not defined` on the page-server bundle). The Bun-native `conditions` option avoids touching the resolver graph and fixes both issues at once.
 
 ### Same-day addition (2026-05-25) — Clean-architecture skill for generated apps
 

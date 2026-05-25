@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.4] - 2026-05-26
+
+### Changed
+
+- Crop and upload blocks now share one combined demo — pick a file, optionally crop, upload.
+
+### Fixed
+
+- Crop demo no longer breaks on CORS — uses your picked file (object URL) instead of a remote image.
+- Docs pages no longer 404 in dev — content path now resolves from the project root, not the bundle location.
+- Crop block's preview area no longer collapses to 0 height — uses inline style as a safe fallback when the host's Tailwind scan doesn't reach the registry source.
+- Docs Tailwind now scans `registry/blocks/**` so block-defined utility classes get generated.
+
+### Added
+
+- Tiny `/api/demo-upload` endpoint in docs so the upload demo completes end-to-end without a 500.
+
 ## [0.6.3] - 2026-05-25
 
 ### Added
@@ -14,6 +31,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Skills API now lists each skill's reference files with URLs so AI agents can fetch them.
 - Drizzle skill now covers migrations, dev-server restart, and the common AI failure modes.
 - New skill enforces clean controller → service → repository layout so the AI stops putting database calls in pages.
+- New file blocks: image cropper with zoom/aspect presets, and drag-and-drop upload area with progress.
+- Crop block now resizes and re-compresses output (defaults 1920×1080 @ 0.85, WebP for round crops).
+
+### Fixed
+
+- Svelte component libraries (like `svelte-easy-crop`) now resolve at build time via the `svelte` export condition.
+- Fixed page-server crash (`b0 is not defined` / `bundle_full_exports is not defined`) caused by an overly broad resolver — now uses Bun's `conditions` option instead.
+- Crop block exposes a `crossOrigin` prop and removes `h-full` from the outer wrapper so it lays out correctly inside unsized parents.
+- Crop demo now uses an image source that returns `Access-Control-Allow-Origin: *` (the previous Picsum URL was being blocked by `crossorigin="anonymous"` and rendered as a broken image).
 
 ### Changed
 

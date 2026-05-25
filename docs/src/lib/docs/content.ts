@@ -1,11 +1,11 @@
 import { readFileSync, statSync, existsSync } from "fs";
-import { join, resolve } from "path";
+import { join } from "path";
 import { parseMarkdown, getHighlighter, type DocPage } from "./markdown";
 
-// Resolve content directory relative to the compiled bundle location.
-// In the compiled output (docs/dist/server/*.js), import.meta.dir = docs/dist/server/
-// so ../../content/docs reliably points to docs/content/docs regardless of cwd.
-const contentDir = resolve(import.meta.dir, "../../content/docs");
+// Resolve relative to the docs project root (where `bun run dev|build` is invoked).
+// `import.meta.dir` sits at different depths in dev (`.bosia/dev/server/`) vs prod
+// (`dist/server/`), so going up two levels misses the content dir in dev.
+const contentDir = join(process.cwd(), "content", "docs");
 
 interface CacheEntry {
 	mtime: number;
@@ -49,9 +49,13 @@ export async function loadDoc(slug: string): Promise<DocPage | null> {
 
 	// If the page has a demo, load and highlight its source
 	if (page.frontmatter.demo) {
-		const demoFile = resolve(
-			import.meta.dir,
-			`../../src/lib/components/demos/${page.frontmatter.demo}.svelte`,
+		const demoFile = join(
+			process.cwd(),
+			"src",
+			"lib",
+			"components",
+			"demos",
+			`${page.frontmatter.demo}.svelte`,
 		);
 		if (existsSync(demoFile)) {
 			try {

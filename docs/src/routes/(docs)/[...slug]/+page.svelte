@@ -64,6 +64,7 @@
 	import TypographyDemo from "$lib/components/demos/TypographyDemo.svelte";
 	import IconGrid from "$lib/components/IconGrid.svelte";
 	import CardFeatureEditorialDemo from "$lib/components/demos/CardFeatureEditorialDemo.svelte";
+	import FilesUploadCropDemo from "$lib/components/demos/FilesUploadCropDemo.svelte";
 
 	const demos: Record<string, any> = {
 		AspectRatioDemo,
@@ -127,6 +128,7 @@
 		TypographyDemo,
 		IconGrid,
 		CardFeatureEditorialDemo,
+		FilesUploadCropDemo,
 	};
 
 	let { data }: { data: any } = $props();

@@ -150,6 +150,13 @@ export const sidebar: NavGroup[] = [
 					},
 				],
 			},
+			{
+				label: "Files",
+				children: [
+					{ label: "Crop Image", slug: "blocks/files/crop-image" },
+					{ label: "Upload Area", slug: "blocks/files/upload-area" },
+				],
+			},
 		],
 	},
 	{

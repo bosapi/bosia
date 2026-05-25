@@ -1,0 +1,10 @@
+{
+	"name": "crop-image",
+	"description": "Interactive image cropper with aspect presets, zoom, and rect/round shapes. Returns a cropped Blob.",
+	"category": "files",
+	"themes": [],
+	"dependencies": ["ui/button", "ui/label", "ui/slider", "ui/icon", "ui/sonner"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": { "svelte-easy-crop": "^5.0.0" }
+}
