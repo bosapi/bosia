@@ -20,7 +20,7 @@ bosia:
         components: []
         feats: [file-upload]
     targets:
-        routes: [api/files, api/files/[id]]
+        routes: ["api/files", "api/files/[id]"]
     stack: [elysia-routes, svelte-runes]
 ---
 
