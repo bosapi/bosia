@@ -609,6 +609,7 @@
 - [x] ⚪ `packages/bosia/src/cli/registry.ts` — `InstallOptions` gained `featureOptions` (resolved values) and `featureArgs` (raw tokens for the root feature). No CLI-level dialect type — dialect is now `file-upload`-specific.
 - [x] ⚪ `registry/index.json` — `features` array gains `file-upload`.
 - [x] 🟡 `docs/content/docs/guides/file-upload.md` — install / env / wiring / S3 swap docs; cross-link added from `blocks/files/upload-area.md`. Nav entry under Guides.
+- [x] ⚪ `docs/content/skills/bosia-file-upload/SKILL.md` — new skill teaching the AI when to install file-upload (avatar/profile picture/media library triggers), R1–R5 rules, workflow, and anti-patterns. Cross-references `bosia-env`, `bosia-drizzle-feature`, `bosia-elysia-routes`, `bosia-block-compose`.
 
 ---
 
