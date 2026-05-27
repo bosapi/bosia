@@ -14,6 +14,6 @@
 		version="v1.0"
 		{links}
 		currentPath="#"
-		user={{ name: "Alice", email: "alice@bosia.dev", initials: "A", avatar: "/favicon.svg" }}
+		user={{ name: "Jeki", email: "jeki@bosia.dev", initials: "J", avatar: "/favicon.svg" }}
 	/>
 </div>

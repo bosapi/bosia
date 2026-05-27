@@ -101,6 +101,6 @@ cn("px-4 py-2", isActive && "bg-primary");
 
 ## Learn More
 
-- [Bosia documentation](https://bosia.bosapi.com)
+- [Bosia documentation](https://bosia.dev)
 - [Svelte 5 docs](https://svelte.dev)
 - [Tailwind CSS v4](https://tailwindcss.com)

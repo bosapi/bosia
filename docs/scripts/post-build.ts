@@ -6,7 +6,7 @@
 import { readdirSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 
-const BASE_URL = "https://bosia.bosapi.com";
+const BASE_URL = "https://bosia.dev";
 const contentDir = join(process.cwd(), "content", "docs");
 const outDir = join(process.cwd(), "dist", "static");
 

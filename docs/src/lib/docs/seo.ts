@@ -1,7 +1,7 @@
 import type { Locale } from "./i18n";
 import { localizeUrl, switchLocaleUrl } from "./i18n";
 
-const BASE_URL = "https://bosia.bosapi.com";
+const BASE_URL = "https://bosia.dev";
 const SITE_NAME = "Bosia Docs";
 
 export function buildSeoMeta({

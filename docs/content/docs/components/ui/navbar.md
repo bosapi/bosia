@@ -46,7 +46,7 @@ When `user` is provided, a dropdown menu appears with Profile, Settings, and Log
 <Navbar
 	{links}
 	currentPath="/"
-	user={{ name: "Alice", email: "alice@bosia.dev", initials: "A", avatar: "/favicon.svg" }}
+	user={{ name: "Jeki", email: "jeki@bosia.dev", initials: "J", avatar: "/favicon.svg" }}
 />
 ```
 
