@@ -600,6 +600,7 @@
 - [x] 🟡 `resolveImport.ts` + `sourceLoc.ts` — extracted from `plugin.ts` and `plugins/inspector/bun-plugin.ts` so the audit and the existing resolver share one alias / tsconfig-paths / relative-path implementation and one `lineColFromOffset` helper. `plugin.ts:onResolve($)` now delegates to `resolveImportPath()`.
 - [x] 🟡 `BosiaConfig.strictImports` (boolean | `{ unbound, namespaceMember, warnings }`) — per-component opt-out. `BOSIA_STRICT_IMPORTS=0` env var downgrades to a `console.warn` at runtime without failing the build.
 - [x] 🟡 `packages/bosia/test/svelte-audit.test.ts` — 8 fixtures cover the repro (missing namespace export), positive cases (correct member, named import, each-block shadowing, bare-package skip), and edge cases (unbound identifier, dotted on default import, env override).
+- [x] 🟡 ConstTag siblings — `{@const Foo = ...}` now scopes its binding across the whole surrounding fragment (not just ConstTag's own children). Previously the docs `[...slug]/+page.svelte` false-flagged `<DemoComponent />` when bound via a sibling `{@const}`. Fragment pre-pass collects all `ConstTag` bindings before descending into children.
 
 ---
 

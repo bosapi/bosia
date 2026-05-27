@@ -318,17 +318,9 @@ function collectTemplateRefs(source: string, fragment: AnyNode): TemplateRef[] {
 
 	const visit = (n: AnyNode, _parent: AnyNode | null): boolean | void => {
 		if (n.type === "ConstTag") {
-			// `{@const Foo = ...}` introduces a binding visible to the surrounding
-			// fragment's remaining siblings + children. Add into the innermost
-			// scope (or a synthetic root scope if we're at fragment top level).
-			const decl = n.declaration as AnyNode | undefined;
-			const declarations = (decl?.declarations as AnyNode[] | undefined) ?? [];
-			const target = scopeStack.length > 0 ? scopeStack[scopeStack.length - 1] : null;
-			const root = target ?? new Set<string>();
-			for (const d of declarations) {
-				collectShadowedNames(d.id as AnyNode | undefined, root);
-			}
-			if (!target && root.size > 0) scopeStack.push(root);
+			// Handled by the Fragment pre-pass in walkWithScope — siblings need
+			// the binding visible across the fragment, not just for ConstTag's
+			// own children.
 			return;
 		}
 		if (n.type === "EachBlock") {
@@ -391,7 +383,7 @@ function collectTemplateRefs(source: string, fragment: AnyNode): TemplateRef[] {
 		}
 	};
 
-	// Custom DFS that pops scopes when leaving Each/Snippet nodes.
+	// Custom DFS that pops scopes when leaving Each/Snippet/Fragment nodes.
 	const walkWithScope = (node: unknown, parent: AnyNode | null) => {
 		if (!node) return;
 		if (Array.isArray(node)) {
@@ -406,10 +398,32 @@ function collectTemplateRefs(source: string, fragment: AnyNode): TemplateRef[] {
 			visit(n, parent);
 			if (scopeStack.length > before) pushed = true;
 		}
+		// Fragment pre-pass: `{@const}` bindings live across all siblings in the
+		// surrounding fragment, so collect them before descending. Without this,
+		// `<ComponentPreview>{@const X = ...}<X /></ComponentPreview>` would
+		// false-positive on `<X />`.
+		let fragmentScopePushed = false;
+		if (n.type === "Fragment" && Array.isArray(n.nodes)) {
+			const fragmentScope = new Set<string>();
+			for (const child of n.nodes as AnyNode[]) {
+				if (child && child.type === "ConstTag") {
+					const decl = child.declaration as AnyNode | undefined;
+					const decls = (decl?.declarations as AnyNode[] | undefined) ?? [];
+					for (const d of decls) {
+						collectShadowedNames(d.id as AnyNode | undefined, fragmentScope);
+					}
+				}
+			}
+			if (fragmentScope.size > 0) {
+				scopeStack.push(fragmentScope);
+				fragmentScopePushed = true;
+			}
+		}
 		for (const key of CHILD_KEYS) {
 			const child = n[key];
 			if (child) walkWithScope(child, n);
 		}
+		if (fragmentScopePushed) scopeStack.pop();
 		if (pushed) scopeStack.pop();
 	};
 

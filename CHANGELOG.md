@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Build now finds binaries (e.g. `tailwindcss`) when deps are hoisted to a monorepo root `node_modules`.
+- Audit no longer false-flags `<DemoComponent />` when bound via sibling `{@const DemoComponent = ...}`.
 
 ### Changed
 

@@ -223,6 +223,27 @@ describe("svelte component-import audit", () => {
 		expect(result.logs).not.toContain("Svelte component-import audit failed");
 	});
 
+	test("sibling {@const} binding inside a component fragment avoids false positive", async () => {
+		tmpDir = buildFixture({
+			"tsconfig.json": TSCONFIG,
+			"src/lib/Wrapper.svelte": `<script></script><slot />`,
+			"src/hydrate.ts": HYDRATE,
+			"src/routes/+page.svelte": `
+<script>
+	import Wrapper from "$lib/Wrapper.svelte";
+	let demo = $state(null);
+</script>
+<Wrapper>
+	{@const DemoComponent = demo}
+	<DemoComponent />
+</Wrapper>
+			`,
+		});
+
+		const result = await runBuild(tmpDir);
+		expect(result.logs).not.toContain("Svelte component-import audit failed");
+	});
+
 	test("BOSIA_STRICT_IMPORTS=0 downgrades audit failures to warnings", async () => {
 		tmpDir = buildFixture({
 			"tsconfig.json": TSCONFIG,
