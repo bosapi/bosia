@@ -12,10 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Cookie `sameSite` now accepts lowercase (`lax`, `strict`, `none`) — matches SvelteKit/Express.
 - Cookies passed `secure:true` over HTTP get auto-downgraded with a warn — fixes silent login loops in dev/preview.
+- Build now finds binaries (e.g. `tailwindcss`) when deps are hoisted to a monorepo root `node_modules`.
 
 ### Changed
 
 - `Secure` cookie flag is now decided per-request from the transport protocol, not from `NODE_ENV`. Set `TRUST_PROXY=true` to honor `x-forwarded-proto` behind reverse proxies.
+- Docs CI install now uses `--linker=hoisted` so registry blocks can resolve docs-declared deps.
 
 ## [0.6.4] - 2026-05-26
 
