@@ -24,9 +24,6 @@ jobs:
             - name: Install (hoisted for monorepo)
               run: bun install --frozen-lockfile --linker=hoisted
 
-            - name: Install Wrangler globally via Bun
-              run: bun install -g wrangler
-
             - name: Build docs
               working-directory: docs
               run: bun run build
@@ -36,6 +33,7 @@ jobs:
               with:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+                  packageManager: bun
                   command: pages project create bosia-docs --production-branch=main
               continue-on-error: true
 
@@ -45,4 +43,5 @@ jobs:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
                   workingDirectory: docs
+                  packageManager: bun
                   command: pages deploy ./dist/static --project-name=bosia-docs --branch=main
