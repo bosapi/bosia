@@ -45,8 +45,8 @@ describe("CookieJar — incoming", () => {
 });
 
 describe("CookieJar — set / delete", () => {
-	test("serializes Set-Cookie with defaults", () => {
-		const jar = new CookieJar("");
+	test("serializes Set-Cookie with defaults over HTTPS", () => {
+		const jar = new CookieJar("", true);
 		jar.set("session", "abc");
 		const [header] = jar.outgoing;
 		expect(header).toContain("session=abc");
@@ -56,10 +56,36 @@ describe("CookieJar — set / delete", () => {
 		expect(header).toContain("SameSite=Lax");
 	});
 
-	test("dev mode omits Secure", () => {
-		const jar = new CookieJar("", true);
+	test("http mode omits Secure by default", () => {
+		const jar = new CookieJar("", false);
 		jar.set("session", "abc");
 		expect(jar.outgoing[0]).not.toContain("Secure");
+	});
+
+	test("http mode downgrades caller-forced secure:true", () => {
+		const jar = new CookieJar("", false);
+		jar.set("session", "abc", { secure: true });
+		expect(jar.outgoing[0]).not.toContain("Secure");
+	});
+
+	test("https mode honors secure:true", () => {
+		const jar = new CookieJar("", true);
+		jar.set("session", "abc", { secure: true });
+		expect(jar.outgoing[0]).toContain("Secure");
+	});
+
+	test("normalizes lowercase sameSite to capitalized header", () => {
+		const jar = new CookieJar("");
+		jar.set("k", "v", { sameSite: "lax" });
+		expect(jar.outgoing[0]).toContain("SameSite=Lax");
+	});
+
+	test("accepts all three sameSite values in either case", () => {
+		for (const v of ["Strict", "strict", "Lax", "lax", "None", "none"] as const) {
+			const jar = new CookieJar("");
+			jar.set("k", "v", { sameSite: v });
+			expect(jar.outgoing[0]).toMatch(/SameSite=(Strict|Lax|None)/);
+		}
 	});
 
 	test("URL-encodes value", () => {

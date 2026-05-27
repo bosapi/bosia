@@ -711,6 +711,11 @@ async function resolve(event: RequestEvent): Promise<Response> {
 // (preview/proxy hubs, design tools, etc.). Other security headers stay on.
 const _xfoDisabled = process.env.DISABLE_X_FRAME_OPTIONS === "true";
 
+// Trust `x-forwarded-proto` header behind a TLS-terminating proxy when computing
+// per-request HTTPS-ness (drives `Secure` cookie flag). Off by default — the
+// header is spoofable from any client that talks directly to the app.
+const TRUST_PROXY = process.env.TRUST_PROXY === "true";
+
 const SECURITY_HEADERS: Record<string, string> = {
 	"X-Content-Type-Options": "nosniff",
 	...(_xfoDisabled ? {} : { "X-Frame-Options": "SAMEORIGIN" }),
@@ -754,7 +759,10 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 			return Response.json({ error: "Forbidden", message: csrfError }, { status: 403 });
 		}
 
-		const cookieJar = new CookieJar(request.headers.get("cookie") ?? "", isDev);
+		const isHttps =
+			(TRUST_PROXY && request.headers.get("x-forwarded-proto") === "https") ||
+			url.protocol === "https:";
+		const cookieJar = new CookieJar(request.headers.get("cookie") ?? "", isHttps);
 		const nonce = CSP_ENABLED ? generateNonce() : "";
 		const event: RequestEvent = {
 			request,

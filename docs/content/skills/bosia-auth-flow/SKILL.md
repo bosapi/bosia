@@ -1,6 +1,6 @@
 ---
 name: bosia-auth-flow
-description: Login + register + logout + forgot-password — Argon2 hash, session cookie, RBAC bootstrap, public route group. Spans multiple files.
+description: Login + register + logout + forgot-password — Bun.password (NOT argon2 npm package), session cookie, RBAC bootstrap, public route group. Spans multiple files. Uses Bun.password not argon2 npm package.
 triggers:
     - auth
     - login
@@ -9,6 +9,11 @@ triggers:
     - sign-in
     - forgot password
     - session
+    - +page.server.ts
+    - cookies.set
+    - password hashing
+    - session cookie
+    - auth route
 od:
     mode: flow
     category: auth
@@ -41,7 +46,7 @@ A full auth surface wired to Drizzle + session cookies.
 
 | File                                    | Purpose                                                         |
 | --------------------------------------- | --------------------------------------------------------------- |
-| `src/features/auth/password.ts`         | Argon2id hash + verify                                          |
+| `src/features/auth/password.ts`         | Argon2id hash + verify via `Bun.password`                       |
 | `src/features/auth/tokens.ts`           | session token mint + verify                                     |
 | `src/features/auth/session-resolver.ts` | resolve session → `locals.user`, `locals.can`                   |
 | `src/features/auth/auth-handle.ts`      | hook wiring `session-resolver` into every request               |
@@ -59,7 +64,7 @@ A full auth surface wired to Drizzle + session cookies.
 
 1. **Drizzle features in place.** Confirm `users.table.ts` and `users` columns include `passwordHash`. If not, add a numbered seed/migration — never edit applied seeds (`bosia-drizzle-feature`).
 2. **Install UI:** `bosia add theme/neutral ui/form ui/field ui/input ui/button ui/label ui/alert`.
-3. **Implement `features/auth/password.ts`** — Argon2id via `@node-rs/argon2` or `argon2`. Never SHA-only.
+3. **Implement `features/auth/password.ts`** — Argon2id via `Bun.password.hash(pw, { algorithm: "argon2id", memoryCost: 19456, timeCost: 2 })` and `Bun.password.verify(pw, hash)`. Never `@node-rs/argon2` / `argon2` / `bcrypt` — they crash under Bun. Never SHA-only. See [[bosia-bun-runtime]].
 4. **Implement `features/auth/tokens.ts`** — session tokens, opaque random 32 bytes, base64url.
 5. **Implement `auth-handle.ts`** — reads `session` cookie, loads user + materialized permissions, sets `locals.user`, `locals.can`.
 6. **Routes:** login, register, forgot, logout. Each `+page.server.ts` validates input, returns shape errors via SvelteKit-style `fail()` or a custom return.
@@ -70,11 +75,11 @@ A full auth surface wired to Drizzle + session cookies.
 
 ### R1 — Password hashing
 
-Argon2id, `memory: 19MiB, time: 2, parallelism: 1` as a baseline. Never plain SHA / unsalted bcrypt.
+Use `Bun.password.hash(pw, { algorithm: "argon2id", memoryCost: 19456, timeCost: 2 })` and `Bun.password.verify(pw, hash)`. Never `@node-rs/argon2` or `argon2` npm packages — their NAPI bindings crash under Bun. Never plain SHA / unsalted bcrypt. See [[bosia-bun-runtime]].
 
 ### R2 — Cookie flags
 
-`HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=<session_ttl>`. `Secure` always — local dev should run over `https` or use `__Host-` cookies via the framework helper.
+Set `HttpOnly` (default), `SameSite=Lax` (default), `Path=/` (default), and `Max-Age=<session_ttl>`. **Omit `secure` in route code** — Bosia inspects the request transport per-request and adds `Secure` only when the request is HTTPS. Passing `secure: true` literal on an HTTP transport triggers a downgrade + warn (silent login loop avoided). See [[bosia-cookies]].
 
 ### R3 — Validate at the boundary
 

@@ -2,9 +2,9 @@
 
 ## P0
 
-- [ ] Argon2id (or Argon2i) password hashing.
+- [ ] Argon2id password hashing via `Bun.password` (NOT `@node-rs/argon2` / `argon2` / `bcrypt` — those crash under Bun).
 - [ ] Session token is opaque random ≥ 32 bytes, base64url.
-- [ ] Cookie: `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, `Max-Age` set.
+- [ ] Cookie: `HttpOnly`, `SameSite=Lax`, `Path=/`, `Max-Age` set. **Do NOT pass `secure: true`** — Bosia adds `Secure` automatically when the request is HTTPS.
 - [ ] Login failures return generic "Invalid credentials".
 - [ ] `/forgot` returns identical response for existing/missing email.
 - [ ] Logout is POST to `+server.ts`, not GET.

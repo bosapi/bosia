@@ -15,7 +15,7 @@ export interface CookieOptions {
 	expires?: Date;
 	httpOnly?: boolean;
 	secure?: boolean;
-	sameSite?: "Strict" | "Lax" | "None";
+	sameSite?: "Strict" | "Lax" | "None" | "strict" | "lax" | "none";
 }
 
 export interface Cookies {

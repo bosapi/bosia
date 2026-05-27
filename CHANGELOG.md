@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.5] - 2026-05-27
+
+### Fixed
+
+- Cookie `sameSite` now accepts lowercase (`lax`, `strict`, `none`) — matches SvelteKit/Express.
+- Cookies passed `secure:true` over HTTP get auto-downgraded with a warn — fixes silent login loops in dev/preview.
+
+### Changed
+
+- `Secure` cookie flag is now decided per-request from the transport protocol, not from `NODE_ENV`. Set `TRUST_PROXY=true` to honor `x-forwarded-proto` behind reverse proxies.
+
 ## [0.6.4] - 2026-05-26
 
 ### Changed

@@ -3,7 +3,18 @@ import type { Cookies, CookieOptions } from "./hooks.ts";
 // ─── Cookie Validation (RFC 6265) ────────────────────────
 /** Rejects characters that could inject into Set-Cookie headers. */
 const UNSAFE_COOKIE_VALUE = /[;\r\n]/;
-const VALID_SAMESITE = new Set(["Strict", "Lax", "None"]);
+/**
+ * Accept both casings (matches SvelteKit/Express convention) and write the
+ * canonical capitalized form into the Set-Cookie header.
+ */
+const SAMESITE_NORMALIZE: Record<string, "Strict" | "Lax" | "None"> = {
+	strict: "Strict",
+	lax: "Lax",
+	none: "None",
+	Strict: "Strict",
+	Lax: "Lax",
+	None: "None",
+};
 
 /**
  * RFC 6265 §4.1.1: cookie-name is an HTTP token (RFC 2616 §2.2).
@@ -41,15 +52,20 @@ function parseCookies(header: string): Record<string, string> {
 }
 
 export class CookieJar implements Cookies {
+	private static _warnedSecureOverHttp = false;
+
 	private _incoming: Record<string, string>;
 	private _outgoing: string[] = [];
 	private _defaults: CookieOptions;
 	private _accessed = false;
+	private _isHttps: boolean;
 
-	constructor(cookieHeader: string, dev = false) {
+	constructor(cookieHeader: string, isHttps = false) {
 		this._incoming = parseCookies(cookieHeader);
-		// In dev mode, omit Secure — browsers reject Secure cookies over http://localhost
-		this._defaults = dev ? { ...COOKIE_DEFAULTS, secure: false } : COOKIE_DEFAULTS;
+		this._isHttps = isHttps;
+		// Browsers drop Secure cookies sent over HTTP — only default `secure` on
+		// when the current request actually arrived over HTTPS.
+		this._defaults = isHttps ? COOKIE_DEFAULTS : { ...COOKIE_DEFAULTS, secure: false };
 	}
 
 	get(name: string): string | undefined {
@@ -69,6 +85,17 @@ export class CookieJar implements Cookies {
 	set(name: string, value: string, options?: CookieOptions): void {
 		if (!VALID_COOKIE_NAME.test(name)) throw new Error(`Invalid cookie name: ${name}`);
 		const opts = { ...this._defaults, ...options };
+		if (!this._isHttps && opts.secure) {
+			opts.secure = false;
+			if (!CookieJar._warnedSecureOverHttp) {
+				console.warn(
+					"[bosia] cookies.set passed secure:true over HTTP — downgrading. " +
+						"Browsers drop Secure cookies on non-HTTPS. " +
+						"Remove the `secure` option; Bosia auto-applies it when the request is HTTPS.",
+				);
+				CookieJar._warnedSecureOverHttp = true;
+			}
+		}
 		let header = `${name}=${encodeURIComponent(value)}`;
 		if (opts.path) {
 			if (UNSAFE_COOKIE_VALUE.test(opts.path))
@@ -85,9 +112,9 @@ export class CookieJar implements Cookies {
 		if (opts.httpOnly) header += "; HttpOnly";
 		if (opts.secure) header += "; Secure";
 		if (opts.sameSite) {
-			if (!VALID_SAMESITE.has(opts.sameSite))
-				throw new Error(`Invalid cookie sameSite: ${opts.sameSite}`);
-			header += `; SameSite=${opts.sameSite}`;
+			const canonical = SAMESITE_NORMALIZE[opts.sameSite as string];
+			if (!canonical) throw new Error(`Invalid cookie sameSite: ${opts.sameSite}`);
+			header += `; SameSite=${canonical}`;
 		}
 		this._outgoing.push(header);
 	}

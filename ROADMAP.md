@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.4**
+> Current version: **0.6.5**
 
 ---
 
@@ -38,6 +38,8 @@
 - [x] 🟡 Static file caching (Cache-Control headers)
 - [x] 🟡 `/_health` endpoint
 - [x] 🟠 Cookie support (`cookies.get`, `cookies.set`, `cookies.delete`)
+- [x] 🟡 Cookie `sameSite` accepts both casings (`lax`/`Lax`) — normalized to canonical header
+- [x] 🟠 Protocol-aware `Secure` cookies — auto-downgrade over HTTP with warn; `TRUST_PROXY=true` honors `x-forwarded-proto`
 - [x] 🟠 Security headers (X-Content-Type-Options, X-Frame-Options, etc.)
 - [x] 🟡 `DISABLE_X_FRAME_OPTIONS=true` env var to omit `X-Frame-Options` for intentional cross-origin iframe embedding
 - [x] 🟠 Graceful shutdown handler (SIGTERM/SIGINT)
