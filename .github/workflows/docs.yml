@@ -24,6 +24,9 @@ jobs:
             - name: Install (hoisted for monorepo)
               run: bun install --frozen-lockfile --linker=hoisted
 
+            - name: Install Wrangler globally via Bun
+              run: bun install -g wrangler
+
             - name: Build docs
               working-directory: docs
               run: bun run build
