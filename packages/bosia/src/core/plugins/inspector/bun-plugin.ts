@@ -3,6 +3,7 @@ import MagicString from "magic-string";
 import { basename, relative } from "node:path";
 import type { BunPlugin } from "bun";
 import { svelteMapCache } from "../../svelteCompiler.ts";
+import { lineColFromOffset } from "../../sourceLoc.ts";
 
 const VIRTUAL_NS = "bosia-inspector-css";
 
@@ -40,20 +41,6 @@ function walk(node: unknown, visit: (n: AnyNode) => void) {
 		const child = n[key];
 		if (child) walk(child, visit);
 	}
-}
-
-function lineColFromOffset(source: string, offset: number): { line: number; col: number } {
-	let line = 1;
-	let col = 1;
-	for (let i = 0; i < offset && i < source.length; i++) {
-		if (source[i] === "\n") {
-			line++;
-			col = 1;
-		} else {
-			col++;
-		}
-	}
-	return { line, col };
 }
 
 function injectLocs(source: string, relPath: string): string {

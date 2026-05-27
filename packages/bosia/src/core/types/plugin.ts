@@ -71,8 +71,27 @@ export interface BosiaPlugin {
 	};
 }
 
+/**
+ * Compile-time audit of component imports in `.svelte` templates. When enabled
+ * (the default), `<Card.Root>` style usages are validated against the
+ * referenced module's actual exports so missing names fail the build instead
+ * of crashing on first SSR render. `BOSIA_STRICT_IMPORTS=0` downgrades to
+ * warnings at runtime.
+ */
+export type StrictImportsOption =
+	| boolean
+	| {
+			/** Catch `<Mystery />` where `Mystery` has no binding. Default: true. */
+			unbound?: boolean;
+			/** Catch `<Card.Root>` where the namespace has no `Root` export. Default: true. */
+			namespaceMember?: boolean;
+			/** Promote selected `svelte/compiler` warnings to errors. Default: true. */
+			warnings?: boolean;
+	  };
+
 export interface BosiaConfig {
 	plugins?: (BosiaPlugin | false | null | undefined)[];
+	strictImports?: StrictImportsOption;
 }
 
 /** Identity helper for type inference in `bosia.config.ts`. */

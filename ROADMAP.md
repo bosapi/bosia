@@ -590,6 +590,19 @@
 
 ---
 
+## v0.6.5 — Compile-time component-import audit ✅ (shipped 2026-05-27)
+
+> A scaffolded app crashed on first SSR render with `undefined is not a function` because `+page.svelte` did `import * as Card from "$lib/components/ui/card/index.ts"` and used `<Card.Root>` — but `card/index.ts` exports `Card`/`CardContent`, not `Root`. `bosia build` succeeded silently: neither `svelte/compiler` nor the Bun bundler cross-checks template component identifiers against their imported source. The audit closes that gap.
+
+- [x] 🟠 `packages/bosia/src/core/svelteAudit.ts` — walks the modern Svelte 5 AST fragment (`Component`, `SvelteComponent`), extracts top-level bindings from `<script>` / `<script module>` (named / default / namespace imports + locals), tracks shadowing scopes from `{#each ... as Name}`, `{#snippet name(params)}`, and `{@const Name = ...}`. For namespace imports (`import * as Card from "$lib/..."`), uses `Bun.Transpiler.scan()` to introspect the resolved source's exports; missing members report with the full export list + Levenshtein-1 "did you mean". Bare-package specifiers (`lucide-svelte`) and modules containing `export *` are treated as opaque to avoid false positives.
+- [x] 🟠 `packages/bosia/src/core/svelteCompiler.ts` — switched `compile()` to `modernAst: true` (legacy `html` AST → modern `fragment`/`instance`/`module`), wired the audit into `onLoad`, and added module-scoped per-file dedupe (`Map<absPath, Promise>`) so the audit runs exactly once per file across the parallel `browser` + `bun` build targets.
+- [x] 🟠 Promotes select `svelte/compiler` warnings to errors: `component_name_lowercase`, `bind_invalid_value`, `invalid_html_attribute` — silently-broken cases the user almost never wants to ship.
+- [x] 🟡 `resolveImport.ts` + `sourceLoc.ts` — extracted from `plugin.ts` and `plugins/inspector/bun-plugin.ts` so the audit and the existing resolver share one alias / tsconfig-paths / relative-path implementation and one `lineColFromOffset` helper. `plugin.ts:onResolve($)` now delegates to `resolveImportPath()`.
+- [x] 🟡 `BosiaConfig.strictImports` (boolean | `{ unbound, namespaceMember, warnings }`) — per-component opt-out. `BOSIA_STRICT_IMPORTS=0` env var downgrades to a `console.warn` at runtime without failing the build.
+- [x] 🟡 `packages/bosia/test/svelte-audit.test.ts` — 8 fixtures cover the repro (missing namespace export), positive cases (correct member, named import, each-block shadowing, bare-package skip), and edge cases (unbound identifier, dotted on default import, env override).
+
+---
+
 ## v0.6.4 — Combined files demo, CORS-safe ✅ (shipped 2026-05-26)
 
 > The crop block's docs demo was loading a remote Unsplash URL with `crossorigin="anonymous"`. The browser blocked it as a CORS failure and the cropper rendered blank. Replaced the two separate demos (one cropper, one uploader) with a single combined demo that mirrors the reference CMS UploadTab — pick a file via `UploadArea`, then click the crop button to overlay `CropImage` against the file's object URL. Object URLs are same-origin, so the `crossOrigin` attribute is no longer needed and the cropper just works.

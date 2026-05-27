@@ -1,30 +1,12 @@
 import { join, dirname } from "path";
-import { existsSync } from "fs";
+
+import { resolveImportPath } from "./resolveImport.ts";
 
 // ─── Bun Build Plugin ─────────────────────────────────────
 // Resolves:
 //   bosia:routes  → .bosia/routes.ts  (generated route map)
 //   $env           → .bosia/env.server.ts (bun) or .bosia/env.client.ts (browser)
 //   $*             → resolved dynamically via tsconfig.json compilerOptions.paths
-
-let cachedTsconfigPaths: Record<string, string[]> | null = null;
-async function getTsconfigPaths() {
-	if (cachedTsconfigPaths !== null) return cachedTsconfigPaths;
-	const tsconfigPath = join(process.cwd(), "tsconfig.json");
-	if (!existsSync(tsconfigPath)) {
-		cachedTsconfigPaths = {};
-		return cachedTsconfigPaths;
-	}
-	try {
-		const tsconfig = await Bun.file(tsconfigPath).json();
-		cachedTsconfigPaths = tsconfig?.compilerOptions?.paths || {};
-	} catch (err) {
-		throw new Error(
-			`tsconfig.json at ${tsconfigPath} is invalid JSON: ${(err as Error).message}. Fix the file and re-run.`,
-		);
-	}
-	return cachedTsconfigPaths!;
-}
 
 export function makeBosiaPlugin(target: "browser" | "bun" = "bun") {
 	return {
@@ -54,32 +36,14 @@ export function makeBosiaPlugin(target: "browser" | "bun" = "bun") {
 			build.onResolve({ filter: /^\$/ }, async (args) => {
 				if (args.path === "$env") return undefined; // Handled above
 
-				const paths = await getTsconfigPaths();
-				let longestMatch = "";
-				let targetPattern = "";
-
-				for (const [pattern, targets] of Object.entries(paths)) {
-					const prefix = pattern.replace(/\*$/, "");
-					if (args.path.startsWith(prefix) && prefix.length > longestMatch.length) {
-						longestMatch = prefix;
-						targetPattern = (targets as string[])[0];
-					}
+				const resolved = await resolveImportPath(
+					args.path,
+					join(process.cwd(), "_"),
+					process.cwd(),
+				);
+				if (resolved.kind === "alias" && resolved.path) {
+					return { path: resolved.path };
 				}
-
-				if (longestMatch && targetPattern) {
-					const suffix = args.path.slice(longestMatch.length);
-					const targetDir = targetPattern.replace(/\*$/, "");
-					const resolved = join(process.cwd(), targetDir, suffix);
-					return { path: await resolveWithExts(resolved) };
-				}
-
-				// Fallback for $lib/* if not in tsconfig
-				if (args.path.startsWith("$lib/")) {
-					const rel = args.path.slice(5);
-					const base = join(process.cwd(), "src", "lib", rel);
-					return { path: await resolveWithExts(base) };
-				}
-
 				return undefined;
 			});
 
@@ -145,16 +109,4 @@ export function makeBosiaPlugin(target: "browser" | "bun" = "bun") {
 			}));
 		},
 	};
-}
-
-async function resolveWithExts(base: string): Promise<string> {
-	if (await Bun.file(base).exists()) return base;
-	for (const ext of [".ts", ".svelte", ".js"]) {
-		if (await Bun.file(base + ext).exists()) return base + ext;
-	}
-	for (const idx of ["index.ts", "index.svelte", "index.js"]) {
-		const p = join(base, idx);
-		if (await Bun.file(p).exists()) return p;
-	}
-	return base;
 }
