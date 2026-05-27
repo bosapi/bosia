@@ -3,6 +3,8 @@ title: Memulai
 description: Buat proyek Bosia pertama Anda dalam waktu kurang dari satu menit.
 ---
 
+> **Bosia siap produksi sejak awal.** Keamanan (CSRF, escape XSS, cookie aman, security header), performa (response cache, gzip, prerendering), dan keandalan (graceful shutdown, request backpressure, crash backoff) sudah terpasang — tanpa plugin atau konfigurasi tambahan.
+
 ## Prasyarat
 
 - [Bun](https://bun.sh) >= 1.x — Bosia berjalan sepenuhnya di atas Bun. Tidak memerlukan Node.js.

@@ -18,14 +18,14 @@
 			<div
 				class="inline-flex items-center rounded-full border border-border bg-muted px-3 py-1 text-xs text-muted-foreground mb-2"
 			>
-				{data.version} — Now available
+				{data.version} — Production Ready
 			</div>
 			<h1 class="text-5xl sm:text-6xl font-bold tracking-tight leading-tight">
 				The fullstack framework<br />for <span class="text-primary">Bun + Svelte</span>
 			</h1>
 			<p class="text-xl text-muted-foreground max-w-xl mx-auto">
-				Build production-ready web apps with file-based routing, streaming SSR, and a
-				built-in component registry.
+				Production-ready out of the box — built-in security, performance, and reliability.
+				File-based routing, streaming SSR, and a component registry included.
 			</p>
 			<div class="flex flex-wrap gap-3 justify-center pt-2">
 				<a href="/getting-started">

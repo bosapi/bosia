@@ -3,6 +3,8 @@ title: Getting Started
 description: Create your first Bosia project in under a minute.
 ---
 
+> **Bosia is production-ready out of the box.** Security (CSRF, XSS escaping, secure cookies, security headers), performance (response cache, gzip, prerendering), and reliability (graceful shutdown drain, request backpressure, crash backoff) are all built in — no plugins or config required.
+
 ## Prerequisites
 
 - [Bun](https://bun.sh) >= 1.x — Bosia runs entirely on Bun. No Node.js required.

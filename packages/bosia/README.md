@@ -1,8 +1,10 @@
 # Bosia
 
-> Full documentation: [bosia.bosapi.com](https://bosia.bosapi.com)
+> Full documentation: [bosia.dev](https://bosia.dev)
 
 A fast, batteries-included fullstack framework — SSR · Svelte 5 Runes · Bun · ElysiaJS.
+
+**Production-ready out of the box** — built-in security (CSRF, XSS escaping, secure cookies, security headers), performance (response cache, gzip, static asset caching, prerendering), and reliability (graceful shutdown drain, request backpressure, crash backoff).
 
 File-based routing inspired by SvelteKit, built on top of the Bun runtime and ElysiaJS HTTP server. No Node.js, no Vite, no adapters.
 

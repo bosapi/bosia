@@ -5,6 +5,8 @@ description: Framework fullstack yang cepat dan lengkap, dibangun di atas Bun + 
 
 Framework fullstack yang cepat dan lengkap. Konvensi SvelteKit, tanpa Node.js, tanpa Vite, tanpa kerumitan adapter.
 
+**Siap produksi sejak awal** — keamanan (CSRF, escape XSS, cookie aman, security header), performa (response cache, gzip, prerendering), dan keandalan (graceful shutdown, request backpressure, crash backoff) sudah terpasang.
+
 ## Fitur
 
 - **File-Based Routing** — Konvensi SvelteKit — `+page.svelte`, `+layout.svelte`, `+page.server.ts`, parameter dinamis `[params]`, grup rute `(name)`.

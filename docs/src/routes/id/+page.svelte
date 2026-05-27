@@ -26,14 +26,14 @@
 			<div
 				class="inline-flex items-center rounded-full border border-border bg-muted px-3 py-1 text-xs text-muted-foreground mb-2"
 			>
-				{data.version} — Sekarang tersedia
+				{data.version} — Siap Produksi
 			</div>
 			<h1 class="text-5xl sm:text-6xl font-bold tracking-tight leading-tight">
 				Framework fullstack<br />untuk <span class="text-primary">Bun + Svelte</span>
 			</h1>
 			<p class="text-xl text-muted-foreground max-w-xl mx-auto">
-				Bangun aplikasi web siap produksi dengan file-based routing, streaming SSR, dan
-				registri komponen bawaan.
+				Siap produksi sejak awal — keamanan, performa, dan keandalan sudah terpasang.
+				Lengkap dengan file-based routing, streaming SSR, dan registri komponen.
 			</p>
 			<div class="flex flex-wrap gap-3 justify-center pt-2">
 				<a href="/id/getting-started">

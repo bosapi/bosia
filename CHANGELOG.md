@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Docs CI install now uses `--linker=hoisted` so registry blocks can resolve docs-declared deps.
 - Switched docs domain to `bosia.dev` and moved hosting to Cloudflare Pages.
+- Docs, READMEs, and templates now lead with the production-ready story (security, performance, reliability).
 
 ## [0.6.5] - 2026-05-27
 
