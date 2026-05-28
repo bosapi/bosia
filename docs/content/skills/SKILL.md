@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 42 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
+description: Top-level index of 44 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
     mode: catalog
     category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-42 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+44 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -67,12 +67,13 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 ## Conventions — design ✦ — always-active design system rules
 
-| Name                    | Rule                                                                                                                                                 |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bosia-theme-tokens`    | Semantic Tailwind tokens only — `bg-card`/`text-foreground`/`border-border`. Never raw colors. Theme swappable via `tokens.css`.                     |
-| `bosia-app-css`         | Canonical `src/app.css` order. `@import url(...)` (fonts) first or LightningCSS drops them. Fonts via theme tokens (`--font-display`/`--font-body`). |
-| `bosia-block-compose`   | Registry-first — call `list_registry()`, prefer blocks over hand-rolling. If no block fits, compose from `ui/*` primitives.                          |
-| `bosia-frontend-design` | Commit to a BOLD aesthetic direction before any UI emit. Distinctive type, dominant color + sharp accent, one memorable detail. Avoid AI defaults.   |
+| Name                    | Rule                                                                                                                                                                                                       |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bosia-theme-tokens`    | Semantic Tailwind tokens only — `bg-card`/`text-foreground`/`border-border`. Never raw colors. Theme swappable via `tokens.css`.                                                                           |
+| `bosia-app-css`         | Canonical `src/app.css` order. `@import url(...)` (fonts) first or LightningCSS drops them. Fonts via theme tokens (`--font-display`/`--font-body`).                                                       |
+| `bosia-block-compose`   | Registry-first — call `list_registry()`, prefer blocks over hand-rolling. If no block fits, compose from `ui/*` primitives.                                                                                |
+| `bosia-frontend-design` | Commit to a BOLD aesthetic direction before any UI emit. Distinctive type, dominant color + sharp accent, one memorable detail. Avoid AI defaults.                                                         |
+| `bosia-page-shell`      | Navbar/footer/sidebar live in `+layout.svelte`, not per page. `(private)` layout passes `user` to `ui/navbar` so the avatar dropdown is reachable. Lists use `ui/data-table`, never hand-rolled `<table>`. |
 
 ## Conventions — framework · — always-active code rules
 
@@ -90,6 +91,7 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 | `bosia-clean-architecture`     | Strict controller → service → repository per feature. No `db` in routes. Valibot validators derived from drizzle tables via `drizzle-valibot`.                  |
 | `bosia-drizzle-feature`        | `*.table.ts` + repository + service + idempotent numbered seeds. Never edit applied seeds — add a new numbered file.                                            |
 | `bosia-drizzle-usage`          | Consumer side of `db`: repositories only. Routes/services never call `db.*` directly. Pre-flight `db_test_connection` before first read.                        |
+| `bosia-query-defaults`         | `list*` repositories take `{ limit=10, offset=0, orderBy }` and return `{ rows, total }`. Default sort `desc(createdAt)`. Service clamps `limit` ≤ 100.         |
 | `bosia-env`                    | Four-tier prefix (`PUBLIC_STATIC_`/`PUBLIC_`/`STATIC_`/none). User vars via `$env`, framework vars via `process.env`. `.env.example` is the contract.           |
 | `bosia-cors`                   | CORS env recipe (`CORS_ALLOWED_ORIGINS` + friends) and CSRF-vs-CORS triage. Preview-proxy apps usually need `TRUST_PROXY=true`, not CORS.                       |
 

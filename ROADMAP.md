@@ -5,6 +5,16 @@
 
 ---
 
+## Same-day addition (2026-05-28) — new skills `bosia-page-shell` + `bosia-query-defaults`
+
+> AI agents kept (a) re-rendering navbar/footer inside every `+page.svelte` instead of declaring them once in `+layout.svelte`, (b) hand-rolling `<table>` blocks instead of using `ui/data-table`, (c) shipping repository `list` functions with no `limit`/`offset` and no `orderBy`. None of the existing skills explicitly said "navbar belongs in the layout" or "every list takes `{ limit, offset, orderBy }` and returns `{ rows, total }`" — so the guidance was easy to drift past. Docs-only changes; no registry/runtime work needed.
+
+- [x] 🟠 `docs/content/skills/bosia-page-shell/SKILL.md` — new skill. R1 hard rule: chrome lives in `+layout.svelte`, never in `+page.svelte`. R2 layout-depth table for `(public)` vs `(private)`. R3 requires `(private)/+layout.server.ts` to produce `data.user` and pass it to `ui/navbar` so the avatar dropdown (Profile / Settings / Log out) is reachable. R5 forbids hand-rolled `<table>` — all lists go through `ui/data-table`. P0 checklist enforces it.
+- [x] 🟠 `docs/content/skills/bosia-query-defaults/SKILL.md` — new skill. R1 fixes the repository signature to `list(db, { limit, offset, orderBy?, where? })` returning `{ rows, total }`. R2 locks defaults: `limit = 10`, `offset = 0`, `orderBy = desc(createdAt)`. R3 mandates `limit` clamp to ≤ 100 at the service boundary. R6 ensures `count()` shares the same `where` as the rows query so `data-table` totals don't lie. R7 bans unbounded `db.select().from(table)` in shipping code.
+- [x] ⚪ `docs/content/skills/SKILL.md` — catalog updated from 42 → 44 skills; new rows added to "Conventions — design ✦" (`bosia-page-shell`) and "Conventions — framework ·" (`bosia-query-defaults`).
+
+---
+
 ## Same-day addition (2026-05-28) — fix `feat` block install + non-interactive `add block`
 
 > AI agent ran `file_upload_install` and got a silent 404 (block path `registry/components/files/upload-area/...` doesn't exist — it lives under `blocks/`). Then the retry hung on `@clack/prompts` because the MCP runner never closes stdin. Framework fixes only — no per-app patching.
