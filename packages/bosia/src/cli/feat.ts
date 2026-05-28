@@ -2,6 +2,7 @@ import { join, dirname, extname } from "path";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
 import * as p from "@clack/prompts";
 import { addComponent, initAddRegistry } from "./add.ts";
+import { runAddBlock } from "./block.ts";
 import {
 	type InstallOptions,
 	resolveLocalRegistryOrExit,
@@ -46,6 +47,7 @@ interface FeatureMeta {
 	description: string;
 	features?: string[]; // other bosia features required
 	components: string[]; // bosia components to install via `bun x bosia@latest add`
+	blocks?: string[]; // bosia blocks to install via `bun x bosia@latest add block`
 	files: FileEntry[]; // file entries with per-file strategy
 	npmDeps: Record<string, string>;
 	npmDevDeps?: Record<string, string>;
@@ -251,6 +253,15 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 		console.log("📦 Installing required components...");
 		for (const comp of meta.components) {
 			await addComponent(comp, false, options);
+		}
+		console.log("");
+	}
+
+	// Install required blocks
+	if (meta.blocks && meta.blocks.length > 0) {
+		console.log("🧱 Installing required blocks...");
+		for (const blockName of meta.blocks) {
+			await runAddBlock(blockName, [], options);
 		}
 		console.log("");
 	}

@@ -1,7 +1,19 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.5**
+> Current version: **0.6.7**
+
+---
+
+## Same-day addition (2026-05-28) — fix `feat` block install + non-interactive `add block`
+
+> AI agent ran `file_upload_install` and got a silent 404 (block path `registry/components/files/upload-area/...` doesn't exist — it lives under `blocks/`). Then the retry hung on `@clack/prompts` because the MCP runner never closes stdin. Framework fixes only — no per-app patching.
+
+- [x] 🟠 `packages/bosia/src/cli/feat.ts` — `FeatureMeta` gains `blocks?: string[]`. After component install, iterate `meta.blocks` and call `runAddBlock(name, [], options)` so block deps route to the block installer (was 404'ing through `addComponent` which hardcodes the `components` category).
+- [x] 🟠 `packages/bosia/src/cli/block.ts` — `runAddBlock` accepts `InstallOptions`, gates the "Replace existing block?" prompt behind `!skipPrompts`, threads `options` into recursive `addComponent` calls, and honors `-y` / `--yes` in `flags`. Also routes `skipInstall` through to `mergePkgJson` instead of unconditional `bunAdd`.
+- [x] ⚪ `packages/bosia/src/cli/index.ts` — `add block` dispatch now passes through `-y` (was filtering to `--` long flags only).
+- [x] ⚪ `registry/features/file-upload/meta.json` — moved `files/upload-area` and `files/crop-image` from `components` to the new `blocks` field.
+- [x] 🟡 `docs/content/skills/bosia-file-upload/SKILL.md` — R5 now shows the explicit `import UploadArea from "$lib/blocks/files/upload-area/block.svelte"` line and the full prop surface; workflow step 5 gains concrete `bun run db:generate && bun run db:migrate`; new R6 stop-rule forbids fallback to `<input type="file">` + raw `fetch("/api/files")` when install fails.
 
 ---
 

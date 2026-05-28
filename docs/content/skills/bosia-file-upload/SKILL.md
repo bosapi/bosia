@@ -47,7 +47,7 @@ bosia:
 
 ### R1 — One scaffold call per app
 
-Run `file_upload_install` once. It is idempotent with `force: true`. Don't `bosia_add_block files/upload-area` separately — the install tool covers it and also pulls the feature it depends on.
+Run `file_upload_install` once. It is idempotent — re-runs replace existing files. Don't `bosia_add_block files/upload-area` separately — the install tool covers it (via `meta.blocks` on the file-upload feature) and also installs `files/crop-image`.
 
 ### R2 — Image-only by default
 
@@ -66,15 +66,49 @@ Add chosen keys to `.env.example` (see [[bosia-env]] R5).
 
 ### R5 — Frontend wiring
 
-`<UploadArea uploadUrl="/api/files" onUploaded={(rec) => ...} />`. The response shape is the full FileRecord: `{ id, url, key, mime, size, width, height }`. Persist `record.url` (not `record.id`) when you want a public-facing src.
+The block ships only `block.svelte` (no `index.ts`) and lands at `src/lib/blocks/files/upload-area/block.svelte`. Import it explicitly:
+
+```ts
+import UploadArea from "$lib/blocks/files/upload-area/block.svelte";
+```
+
+Then use it:
+
+```svelte
+<UploadArea uploadUrl="/api/files" onUploaded={(rec) => ...} />
+```
+
+The response shape is the full FileRecord: `{ id, url, key, mime, size, width, height }`. Persist `record.url` (not `record.id`) when you want a public-facing src.
+
+**Full prop surface** (see `registry/blocks/files/upload-area/block.svelte`):
+
+- `uploadUrl: string` — POST endpoint (typically `/api/files`).
+- `onUploaded: (record: FileRecord) => void` — success callback.
+- `accept?: string` — MIME accept list (default `"image/*"`).
+- `maxSizeMB?: number` — client-side size cap.
+- `fieldName?: string` — multipart field name (default `"file"`).
+- `extraFields?: Record<string, string>` — extra form fields appended to the POST.
+- `headers?: Record<string, string>` — extra request headers.
+- `enableCrop?: boolean` — enables the crop step (requires `files/crop-image`).
+- `onCropRequest?: (file: File) => Promise<File>` — custom crop hook.
+- `onError?: (err: Error) => void` — error callback.
+- `children?: Snippet` — slot for custom drop-zone content.
+
+### R6 — Install-failure stop rule
+
+If `file_upload_install` returns non-empty stderr OR a `404` anywhere in stdout/stderr, **STOP**. Report the error to the user verbatim. Do not fall back to a hand-rolled `<input type="file">` + `fetch("/api/files")` (the anti-pattern below). Quote the failed install output verbatim in the report so the framework bug can be diagnosed.
 
 ## Workflow
 
-1. Run `file_upload_install` (set `include_crop: true` if the user wants client-side crop).
+1. Run `file_upload_install` (installs the feature, the upload-area block, and the crop-image block in one shot).
 2. Add storage env keys to `.env.example` + `.env.local` per R3.
 3. Import `UploadArea` into the target page/form.
 4. On `onUploaded`, store `record.url` on the parent entity (user.avatarUrl, post.coverUrl, etc.).
-5. Run migration so the `files` table exists.
+5. Run drizzle migration so the `files` table exists:
+    ```
+    bun run db:generate   # drizzle-kit generate
+    bun run db:migrate    # apply
+    ```
 6. Verify in-browser: drag an image, see the toast, refresh and confirm the URL renders.
 
 ## Anti-patterns
@@ -95,7 +129,7 @@ P0:
 
 P1:
 
-- [ ] `include_crop: true` only when end-user actually needs crop.
+- [ ] Use `enableCrop` prop on `<UploadArea>` only when end-user actually needs crop (the crop-image block is always installed by `file_upload_install`).
 - [ ] S3 chosen for production; local OK for dev.
 - [ ] Parent entity has a nullable URL column (uploads may fail).
 

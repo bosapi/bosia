@@ -41,7 +41,7 @@ async function main() {
 			const flags = args.filter((a) => a.startsWith("-"));
 			const sub = positional[0];
 			if (sub === "block") {
-				const blockFlags = args.filter((a) => a.startsWith("--"));
+				const blockFlags = flags;
 				const { runAddBlock } = await import("./block.ts");
 				await runAddBlock(positional[1], blockFlags);
 			} else if (sub === "theme") {

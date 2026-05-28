@@ -2,9 +2,11 @@ import { join, dirname } from "path";
 import { mkdirSync, writeFileSync, existsSync } from "fs";
 import * as p from "@clack/prompts";
 import {
+	type InstallOptions,
 	resolveLocalRegistryOrExit,
 	readRegistryJSON,
 	readRegistryFile,
+	mergePkgJson,
 	bunAdd,
 } from "./registry.ts";
 import { addComponent, initAddRegistry, ensureUtils } from "./add.ts";
@@ -26,17 +28,27 @@ interface BlockMeta {
 	npmDeps: Record<string, string>;
 }
 
-export async function runAddBlock(name: string | undefined, flags: string[] = []) {
+export async function runAddBlock(
+	name: string | undefined,
+	flags: string[] = [],
+	options?: InstallOptions,
+) {
 	if (!name || !name.includes("/")) {
 		console.error(
-			"❌ Please provide a block path.\n   Usage: bun x bosia@latest add block <category>/<name> [--local]",
+			"❌ Please provide a block path.\n   Usage: bun x bosia@latest add block <category>/<name> [-y] [--local]",
 		);
 		process.exit(1);
 	}
 
 	const local = flags.includes("--local");
+	const flagYes = flags.includes("-y") || flags.includes("--yes");
 	const registryRoot = local ? resolveLocalRegistryOrExit() : null;
 	if (local) console.log(`⬡ Using local registry: ${registryRoot}\n`);
+
+	const resolvedOptions: InstallOptions = {
+		...(options ?? {}),
+		skipPrompts: options?.skipPrompts ?? flagYes,
+	};
 
 	await initAddRegistry(registryRoot);
 	ensureUtils();
@@ -47,14 +59,14 @@ export async function runAddBlock(name: string | undefined, flags: string[] = []
 
 	// 1. Install primitive dependencies first
 	for (const dep of meta.dependencies ?? []) {
-		await addComponent(dep, false);
+		await addComponent(dep, false, resolvedOptions);
 	}
 
 	// 2. Copy block files to src/lib/blocks/<path>/
-	const cwd = process.cwd();
+	const cwd = resolvedOptions.cwd ?? process.cwd();
 	const destDir = join(cwd, "src", "lib", "blocks", name);
 
-	if (existsSync(destDir)) {
+	if (!resolvedOptions.skipPrompts && existsSync(destDir)) {
 		const replace = await p.confirm({
 			message: `Block "${name}" already exists at src/lib/blocks/${name}/. Replace it?`,
 		});
@@ -87,7 +99,13 @@ export async function runAddBlock(name: string | undefined, flags: string[] = []
 
 	// 4. npm deps
 	if (meta.npmDeps && Object.keys(meta.npmDeps).length > 0) {
-		await bunAdd(cwd, meta.npmDeps);
+		if (resolvedOptions.skipInstall) {
+			const { addedDeps } = mergePkgJson(cwd, { deps: meta.npmDeps });
+			if (addedDeps.length > 0)
+				console.log(`   📥 Added to package.json: ${addedDeps.join(", ")}`);
+		} else {
+			await bunAdd(cwd, meta.npmDeps);
+		}
 	}
 
 	console.log(`\n✅ ${name} installed at src/lib/blocks/${name}/`);

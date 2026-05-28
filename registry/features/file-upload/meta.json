@@ -2,7 +2,8 @@
 	"name": "file-upload",
 	"description": "Server-side image uploads with Bun.Image compression. Local FS or S3 via STORAGE_DRIVER. Drizzle-backed metadata. Pick dialect at install via -d sqlite|postgres|mysql (or -y for sqlite default).",
 	"features": ["drizzle"],
-	"components": ["files/upload-area", "files/crop-image"],
+	"components": [],
+	"blocks": ["files/upload-area", "files/crop-image"],
 	"options": [
 		{
 			"name": "dialect",

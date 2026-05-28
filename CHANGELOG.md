@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.7] - 2026-05-28
+
+### Fixed
+
+- `bosia feat file-upload` now installs the upload-area and crop-image blocks properly (was 404'ing).
+- `bosia add block -y` skips overwrite prompts so scripted installs no longer hang.
+
+### Added
+
+- `FeatureMeta.blocks[]` — features can now declare block dependencies separate from components.
+
 ## [0.6.6] - 2026-05-27
 
 ### Fixed
