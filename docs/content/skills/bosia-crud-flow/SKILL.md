@@ -40,6 +40,10 @@ bosia:
 
 # bosia-crud-flow
 
+## STOP — route placement
+
+All resource routes live under `(private)/<resource>/...`. Admin CRUD never goes in `(public)/`. If `src/routes/(private)/+layout.server.ts` does not exist, create it (must enforce session presence). See `bosia-routing` R6.
+
 ## What it builds
 
 A complete CRUD surface for one resource (call it `<resource>`):

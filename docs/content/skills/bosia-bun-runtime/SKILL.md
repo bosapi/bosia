@@ -71,6 +71,28 @@ const bytes = await Bun.file("./blob.bin").bytes();
 
 Faster than `node:fs/promises` and avoids unnecessary buffering.
 
+## Image processing — `Bun.Image`
+
+`Bun.Image` is a **constructor**, not a static factory. There is no `Bun.Image.open()` or `Bun.Image.decode()` — calling them throws. Construct with `new`, read dimensions from `metadata()` (not `.width` / `.height` — those return `-1`), resize positionally, encode via per-format methods, finalize with `.bytes()`.
+
+```ts
+const bytes = await Bun.file("./input.png").bytes();
+const img = new Bun.Image(bytes);
+
+const { width, height } = await img.metadata();
+
+const out = await img
+	.resize(1920, 1080, { fit: "inside" }) // positional (w, h, opts)
+	.webp({ quality: 85 }) // quality is 0–100 integer, NOT 0–1
+	.bytes();
+
+await Bun.write("./out.webp", out);
+```
+
+Per-format encoders: `.webp({ quality })`, `.jpeg({ quality })`, `.png()`, `.avif({ quality })`, `.heic({ quality })`. Other instance methods: `rotate`, `flip`, `flop`, `modulate`, `blob`, `buffer`, `toBase64`, `dataurl`, `write`.
+
+❌ Wrong: `Bun.Image.open(bytes)`, `Bun.Image.decode(bytes)`, `img.width`, `img.resize({ width, height })`, `img.encode({ format: "webp", quality: 0.85 })`.
+
 ## Spawning processes — `Bun.spawn`
 
 `Bun.spawn` is preferred over `child_process.spawn` for ergonomics and speed. `child_process` still works for compatibility with libraries that depend on it.
@@ -83,3 +105,4 @@ The AI repeatedly generates Bosia user apps that import `@node-rs/argon2`, which
 
 - [[bosia-auth-flow]] — uses `Bun.password` for password hashing.
 - [[bosia-hooks]] — `event.cookies` for session storage.
+- [[bosia-file-upload]] — uses `Bun.Image` for image compression on upload.

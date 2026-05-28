@@ -41,6 +41,10 @@ bosia:
 
 # bosia-dashboard
 
+## STOP — route placement
+
+All files live under `(private)/`. If `src/routes/(private)/+layout.server.ts` does not exist, **create it** (it must enforce session presence). Never scaffold `dashboard/...` under `(public)/`. See `bosia-routing` R6.
+
 ## What it builds
 
 The most complex page-scaffold. A private app shell + a dashboard page demonstrating the standard primitives.

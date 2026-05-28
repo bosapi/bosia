@@ -51,7 +51,7 @@ Run `file_upload_install` once. It is idempotent — re-runs replace existing fi
 
 ### R2 — Image-only by default
 
-FileService accepts only `image/jpeg | png | webp | heic | avif`. Files are decoded with `Bun.Image`, resized to fit 1920×1080, and re-encoded to WebP at 0.85 quality. Don't try to upload PDFs/zips — they will 400.
+FileService accepts only `image/jpeg | png | webp | heic | avif`. Files are decoded with `Bun.Image`, resized to fit 1920×1080, and re-encoded to WebP at quality 85. Don't try to upload PDFs/zips — they will 400. See [[bosia-bun-runtime]] § "Image processing — `Bun.Image`" for the exact API surface (constructor, `metadata()`, positional `resize`, per-format encoders).
 
 ### R3 — Storage adapter via env
 
@@ -139,3 +139,4 @@ P1:
 - [[bosia-drizzle-feature]] — the files table follows the standard Drizzle feature shape.
 - [[bosia-elysia-routes]] — POST /api/files is a standard route handler.
 - [[bosia-block-compose]] — composing UploadArea inside larger forms.
+- [[bosia-bun-runtime]] — `Bun.Image` API used by FileService.

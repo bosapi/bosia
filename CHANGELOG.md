@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `bosia feat file-upload` now installs the upload-area and crop-image blocks properly (was 404'ing).
 - `bosia add block -y` skips overwrite prompts so scripted installs no longer hang.
+- File upload now actually compresses images (was crashing on Bun.Image API mismatch).
+- Uploaded image URLs are now relative so they render on any host (preview, prod, localhost).
+- Routing/dashboard/CRUD skills now hard-rule authenticated pages into (private), never (public).
 
 ### Added
 

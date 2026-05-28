@@ -81,6 +81,30 @@ export async function load({ parent }) {
 - `+error.svelte` renders inside layouts up to its depth.
 - `scope` (`public` / `private`) is inherited down the tree from the nearest layout that sets it.
 
+### R6 — Authenticated UI MUST live under `(private)`
+
+Hard rule: any route requiring a logged-in user — `dashboard`, `admin/*`, `settings`, internal CRUD, or anything that reads `locals.user` / `locals.can()` — goes under `(private)/`. **Never** `(public)/`.
+
+Decision rule: "Would I be okay with a signed-out stranger loading this URL?" — No → `(private)`. Unsure → `(private)`.
+
+❌ Anti-pattern:
+
+```
+src/routes/(public)/admin/produk/+page.svelte
+src/routes/(public)/admin/produk/[id]/edit/+page.svelte
+src/routes/(public)/dashboard/+page.svelte
+```
+
+✅ Correct:
+
+```
+src/routes/(private)/admin/produk/+page.svelte
+src/routes/(private)/admin/produk/[id]/edit/+page.svelte
+src/routes/(private)/dashboard/+page.svelte
+```
+
+If `(private)/+layout.server.ts` does not exist, **create it** as part of the work (it must enforce session presence). Do not work around its absence by demoting routes to `(public)`.
+
 ## Workflow
 
 1. **Decide route shape.** UI page? → `+page.svelte` (+ optional `+page.server.ts`). Action-only? → `+server.ts`. Shared shell? → `+layout.svelte` / `+layout.server.ts`.
@@ -103,6 +127,7 @@ P0:
 - [ ] Page reads `data.x` where `x` comes from a layout loader → has `+page.server.ts` calling `parent()`.
 - [ ] Form `action` URL exists as either a `+page.server.ts` with `actions` (and a `+page.svelte`) OR a `+server.ts` handler.
 - [ ] Private route enforces RBAC in its loader / handler.
+- [ ] No `admin/*`, `dashboard`, `settings`, or other authenticated routes under `(public)`.
 
 P1:
 

@@ -4,12 +4,11 @@ import type { IStorageAdapter } from "../types";
 
 export class LocalStorage implements IStorageAdapter {
 	private dir = process.env.UPLOAD_DIR ?? "./uploads";
-	private base = process.env.PUBLIC_BASE_URL ?? "";
 
 	async save(key: string, data: Uint8Array, _mime: string) {
 		await mkdir(this.dir, { recursive: true });
 		await Bun.write(join(this.dir, key), data);
-		return `${this.base}/uploads/${key}`;
+		return `/uploads/${key}`;
 	}
 
 	async delete(key: string) {

@@ -17,6 +17,21 @@
 
 ---
 
+## Same-day addition (2026-05-28) — fix `file-upload` end-to-end (Bun.Image, image host, route placement)
+
+> AI agent scaffolded `bosia feat file-upload` and hit three independent framework regressions: (1) `Bun.Image.open/decode` doesn't exist, so uploads crash; (2) `PUBLIC_BASE_URL` bakes the wrong host into stored URLs, breaking image rendering on `lvh.me` preview subdomains; (3) routing/dashboard/CRUD skills only softly suggest `(private)`, so agents drift into `(public)/admin/...`. Framework fixes only — user re-scaffolds.
+
+- [x] 🔴 `registry/features/file-upload/file.service.ts` — rewrite Bun.Image pipeline. Drop `decodeImage` shim + `BunImageModule/Instance` interfaces. Use `new Bun.Image(bytes)`, read dims from `metadata()`, positional `resize(w, h, opts)`, `.webp({ quality: 85 }).bytes()`. Persist row width/height from resize target. (F1)
+- [x] 🟠 `registry/features/file-upload/storage-local.ts` — `save()` returns relative `/uploads/${key}` (no `PUBLIC_BASE_URL` prefix). Browser resolves against the page's current origin → works for `lvh.me` preview, prod custom domains, and localhost without env tuning. (F2)
+- [x] ⚪ `registry/features/file-upload/meta.json` — drop misleading `PUBLIC_BASE_URL=http://localhost:3000` default (now empty string). (F2)
+- [x] 🟠 `docs/content/skills/bosia-routing/SKILL.md` — new R6 hard rule: authenticated UI MUST live under `(private)`. Anti-pattern block with `(public)/admin/produk/...` ❌ vs `(private)/admin/produk/...` ✅. Decision rule + P0 checklist entry. (F3a)
+- [x] 🟠 `docs/content/skills/bosia-dashboard/SKILL.md` — STOP rule at top: files under `(private)/`; create `(private)/+layout.server.ts` if absent. (F3b)
+- [x] 🟠 `docs/content/skills/bosia-crud-flow/SKILL.md` — STOP rule at top: resource routes under `(private)/<resource>/...`; admin CRUD never `(public)`. (F3c)
+- [x] 🟡 `docs/content/skills/bosia-bun-runtime/SKILL.md` — new `Bun.Image` section documenting constructor, `metadata()`, positional `resize`, per-format encoders (`.webp({ quality: 0–100 })`), `.bytes()`. Anti-pattern callout for `Bun.Image.open/decode` and `0–1` quality. (F4)
+- [x] ⚪ `docs/content/skills/bosia-file-upload/SKILL.md` — R2 cross-references the new `Bun.Image` section in `bosia-bun-runtime` for the API surface. (F5)
+
+---
+
 > Severity: 🔴 Critical · 🟠 Major · 🟡 Minor · ⚪ Trivial
 
 ---
