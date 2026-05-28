@@ -9,6 +9,10 @@ triggers:
     - media library
     - attachment
     - drag and drop upload
+    - upload
+    - delete file
+    - unlink
+    - S3
 od:
     mode: scaffold
     category: framework
@@ -93,6 +97,31 @@ The response shape is the full FileRecord: `{ id, url, key, mime, size, width, h
 - `onCropRequest?: (file: File) => Promise<File>` — custom crop hook.
 - `onError?: (err: Error) => void` — error callback.
 - `children?: Snippet` — slot for custom drop-zone content.
+
+### R5.5 — Delete cleans up storage
+
+When a DB row that references an uploaded file is deleted, the handler **must** unlink the file from disk (or remove it from S3). Otherwise orphans pile up under `./uploads/` (local) or rack up cost (S3).
+
+```ts
+// inside the delete action / service
+import { unlink } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { storage } from "$lib/storage";
+
+const row = await db.select().from(files).where(eq(files.id, id)).limit(1);
+if (!row[0]) return fail(404);
+
+await db.delete(files).where(eq(files.id, id));
+
+if (process.env.STORAGE_DRIVER === "s3") {
+	await storage.deleteObject(row[0].key);
+} else {
+	const path = `./uploads/${row[0].key}`;
+	if (existsSync(path)) await unlink(path);
+}
+```
+
+Order matters: read the row first (to capture `key` / path), then delete the DB row, then unlink. If the unlink fails after the row is gone, log + continue — the row is the source of truth.
 
 ### R6 — Install-failure stop rule
 

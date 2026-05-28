@@ -13,6 +13,9 @@ triggers:
     - avatar dropdown
     - table
     - list view
+    - layout data
+    - await parent
+    - data overwrite
 od:
     mode: convention
     category: design
@@ -197,6 +200,32 @@ Any view that lists records (users, orders, products, audit log) renders through
 ```
 
 Drive `data.rows` + `data.total` from the loader → repository call. See `bosia-query-defaults` for the `{ limit, offset, orderBy }` contract that backs `totalRows` and `pageSize`.
+
+### R5.5 — Child layout `load` must spread parent data, not replace it
+
+SvelteKit merges layout data **per depth**: each `+layout.server.ts` returns its own object, which becomes `data` at that level. Children do NOT auto-inherit parent keys — they have to ask for them via `await event.parent()` and spread them.
+
+**Bug pattern observed:** root `+layout.server.ts` returns `{ user, cartCount }`; `(private)/+layout.server.ts` returns `{ user }`; `data.cartCount` is then **undefined** on every private page and the cart badge silently disappears.
+
+```ts
+// ❌ Wrong — replaces inherited keys at this depth
+// src/routes/(private)/+layout.server.ts
+export async function load({ locals }) {
+	return { user: locals.user };
+}
+```
+
+```ts
+// ✅ Right — spread parent, override only what changes
+// src/routes/(private)/+layout.server.ts
+export async function load(event) {
+	const parent = await event.parent();
+	if (!event.locals.user) throw redirect(303, "/login");
+	return { ...parent, user: event.locals.user };
+}
+```
+
+Alternative for dynamic per-route data (cart count, notification count): fetch from `/api/...` via a `$effect` on the client rather than threading through layout data.
 
 ### R6 — Active link state comes from the layout
 

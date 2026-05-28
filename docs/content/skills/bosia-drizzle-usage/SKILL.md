@@ -8,6 +8,7 @@ triggers:
     - db.select
     - drizzle query
     - db.all
+    - repository
 od:
     mode: convention
     category: framework
@@ -32,7 +33,7 @@ Governs the **consumer** side of `db` — used inside `*.repository.ts` files on
 Pairs with:
 
 - [`bosia-clean-architecture`](../bosia-clean-architecture/SKILL.md) — controller → service → repository layering. Route handlers never import `db`; this skill applies inside the repository layer.
-- [`bosia-drizzle-feature`](../bosia-drizzle-feature/SKILL.md) — schema authoring, `*.table.ts`, seeds.
+- [`bosia-drizzle-feature`](../bosia-drizzle-feature/SKILL.md) — schema authoring, `*.table.ts`, seeds. **Schema rules live there**: UUID primary keys (R7) and the `sql` template for `CURRENT_TIMESTAMP` on `created_at` / `updated_at` (R8). Read it before touching any `*.table.ts`.
 - `bosia-brief-database` — engine choice (postgres vs mysql vs sqlite) during intake.
 
 ## When to use

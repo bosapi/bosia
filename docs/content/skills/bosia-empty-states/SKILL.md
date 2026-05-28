@@ -7,6 +7,8 @@ triggers:
     - error state
     - skeleton
     - no data
+    - placeholder
+    - empty list
 od:
     mode: composition
     category: design

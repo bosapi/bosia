@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.8] - 2026-05-29
+
+### Fixed
+
+- Sidebar no longer crashes with `crypto.randomUUID is not a function` in non-HTTPS / sandboxed runtimes.
+
+### Added
+
+- `cart` icon — `<Icon name="cart" />` now renders the shopping-cart symbol.
+- New skill `bosia-data-table` so AI uses the registry data table instead of hand-rolled HTML tables.
+- New skill `bosia-debug-discipline` — after two failed fixes, AI reads framework source before guessing again.
+
+### Changed
+
+- `bosia-crud-flow` now mandates `use:enhance` + the correct `export const actions = { … }` shape (silent no-op was the bug).
+- `bosia-drizzle-feature` now mandates UUID primary keys (pg + sqlite) and `sql\`CURRENT_TIMESTAMP\`` for timestamps.
+- `bosia-file-upload` now requires unlinking the file on delete so storage doesn't fill with orphans.
+- `bosia-navigation` now mandates the registry sidebar with ≥3 menu items + empty states.
+- `bosia-page-shell` now explains how child layout `load` must spread parent data (cart-count bug).
+
 ## [0.6.7] - 2026-05-28
 
 ### Fixed

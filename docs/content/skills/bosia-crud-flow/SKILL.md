@@ -6,6 +6,11 @@ triggers:
     - resource
     - list create edit delete
     - admin resource
+    - form action
+    - use:enhance
+    - create form
+    - edit form
+    - delete action
 od:
     mode: flow
     category: data
@@ -77,6 +82,50 @@ Optional: `(private)/<resource>/+layout.server.ts` if the section shares context
 ### R1 — Service is pure
 
 No `locals`, no HTTP. Service takes `db` and typed arguments. Auth lives in the route.
+
+### R1.5 — Actions export shape + `use:enhance`
+
+**Wrong** (silently does nothing, page reloads, action result lost):
+
+```ts
+export async function actions({ request, locals }) {
+	/* ... */
+}
+```
+
+**Right** — must be `export const actions = { default | <name>: async ({...}) => {...} }`:
+
+```ts
+// +page.server.ts
+import { fail } from "@sveltejs/kit";
+export const actions = {
+	create: async ({ request, locals }) => {
+		if (!locals.can("resource.create")) return fail(403);
+		const data = parseCreate(await request.formData());
+		if (!data.ok) return fail(400, { errors: data.errors });
+		const id = await service.create(db, data.value);
+		return { ok: true, id };
+	},
+};
+```
+
+Form must use `use:enhance` from `$app/forms`, and the page reads action results from the `form` prop (NOT `data`):
+
+```svelte
+<script>
+	import { enhance } from "$app/forms";
+	let { data, form } = $props();
+</script>
+
+<form method="POST" action="?/create" use:enhance>
+	<input name="name" />
+	<button type="submit">Create</button>
+</form>
+
+{#if form?.errors}<p class="text-destructive">{form.errors.name}</p>{/if}
+```
+
+Without `use:enhance` the browser does a full reload and any `form` prop / progressive-enhancement state is gone.
 
 ### R2 — RBAC at top of every action
 

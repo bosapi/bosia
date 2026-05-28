@@ -12,6 +12,10 @@ triggers:
     - redirect after submit
     - full reload
     - window.location
+    - sidebar
+    - navbar
+    - menu item
+    - navigation
 od:
     mode: convention
     category: framework
@@ -140,6 +144,33 @@ Otherwise: `goto()` is faster (no script re-parse, no re-hydration) and keeps lo
 3. **If you need post-nav side effects**, use `afterNavigate` — not a `$effect` on `data`, which is invoked at other times too.
 4. **Await `goto()`** when ordering matters (e.g. toast after settle). Don't await it inside a `$effect` body.
 5. **Import from `bosia/client`** — not `$app/navigation`. There is no `$app/navigation` alias in Bosia.
+
+### R7 — Sidebar uses the registry, not hand-rolled markup
+
+When the app has a sidebar, install and compose `ui/sidebar` from the registry — do **not** author a custom `<aside>` with hand-rolled menu items. The registry components (`Sidebar`, `SidebarMenu`, `SidebarMenuItem`) cover collapsed/expanded states, hover popovers, mobile drawer behavior, and a11y focus traps.
+
+```ts
+bosia_add({ items: ["ui/sidebar"] });
+```
+
+```svelte
+<script>
+	import { Sidebar, SidebarMenu, SidebarMenuItem } from "$lib/components/ui/sidebar";
+	import { Empty } from "$lib/components/ui/empty";
+</script>
+
+<Sidebar>
+	<SidebarMenu>
+		<SidebarMenuItem href="/dashboard" icon="layout-dashboard">Dashboard</SidebarMenuItem>
+		<SidebarMenuItem href="/products" icon="package">Products</SidebarMenuItem>
+		<SidebarMenuItem href="/orders" icon="cart">Orders</SidebarMenuItem>
+	</SidebarMenu>
+</Sidebar>
+```
+
+Scaffold ≥3 menu items, each pointing at a route that ships with an `<Empty />` empty-state until populated (see [[bosia-empty-states]]). Don't ship a sidebar with one item — it looks broken.
+
+Sidebars live in the layout, not the page. See [[bosia-page-shell]] for the layout vs. page split.
 
 ## Bosia conventions
 

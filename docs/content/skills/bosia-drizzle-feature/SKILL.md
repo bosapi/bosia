@@ -7,6 +7,13 @@ triggers:
     - add table
     - seed data
     - migration
+    - schema
+    - drizzle
+    - table.ts
+    - uuid
+    - primary key
+    - timestamp
+    - created_at
 od:
     mode: convention
     category: framework
@@ -123,7 +130,46 @@ Use `onConflictDoNothing()` for many-to-many link tables.
 
 Don't add FKs in seeds. Declare in `*.table.ts` via `.references(() => other.id, { onDelete: 'cascade' })`.
 
-### R7 — Migrations are generated, not hand-edited
+### R7 — Primary keys are UUID (pg AND sqlite)
+
+Inner apps have shipped `int autoincrement` PKs; that's wrong. Primary keys are always UUID, regardless of engine:
+
+```ts
+// Postgres
+import { pgTable, uuid } from "drizzle-orm/pg-core";
+id: uuid("id").primaryKey().defaultRandom(),
+
+// SQLite — there is no native uuid type, store as TEXT
+import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+```
+
+Never `integer().primaryKey({ autoIncrement: true })` — IDs leak row counts and break cross-environment sync.
+
+### R8 — `created_at` / `updated_at` use the `sql` template, not a string literal
+
+**Wrong** — Drizzle inserts the literal string `'CURRENT_TIMESTAMP'` and the column type becomes text:
+
+```ts
+createdAt: timestamp("created_at").default("CURRENT_TIMESTAMP"),
+```
+
+**Right** — import `sql` from `drizzle-orm` and use a tagged template:
+
+```ts
+import { sql } from "drizzle-orm";
+
+// Postgres
+createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+
+// SQLite
+createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+```
+
+For app-side updates of `updatedAt`, use `.$onUpdate(() => new Date())`.
+
+### R9 — Migrations are generated, not hand-edited
 
 `bun run db:generate` produces `drizzle/migrations/NNNN_*.sql`. Once committed, treat as historical record — same rule as seeds.
 
