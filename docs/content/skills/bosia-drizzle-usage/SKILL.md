@@ -34,7 +34,7 @@ Pairs with:
 
 - [`bosia-clean-architecture`](../bosia-clean-architecture/SKILL.md) — controller → service → repository layering. Route handlers never import `db`; this skill applies inside the repository layer.
 - [`bosia-drizzle-feature`](../bosia-drizzle-feature/SKILL.md) — schema authoring, `*.table.ts`, seeds. **Schema rules live there**: UUID primary keys (R7) and the `sql` template for `CURRENT_TIMESTAMP` on `created_at` / `updated_at` (R8). Read it before touching any `*.table.ts`.
-- `bosia-brief-database` — engine choice (postgres vs mysql vs sqlite) during intake.
+- [`bosia-database-setup`](../bosia-database-setup/SKILL.md) — on-demand engine swap (sqlite → postgres / mysql) + new tables. Loaded only when the user explicitly asks for DB work; default scaffold ships sqlite-file.
 
 ## When to use
 
@@ -184,7 +184,7 @@ Stop and reconsider if you see any of these:
 - `references/performance.md` — Bun-driver behavior (pooling is mostly automatic), explicit column projection, index strategy, cursor pagination, drizzle `logger:` query logging, materialized views for postgres.
 - `references/troubleshooting.md` — failure modes catalog: `db.all is not a function`, `SQLite not initialized`, `unable to open database file`, engine mismatch after `.env` edits, recovery flow for each.
 - `references/quick-reference.md` — Bosia-flavored cheatsheet of drizzle operators (`eq`, `and`, `like`, `inArray`, `count`, joins, pagination/sorting).
-- **External skills** — pair with `bosia-brief-database` (engine choice) and `bosia-drizzle-feature` (schema/seed authoring).
+- **External skills** — pair with `bosia-database-setup` (on-demand engine swap / new tables) and `bosia-drizzle-feature` (schema/seed authoring).
 - **Bosia internals** — `registry/features/drizzle/drizzle-index.ts` (engine-aware `db` build), `src/features/ai/tools/db.ts` (`db_test_connection`, `db_status`, etc.).
 - **Upstream docs** — verified against `https://orm.drizzle.team/docs/connect-bun-sqlite` + `…/connect-bun-sql` for drizzle-orm 0.44/0.45.
 - **Acknowledgement** — `references/query-patterns.md`, `references/performance.md`, and `references/quick-reference.md` adapt content from `bobmatnyc/claude-mpm-skills` (MIT, updated 2025-11-30). The original SKILL.md, query-patterns.md, performance.md, and advanced-schemas.md were rewritten for Bun-only drivers and Bosia loader contexts.

@@ -5,6 +5,19 @@
 
 ---
 
+## Same-day addition (2026-05-30) — brief intake: drop DB question + approval-button tool + `bosia-database-setup` skill
+
+> Two pain points reported by users: (a) AI kept asking extra follow-up questions after the Quick Start batch (heading said "six" but the script listed 7 items, with no rule against follow-ups); (b) the database engine question was friction during a design-only intake — most first-time apps don't care, sqlite-file is the right default. Approval gate was also a plain-text "Setuju?" that required typing.
+
+- [x] 🟠 `docs/content/skills/bosia-brief-intake/SKILL.md` — Quick Start now five questions (palette + aesthetic direction merged into Q5). Workflow step 5 is the **approval gate**: AI calls `brief_request_approval({ summary })`; host UI renders a **Setuju** button; AI must NOT `fs_write('BRIEF.md', ...)` until the user's next message confirms. New "infer, don't loop back" inference rule. Database question dropped from Quick Start, BRIEF.md template, references list, and P0 checklist. New anti-patterns: asking follow-ups after the batch; asking about the DB engine during intake; ending the recap with a plain-text "Setuju?".
+- [x] 🟠 `docs/content/skills/bosia-brief-intake/references/quick-start-script.md` — rewritten as five-question script with the merged Q5 and an updated inference table. "After answers locked" now references the `brief_request_approval` tool call.
+- [x] 🟠 `docs/content/skills/bosia-database-setup/SKILL.md` — new skill replacing `bosia-brief-database`. Triggers on explicit user intent ("pakai postgres", "ganti database", "buat tabel", etc.). Workflow A = engine swap (drizzle.config + .env.local + driver install + bun-native migrate); Workflow B = new table / column (per-feature `*.table.ts` + `db:generate` + `db:migrate`). R1 keeps sqlite-file as the silent default; R2 surfaces that cross-engine migration is data work, not `drizzle-kit migrate`.
+- [x] 🟠 `docs/content/skills/bosia-brief-database/` — deleted; superseded by `bosia-database-setup`.
+- [x] ⚪ `docs/content/skills/SKILL.md` catalog — count bumped 44 → 45; added a `bosia-database-setup` row to the "Conventions — framework ·" section.
+- [x] ⚪ `docs/content/skills/bosia-drizzle-usage/SKILL.md` + `references/troubleshooting.md` — swapped every `bosia-brief-database` reference to `bosia-database-setup`.
+
+---
+
 ## Same-day addition (2026-05-29) — fix in-page anchor link scroll
 
 > Bosia's SPA router intercepted every `<a>` click and re-ran the full page load, then unconditionally `scrollTo(0, 0)` after settle. Hash-only links like `<a href="#features">` therefore never scrolled to their target — the browser default (`scrollIntoView` on id match) never fired because `e.preventDefault()` ran first. Cross-page links with a hash (`/foo#bar`) also lost their target scroll. Reported via docs site TOC links.

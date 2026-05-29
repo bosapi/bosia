@@ -13,6 +13,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `bosia sync` CLI: generates `.bosia/routes.ts`, `$types`, env modules without a full build (cheap codegen for `check`).
 - Default template `bun run check` now runs `svelte-check` (catches template reference errors like `<Navbar {links} />` when only `navLinks` exists).
 - Generated `$types.d.ts` now exports `Actions` (`Record<string, Action>`) so `+page.server.ts` actions type-check under svelte-check.
+- New skill `bosia-database-setup` — on-demand engine swap + table creation, replacing `bosia-brief-database`.
+
+### Changed
+
+- Brief intake no longer asks the user about the database engine. Default = sqlite-file; load `bosia-database-setup` only when the user explicitly asks for postgres/mysql or new tables.
+- Brief intake Quick Start is now five questions (palette + direction merged), with an explicit "infer, don't loop back" inference rule.
+- Brief intake now ends with the `brief_request_approval` tool call (host UI renders a Setuju button) instead of a plain-text "Setuju?" question.
+
+### Removed
+
+- Skill `bosia-brief-database` — superseded by `bosia-database-setup`.
 
 ### Fixed
 

@@ -56,27 +56,31 @@ Skip only if `fs_read("BRIEF.md")` succeeds AND `## Status` line is `complete`.
     2. **Display + body fonts** — distinctive pair, NOT Inter / Roboto / Space Grotesk. Wire later via `app.css` `@theme`.
     3. **Memorable detail** — one named element (staggered headline reveal, custom cursor, grain overlay, oversized footer wordmark, etc.). If user can't name one, the stance isn't locked.
     4. **What we are NOT** — one sentence rejecting the default (e.g. "not a soft purple gradient SaaS landing").
-5. `read_skill({ name: "bosia-brief-database" })` and run its question set. Append the `## Database` block to the BRIEF.md draft (between `## Aesthetic` and `## Platform`).
-6. `fs_write("BRIEF.md", ...)` with the consolidated answers, including the new `## Aesthetic` and `## Database` sections (templates under `bosia-frontend-design` and `bosia-brief-database`).
+5. **Approval gate (tool call, not text question).** Build the consolidated draft in memory and call `brief_request_approval({ summary })` where `summary` is the recap (identity + aesthetic stance + memorable detail). The host UI renders a **Setuju** button. DO NOT call `fs_write("BRIEF.md", ...)` yet. If the user types corrections instead of clicking, update the draft and call `brief_request_approval` again with the revised summary.
+6. After the user confirms (next turn carries "Setuju, tulis BRIEF.md." or `briefApproval: true`), `fs_write("BRIEF.md", ...)` with the consolidated answers, including the `## Aesthetic` section.
 7. `read_skill({ name: "bosia-brief-review" })` and walk its checklist (B18 covers the aesthetic stance).
 8. Set `## Status: complete` in BRIEF.md.
 9. Only now: greet user with a recap and the suggested first build step. The recap MUST name the direction + the memorable detail so the user can confirm.
+
+> Database engine is NOT collected here. Scaffolded apps default to **sqlite-file** via Bun's `bun:sqlite`. If the user later asks for postgres / mysql / schema work, load `bosia-database-setup`.
 
 ## Modes
 
 ### Quick start (default for users in a hurry)
 
-Ask **six** questions in one turn, infer the rest with named defaults the user can override:
+Ask **five** questions in one turn, infer the rest with named defaults the user can override:
 
 1. Product name + one-sentence promise.
 2. Target audience (one sentence).
 3. UI language (`id` / `en` / other).
 4. Vibe in 2–4 words ("disciplined, warm, agrarian" / "playful, bright, consumer" / "minimal, technical, calm").
-5. Palette intent (`warm-earthy` / `cool-tech` / `minimal-mono` / `playful-bright` / `dark-luxury`).
-6. Aesthetic direction (`editorial` / `brutally-minimal` / `brutalist` / `retro-futuristic` / `maximalist` / `soft-pastel` / `luxury` / `industrial` / `organic` / `playful` / `art-deco` / custom). Pair this with the vibe — don't blend two directions.
-7. Database engine (`postgres` / `mysql` / `sqlite-file` / `sqlite-memory` / `none`). Default `postgres` for multi-user apps; `sqlite-file` for embedded/demo; `none` only for pure marketing pages. `sqlite-memory` flushes on restart — confirm out loud.
+5. Palette intent (`warm-earthy` / `cool-tech` / `minimal-mono` / `playful-bright` / `dark-luxury`) AND aesthetic direction (`editorial` / `brutally-minimal` / `brutalist` / `retro-futuristic` / `maximalist` / `soft-pastel` / `luxury` / `industrial` / `organic` / `playful` / `art-deco` / custom). Pair direction with the vibe — don't blend two.
 
-Then fill the remaining fields with sensible defaults (see each group skill + `bosia-frontend-design`) and confirm in one block before writing BRIEF.md. The agent proposes a default memorable detail given the direction; user can swap it.
+**Inference rule.** If the user gives ≥3 of 5 in their opening message, INFER the rest from context (chat language → `language`; tone words → vibe; palette intent → compatible direction; etc.) using the named defaults below. Do NOT loop back with follow-up questions — go straight to the approval gate (workflow step 5). User corrects in the next turn or clicks **Setuju**.
+
+Database engine is NOT asked here. Default: **sqlite-file**. If the user wants a different engine or tables, load `bosia-database-setup` later.
+
+Then fill the remaining fields with sensible defaults (see each group skill + `bosia-frontend-design`) and call `brief_request_approval({ summary })` for the **Setuju** button (workflow step 5). The agent proposes a default memorable detail given the direction; user can swap it.
 
 ### Deep dive
 
@@ -144,16 +148,6 @@ complete
 - Memorable detail: {one sentence — the thing a viewer will remember}
 - What we are NOT: {one sentence — the default we are rejecting}
 
-## Database
-
-- Engine: {postgres | mysql | sqlite-file | sqlite-memory | none}
-- DATABASE_URL: {scheme://user:\*\*\*@host:port/db — password masked, real value in .env.local}
-- Host: {host or n/a for sqlite}
-- Database name: {name or n/a for sqlite}
-- ORM: drizzle + Bun built-in driver (Bun.SQL / bun:sqlite)
-- Persistence: {yes | no (in-memory)}
-- Initial tables: {list or "none yet"}
-
 ## Platform
 
 - Form factors: {mobile, tablet, web-desktop, web-admin}
@@ -209,6 +203,10 @@ If user wants a multi-app product, scaffold separate Bosia apps, each with its o
 
 - Asking 30 questions in one turn. Use Quick start.
 - Asking yes/no questions with no defaults. Always offer a sane default ("default: `warm-earthy` — type a different one or say `ok`").
+- Asking follow-up questions after the Quick Start batch. Infer from context using named defaults, then call `brief_request_approval`. Don't loop back for more questions.
+- Asking the user about the database engine during intake. The default is sqlite-file; `bosia-database-setup` handles engine swaps later, on explicit request.
+- Ending the recap with a plain-text "Setuju?" instead of calling `brief_request_approval` — the host UI needs the tool call to render the **Setuju** button.
+- Calling `fs_write("BRIEF.md", ...)` before the user has confirmed via the **Setuju** click (or typed corrections + a fresh approval).
 - Inventing answers and writing BRIEF.md without user confirmation.
 - Treating BRIEF.md as a one-time artifact. It's living — re-read at the start of each chat session.
 - Writing BRIEF.md as JSON or YAML. Markdown only.
@@ -219,7 +217,7 @@ P0:
 
 - [ ] BRIEF.md exists at app root.
 - [ ] `## Status: complete` present.
-- [ ] Identity, Voice, Visual, **Aesthetic**, Platform sections all populated (no `TBD`).
+- [ ] Identity, Voice, Visual, **Aesthetic**, Platform sections all populated (no `TBD`). No `## Database` section — sqlite-file is the silent default.
 - [ ] Microcopy spine table has ≥4 rows filled.
 - [ ] Theme installed (verify with `fs_list("src/")` for `app.css` having theme tokens).
 - [ ] Aesthetic direction named (not "modern, clean, professional") + memorable detail named (one sentence).
@@ -234,5 +232,5 @@ P1:
 ## References
 
 - `references/example-brief.md` — Dombaku-style fully-filled BRIEF.md.
-- `references/quick-start-script.md` — exact 6-question opener.
-- `bosia-brief-identity`, `bosia-brief-voice`, `bosia-brief-visual`, `bosia-brief-platform`, `bosia-brief-database`, `bosia-frontend-design`, `bosia-brief-review`.
+- `references/quick-start-script.md` — exact 5-question opener.
+- `bosia-brief-identity`, `bosia-brief-voice`, `bosia-brief-visual`, `bosia-brief-platform`, `bosia-frontend-design`, `bosia-brief-review`, `bosia-database-setup` (load only on explicit DB request).

@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 44 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
+description: Top-level index of 45 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
     mode: catalog
     category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-44 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+45 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -91,6 +91,7 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 | `bosia-clean-architecture`     | Strict controller → service → repository per feature. No `db` in routes. Valibot validators derived from drizzle tables via `drizzle-valibot`.                  |
 | `bosia-drizzle-feature`        | `*.table.ts` + repository + service + idempotent numbered seeds. Never edit applied seeds — add a new numbered file.                                            |
 | `bosia-drizzle-usage`          | Consumer side of `db`: repositories only. Routes/services never call `db.*` directly. Pre-flight `db_test_connection` before first read.                        |
+| `bosia-database-setup`         | On-demand engine swap (sqlite ↔ postgres / mysql) + new tables. Default scaffold = sqlite-file. Load only when the user explicitly asks for DB work.            |
 | `bosia-query-defaults`         | `list*` repositories take `{ limit=10, offset=0, orderBy }` and return `{ rows, total }`. Default sort `desc(createdAt)`. Service clamps `limit` ≤ 100.         |
 | `bosia-env`                    | Four-tier prefix (`PUBLIC_STATIC_`/`PUBLIC_`/`STATIC_`/none). User vars via `$env`, framework vars via `process.env`. `.env.example` is the contract.           |
 | `bosia-cors`                   | CORS env recipe (`CORS_ALLOWED_ORIGINS` + friends) and CSRF-vs-CORS triage. Preview-proxy apps usually need `TRUST_PROXY=true`, not CORS.                       |
