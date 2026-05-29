@@ -1,3 +1,5 @@
+/// <reference path="../ambient.d.ts" />
+
 // ─── Bosia Public API ─────────────────────────────────────
 // Usage in user apps:
 //   import { cn, sequence } from "bosia"

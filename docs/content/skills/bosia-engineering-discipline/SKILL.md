@@ -96,6 +96,26 @@ Strong success criteria allow independent looping. Weak criteria ("make it work"
 
 When two approaches differ in meaningful ways (perf, complexity, scope), name the tradeoff in one line before picking. Do not bury the choice in the diff.
 
+### R6 — Verify with `bun run check` and `bun run build`
+
+After any code change, the agent **must** run both:
+
+```sh
+bun run check   # bosia sync + svelte-check + tsc
+bun run build   # full production build
+```
+
+`prettier --check` is intentionally **not** in `check` — formatting is a publish-time gate, run via `bun run format:check` (or `bun run format` to fix). Do not add `prettier --check` to the agent's verify loop.
+
+Both must exit 0 before reporting "done". Reasons:
+
+- `svelte-check` catches template-only reference errors that `tsc` cannot see — e.g. `<Navbar {links} />` where the script defines `navLinks`. The Svelte compiler treats the shorthand as a possibly-global at build time and fails only at SSR runtime. `svelte-check` is the **only** static gate that catches it.
+- `bosia build` exercises Tailwind, client bundle, server bundle, and prerender — surfaces failures `check` does not.
+
+If `check` fails because `$types` or `bosia:routes` cannot be resolved, the codegen step did not run. `bun run check` chains `bosia sync` first, so this should not happen on a fresh clone. If it does, run `bun x bosia sync` manually and report the issue.
+
+Do not skip either command to "move faster". The agent has no other static signal for template reference errors.
+
 ## Anti-patterns
 
 - Silent interpretation of ambiguous requests.
@@ -115,6 +135,8 @@ P0:
 - [ ] No speculative features, abstractions, or error handlers.
 - [ ] Existing style matched in edited files.
 - [ ] Success criteria stated for multi-step tasks.
+- [ ] `bun run check` exits 0.
+- [ ] `bun run build` exits 0.
 
 P1:
 

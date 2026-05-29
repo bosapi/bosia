@@ -26,6 +26,11 @@ async function main() {
 			await runBuild();
 			break;
 		}
+		case "sync": {
+			const { runSync } = await import("./sync.ts");
+			await runSync();
+			break;
+		}
 		case "start": {
 			const { runStart } = await import("./start.ts");
 			await runStart();
@@ -80,6 +85,7 @@ Commands:
   create <name> [--template <t>]  Scaffold a new Bosia project
   dev                 Start the development server
   build               Build for production
+  sync                Generate .bosia/ codegen (routes, $types, env) without building
   start               Run the production server
   test [args]         Run tests with bun test (auto-loads .env.test, sets BOSIA_ENV=test)
   add <component...> [-y]   Add one or more UI components from the registry

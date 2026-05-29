@@ -100,6 +100,7 @@ export function generateRouteTypes(manifest: RouteManifest): void {
 				`export type PageMetadataLoad = (event: _MetadataEvent) => Metadata | Promise<Metadata>;`,
 			);
 			lines.push(`export type Action = (event: _RequestEvent) => any;`);
+			lines.push(`export type Actions = Record<string, Action>;`);
 			lines.push(`export type PageData = Awaited<ReturnType<typeof _pageLoad>>;`);
 		} else {
 			lines.push(``);
@@ -107,6 +108,7 @@ export function generateRouteTypes(manifest: RouteManifest): void {
 				`export type PageMetadataLoad = (event: _MetadataEvent) => Metadata | Promise<Metadata>;`,
 			);
 			lines.push(`export type Action = (event: _RequestEvent) => any;`);
+			lines.push(`export type Actions = Record<string, Action>;`);
 			lines.push(`export type PageData = {};`);
 		}
 		lines.push(`export type PageProps = { data: PageData; params: Params };`);

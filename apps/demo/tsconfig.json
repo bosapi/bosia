@@ -19,6 +19,6 @@
 			"$components/*": ["../../registry/components/*"]
 		}
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", ".bosia/types/**/*.d.ts"],
 	"exclude": ["node_modules", "dist"]
 }

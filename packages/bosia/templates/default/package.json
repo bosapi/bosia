@@ -6,7 +6,7 @@
 		"dev": "bosia dev",
 		"build": "bosia build",
 		"start": "bosia start",
-		"check": "tsc --noEmit && prettier --check .",
+		"check": "bosia sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit",
 		"format": "prettier --write .",
 		"format:check": "prettier --check ."
 	},
@@ -19,6 +19,7 @@
 		"@types/bun": "latest",
 		"prettier": "^3.3.0",
 		"prettier-plugin-svelte": "^3.2.0",
+		"svelte-check": "^4.4.8",
 		"typescript": "^5"
 	}
 }

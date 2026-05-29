@@ -112,11 +112,48 @@ For cross-component state, create `lib/stores/foo.svelte.ts` and export `$state`
 export const session = $state<{ user: User | null }>({ user: null });
 ```
 
-### R6.5 — State + effects must sync with template
+### R6.5 — Template identifiers must match script scope
 
-When you create `let x = $state(...)` and update it via `$effect` or `afterNavigate`, the template **must** bind to that variable, not to a different reference that no longer exists.
+Every identifier the template uses (including shorthand attributes `{foo}`) **must** exist in the component's script scope. The Svelte compiler does NOT error on undeclared identifiers — it treats them as possibly-global. The failure surfaces only at SSR runtime as `ReferenceError: X is not defined`.
 
-**Symptom:** Removed `import { page }` from script but template still uses `{page.url.pathname}`. Compiler doesn't error (treats `page` as maybe-global). Runtime SSR fails: `ReferenceError: page is not defined`.
+Two common shapes:
+
+**a) Shorthand attribute name does not match the local variable:**
+
+```svelte
+<script lang="ts">
+	const navLinks = [
+		/* ... */
+	];
+</script>
+
+<Navbar {links} /> {/* ❌ ReferenceError: links is not defined */}
+<Navbar links={navLinks} /> {/* ✅ explicit when names differ */}
+<Navbar {navLinks} /> {/* ✅ shorthand only when names match */}
+```
+
+Rule: `{x}` shorthand is legal **only** when a script-scope `const/let x` exists with the same name. When names differ, use `prop={local}`.
+
+**b) Refactor removed an import but template still uses it:**
+
+```svelte
+<script>
+	let currentPath = $state("/");
+	import { afterNavigate } from "bosia/client";
+	// removed: import { page } from "bosia/client";
+
+	afterNavigate((nav) => {
+		currentPath = nav.to.url.pathname;
+	});
+</script>
+
+<Navbar currentPath={page.url.pathname} /> {/* ❌ ReferenceError: page is not defined */}
+<Navbar {currentPath} /> {/* ✅ template synced with state */}
+```
+
+After renaming a local or removing an import, grep the template for any identifier that no longer exists in script scope.
+
+**Static detection:** `svelte-check` catches both cases (`"No value exists in scope for the shorthand property 'X'"`). It runs as part of `bun run check`. Do not ship without `check` passing — see [[bosia-engineering-discipline]] R6.
 
 ❌ Wrong (template doesn't match state setup):
 
@@ -178,6 +215,7 @@ P0:
 - [ ] Props destructured from `$props()` with inline type.
 - [ ] Derivations use `$derived` / `$derived.by`, not `$effect`.
 - [ ] `bind:` targets declare `$bindable`.
+- [ ] Every `{shorthand}` and template identifier exists in script scope.
 
 P1:
 

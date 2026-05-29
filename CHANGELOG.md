@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.10] - 2026-05-30
+
+### Added
+
+- `bosia sync` CLI: generates `.bosia/routes.ts`, `$types`, env modules without a full build (cheap codegen for `check`).
+- Default template `bun run check` now runs `svelte-check` (catches template reference errors like `<Navbar {links} />` when only `navLinks` exists).
+- Generated `$types.d.ts` now exports `Actions` (`Record<string, Action>`) so `+page.server.ts` actions type-check under svelte-check.
+
+### Fixed
+
+- `$env` ambient declaration now picked up by `tsc` / `svelte-check` (template tsconfig `include` extended with `.bosia/types/**/*.d.ts`).
+- `bosia:routes` virtual module ambient now reachable by consumers (triple-slash reference added to `bosia`'s `src/lib/index.ts`).
+
+---
+
 ## [0.6.9] - 2026-05-29
 
 ### Fixed

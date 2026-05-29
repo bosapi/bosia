@@ -17,6 +17,6 @@
 			"$lib/*": ["./src/lib/*"]
 		}
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", ".bosia/types/**/*.d.ts"],
 	"exclude": ["node_modules", "dist"]
 }
