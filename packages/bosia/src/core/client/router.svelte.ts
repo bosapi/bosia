@@ -16,6 +16,22 @@ function buildTarget(path: string): { url: URL; params: Record<string, string> }
 	return { url, params: match?.params ?? {} };
 }
 
+export function scrollToHash(hash: string): boolean {
+	if (typeof document === "undefined" || !hash) return false;
+	const raw = hash.startsWith("#") ? hash.slice(1) : hash;
+	if (!raw) return false;
+	let id = raw;
+	try {
+		id = decodeURIComponent(raw);
+	} catch {
+		// Fallback to raw if URI sequence is malformed.
+	}
+	const el = document.getElementById(id) ?? document.getElementById(raw);
+	if (!el) return false;
+	el.scrollIntoView();
+	return true;
+}
+
 export const router = new (class Router {
 	currentRoute = $state(
 		typeof window !== "undefined"
@@ -88,6 +104,22 @@ export const router = new (class Router {
 			if (anchor.hasAttribute("download")) return;
 			if (anchor.rel.split(/\s+/).includes("external")) return;
 			if (anchor.protocol !== "https:" && anchor.protocol !== "http:") return;
+
+			// Same-page hash navigation: skip page reload, just update URL and scroll
+			// to the target element. Mirrors browser default for in-page anchors.
+			const samePage =
+				anchor.pathname === window.location.pathname &&
+				anchor.search === window.location.search;
+			if (samePage && anchor.hash) {
+				e.preventDefault();
+				const finalPath = anchor.pathname + anchor.search + anchor.hash;
+				if (this.currentRoute !== finalPath) {
+					history.pushState({}, "", finalPath);
+					this.currentRoute = finalPath;
+				}
+				scrollToHash(anchor.hash);
+				return;
+			}
 
 			e.preventDefault();
 			this.navigate(anchor.pathname + anchor.search + anchor.hash, { source: "link" });

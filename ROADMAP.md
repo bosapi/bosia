@@ -5,6 +5,16 @@
 
 ---
 
+## Same-day addition (2026-05-29) — fix in-page anchor link scroll
+
+> Bosia's SPA router intercepted every `<a>` click and re-ran the full page load, then unconditionally `scrollTo(0, 0)` after settle. Hash-only links like `<a href="#features">` therefore never scrolled to their target — the browser default (`scrollIntoView` on id match) never fired because `e.preventDefault()` ran first. Cross-page links with a hash (`/foo#bar`) also lost their target scroll. Reported via docs site TOC links.
+
+- [x] 🟠 `packages/bosia/src/core/client/router.svelte.ts` — short-circuit same-page hash navigation in the click handler: when `anchor.pathname + anchor.search` matches the current location and a hash is present, skip `navigate()` entirely; just `pushState` the new URL and `scrollIntoView` the target. Avoids tearing down/remounting the page for what should be a pure scroll.
+- [x] 🟠 `packages/bosia/src/core/client/router.svelte.ts` — export `scrollToHash(hash)` helper: decodes the fragment, resolves `getElementById`, calls `scrollIntoView()`, returns whether it found a target. Used by both the click handler and `App.svelte`.
+- [x] 🟠 `packages/bosia/src/core/client/App.svelte` — replace unconditional `window.scrollTo(0, 0)` after nav settle with `tick().then(() => scrollToHash(hash) || scrollTo(0,0))` in both the error-boundary path and the normal-nav path. `tick()` is required because `appState.pageData` was just assigned in the same effect — the heading element from `{@html}` content doesn't exist until Svelte flushes.
+
+---
+
 ## Same-day addition (2026-05-28) — new skills `bosia-page-shell` + `bosia-query-defaults`
 
 > AI agents kept (a) re-rendering navbar/footer inside every `+page.svelte` instead of declaring them once in `+layout.svelte`, (b) hand-rolling `<table>` blocks instead of using `ui/data-table`, (c) shipping repository `list` functions with no `limit`/`offset` and no `orderBy`. None of the existing skills explicitly said "navbar belongs in the layout" or "every list takes `{ limit, offset, orderBy }` and returns `{ rows, total }`" — so the guidance was easy to drift past. Docs-only changes; no registry/runtime work needed.

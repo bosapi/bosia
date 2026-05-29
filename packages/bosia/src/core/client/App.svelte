@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { router } from "./router.svelte.ts";
+	import { tick } from "svelte";
+	import { router, scrollToHash } from "./router.svelte.ts";
 	import { findMatch } from "../matcher.ts";
 	import { clientRoutes } from "bosia:routes";
 	import { consumePrefetch, prefetchCache, dataUrl } from "./prefetch.ts";
@@ -198,7 +199,12 @@
 					appState.errorComponent = errMod.default;
 					appState.errorProps = { error: { status: errStatus, message: errMessage } };
 					appState.errorDepth = K;
-					if (router.isPush && !router.suppressScroll) window.scrollTo(0, 0);
+					if (router.isPush && !router.suppressScroll) {
+						const hash = window.location.hash;
+						tick().then(() => {
+							if (!scrollToHash(hash)) window.scrollTo(0, 0);
+						});
+					}
 					router.suppressScroll = false;
 					settle({ url, params: match.params });
 				} catch {
@@ -290,7 +296,13 @@
 
 			// Scroll to top on forward navigation (not on popstate/back-forward).
 			// goto({ noScroll: true }) flips `router.suppressScroll` for one nav.
-			if (router.isPush && !router.suppressScroll) window.scrollTo(0, 0);
+			// If the destination URL has a hash, scroll to that element instead.
+			if (router.isPush && !router.suppressScroll) {
+				const hash = window.location.hash;
+				tick().then(() => {
+					if (!scrollToHash(hash)) window.scrollTo(0, 0);
+				});
+			}
 			router.suppressScroll = false;
 
 			// Update document title and meta description from server metadata
