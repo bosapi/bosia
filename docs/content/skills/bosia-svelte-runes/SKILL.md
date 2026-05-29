@@ -7,6 +7,13 @@ triggers:
     - component props
     - derived value
     - effect
+    - $state
+    - $derived
+    - $effect
+    - currentPath
+    - page.url.pathname
+    - ReferenceError
+    - undefined variable
 od:
     mode: convention
     category: framework
@@ -104,6 +111,45 @@ For cross-component state, create `lib/stores/foo.svelte.ts` and export `$state`
 // lib/stores/session.svelte.ts
 export const session = $state<{ user: User | null }>({ user: null });
 ```
+
+### R6.5 — State + effects must sync with template
+
+When you create `let x = $state(...)` and update it via `$effect` or `afterNavigate`, the template **must** bind to that variable, not to a different reference that no longer exists.
+
+**Symptom:** Removed `import { page }` from script but template still uses `{page.url.pathname}`. Compiler doesn't error (treats `page` as maybe-global). Runtime SSR fails: `ReferenceError: page is not defined`.
+
+❌ Wrong (template doesn't match state setup):
+
+```svelte
+<script>
+	let currentPath = $state("/");
+	import { afterNavigate } from "bosia/client";
+	// removed: import { page } from "bosia/client";
+
+	afterNavigate((nav) => {
+		currentPath = nav.to.url.pathname;
+	});
+</script>
+
+<Navbar currentPath={page.url.pathname} /> {/* ERROR: page undefined */}
+```
+
+✅ Right (template synced with state):
+
+```svelte
+<script>
+	let currentPath = $state("/");
+	import { afterNavigate } from "bosia/client";
+
+	afterNavigate((nav) => {
+		currentPath = nav.to.url.pathname;
+	});
+</script>
+
+<Navbar {currentPath} />
+```
+
+After refactoring imports or state setup, search the template for any references that no longer exist and update them to use the new variable.
 
 ### R7 — Snippets replace slots
 

@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.6.8] - 2026-05-29
 
+### Removed
+
+- `/about` page from the default project template — new projects now start with a clean home page only.
+
 ### Fixed
 
 - Sidebar no longer crashes with `crypto.randomUUID is not a function` in non-HTTPS / sandboxed runtimes.

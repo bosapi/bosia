@@ -34,8 +34,6 @@ Add pages by creating `+page.svelte` files under `src/routes/`:
 src/routes/
 └── (public)/                     # public route group — no URL segment
     ├── +page.svelte              # /
-    ├── about/
-    │   └── +page.svelte          # /about
     └── blog/
         ├── +page.svelte          # /blog
         └── [slug]/
