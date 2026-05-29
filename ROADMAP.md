@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.7**
+> Current version: **0.6.9**
 
 ---
 
@@ -279,7 +279,7 @@
 
 ### Navigation
 
-- [ ] 🟠 `beforeNavigate` / `afterNavigate` lifecycle hooks
+- [x] 🟠 `beforeNavigate` / `afterNavigate` lifecycle hooks — exported from `bosia/client`; fired by SPA router around pushState/popstate navs and on full-page unload (`willUnload=true`); cancel support via `cancel()` on programmatic navs
 - [ ] 🟠 Scroll restoration and snapshot support (`export const snapshot`)
 
 ### Routing
@@ -324,7 +324,7 @@
 - [x] 🟡 Compiled route regex — pre-compile route patterns to `RegExp` at startup instead of parsing on every match
 - [x] 🟠 Concurrency / backpressure ceiling — Bun currently accepts unlimited concurrent connections (`server.ts:812` only sets `idleTimeout`/`maxRequestBodySize`). Under load spike or slow-loris, memory + FD exhaustion is possible before idleTimeout kicks in — the most likely OOM vector for single-replica container deploys. Add a soft cap (env-gated, e.g. `MAX_INFLIGHT`) that reuses the existing in-flight counter (`server.ts:633,696`) and returns 503 when exceeded. Until shipped, deployments must front Bosia with a reverse proxy that enforces connection limits. Source: 2026-05-23 pre-prod audit. Shipped in v0.5.13 (`server.ts:765-784, 638-646`) — `MAX_INFLIGHT` env var, default `Infinity` (off, no behavior change); `/_health` exempt; cap-check runs before all work so the 503 is cheap. Docs + `.env.example` files updated
 - [x] 🟡 Response cache + brotli — `Bun.gzipSync()` runs on every HTML response >2 KB in prod (`html.ts:354-378`) with no precompressed cache; brotli not implemented. (a) Add an LRU response cache keyed by `(path, status, content-hash)` for compressed bodies on routes with no per-user data; (b) add brotli via `Bun.brotliCompressSync` gated on `Accept-Encoding: br`. Source: 2026-05-23 pre-prod audit. Shipped in v0.6.0 — skip-render response cache (`cache.ts`) keyed on URL + identity hash (cookies/headers from `CACHE_KEYS`), per-route opt-out via `export const cache = false`, server-side `invalidate(key)` / `invalidateAll(prefix)` from `bosia` mirroring the client API, brotli + gzip pre-compressed per entry, CSP disables the cache. Follow-ups deferred to v0.7+: TTL expiry, layout-level cascade, multi-replica pub/sub invalidation, stale-while-revalidate, key-based invalidation for `+server.ts` endpoints
-- [ ] 🟡 Static-asset fallthrough cost — every static hit calls `Bun.file().exists()` up to 4× across `/dist/client/`, `/public/`, `/dist/`, `/dist/static/` (`server.ts:299-335`). Build a manifest at boot so prod lookups become a Map check; doc nginx/Caddy offload for high-traffic deploys. Source: 2026-05-23 pre-prod audit
+- [x] 🟡 Static-asset fallthrough cost — every static hit calls `Bun.file().exists()` up to 4× across `/dist/client/`, `/public/`, `/dist/`, `/dist/static/` (`server.ts:299-335`). Build a manifest at boot so prod lookups become a Map check; doc nginx/Caddy offload for high-traffic deploys. Source: 2026-05-23 pre-prod audit. Shipped in v0.6.9 — `staticManifest.ts` walks `dist/client`, `./public`, and `OUT_DIR` root once at boot; prod path is a single `Map` lookup, no per-request stat. Dev keeps the fallthrough so dropped-in `public/` files are served without restart. Latent bug fixed: `?query` no longer 404s
 - [ ] 🟡 Collapse SSR `render()` calls — root `App.svelte` + error pages are rendered in separate Svelte `render()` invocations (`renderer.ts:646,804,884,931`). Profile under representative load before changing — error pages have different layouts so collapsing isn't trivial. Source: 2026-05-23 pre-prod audit
 
 ### Server Reliability

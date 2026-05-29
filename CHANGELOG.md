@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.9] - 2026-05-29
+
+### Fixed
+
+- Anchor links (`href="#section"`) now scroll to the target heading instead of jumping to the top.
+- Static assets with query strings (e.g. `/favicon.ico?v=2`) now resolve correctly instead of 404'ing.
+
+### Changed
+
+- Marked `beforeNavigate` / `afterNavigate` navigation hooks as done in the roadmap (already shipped).
+- Static assets now served from a boot-time manifest in production (single Map lookup, no per-request stat).
+
 ## [0.6.8] - 2026-05-29
 
 ### Removed
@@ -15,7 +27,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Sidebar no longer crashes with `crypto.randomUUID is not a function` in non-HTTPS / sandboxed runtimes.
-- Anchor links (`href="#section"`) now scroll to the target heading instead of jumping to the top.
 
 ### Added
 

@@ -24,6 +24,7 @@ import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } f
 import { isDev, compress, isStaticPath } from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
+import { buildStaticManifest, lookupStatic } from "./staticManifest.ts";
 import { dedup, dedupKey } from "./dedup.ts";
 import {
 	CACHE_ENABLED,
@@ -169,6 +170,12 @@ function parseActionName(url: URL): string {
 	}
 	return "default";
 }
+
+// Prod: walk `dist/client`, `./public`, and `OUT_DIR` once at boot so static-asset
+// requests cost a single Map lookup instead of up to 4 `Bun.file().exists()` syscalls.
+// Dev keeps the per-request fallthrough so files dropped into `public/` mid-session
+// are served without a restart (dev's watcher doesn't fire on `public/`).
+const staticManifest = isDev ? null : buildStaticManifest(OUT_DIR);
 
 async function resolve(event: RequestEvent): Promise<Response> {
 	const { request, url, locals, cookies } = event;
@@ -327,7 +334,21 @@ async function resolve(event: RequestEvent): Promise<Response> {
 
 	// Static files
 	if (isStaticPath(path)) {
-		// dist/client: serve with cache headers based on whether filename is hashed
+		// Prod fast path: single Map lookup, no per-request stat calls.
+		if (staticManifest) {
+			const hit = lookupStatic(staticManifest, path);
+			if (hit) {
+				return new Response(
+					Bun.file(hit.absPath),
+					hit.cacheControl
+						? { headers: { "Cache-Control": hit.cacheControl } }
+						: undefined,
+				);
+			}
+			return new Response("Not Found", { status: 404 });
+		}
+		// Dev: keep the per-request fallthrough so files dropped into `public/`
+		// mid-session are served without a restart.
 		if (path.startsWith("/dist/client/")) {
 			const resolved = safePath(
 				`${OUT_DIR}/client`,
@@ -336,11 +357,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			if (resolved) {
 				const file = Bun.file(resolved);
 				if (await file.exists()) {
-					const filename = path.split("/").pop() ?? "";
-					const isHashed = /\-[a-z0-9]{8,}\.[a-z]+$/.test(filename);
-					const cacheControl =
-						!isDev && isHashed ? "public, max-age=31536000, immutable" : "no-cache";
-					return new Response(file, { headers: { "Cache-Control": cacheControl } });
+					return new Response(file, { headers: { "Cache-Control": "no-cache" } });
 				}
 			}
 			return new Response("Not Found", { status: 404 });
