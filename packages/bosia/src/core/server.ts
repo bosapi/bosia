@@ -332,82 +332,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		}
 	}
 
-	// Static files
-	if (isStaticPath(path)) {
-		// Prod fast path: single Map lookup, no per-request stat calls.
-		if (staticManifest) {
-			const hit = lookupStatic(staticManifest, path);
-			if (hit) {
-				return new Response(
-					Bun.file(hit.absPath),
-					hit.cacheControl
-						? { headers: { "Cache-Control": hit.cacheControl } }
-						: undefined,
-				);
-			}
-			return new Response("Not Found", { status: 404 });
-		}
-		// Dev: keep the per-request fallthrough so files dropped into `public/`
-		// mid-session are served without a restart.
-		if (path.startsWith("/dist/client/")) {
-			const resolved = safePath(
-				`${OUT_DIR}/client`,
-				path.split("?")[0].slice("/dist/client".length),
-			);
-			if (resolved) {
-				const file = Bun.file(resolved);
-				if (await file.exists()) {
-					return new Response(file, { headers: { "Cache-Control": "no-cache" } });
-				}
-			}
-			return new Response("Not Found", { status: 404 });
-		}
-		const pubPath = safePath("./public", path);
-		if (pubPath) {
-			const pub = Bun.file(pubPath);
-			if (await pub.exists()) return new Response(pub);
-		}
-		const distPath = safePath(OUT_DIR, path);
-		if (distPath) {
-			const dist = Bun.file(distPath);
-			if (await dist.exists()) return new Response(dist);
-		}
-		const staticPath = safePath(`${OUT_DIR}/static`, path);
-		if (staticPath) {
-			const staticFile = Bun.file(staticPath);
-			if (await staticFile.exists()) return new Response(staticFile);
-		}
-		return new Response("Not Found", { status: 404 });
-	}
-
-	// Prerendered pages — serve static HTML built at build time.
-	// SKIP in dev: prerender runs with NODE_ENV=production, which disables the
-	// inspector plugin and the dev-only error pipeline. Serving its output back
-	// in dev would mask errors (the badge stays empty, the SSE reload script
-	// isn't injected, and the page can't auto-recover when the source is fixed).
-	// Live SSR every request in dev so /about behaves like every other route.
-	if (!isDev) {
-		// Try both `<path>/index.html` (always/ignore mode) and `<path>.html` (never mode)
-		const prerenderCandidates =
-			path === "/"
-				? ["index.html"]
-				: [`${path}/index.html`, `${path.replace(/\/$/, "")}.html`];
-		for (const candidate of prerenderCandidates) {
-			const prerenderPath = safePath(`${OUT_DIR}/prerendered`, candidate);
-			if (!prerenderPath) continue;
-			const prerenderFile = Bun.file(prerenderPath);
-			if (await prerenderFile.exists()) {
-				return new Response(prerenderFile, {
-					headers: {
-						"Content-Type": "text/html; charset=utf-8",
-						"Cache-Control": "public, max-age=3600",
-					},
-				});
-			}
-		}
-	}
-
 	// API routes (+server.ts) — resolve with `.json` alias preference.
+	// Matched BEFORE static fallthrough so explicit handlers shadow extension-
+	// based static detection (e.g. `/uploads/[...path]/+server.ts` can serve
+	// `.webp` URLs that would otherwise be intercepted by isStaticPath).
 	const apiMatch = await resolveApiMatch(apiRoutes, path);
 	if (apiMatch) {
 		try {
@@ -511,6 +439,81 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				});
 			}
 			return Response.json({ error: "Internal Server Error" }, { status: 500 });
+		}
+	}
+
+	// Static files — fallthrough after API routes so explicit handlers win.
+	if (isStaticPath(path)) {
+		// Prod fast path: single Map lookup, no per-request stat calls.
+		if (staticManifest) {
+			const hit = lookupStatic(staticManifest, path);
+			if (hit) {
+				return new Response(
+					Bun.file(hit.absPath),
+					hit.cacheControl
+						? { headers: { "Cache-Control": hit.cacheControl } }
+						: undefined,
+				);
+			}
+			return new Response("Not Found", { status: 404 });
+		}
+		// Dev: keep the per-request fallthrough so files dropped into `public/`
+		// mid-session are served without a restart.
+		if (path.startsWith("/dist/client/")) {
+			const resolved = safePath(
+				`${OUT_DIR}/client`,
+				path.split("?")[0].slice("/dist/client".length),
+			);
+			if (resolved) {
+				const file = Bun.file(resolved);
+				if (await file.exists()) {
+					return new Response(file, { headers: { "Cache-Control": "no-cache" } });
+				}
+			}
+			return new Response("Not Found", { status: 404 });
+		}
+		const pubPath = safePath("./public", path);
+		if (pubPath) {
+			const pub = Bun.file(pubPath);
+			if (await pub.exists()) return new Response(pub);
+		}
+		const distPath = safePath(OUT_DIR, path);
+		if (distPath) {
+			const dist = Bun.file(distPath);
+			if (await dist.exists()) return new Response(dist);
+		}
+		const staticPath = safePath(`${OUT_DIR}/static`, path);
+		if (staticPath) {
+			const staticFile = Bun.file(staticPath);
+			if (await staticFile.exists()) return new Response(staticFile);
+		}
+		return new Response("Not Found", { status: 404 });
+	}
+
+	// Prerendered pages — serve static HTML built at build time.
+	// SKIP in dev: prerender runs with NODE_ENV=production, which disables the
+	// inspector plugin and the dev-only error pipeline. Serving its output back
+	// in dev would mask errors (the badge stays empty, the SSE reload script
+	// isn't injected, and the page can't auto-recover when the source is fixed).
+	// Live SSR every request in dev so /about behaves like every other route.
+	if (!isDev) {
+		// Try both `<path>/index.html` (always/ignore mode) and `<path>.html` (never mode)
+		const prerenderCandidates =
+			path === "/"
+				? ["index.html"]
+				: [`${path}/index.html`, `${path.replace(/\/$/, "")}.html`];
+		for (const candidate of prerenderCandidates) {
+			const prerenderPath = safePath(`${OUT_DIR}/prerendered`, candidate);
+			if (!prerenderPath) continue;
+			const prerenderFile = Bun.file(prerenderPath);
+			if (await prerenderFile.exists()) {
+				return new Response(prerenderFile, {
+					headers: {
+						"Content-Type": "text/html; charset=utf-8",
+						"Cache-Control": "public, max-age=3600",
+					},
+				});
+			}
 		}
 	}
 

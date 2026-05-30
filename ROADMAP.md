@@ -1,7 +1,16 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.9**
+> Current version: **0.6.11**
+
+---
+
+## Same-day addition (2026-05-30) — API routes shadow static fallthrough
+
+> Bug report from fotoku app: `/uploads/<uuid>.webp` returned 404 even though a `+server.ts` was registered at `/uploads/[...path]`. Root cause in `core/server.ts`: the static-files block (`isStaticPath(path)` — matches by extension, `.webp`/`.png`/`.pdf`/etc.) ran BEFORE `resolveApiMatch`, so any URL ending in a static extension short-circuited into the static handler and was looked up against `./public`, `dist/client`, `dist/static` only — never reaching the user's route. Fix: swap the order so `resolveApiMatch` runs first; static + prerender fall through only when no API route matches. Verified via `apps/demo` (`/uploads/sample.webp` now serves with `X-Handler: uploads-route`; `/favicon.svg` and `/bosia-tw.css` still 200 via fallthrough).
+
+- [x] 🟠 `packages/bosia/src/core/server.ts` — move the API-match block (`+server.ts` resolution + cache + error handling) above the static-files block and prerender block. No logic change inside the moved block.
+- [x] ⚪ `apps/demo/src/routes/uploads/[...path]/+server.ts`, `apps/demo/uploads/sample.webp`, `apps/demo/src/routes/(public)/uploads-test/+page.svelte` — regression demo so `/uploads-test` renders an image served via the +server.ts handler.
 
 ---
 

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.11] - 2026-05-30
+
+### Fixed
+
+- `+server.ts` API routes now win over the static fallthrough, so handlers can serve URLs ending in `.webp` / `.png` / `.pdf` (previously returned 404 because `isStaticPath` matched the extension and short-circuited into the static-file lookup).
+
 ## [0.6.10] - 2026-05-30
 
 ### Added
@@ -34,8 +40,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - UI components no longer crash on plain http: switched id generation from `crypto.randomUUID` / `Math.random` to Svelte's built-in `$props.id()`.
 - `bosia feat drizzle` now defaults to a persistent sqlite file instead of in-memory, so data survives restarts out of the box.
 - Twelve UI components no longer crash with `props_id_invalid_placement` — `$props.id()` is now assigned to its own variable before being interpolated into id strings.
-
----
 
 ## [0.6.9] - 2026-05-29
 
