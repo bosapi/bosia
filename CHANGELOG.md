@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Brief intake no longer asks the user about the database engine. Default = sqlite-file; load `bosia-database-setup` only when the user explicitly asks for postgres/mysql or new tables.
 - Brief intake Quick Start is now five questions (palette + direction merged), with an explicit "infer, don't loop back" inference rule.
 - Brief intake now ends with the `brief_request_approval` tool call (host UI renders a Setuju button) instead of a plain-text "Setuju?" question.
+- `bosia-page-shell` skill triggers now include `+page.svelte`, `+layout.svelte`, `page shell`, `root layout` so AI auto-loads it before touching layout/page files.
 
 ### Removed
 

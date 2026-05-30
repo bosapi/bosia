@@ -7,6 +7,10 @@ triggers:
     - sidebar
     - layout
     - app shell
+    - page shell
+    - root layout
+    - +page.svelte
+    - +layout.svelte
     - chrome
     - header
     - user avatar
