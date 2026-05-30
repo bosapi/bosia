@@ -53,7 +53,21 @@ They render once in a layout file. Which layout depends on scope:
 
 If you import `Navbar` / `Footer` / `Sidebar` from a `+page.svelte`, you have a bug. Delete it and move to the layout.
 
-**Auth-aware navbar (Profile / Settings / Log out dropdown):** when the navbar renders for both signed-in and signed-out users (root layout pattern), pass `user={data.user}` from the loader — `undefined` hides the dropdown by design. See R3 / R4 for the prop contract.
+## ⚠ HARD RULE — `(private)` chrome MUST carry `user=`
+
+Public and private chrome are **separate components configured separately**, not one shared instance.
+
+- `(public)/+layout.svelte` → Navbar **without** `user=` (visitor sees marketing nav, no avatar dropdown). Correct.
+- `(private)/+layout.svelte` → renders its own `<Navbar>` _or_ `<Sidebar>`, **always with `user={data.user}`**, threaded from `(private)/+layout.server.ts`. Without it, signed-in users have no avatar dropdown and no way to Log out.
+
+Common bug the lint catches: agent adds a navbar to `(public)/+layout.svelte` for login/register, ships, and tells the user "the dropdown will appear later when we add a private layout." That's wrong. The moment you create `(private)/+layout.svelte`, it needs its own auth-aware chrome — do not defer it to a future turn.
+
+If you prefer one shared navbar across both groups, put it in the root `+layout.svelte` and pass `user={data.user}` conditionally — but then drop the `(public)` and `(private)` group navbars to avoid double-rendering.
+
+The shell-hygiene lint warns when `(private)/+layout.svelte` renders `<Navbar>` or `<Sidebar>` without `user=`. Fix by:
+
+1. Make `(private)/+layout.server.ts` return `{ ...await parent(), user: locals.user }`.
+2. Pass `user={data.user}` to the chrome tag.
 
 ---
 
@@ -282,9 +296,10 @@ P0 (blockers — `bun run check` should fail if any of these are violated):
 - [ ] Lists of records use `<DataTable …>` — no hand-rolled `<table>` in page code.
 - [ ] `currentPath` comes from `page.url.pathname`, not a string literal.
 
-P1 (guidance — verify by reading code, not lint):
+P1 (lint-warned — `shell-hygiene` emits a warning when `(private)/+layout.svelte` renders `<Navbar>` or `<Sidebar>` without `user=`; exitCode stays 0 but the warning must be addressed before claiming done):
 
-- [ ] If the navbar renders for signed-in users, `<Navbar>` receives `user={data.user}` so the avatar dropdown (Profile / Settings / Log out) appears. Omit `user` for visitor-only states.
+- [ ] If `(private)/+layout.svelte` exists and renders `<Navbar>` or `<Sidebar>`, the tag includes `user={data.user}` — and `(private)/+layout.server.ts` returns `user` (spread parent + override) so the loader feeds it.
+- [ ] `(public)` layout's `<Navbar>` correctly omits `user=` (visitor-only).
 - [ ] `logout/+server.ts` exists; the dropdown's Log out hits it.
 
 P1:
