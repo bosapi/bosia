@@ -5,6 +5,35 @@
 
 ---
 
+## Same-day addition (2026-05-30) — fix `props_id_invalid_placement` in UI components
+
+> Svelte 5 requires `$props.id()` to be the entire RHS of a top-level `const` declaration. Nine UI components were calling it inside a template literal (`const baseId = \`tabs-${$props.id()}\`;`), which throws at component init. Sister components (`alert-dialog`, `dialog`, `field`) already had the correct shape — used as the reference pattern.
+
+- [x] 🟠 `registry/components/ui/{accordion,collapsible,hover-card,menubar/menubar-menu,navigation-menu/navigation-menu-item,popover,sidebar/sidebar-menu-item,tabs,tooltip}.svelte` — split into `const uid = $props.id();` then `const id = \`<prefix>-${uid}\`;`. Behaviour identical, but now passes Svelte's strict placement check.
+
+---
+
+## Same-day addition (2026-05-30) — `bosia feat drizzle` defaults to sqlite-file, not in-memory
+
+> User report: AI agent ran `bosia feat drizzle` and ended up with `sqlite://:memory:`, losing data on restart. Three drifts: (a) `registry/features/drizzle/meta.json` `envVars.DATABASE_URL` was a multi-option comment string with `:memory:` as the last visible token; (b) `drizzle-index.ts` + `drizzle.config.ts` fallback when `DATABASE_URL` is unset was `sqlite://:memory:`; (c) `bosia-database-setup` skill claimed the default was `file:./data.db` but `resolveEngine` only accepts `sqlite://` URLs, so the documented default would have thrown.
+
+- [x] 🟠 `registry/features/drizzle/meta.json` — single concrete `DATABASE_URL=sqlite://./data/app.db`, no inline comment options.
+- [x] 🟠 `registry/features/drizzle/drizzle-index.ts` + `drizzle.config.ts` — runtime fallback now `sqlite://./data/app.db`, not `sqlite://:memory:`.
+- [x] 🟠 `docs/content/skills/bosia-database-setup/SKILL.md` — default scheme updated to `sqlite://./data/app.db`; references to `src/features/drizzle/db.ts` corrected to `index.ts` (actual file shipped by the feature).
+
+---
+
+## Same-day addition (2026-05-30) — UI ids use `$props.id()` instead of `crypto.randomUUID` / `Math.random`
+
+> Generated apps crashed with `TypeError: crypto.randomUUID is not a function` when served over plain http (LAN IP, preview subdomains) because `crypto.randomUUID` only exists in secure contexts. Six other components used `Math.random().toString(36)` which avoided the crash but produced different ids per SSR/CSR render — hydration mismatch risk and weaker uniqueness than the framework primitive. Svelte 5.20+ ships `$props.id()`, a deterministic per-component id helper — adopting it eliminates both classes of bug with one consistent pattern.
+
+- [x] 🟠 `registry/components/ui/field/field.svelte`, `tooltip/tooltip.svelte`, `popover/popover.svelte`, `hover-card/hover-card.svelte`, `navigation-menu/navigation-menu-item.svelte`, `menubar/menubar-menu.svelte` — replace `crypto.randomUUID().slice(0, 8)` with `$props.id()`. `menubar-menu` now prefixes its id with `menubar-` for consistency with siblings.
+- [x] 🟠 `registry/components/ui/tabs/tabs.svelte`, `sidebar/sidebar-menu-item.svelte`, `accordion/accordion.svelte`, `collapsible/collapsible.svelte` — replace `Math.random().toString(36).slice(2, 10)` base ids with `$props.id()`.
+- [x] 🟠 `registry/components/ui/alert-dialog/alert-dialog.svelte`, `dialog/dialog.svelte` — collapse the two separate `Math.random()` calls into one `$props.id()` shared by `titleId` and `descriptionId`.
+- [x] ⚪ Server-side `crypto.randomUUID` usage in `registry/features/file-upload/file.service.ts` and `file.{mysql,sqlite}.table.ts` left as-is — runs in Node where `crypto` is always available, and those ids persist to the DB rather than per-render.
+
+---
+
 ## Same-day addition (2026-05-30) — brief intake: drop DB question + approval-button tool + `bosia-database-setup` skill
 
 > Two pain points reported by users: (a) AI kept asking extra follow-up questions after the Quick Start batch (heading said "six" but the script listed 7 items, with no rule against follow-ups); (b) the database engine question was friction during a design-only intake — most first-time apps don't care, sqlite-file is the right default. Approval gate was also a plain-text "Setuju?" that required typing.

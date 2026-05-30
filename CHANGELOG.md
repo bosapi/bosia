@@ -30,6 +30,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `$env` ambient declaration now picked up by `tsc` / `svelte-check` (template tsconfig `include` extended with `.bosia/types/**/*.d.ts`).
 - `bosia:routes` virtual module ambient now reachable by consumers (triple-slash reference added to `bosia`'s `src/lib/index.ts`).
+- UI components no longer crash on plain http: switched id generation from `crypto.randomUUID` / `Math.random` to Svelte's built-in `$props.id()`.
+- `bosia feat drizzle` now defaults to a persistent sqlite file instead of in-memory, so data survives restarts out of the box.
+- Twelve UI components no longer crash with `props_id_invalid_placement` — `$props.id()` is now assigned to its own variable before being interpolated into id strings.
 
 ---
 

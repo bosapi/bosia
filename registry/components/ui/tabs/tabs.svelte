@@ -15,7 +15,8 @@
 		[key: string]: any;
 	} = $props();
 
-	const baseId = `tabs-${Math.random().toString(36).slice(2, 10)}`;
+	const uid = $props.id();
+	const baseId = `tabs-${uid}`;
 
 	setContext("tabs", {
 		get value() {

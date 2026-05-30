@@ -12,8 +12,9 @@
 		[key: string]: any;
 	} = $props();
 
-	const titleId = `alert-dialog-title-${Math.random().toString(36).slice(2, 8)}`;
-	const descriptionId = `alert-dialog-desc-${Math.random().toString(36).slice(2, 8)}`;
+	const uid = $props.id();
+	const titleId = `alert-dialog-title-${uid}`;
+	const descriptionId = `alert-dialog-desc-${uid}`;
 
 	setContext("alert-dialog", {
 		get open() {

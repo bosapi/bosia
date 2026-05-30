@@ -21,7 +21,8 @@
 		closeAll: () => void;
 	}>("navigation-menu");
 
-	const id = `nm-${crypto.randomUUID().slice(0, 8)}`;
+	const uid = $props.id();
+	const id = `nm-${uid}`;
 
 	setContext("navigation-menu-item", { id });
 </script>

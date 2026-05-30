@@ -17,7 +17,8 @@
 		[key: string]: any;
 	} = $props();
 
-	const baseId = `collapsible-${Math.random().toString(36).slice(2, 10)}`;
+	const uid = $props.id();
+	const baseId = `collapsible-${uid}`;
 
 	function toggle() {
 		if (disabled) return;

@@ -10,7 +10,8 @@
 		[key: string]: any;
 	} = $props();
 
-	const id = crypto.randomUUID();
+	const uid = $props.id();
+	const id = `menubar-${uid}`;
 	const menubar = getContext<{
 		activeMenu: string | null;
 		setActive: (id: string) => void;

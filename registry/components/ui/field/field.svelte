@@ -27,7 +27,7 @@
 		return undefined;
 	});
 
-	const uid = crypto.randomUUID().slice(0, 8);
+	const uid = $props.id();
 	const id = `field-${uid}`;
 	const descriptionId = `field-desc-${uid}`;
 	const errorId = `field-err-${uid}`;

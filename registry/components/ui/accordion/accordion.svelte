@@ -27,7 +27,8 @@
 		value = type === "multiple" ? [] : "";
 	}
 
-	const baseId = `accordion-${Math.random().toString(36).slice(2, 10)}`;
+	const uid = $props.id();
+	const baseId = `accordion-${uid}`;
 
 	function isOpen(itemValue: string): boolean {
 		if (type === "multiple") {

@@ -83,7 +83,8 @@
 	}
 
 	const isHover = $derived(trigger === "hover");
-	const popoverId = `sidebar-popover-${Math.random().toString(36).slice(2, 10)}`;
+	const uid = $props.id();
+	const popoverId = `sidebar-popover-${uid}`;
 </script>
 
 <svelte:window onclick={handlePopoverClickOutside} onkeydown={handlePopoverKeydown} />

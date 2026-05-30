@@ -12,8 +12,9 @@
 		[key: string]: any;
 	} = $props();
 
-	const titleId = `dialog-title-${Math.random().toString(36).slice(2, 8)}`;
-	const descriptionId = `dialog-desc-${Math.random().toString(36).slice(2, 8)}`;
+	const uid = $props.id();
+	const titleId = `dialog-title-${uid}`;
+	const descriptionId = `dialog-desc-${uid}`;
 
 	setContext("dialog", {
 		get open() {

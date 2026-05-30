@@ -19,7 +19,7 @@
 		[key: string]: any;
 	} = $props();
 
-	const uid = crypto.randomUUID().slice(0, 8);
+	const uid = $props.id();
 	const id = `popover-${uid}`;
 
 	let rootEl: HTMLDivElement;

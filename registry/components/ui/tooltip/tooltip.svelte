@@ -17,7 +17,7 @@
 		[key: string]: any;
 	} = $props();
 
-	const uid = crypto.randomUUID().slice(0, 8);
+	const uid = $props.id();
 	const id = `tooltip-${uid}`;
 
 	let showTimer: ReturnType<typeof setTimeout> | null = null;
