@@ -1,6 +1,6 @@
 import { defineConfig } from "drizzle-kit";
 
-const url = process.env.DATABASE_URL || "sqlite://:memory:";
+const url = process.env.DATABASE_URL || "sqlite://./data/app.db";
 
 type Dialect = "postgresql" | "mysql" | "sqlite";
 

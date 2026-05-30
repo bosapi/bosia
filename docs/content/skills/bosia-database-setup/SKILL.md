@@ -59,8 +59,8 @@ If the user is in brief intake (`BRIEF.md` missing or `## Status: pending`), kee
 Fresh Bosia apps include:
 
 - `drizzle.config.ts` → sqlite driver, `dialect: "sqlite"`.
-- `.env.local` → `DATABASE_URL=file:./data.db`.
-- `src/features/drizzle/{db.ts,schemas.ts,migrate.ts}` → Bun-native `drizzle-orm/bun-sqlite`.
+- `.env` → `DATABASE_URL=sqlite://./data/app.db`.
+- `src/features/drizzle/{index.ts,schemas.ts,migrate.ts}` → Bun-native `drizzle-orm/bun-sqlite`.
 - `bun run db:generate` + `bun run db:migrate` already wired in `package.json`.
 
 If the user only asks "is the database working?", confirm sqlite-file is the default and stop. No edits.
@@ -72,18 +72,18 @@ When the user says "pakai postgres" / "ganti ke mysql" / etc.:
 1. **Confirm engine + reason.** One short question: "Pindah ke `postgres` — alasan: multi-user / cloud deploy / butuh JSONB / lain?" Skip if the reason is obvious from context (e.g. they just mentioned Supabase / Neon).
 2. **Read current state.** `fs_read("drizzle.config.ts")`, `fs_read(".env.local")`. Capture existing tables count to estimate migration risk.
 3. **Update `drizzle.config.ts`.** Set `dialect: "postgresql" | "mysql" | "sqlite"`. Keep `schema` + `out` paths.
-4. **Update `.env.local`** with the new `DATABASE_URL`:
+4. **Update `.env`** with the new `DATABASE_URL`:
     - postgres: `postgres://user:pass@host:5432/dbname`
     - mysql: `mysql://user:pass@host:3306/dbname`
-    - sqlite file: `file:./data.db`
-    - sqlite memory: `:memory:` (warn: flushes on restart)
+    - sqlite file: `sqlite://./data/app.db`
+    - sqlite memory: `sqlite://:memory:` (warn: flushes on restart)
 5. **Update `.env.example`** with the same key, mask the password.
 6. **Install the driver** if the engine changed from sqlite:
     - postgres: `bun add postgres` (Bun's built-in `Bun.SQL` already handles it; only add `postgres` if the scaffold uses node-postgres adapter — check first)
     - mysql: `bun add mysql2`
     - sqlite: no install needed.
       Use the `bash` / `shell` tool.
-7. **Update `src/features/drizzle/db.ts`** to import the matching drizzle adapter (`drizzle-orm/bun-sql`, `drizzle-orm/mysql2`, `drizzle-orm/bun-sqlite`). Re-use existing patterns; see `bosia-drizzle-feature`.
+7. **Update `src/features/drizzle/index.ts`** to import the matching drizzle adapter (`drizzle-orm/bun-sql`, `drizzle-orm/mysql2`, `drizzle-orm/bun-sqlite`). Re-use existing patterns; see `bosia-drizzle-feature`.
 8. **Re-generate + migrate.** `bun run db:generate` then `bun run db:migrate`. If existing tables are present and the engine changed, surface the truth: cross-engine migration is data export + re-import, NOT just `migrate`. Stop and ask the user before running anything that could lose data.
 9. **Verify.** `bun run check` to confirm types resolve.
 
@@ -140,7 +140,7 @@ P0:
 - [ ] `drizzle.config.ts` `dialect` matches the engine in `DATABASE_URL`.
 - [ ] `.env.local` has a valid `DATABASE_URL` for the chosen engine.
 - [ ] `.env.example` mirrors `.env.local` with secrets masked.
-- [ ] `src/features/drizzle/db.ts` imports the matching drizzle adapter.
+- [ ] `src/features/drizzle/index.ts` imports the matching drizzle adapter.
 - [ ] `bun run check` passes after the change.
 
 P1:

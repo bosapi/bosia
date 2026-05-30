@@ -19,7 +19,7 @@ if (!connectionString) {
 	console.warn("⚠️  DATABASE_URL is not set. Database queries will fail.");
 }
 
-const url = connectionString || "sqlite://:memory:";
+const url = connectionString || "sqlite://./data/app.db";
 export const engine: Engine = resolveEngine(url);
 export const isPersistent = engine !== "sqlite-memory";
 

@@ -46,6 +46,6 @@
 		"db:seed": "bun run src/features/drizzle/seeds/runner.ts"
 	},
 	"envVars": {
-		"DATABASE_URL": "postgres://user:pass@localhost:5432/myapp  # or mysql://user:pass@host:3306/myapp  # or sqlite://./data/app.db  # or sqlite://:memory:"
+		"DATABASE_URL": "sqlite://./data/app.db"
 	}
 }
