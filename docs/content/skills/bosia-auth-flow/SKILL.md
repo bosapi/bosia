@@ -101,6 +101,10 @@ First registered user (or `001_rbac_bootstrap.ts` seed) creates the `super_admin
 
 GET logout is a CSRF hole (link-driven). Use `<form method="POST" action="/logout">` and `+server.ts` handler.
 
+### R8 — Post-auth redirect is server-side
+
+After a successful login / register, `throw redirect(303, …)` from the form action. **Never** return `{ success: true }` from the action and then `goto(...)` (or `window.location`) inside `use:enhance` — `Set-Cookie` from the action response can race the client-side navigation, so the first request after redirect arrives **without** the session cookie and the user bounces back to `/login` (silent loop, no error). Mirror `register/+page.server.ts` — same pattern for login. If you need post-redirect UI state (toast, etc.), encode it in the redirect URL or read it from `locals.user` on the destination, not from action return data.
+
 ## Bosia conventions
 
 - `bosia-routing` — `(public)` group, action-only `/logout` as `+server.ts`.
@@ -119,6 +123,7 @@ P0:
 - [ ] Login error message is generic.
 - [ ] `/forgot` response identical regardless of email existence.
 - [ ] Logout is `POST` via `+server.ts`.
+- [ ] Login / register redirect via server-side `throw redirect(303, …)` — never `use:enhance` + client `goto()`.
 - [ ] All form actions validate input at the boundary.
 - [ ] `bosia-security-review` pass.
 

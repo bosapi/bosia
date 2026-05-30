@@ -40,6 +40,38 @@ bosia:
 
 # bosia-page-shell
 
+> **STOP. Read before writing any `+page.svelte` or `+layout.svelte`.**
+>
+> These two rules trip agents on every new project. Verify both before claiming "done".
+
+## 🚫 HARD RULE 1 — Chrome lives in `+layout.svelte`, ONLY
+
+`Navbar`, `Footer`, `Sidebar` are **forbidden** inside any `+page.svelte`.
+They render once in a layout file. See R1 for the full rationale and examples.
+
+- Public pages (landing, login, register) → chrome in `src/routes/(public)/+layout.svelte`.
+- Private pages (dashboard, settings) → chrome in `src/routes/(private)/+layout.svelte`.
+- App-wide chrome shared by both → root `src/routes/+layout.svelte`.
+
+If you import `Navbar` / `Footer` / `Sidebar` from a `+page.svelte`, you have a bug. Delete it and move to the layout.
+
+## 🚫 HARD RULE 2 — Authenticated `<Navbar>` MUST receive `user=`
+
+Inside `(private)/+layout.svelte`, the `<Navbar>` tag **must** include `user={data.user}`.
+Without it, the avatar dropdown (Profile / Settings / **Log out**) disappears and the user is trapped signed in. See R3.
+
+```svelte
+<!-- ❌ wrong — no dropdown, no Log out -->
+<Navbar {links} currentPath={page.url.pathname} />
+
+<!-- ✅ right -->
+<Navbar {links} currentPath={page.url.pathname} user={data.user} />
+```
+
+Inversely, `(public)/+layout.svelte` **omits** `user` — visitor is signed out (see R4).
+
+---
+
 ## What it builds
 
 Consistent app chrome. Navbar, footer, and sidebar live in `+layout.svelte` files at the right depth — never re-rendered inside `+page.svelte`. Authenticated layouts show the signed-in user via `ui/navbar`'s avatar dropdown. Tabular data uses `ui/data-table`.
@@ -255,11 +287,15 @@ Alternative for dynamic per-route data (cart count, notification count): fetch f
 
 ## Checklist gate
 
-P0:
+> **Run this BEFORE claiming "done".** Quote each box back with file:line evidence — don't self-grade from memory.
+> Projects may wire `scripts/check-shell.ts` into `bun run check` to enforce P0 automatically.
 
-- [ ] Navbar / footer / sidebar declared in a `+layout.svelte`, not in any `+page.svelte`.
-- [ ] `(private)/+layout.svelte` passes `user={data.user}` to `<Navbar>` so the avatar dropdown (with Log out) is reachable.
-- [ ] `(public)` layouts do NOT pass `user` (visitor is signed-out).
+P0 (blockers — `bun run check` should fail if any of these are violated):
+
+- [ ] **No `<Navbar>` / `<Footer>` / `<Sidebar>` tag inside any `+page.svelte`** — grep the page files; if found, move them to the layout.
+- [ ] **No `from ".../ui/navbar"` (or `ui/footer` / `ui/sidebar`) import inside any `+page.svelte`** — same: imports belong in the layout that renders them.
+- [ ] **`(private)/+layout.svelte` `<Navbar>` includes `user={data.user}`** — without it the avatar dropdown (Profile / Settings / Log out) is hidden and the user can't sign out.
+- [ ] **`(public)` layouts do NOT pass `user`** to `<Navbar>` (visitor is signed-out).
 - [ ] Lists of records use `<DataTable …>` — no hand-rolled `<table>` in page code.
 - [ ] `currentPath` comes from `page.url.pathname`, not a string literal.
 - [ ] `logout/+server.ts` exists; navbar dropdown's Log out hits it.

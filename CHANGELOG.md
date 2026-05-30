@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Default template `bun run check` now runs `svelte-check` (catches template reference errors like `<Navbar {links} />` when only `navLinks` exists).
 - Generated `$types.d.ts` now exports `Actions` (`Record<string, Action>`) so `+page.server.ts` actions type-check under svelte-check.
 - New skill `bosia-database-setup` — on-demand engine swap + table creation, replacing `bosia-brief-database`.
+- `bosia-auth-flow` R8: login/register must redirect server-side (`throw redirect(303)`), never `use:enhance` + client `goto()` — avoids cookie/nav race that drops the session.
 
 ### Changed
 
