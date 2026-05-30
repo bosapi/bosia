@@ -98,7 +98,23 @@ The response shape is the full FileRecord: `{ id, url, key, mime, size, width, h
 - `onError?: (err: Error) => void` — error callback.
 - `children?: Snippet` — slot for custom drop-zone content.
 
-### R5.5 — Delete cleans up storage
+### R5.5 — Files are private by default — auth is mandatory
+
+The feature ships with **per-user ownership**, not public buckets. Three things make this work and **must not be removed**:
+
+1. `file.userId` column on the `file` table (sqlite/pg/mysql) — set on insert, NOT NULL.
+2. `POST /api/files` + `GET /api/files` + `DELETE /api/files/[id]` all require `locals.user` (401 otherwise) and pass `locals.user.id` into FileService.
+3. `GET /uploads/[...path]` requires `locals.user`, looks up the file row by `key`, returns 404 unless `file.userId === locals.user.id`, and responds with `Cache-Control: private, no-store` and `Content-Type` from the DB row.
+
+**Auth feature is a hard prerequisite.** `bosia feat file-upload` will not work in an app without an auth model — `locals.user` would always be undefined and every upload would 401. Install [[bosia-auth-flow]] first.
+
+If the host app stores its user id under a different key (e.g. `locals.account.id`), edit `api-files-server.ts`, `api-files-id-server.ts`, and `uploads-static-server.ts` to match. Do not drop the check.
+
+**Why not just store under `public/uploads/`?** The framework's static fallthrough serves anything in `public/` to anyone — no auth gate, with permissive `Cache-Control`. Once a URL leaks (history, screenshot, shared logs), the file is public forever.
+
+**Why 404, not 403, on ownership mismatch?** 403 lets attackers enumerate which keys exist by user. 404 makes the existence itself indistinguishable from "no such file."
+
+### R5.6 — Delete cleans up storage
 
 When a DB row that references an uploaded file is deleted, the handler **must** unlink the file from disk (or remove it from S3). Otherwise orphans pile up under `./uploads/` (local) or rack up cost (S3).
 
@@ -146,15 +162,21 @@ If `file_upload_install` returns non-empty stderr OR a `404` anywhere in stdout/
 - Storing the returned `id` on a parent entity as if it were the URL.
 - Setting `accept="*"` on UploadArea — backend will reject non-image MIME and the UX confuses the user.
 - Hand-rolling a `<form enctype="multipart">` instead of `UploadArea` — you lose progress + crop + size validation.
+- **Removing the `locals.user` check from `uploads-static-server.ts` "to fix the 404"** — the 404 means auth isn't wired, not that the check is wrong. Wire auth ([[bosia-auth-flow]]) before scaffolding the feature.
+- **Pointing `UPLOAD_DIR` at `./public/uploads`** to bypass the route handler — the static fallthrough is public + CDN-cacheable. Once a URL leaks, the file is public forever.
+- **Making `file.userId` nullable or dropping it** to avoid migrations on legacy data — backfill with a real user id from auth instead. A null `userId` means a public file.
 
 ## Checklist gate
 
 P0:
 
+- [ ] Auth feature ([[bosia-auth-flow]]) installed first — `locals.user` resolvable on the routes below.
 - [ ] `file_upload_install` ran successfully (feat + block installed).
 - [ ] Storage env keys present in `.env.example`.
-- [ ] Migration applied; `files` table exists.
+- [ ] Migration applied; `file` table exists with `user_id` NOT NULL column.
 - [ ] `UploadArea` receives `uploadUrl="/api/files"` and stores `record.url`.
+- [ ] Unauthenticated `GET /uploads/<key>.webp` returns 401 (verify with `curl -I` without a session cookie).
+- [ ] Authenticated cross-user `GET /uploads/<other-user-key>.webp` returns 404 (verify by hitting another user's key with your session).
 
 P1:
 

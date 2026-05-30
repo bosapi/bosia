@@ -5,6 +5,18 @@
 
 ---
 
+## Same-day addition (2026-05-30) — file-upload private-by-default + skill rule
+
+> 0.6.11 made `/uploads/<key>.webp` reach `+server.ts`, but the registry's default handler had no auth and no ownership check, and the `file` table had no `userId` column — so every `bosia feat file-upload` app shipped with anonymous public uploads. Decision: private-by-default + auth as hard prereq. Plain `text("user_id")` on the `file` table (no FK, so the feature stays independent of any specific auth feature). All three API routes (`POST /api/files`, `GET /api/files`, `DELETE /api/files/[id]`) gate on `locals.user`; `GET /uploads/[...path]` looks up the file row by `key`, returns 404 on ownership mismatch (not 403, to prevent enumeration), responds with `Cache-Control: private, no-store` and `Content-Type` from the DB row. Skill updated with R5.5 explaining the model, anti-patterns banning the obvious bypasses, and P0 checklist gating on a 401 + 404 verification curl.
+
+- [x] 🟠 `registry/features/file-upload/file.{sqlite,pg,mysql}.table.ts` — add `user_id` NOT NULL (text for sqlite/pg, varchar(36) for mysql).
+- [x] 🟠 `registry/features/file-upload/file.repository.ts` — `getAllByUser(userId)`, `getByKey(key)`, `getOwned(id, userId)`, `remove(id, userId)` — ownership is part of every query.
+- [x] 🟠 `registry/features/file-upload/file.service.ts` — `upload(file, userId)` stores userId; `getAll(userId)` filters; `getByKey(key)` exposes the row for the route's ownership check; `remove(id, userId)` rejects on ownership mismatch.
+- [x] 🟠 `registry/features/file-upload/api-files-server.ts`, `api-files-id-server.ts`, `uploads-static-server.ts` — all gated on `locals.user`; uploads-static responds with `Content-Type: record.mime` + `Cache-Control: private, no-store`.
+- [x] 🟠 `docs/content/skills/bosia-file-upload/SKILL.md` — new R5.5 "Files are private by default", new anti-patterns (remove auth check, repoint to `public/uploads`, drop `user_id`), P0 checklist gates on 401 + cross-user 404 curl verifications, [[bosia-auth-flow]] declared a hard prereq.
+
+---
+
 ## Same-day addition (2026-05-30) — API routes shadow static fallthrough
 
 > Bug report from fotoku app: `/uploads/<uuid>.webp` returned 404 even though a `+server.ts` was registered at `/uploads/[...path]`. Root cause in `core/server.ts`: the static-files block (`isStaticPath(path)` — matches by extension, `.webp`/`.png`/`.pdf`/etc.) ran BEFORE `resolveApiMatch`, so any URL ending in a static extension short-circuited into the static handler and was looked up against `./public`, `dist/client`, `dist/static` only — never reaching the user's route. Fix: swap the order so `resolveApiMatch` runs first; static + prerender fall through only when no API route matches. Verified via `apps/demo` (`/uploads/sample.webp` now serves with `X-Handler: uploads-route`; `/favicon.svg` and `/bosia-tw.css` still 200 via fallthrough).

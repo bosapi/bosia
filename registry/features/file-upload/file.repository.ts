@@ -1,17 +1,24 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../drizzle";
 import { file } from "./schemas/file.table";
 import type { NewFileRecord } from "./types";
 
 export class FileRepository {
-	static async getAll() {
+	static async getAllByUser(userId: string) {
 		return db.query.file.findMany({
+			where: eq(file.userId, userId),
 			orderBy: (f, { desc }) => [desc(f.createdAt)],
 		});
 	}
 
-	static async getById(id: string) {
-		return db.query.file.findFirst({ where: eq(file.id, id) });
+	static async getByKey(key: string) {
+		return db.query.file.findFirst({ where: eq(file.key, key) });
+	}
+
+	static async getOwned(id: string, userId: string) {
+		return db.query.file.findFirst({
+			where: and(eq(file.id, id), eq(file.userId, userId)),
+		});
 	}
 
 	static async create(data: NewFileRecord) {
@@ -19,7 +26,10 @@ export class FileRepository {
 		return inserted;
 	}
 
-	static async remove(id: string) {
-		return db.delete(file).where(eq(file.id, id)).returning();
+	static async remove(id: string, userId: string) {
+		return db
+			.delete(file)
+			.where(and(eq(file.id, id), eq(file.userId, userId)))
+			.returning();
 	}
 }

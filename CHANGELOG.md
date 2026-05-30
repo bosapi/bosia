@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.6.11] - 2026-05-30
 
+### Changed
+
+- `feat file-upload` now ships private-by-default: the `file` table carries a NOT NULL `user_id`, the upload/list/delete API routes require `locals.user`, and `GET /uploads/<key>` checks ownership before streaming the bytes with `Cache-Control: private, no-store`. Apps that previously relied on anonymous public uploads need to add a user backfill and rerun the migration.
+- `bosia-file-upload` skill now teaches AI to install [[bosia-auth-flow]] first, never to drop the `locals.user` check or point `UPLOAD_DIR` at `./public/uploads`.
+
 ### Fixed
 
 - `+server.ts` API routes now win over the static fallthrough, so handlers can serve URLs ending in `.webp` / `.png` / `.pdf` (previously returned 404 because `isStaticPath` matched the extension and short-circuited into the static-file lookup).

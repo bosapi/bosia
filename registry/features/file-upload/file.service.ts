@@ -11,7 +11,7 @@ function fitInside(srcW: number, srcH: number, maxW: number, maxH: number) {
 }
 
 export class FileService {
-	static async upload(file: File) {
+	static async upload(file: File, userId: string) {
 		if (!ALLOWED.has(file.type)) {
 			throw new Error(`Unsupported type: ${file.type || "unknown"}`);
 		}
@@ -29,6 +29,7 @@ export class FileService {
 		const url = await getStorage().save(key, out, "image/webp");
 
 		const [row] = await FileRepository.create({
+			userId,
 			key,
 			url,
 			mime: "image/webp",
@@ -39,15 +40,19 @@ export class FileService {
 		return row;
 	}
 
-	static getAll() {
-		return FileRepository.getAll();
+	static getAll(userId: string) {
+		return FileRepository.getAllByUser(userId);
 	}
 
-	static async remove(id: string) {
-		const record = await FileRepository.getById(id);
+	static getByKey(key: string) {
+		return FileRepository.getByKey(key);
+	}
+
+	static async remove(id: string, userId: string) {
+		const record = await FileRepository.getOwned(id, userId);
 		if (!record) throw new Error("Not found");
 		await getStorage().delete(record.key);
-		const [row] = await FileRepository.remove(id);
+		const [row] = await FileRepository.remove(id, userId);
 		return row;
 	}
 }

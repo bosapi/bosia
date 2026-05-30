@@ -5,6 +5,7 @@ export const file = sqliteTable("file", {
 	id: text("id")
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
+	userId: text("user_id").notNull(),
 	key: text("key").notNull().unique(),
 	url: text("url").notNull(),
 	mime: text("mime").notNull(),
