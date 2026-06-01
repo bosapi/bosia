@@ -32,15 +32,23 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
 		process.exit(1);
 	}
 
-	// Parse --template flag
+	// Parse --template flag (supports `--template foo` and `--template=foo`)
 	let template: string | undefined;
-	const templateIdx = args.indexOf("--template");
-	if (templateIdx !== -1 && args[templateIdx + 1]) {
-		template = args[templateIdx + 1];
+	const templateEq = args.find((a) => a.startsWith("--template="));
+	if (templateEq) {
+		template = templateEq.slice("--template=".length);
+	} else {
+		const templateIdx = args.indexOf("--template");
+		if (templateIdx !== -1 && args[templateIdx + 1]) {
+			template = args[templateIdx + 1];
+		}
 	}
 
 	// Parse --local flag
 	const isLocal = args.includes("--local");
+
+	// Parse --no-install flag (skip final `bun install`)
+	const skipInstall = args.includes("--no-install");
 
 	// If no --template flag, prompt interactively
 	if (!template) {
@@ -92,6 +100,16 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
 	}
 
 	console.log(`\n✅ Project created at ${targetDir}\n`);
+
+	if (skipInstall) {
+		console.log(`Skipped \`bun install\` (--no-install).\n\ncd ${name} && bun install\n`);
+		const instPath = join(templateDir, "instructions.txt");
+		if (existsSync(instPath)) {
+			const instructions = readFileSync(instPath, "utf-8").trimEnd();
+			if (instructions) console.log(instructions);
+		}
+		return;
+	}
 
 	console.log("Installing dependencies...");
 	const proc = spawn(["bun", "install"], {

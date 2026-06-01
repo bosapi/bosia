@@ -12,8 +12,25 @@ const [, , command, ...args] = process.argv;
 async function main() {
 	switch (command) {
 		case "create": {
+			// Name is the first non-flag token; --template consumes the next arg as its value
+			// (also accepts --template=value form).
+			let name: string | undefined;
+			const rest: string[] = [];
+			for (let i = 0; i < args.length; i++) {
+				const a = args[i];
+				if (a === "--template" && args[i + 1]) {
+					rest.push(a, args[i + 1]);
+					i++;
+					continue;
+				}
+				if (!name && !a.startsWith("-")) {
+					name = a;
+					continue;
+				}
+				rest.push(a);
+			}
 			const { runCreate } = await import("./create.ts");
-			await runCreate(args[0], args.slice(1));
+			await runCreate(name, rest);
 			break;
 		}
 		case "dev": {

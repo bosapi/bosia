@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.12] - 2026-06-01
+
+### Added
+
+- `bosia create --no-install` flag: scaffold files only and skip the final `bun install` step. Lets hosts run the install in a sandbox (container, VM) instead of on the scaffolding host — fixes native-module arch mismatches when the host and runtime OS differ.
+
+### Fixed
+
+- `bosia create` now picks the project name from the first non-flag argument, so `create --local --no-install app` no longer scaffolds into a folder called `--local`.
+
 ## [0.6.11] - 2026-05-30
 
 ### Changed
