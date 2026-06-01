@@ -57,6 +57,27 @@ export const cache: CacheOption = false;
 
 Use this for live data (ticker, per-second counter) or pages where personalisation is not covered by `CACHE_KEYS`.
 
+Note that `$types` is only generated for page routes — API `+server.ts` handlers don't have one. Use the literal there:
+
+```ts
+// +server.ts (API)
+export const cache = false;
+```
+
+## Opting out per response (`Cache-Control` header)
+
+When the route is cacheable in general but a specific response must not be cached, set `Cache-Control` on the response. Bosia honours `no-store`, `no-cache`, and `private` and skips the cache write for that response only:
+
+```ts
+// +server.ts
+export async function GET() {
+	const fresh = await readLiveStatus();
+	return Response.json(fresh, { headers: { "cache-control": "no-store" } });
+}
+```
+
+Use this when the cache decision is per-request (live polling, conditional error paths). Prefer `export const cache = false` when the whole route is dynamic.
+
 ## Server-side `invalidate()`
 
 After a write, evict any matching cache entries so the next read serves fresh HTML:

@@ -87,6 +87,25 @@ import type { CacheOption } from "./$types";
 export const cache: CacheOption = false;
 ```
 
+`$types` is generated for `+page.server.ts` but **not** for API `+server.ts` routes. In an API handler, drop the type import and use the literal — Bosia matches on the value:
+
+```ts
+// +server.ts (API)
+export const cache = false;
+```
+
+**Per-response alternative — `Cache-Control` header.** When you want the route cacheable in general but need to skip caching for specific responses (e.g. live status polling that piggy-backs on an otherwise cacheable endpoint, or a conditional that flips on error), return a response with one of `no-store`, `no-cache`, or `private`:
+
+```ts
+// +server.ts
+export async function GET() {
+	const fresh = await readLiveStatus();
+	return Response.json(fresh, { headers: { "cache-control": "no-store" } });
+}
+```
+
+Bosia's server checks the response's `Cache-Control` header and skips the cache write when any of those directives are present (see `core/server.ts`). This is honoured **per response**, so the same handler can return cached and non-cached responses based on runtime conditions. Prefer the route-level `export const cache = false` when the entire endpoint is dynamic — reach for the header only when the decision is per-request.
+
 R4. **Don't `setCookie` in cacheable paths.** The cache write is skipped if a handler called `cookies.set()` during the request — but the cached entry can never reproduce that `Set-Cookie`. If a cookie is essential, opt the route out with `cache = false`.
 
 R5. **API endpoints invalidate by URL only in v0.6.** `+server.ts` handlers don't have a `depends()` mechanism yet. To clear a cached API response, call `invalidate("/api/posts")` (exact path) or `invalidateAll("/api/")` (prefix). Tag support for API endpoints is on the roadmap.
