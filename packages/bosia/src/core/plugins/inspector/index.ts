@@ -163,7 +163,11 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 	if (process.env.NODE_ENV === "production") return false;
 	const editor = options.editor ?? "code";
 	const endpoint = options.endpoint ?? "/__bosia/locate";
-	const aiEndpoint = options.aiEndpoint;
+	// Env override lets hosts (e.g. bosapi running the app inside a podman
+	// container) point inspector POSTs at an address reachable from inside
+	// the sandbox, since the URL baked into bosia.config.ts resolves to the
+	// container's own loopback there.
+	const aiEndpoint = process.env.BOSIA_INSPECTOR_AI_ENDPOINT?.trim() || options.aiEndpoint;
 	const errorsEnabled = options.errorsEnabled !== false;
 
 	return {

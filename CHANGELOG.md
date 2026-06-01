@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.13] - 2026-06-01
+
+### Added
+
+- `inspector` plugin: env var `BOSIA_INSPECTOR_AI_ENDPOINT` overrides the `aiEndpoint` option from `bosia.config.ts`. Lets sandboxed hosts (bosapi running the app in a podman container) point inspector POSTs at an address reachable from inside the sandbox, since the baked URL otherwise resolves to the container's own loopback.
+
 ## [0.6.12] - 2026-06-01
 
 ### Added
