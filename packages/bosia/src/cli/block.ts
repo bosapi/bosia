@@ -11,6 +11,7 @@ import {
 } from "./registry.ts";
 import { addComponent, initAddRegistry, ensureUtils } from "./add.ts";
 import { mergeFontImports } from "./fonts.ts";
+import { recordBlock } from "./manifest.ts";
 
 // ─── bun x bosia@latest add block <category>/<name> ──────
 // Installs a composed block into src/lib/blocks/<path>/.
@@ -107,6 +108,20 @@ export async function runAddBlock(
 			await bunAdd(cwd, meta.npmDeps);
 		}
 	}
+
+	// 5. Record install in bosia.json manifest.
+	recordBlock(cwd, name, {
+		files: meta.files,
+		...(meta.npmDeps && Object.keys(meta.npmDeps).length > 0
+			? { npmDeps: Object.keys(meta.npmDeps) }
+			: {}),
+		...(meta.dependencies && meta.dependencies.length > 0
+			? { dependencies: meta.dependencies }
+			: {}),
+		...(meta.fonts && Object.keys(meta.fonts).length > 0
+			? { fonts: Object.keys(meta.fonts) }
+			: {}),
+	});
 
 	console.log(`\n✅ ${name} installed at src/lib/blocks/${name}/`);
 }

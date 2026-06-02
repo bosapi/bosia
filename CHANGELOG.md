@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.14] - 2026-06-02
+
+### Added
+
+- `bosia.json` install manifest at project root. Every `feat`, `add`, and `add block` records what was installed (files, deps, options) so future sessions can list and (eventually) uninstall them.
+- `bosia feat list` — show installed features with their options.
+- `bosia add list` — show installed components and blocks.
+
 ## [0.6.13] - 2026-06-01
 
 ### Added

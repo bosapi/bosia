@@ -73,6 +73,9 @@ async function main() {
 			} else if (sub === "font") {
 				const { runAddFont } = await import("./font.ts");
 				await runAddFont(positional[1], positional[2]);
+			} else if (sub === "list") {
+				const { runAddList } = await import("./add.ts");
+				runAddList();
 			} else {
 				const { runAdd } = await import("./add.ts");
 				await runAdd(positional, flags);
@@ -80,12 +83,17 @@ async function main() {
 			break;
 		}
 		case "feat": {
+			const nameIdx = args.findIndex((a) => !a.startsWith("-"));
+			const featName = nameIdx === -1 ? undefined : args[nameIdx];
+			if (featName === "list") {
+				const { runFeatList } = await import("./feat.ts");
+				runFeatList();
+				break;
+			}
 			const { runFeat } = await import("./feat.ts");
 			// First non-flag token is the feature name; everything else flows through to the
 			// feature's own option parser. Global flags (-y, --local) are also accepted here
 			// and get split out inside runFeat.
-			const nameIdx = args.findIndex((a) => !a.startsWith("-"));
-			const featName = nameIdx === -1 ? undefined : args[nameIdx];
 			const rest =
 				nameIdx === -1 ? args : [...args.slice(0, nameIdx), ...args.slice(nameIdx + 1)];
 			await runFeat(featName, rest);
@@ -109,9 +117,11 @@ Commands:
   add block <cat>/<name>    Add a composed block from the registry
   add theme <name>          Add a theme (tokens.css) from the registry
   add font <family> <url>   Prepend an @import url(...) for a font family to src/app.css
+  add list                  List installed components and blocks (reads bosia.json)
   feat [-y] <feature> [feature options...]   Add a feature scaffold from the registry [--local]
                             -y / --yes auto-confirms prompts and uses each feature's default option values
                             Feature-specific options (e.g. file-upload's -d) follow the feature name
+  feat list                 List installed features (reads bosia.json)
 
 Examples:
   bun x bosia@latest create my-app
@@ -130,6 +140,8 @@ Examples:
   bun x bosia@latest add theme editorial
   bun x bosia@latest add font "Fredoka" "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap"
   bun x bosia@latest feat login
+  bun x bosia feat list
+  bun x bosia add list
 `);
 			break;
 		}

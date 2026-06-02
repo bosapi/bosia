@@ -11,6 +11,7 @@ import {
 	mergePkgJson,
 	bunAdd,
 } from "./registry.ts";
+import { recordFeature, readManifest } from "./manifest.ts";
 
 // ─── bun x bosia@latest feat <feature> [--local] ─────────
 // Fetches a feature scaffold from the GitHub registry (or local
@@ -268,6 +269,7 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 
 	// Apply each file entry per its strategy. Skip entries whose `when` clause doesn't match.
 	const createdDirs = new Set<string>();
+	const recordedFiles: { target: string; strategy: string; marker?: string }[] = [];
 	for (const entry of meta.files) {
 		if (entry.when && !whenMatches(entry.when, myOptions)) continue;
 		const dest = join(cwd, entry.target);
@@ -286,6 +288,11 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 			feat: name,
 			marker: entry.marker ?? name,
 			skipPrompts: nextOptions.skipPrompts ?? false,
+		});
+		recordedFiles.push({
+			target: entry.target,
+			strategy,
+			...(entry.marker ? { marker: entry.marker } : {}),
 		});
 	}
 
@@ -335,6 +342,32 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 			console.log(`\n🔑 Added to .env: ${toAdd.map((l) => l.split("=")[0]).join(", ")}`);
 		}
 	}
+
+	// Record install in bosia.json manifest (overwrites prior entry on re-install).
+	recordFeature(cwd, name, {
+		...(Object.keys(myOptions).length > 0 ? { options: myOptions } : {}),
+		files: recordedFiles,
+		...(Object.keys(meta.npmDeps).length > 0 ? { npmDeps: Object.keys(meta.npmDeps) } : {}),
+		...(meta.npmDevDeps && Object.keys(meta.npmDevDeps).length > 0
+			? { npmDevDeps: Object.keys(meta.npmDevDeps) }
+			: {}),
+		...(meta.envVars && Object.keys(meta.envVars).length > 0
+			? { envVars: Object.keys(meta.envVars) }
+			: {}),
+		...((meta.features && meta.features.length > 0) ||
+		meta.components.length > 0 ||
+		(meta.blocks && meta.blocks.length > 0)
+			? {
+					deps: {
+						...(meta.features && meta.features.length > 0
+							? { features: meta.features }
+							: {}),
+						...(meta.components.length > 0 ? { components: meta.components } : {}),
+						...(meta.blocks && meta.blocks.length > 0 ? { blocks: meta.blocks } : {}),
+					},
+				}
+			: {}),
+	});
 
 	if (isRoot) {
 		console.log(`\n✅ Feature "${name}" scaffolded!`);
@@ -494,6 +527,30 @@ function mergeJsonPreserve(target: unknown, source: unknown): unknown {
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
 	return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+// ─── bosia feat list ──────────────────────────────────────
+
+export function runFeatList(): void {
+	const manifest = readManifest();
+	const entries = Object.entries(manifest.features);
+	if (entries.length === 0) {
+		console.log("No features installed.");
+		console.log("Install one with: bun x bosia@latest feat <name>");
+		return;
+	}
+	console.log(`⬡ Installed features (${entries.length}):\n`);
+	const nameWidth = Math.max(...entries.map(([n]) => n.length));
+	for (const [name, entry] of entries) {
+		const opts = entry.options
+			? Object.entries(entry.options)
+					.map(([k, v]) => `${k}=${v}`)
+					.join(", ")
+			: "";
+		const date = entry.installedAt.slice(0, 10);
+		const optsSuffix = opts ? `  (${opts})` : "";
+		console.log(`  ${name.padEnd(nameWidth)}  ${date}${optsSuffix}`);
+	}
 }
 
 // Re-exports for create.ts

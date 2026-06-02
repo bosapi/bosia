@@ -120,6 +120,16 @@ bun x bosia@latest add shop/cart           # → src/lib/components/shop/cart/
 bun x bosia@latest add dashboard/widgets   # → src/lib/components/dashboard/widgets/
 ```
 
+## bosia add list
+
+List components and blocks recorded in `bosia.json`.
+
+```bash
+bosia add list
+```
+
+Reads the `bosia.json` install manifest at the project root and prints every component and block the CLI installed, with the install date.
+
 ## bosia feat
 
 Scaffold a feature (routes + components + server files).
@@ -131,6 +141,7 @@ bosia feat <feature>
 - Installs required UI components first via `bosia add`
 - Copies feature files to the appropriate locations in your project
 - Installs required npm packages
+- Records the install in `bosia.json` at the project root (see [Install manifest](#install-manifest))
 - Registry hosted on GitHub: `bosapi/bosia/main/registry/features/`
 
 Example:
@@ -138,3 +149,41 @@ Example:
 ```bash
 bosia feat login
 ```
+
+## bosia feat list
+
+List features recorded in `bosia.json`.
+
+```bash
+bosia feat list
+```
+
+Prints each installed feature with its install date and the option values that were chosen (e.g. `drizzle.dialect=sqlite`).
+
+## Install manifest
+
+Every `bosia feat`, `bosia add`, and `bosia add block` run writes an entry to **`bosia.json`** at the project root. The file is committed to git so the team and the CLI share a single source of truth about which features, components, and blocks are present.
+
+```json
+{
+	"version": 1,
+	"features": {
+		"todo": {
+			"installedAt": "2026-06-02T10:00:00.000Z",
+			"options": { "drizzle.dialect": "sqlite" },
+			"files": [{ "target": "src/routes/todos/+page.svelte", "strategy": "write" }],
+			"npmDeps": ["drizzle-orm"],
+			"deps": { "features": ["drizzle"], "components": ["button"] }
+		}
+	},
+	"components": {
+		"ui/button": {
+			"installedAt": "2026-06-02T10:00:00.000Z",
+			"files": ["button.svelte", "index.ts"]
+		}
+	},
+	"blocks": {}
+}
+```
+
+The manifest is created lazily on the first install — projects scaffolded before `0.6.14` get a manifest on their next `feat` / `add` call.

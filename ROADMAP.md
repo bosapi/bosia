@@ -411,7 +411,7 @@
 - [ ] 🟡 Validation: error early when two installed features write to the same target with `write` strategy (force one to declare append-line/append-block)
 - [ ] 🟠 `auth` feature scaffold — uses `append-block` to register hooks in `src/hooks.server.ts` and routes barrel
 - [x] 🟡 `s3` / `storage` feature — bucket client + upload route using new strategies → shipped as `file-upload` in v0.6.4 (2026-05-26): `bun x bosia@latest feat [-y] file-upload [-d sqlite|postgres|mysql]` scaffolds Drizzle-backed metadata + local/S3 adapter + `/api/files` POST that pipes through `Bun.Image` compression (WebP @ 0.85, fit-inside 1920×1080). Install-time dialect selection via the new **per-feature options** mechanism — `-d` is declared in `file-upload`'s own `meta.json`, not hard-coded in the CLI
-- [ ] 🟡 Track installed features per project (`.bosia/installed.json`) — enable `bosia feat list` and uninstall
+- [x] 🟡 Track installed features per project (`bosia.json` at root, committed) — enables `bosia feat list` and `bosia add list`. Schema: `{ version, features, components, blocks }` keyed by name; each entry records `installedAt`, `files`, `npmDeps`, deps, and per-feature `options`. Manifest written on every install (feat/add/add block); new projects start with no manifest, it's created lazily on first install. Existing apps are not backfilled — Phase 2 (uninstall + refcount) will follow.
 
 ---
 

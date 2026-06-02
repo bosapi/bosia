@@ -10,6 +10,7 @@ import {
 	mergePkgJson,
 	bunAdd,
 } from "./registry.ts";
+import { recordComponent, readManifest } from "./manifest.ts";
 
 // ─── bun x bosia@latest add <component> ──────────────────
 // Fetches a component from the GitHub registry (or local registry
@@ -164,7 +165,45 @@ export async function addComponent(name: string, root = false, options?: Install
 		}
 	}
 
+	// Record install in bosia.json manifest.
+	recordComponent(cwd, fullPath, {
+		files: meta.files,
+		...(Object.keys(meta.npmDeps).length > 0 ? { npmDeps: Object.keys(meta.npmDeps) } : {}),
+		...(meta.dependencies.length > 0 ? { dependencies: meta.dependencies } : {}),
+	});
+
 	if (root) console.log(`\n✅ ${name} installed at src/lib/components/${fullPath}/`);
+}
+
+// ─── bosia add list ───────────────────────────────────────
+
+export function runAddList(): void {
+	const manifest = readManifest();
+	const components = Object.entries(manifest.components);
+	const blocks = Object.entries(manifest.blocks);
+
+	if (components.length === 0 && blocks.length === 0) {
+		console.log("No components or blocks installed.");
+		console.log("Install one with: bun x bosia@latest add <component>");
+		return;
+	}
+
+	if (components.length > 0) {
+		console.log(`⬡ Installed components (${components.length}):\n`);
+		const w = Math.max(...components.map(([n]) => n.length));
+		for (const [name, entry] of components) {
+			console.log(`  ${name.padEnd(w)}  ${entry.installedAt.slice(0, 10)}`);
+		}
+	}
+
+	if (blocks.length > 0) {
+		if (components.length > 0) console.log("");
+		console.log(`⬡ Installed blocks (${blocks.length}):\n`);
+		const w = Math.max(...blocks.map(([n]) => n.length));
+		for (const [name, entry] of blocks) {
+			console.log(`  ${name.padEnd(w)}  ${entry.installedAt.slice(0, 10)}`);
+		}
+	}
 }
 
 // ─── Ensure $lib/utils.ts exists ─────────────────────────────
