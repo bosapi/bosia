@@ -1,7 +1,26 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.11**
+> Current version: **0.6.15**
+
+---
+
+## Same-day addition (2026-06-04) — `parent()` returns `{}` on client-side JSON nav
+
+> Bug report from komba app: `+page.server.ts` calling `(await parent()).farmId` worked on SSR but returned `undefined` on every client-side navigation, breaking any page that pulls layout data through `parent()` (14 routes affected). Root cause in `core/renderer.ts` (`loadRouteData`): the client data endpoint `/__bosia/data/<route>.json` ships a `LoaderMask` that marks already-cached layout servers as `layouts[i] === false`. The renderer's skip path sets `layoutData[ls.depth] = null` and **does not contribute the skipped layer's data to `parentData`** (see comment at lines 299–303: "skipped loaders contribute `{}` to parent and the response slot is `null`; the client merges with its cached data"). The page server then runs with `parent = async () => ({})`, so any `parent()` consumer sees an empty object. SSR works because nothing is skipped. Workaround in user code: move shared values onto `event.locals` via `hooks.server.ts` and read from `locals` in page servers. But every Bosia app written against SvelteKit muscle memory will hit this silently.
+
+Decision: make `parent()` see the real parent chain even when layer loaders are skipped. Two viable shapes — pick one:
+
+- **A (server-side):** when handling `/__bosia/data/*.json`, accept a `parentSnapshots` payload in the POST body (the client already has the cached data per skipped layer); merge those into `parentData` before running the page loader. Lowest churn, no extra round-trips.
+- **B (client-side):** when a page loader is selected to re-run and any ancestor layout is skipped, re-run those layouts server-side too. Simpler invariant ("parent() always sees fresh data") but defeats the whole point of selective re-runs.
+
+A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based farm/user scope) is the documented pattern even after the framework fix lands, since `locals` is also better for typed access.
+
+- [ ] 🟠 `packages/bosia/src/core/client/router.svelte.ts` — when issuing `/__bosia/data/<route>.json`, include the cached `parentSnapshots: Record<depth, Record<string, any>>` in the request body for every layout layer being skipped.
+- [ ] 🟠 `packages/bosia/src/core/server.ts` (or wherever the `/__bosia/data` route is wired) — parse `parentSnapshots` from the body and forward into `loadRouteData` via a new arg.
+- [ ] 🟠 `packages/bosia/src/core/renderer.ts` — `loadRouteData` accepts `parentSnapshots?: Record<number, Record<string, any>>`; in the skip branch, `parentData = { ...parentData, ...(parentSnapshots?.[ls.depth] ?? {}) }` so downstream loaders see the same data they would on SSR. Trust boundary note: client-supplied parent data is just a perf hint, never authoritative — code that relies on auth/role/farmId for authorization must still read from `event.locals` populated by `hooks.server.ts`.
+- [ ] ⚪ `docs/content/skills/bosia-routing/SKILL.md` (or a new skill rule in `bosia-auth-flow`) — add R: "Don't use `parent()` for scope identifiers (farmId, orgId, userId) — read from `event.locals` populated in `hooks.server.ts`." Include a one-paragraph explainer that `parent()` is fine for view-layer data but `locals` is the source of truth for cross-loader scope.
+- [ ] ⚪ Regression test under `apps/demo` (or new `apps/parent-data-nav`): a layout server returning `{ orgId }`, a child `+page.server.ts` asserting `(await parent()).orgId === "..."`. Verify SSR pass AND a client-nav JSON fetch pass.
 
 ---
 

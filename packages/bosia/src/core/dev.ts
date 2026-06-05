@@ -241,7 +241,13 @@ const devServer = Bun.serve({
 		// rather than the inner-app's host (localhost:APP_PORT).
 		const reqUrl = new URL(req.url);
 		const target = new URL(req.url);
-		target.hostname = "localhost";
+		// 127.0.0.1 instead of "localhost" — under systemd `IPAddressAllow=localhost`
+		// the eBPF cgroup filter only permits packets to/from 127.0.0.0/8 + ::1.
+		// "localhost" resolves to both ::1 and 127.0.0.1; bun's fetch() picks IPv6
+		// first, but the inner Bun.serve() listens IPv4-only, so the v6 connect
+		// fails fast and (under bun 1.3) doesn't fall back to v4. Pinning to v4
+		// avoids the failure path entirely.
+		target.hostname = "127.0.0.1";
 		target.port = String(APP_PORT);
 
 		const forwardedHeaders = new Headers(req.headers);

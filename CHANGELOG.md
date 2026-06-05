@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.15] - 2026-06-05
+
+### Fixed
+
+- `parent()` now includes cached parent data on client-side navigation even when layout loaders are skipped.
+
 ## [0.6.14] - 2026-06-02
 
 ### Added
