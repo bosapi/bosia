@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.16**
+> Current version: **0.6.17**
 
 ---
 
@@ -26,6 +26,19 @@ Decision: emit parsed segments to `dist/app-html.json` during build; renderer re
 
 - [x] 🟠 `packages/bosia/src/core/appHtml.ts` — add `writeAppHtmlSegments(segments, outDir)` (serializes to `${outDir}/app-html.json`); `getAppHtmlSegments(cwd)` now tries persisted artifact first, falls back to `loadAppHtmlTemplate(cwd)`.
 - [x] 🟠 `packages/bosia/src/core/build.ts` — after writing route-manifest, call `writeAppHtmlSegments(appHtml)` so production runtime has the segments inside `dist/`.
+
+---
+
+## 0.6.17 (2026-06-07) — production runtime also needed `src/hooks.server.ts`, `bosia.config.ts`, and `public/`
+
+> Same komba Dockerfile incident as `src/app.html` above. Once dist contained `app-html.json`, the app booted but every authenticated request 303'd to `/login`. Root causes: `core/server.ts:53` reads `src/hooks.server.ts` from `process.cwd()` (no fallback) so user hooks never registered → `event.locals.user` always `undefined` → `(private)/+layout.server.ts` redirected to login forever. Same shape for `core/config.ts loadBosiaConfig` (reads `bosia.config.ts` from cwd, runs Bun.build at server start). And `core/staticManifest.ts` only walked `./public` — production images that drop `public/` lost `/bosia-tw.css`, `/favicon.svg`, etc.
+
+Decision: extend the dist-first / src-fallback pattern (already used for `app-html.json`) to hooks, config, and static assets. Build emits self-contained ESM artifacts under `dist/`; runtime prefers them and falls back to source for dev. Static manifest walks `dist/static/` (which the build already populates by copying `public/`) so containers can drop `public/`.
+
+- [x] 🟠 `packages/bosia/src/core/build.ts` — new `bundleRuntimeUserFiles(cwd)` step after server bundle: read user's `package.json` deps, externalize npm packages + bosia/elysia/bun/svelte, Bun.build `src/hooks.server.ts` → `dist/hooks.server.js` and `bosia.config.{ts,js,mjs}` → `dist/bosia.config.js`. Single-file output; relative project imports inline.
+- [x] 🟠 `packages/bosia/src/core/server.ts` — hook loader checks `${OUT_DIR}/hooks.server.js` first, falls back to `src/hooks.server.ts`. Log line reports which path won.
+- [x] 🟠 `packages/bosia/src/core/config.ts` — `loadBosiaConfig` checks `${OUT_DIR}/bosia.config.js` first, dynamic-imports it directly (skips Bun.build at server start); falls back to the existing compile-from-source path for dev.
+- [x] 🟠 `packages/bosia/src/core/staticManifest.ts` — walk `${outDir}/static/` (mirror of `public/` written by build) so prod images can ship only `dist/`. `addOnce` keeps `public/` canonical when both exist (dev double-walk).
 
 ---
 

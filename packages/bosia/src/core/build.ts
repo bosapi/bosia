@@ -1,4 +1,4 @@
-import { writeFileSync, rmSync, mkdirSync } from "fs";
+import { writeFileSync, rmSync, mkdirSync, existsSync } from "fs";
 import { join, relative } from "path";
 
 import { scanRoutes } from "./scanner.ts";
@@ -16,6 +16,9 @@ import { loadAppHtmlTemplate, writeAppHtmlSegments } from "./appHtml.ts";
 
 // Resolved from this file's location inside the bosia package
 const CORE_DIR = import.meta.dir;
+
+// Runtime externals: never bundled into dist/hooks.server.js or dist/bosia.config.js
+const BOSIA_RUNTIME_EXTERNALS = ["bosia", "elysia", "bun", "svelte", "svelte/server"];
 
 // ─── Entry Point ─────────────────────────────────────────
 
@@ -255,6 +258,13 @@ writeFileSync(`${OUT_DIR}/route-manifest.json`, JSON.stringify(manifest, null, 2
 // falls back to parsing `src/app.html` for dev.
 writeAppHtmlSegments(appHtml);
 
+// 8d. Bundle user `src/hooks.server.ts` and `bosia.config.{ts,js,mjs}` into
+// `dist/` so production images can copy only `dist/` + `node_modules/` —
+// `src/` is never required at runtime. The runtime (server.ts, config.ts)
+// prefers these artifacts over the source files. npm packages stay external
+// so they resolve against the app's node_modules at runtime.
+await bundleRuntimeUserFiles(process.cwd());
+
 // 9. Prerender static routes
 await prerenderStaticRoutes(manifest);
 
@@ -268,3 +278,75 @@ for (const p of userPlugins) {
 }
 
 console.log(`\n🎉 Build complete in ${Math.round(performance.now() - buildStart)}ms!`);
+
+// ─── Helpers ─────────────────────────────────────────────
+
+async function readUserDependencyNames(cwd: string): Promise<string[]> {
+	try {
+		const pkg = (await Bun.file(join(cwd, "package.json")).json()) as {
+			dependencies?: Record<string, string>;
+			peerDependencies?: Record<string, string>;
+			optionalDependencies?: Record<string, string>;
+		};
+		return Array.from(
+			new Set([
+				...Object.keys(pkg.dependencies ?? {}),
+				...Object.keys(pkg.peerDependencies ?? {}),
+				...Object.keys(pkg.optionalDependencies ?? {}),
+			]),
+		);
+	} catch {
+		return [];
+	}
+}
+
+async function bundleRuntimeUserFiles(cwd: string): Promise<void> {
+	const userDeps = await readUserDependencyNames(cwd);
+	// Externalize every npm package + every subpath (e.g. `bosia/plugins/inspector`).
+	// Bun.build's `external` accepts globs.
+	const externalNames = Array.from(new Set([...BOSIA_RUNTIME_EXTERNALS, ...userDeps]));
+	const external = externalNames.flatMap((n) => [n, `${n}/*`]);
+
+	// 1) src/hooks.server.ts → dist/hooks.server.js
+	const hooksSrc = join(cwd, "src", "hooks.server.ts");
+	if (existsSync(hooksSrc)) {
+		const result = await Bun.build({
+			entrypoints: [hooksSrc],
+			outdir: OUT_DIR,
+			target: "bun",
+			format: "esm",
+			naming: { entry: "hooks.server.[ext]" },
+			minify: isProduction,
+			sourcemap: isProduction ? "none" : "linked",
+			external,
+		});
+		if (!result.success) {
+			console.error("❌ hooks.server bundle failed:");
+			for (const msg of result.logs) console.error(msg);
+			process.exit(1);
+		}
+		console.log("🪝 Bundled hooks.server → " + OUT_DIR + "/hooks.server.js");
+	}
+
+	// 2) bosia.config.{ts,js,mjs} → dist/bosia.config.js
+	const configCandidates = ["bosia.config.ts", "bosia.config.js", "bosia.config.mjs"];
+	const configSrc = configCandidates.map((n) => join(cwd, n)).find((p) => existsSync(p));
+	if (configSrc) {
+		const result = await Bun.build({
+			entrypoints: [configSrc],
+			outdir: OUT_DIR,
+			target: "bun",
+			format: "esm",
+			naming: { entry: "bosia.config.[ext]" },
+			minify: isProduction,
+			sourcemap: isProduction ? "none" : "linked",
+			external,
+		});
+		if (!result.success) {
+			console.error("❌ bosia.config bundle failed:");
+			for (const msg of result.logs) console.error(msg);
+			process.exit(1);
+		}
+		console.log("⚙️  Bundled bosia.config → " + OUT_DIR + "/bosia.config.js");
+	}
+}

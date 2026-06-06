@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
 
+import { OUT_DIR } from "./paths.ts";
 import type { BosiaConfig, BosiaPlugin } from "./types/plugin.ts";
 
 let cached: BosiaConfig | null = null;
@@ -25,6 +26,25 @@ function findConfigPath(cwd: string): string | null {
  */
 export async function loadBosiaConfig(cwd: string = process.cwd()): Promise<BosiaConfig> {
 	if (cached && cachedFromPath === cwd) return cached;
+
+	// Production runtime: prefer the pre-bundled `${OUT_DIR}/bosia.config.js`
+	// produced by the build. Avoids needing `bosia.config.ts` in the image and
+	// skips an on-the-fly Bun.build at server startup.
+	const prebuiltPath = join(cwd, OUT_DIR, "bosia.config.js");
+	if (existsSync(prebuiltPath)) {
+		const mod = (await import(prebuiltPath)) as { default?: BosiaConfig };
+		const config = mod.default;
+		if (!config || typeof config !== "object") {
+			throw new Error(
+				`${prebuiltPath} must export a default object (use \`export default defineConfig({...})\`).`,
+			);
+		}
+		const rawPlugins = Array.isArray(config.plugins) ? config.plugins : [];
+		const plugins = rawPlugins.filter((p): p is BosiaPlugin => Boolean(p));
+		cached = { plugins };
+		cachedFromPath = cwd;
+		return cached;
+	}
 
 	const configPath = findConfigPath(cwd);
 	if (!configPath) {

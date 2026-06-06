@@ -64,6 +64,16 @@ export function buildStaticManifest(outDir: string): StaticManifest {
 		}
 	}
 
+	// `dist/static/` mirrors `public/` (the build copies it for SSG output).
+	// Walk it too so production images can drop `public/` and ship only `dist/`.
+	// `addOnce` keeps the `public/` source canonical when both exist (dev).
+	const staticRoot = join(outAbs, "static");
+	if (existsSync(staticRoot)) {
+		for (const { abs, rel } of walk(staticRoot)) {
+			addOnce(manifest, `/${rel}`, { absPath: abs });
+		}
+	}
+
 	if (existsSync(outAbs)) {
 		let rootEntries: Array<{ name: string; isDirectory(): boolean; isFile(): boolean }>;
 		try {

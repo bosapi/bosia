@@ -67,7 +67,6 @@ describe("buildStaticManifest", () => {
 		touch(join(outDir, "robots.txt"), "User-agent: *");
 		touch(join(outDir, "manifest.json"), "{}");
 		touch(join(outDir, "route-manifest.json"), "{}");
-		touch(join(outDir, "static", "ghost.txt"), "should not appear");
 		touch(join(outDir, "prerendered", "index.html"), "<html/>");
 		touch(join(outDir, "server", "render.js"), "// server");
 
@@ -76,9 +75,30 @@ describe("buildStaticManifest", () => {
 		expect(m.has("/robots.txt")).toBe(true);
 		expect(m.has("/manifest.json")).toBe(false);
 		expect(m.has("/route-manifest.json")).toBe(false);
-		expect(m.has("/ghost.txt")).toBe(false);
 		expect(m.has("/index.html")).toBe(false);
 		expect(m.has("/render.js")).toBe(false);
+	});
+
+	test("dist/static/* is walked so production images can drop ./public", () => {
+		// Build copies public/ → dist/static/ as the SSG mirror. Containers ship
+		// only dist/, so the manifest must also serve from dist/static/.
+		touch(join(outDir, "static", "favicon.ico"), "icon");
+		touch(join(outDir, "static", "img", "logo.svg"), "<svg/>");
+
+		const m = buildStaticManifest(outDir);
+
+		expect(m.get("/favicon.ico")?.absPath).toBe(join(outDir, "static", "favicon.ico"));
+		expect(m.get("/img/logo.svg")?.absPath).toBe(join(outDir, "static", "img", "logo.svg"));
+	});
+
+	test("./public wins over dist/static when both exist (dev)", () => {
+		// In dev both exist; the public/ source must stay canonical.
+		touch(join(workdir, "public", "favicon.ico"), "from public");
+		touch(join(outDir, "static", "favicon.ico"), "from dist mirror");
+
+		const m = buildStaticManifest(outDir);
+
+		expect(m.get("/favicon.ico")?.absPath).toBe(join(workdir, "public", "favicon.ico"));
 	});
 
 	test("/__bosia/* keys cannot be added even if a user creates the file in public/", () => {

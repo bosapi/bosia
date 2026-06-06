@@ -45,21 +45,32 @@ import {
 import { getServerTime } from "../lib/utils.ts";
 
 // ─── User Hooks ──────────────────────────────────────────
-// Load src/hooks.server.ts if present. Uses process.cwd() so
-// Bun can resolve it at runtime without bundling user code.
+// Load user hooks. Production prefers the pre-bundled `${OUT_DIR}/hooks.server.js`
+// emitted by the build (single-file, all relative imports inlined, npm deps left
+// external) so production images can ship only `dist/` + `node_modules/` without
+// the `src/` tree. Dev (and any environment lacking the artifact) falls back to
+// importing `src/hooks.server.ts` directly so edits hot-reload without a build.
 
 let userHandle: Handle | null = null;
 
-const hooksPath = join(process.cwd(), "src", "hooks.server.ts");
-if (existsSync(hooksPath)) {
+const prebuiltHooksPath = join(process.cwd(), OUT_DIR, "hooks.server.js");
+const srcHooksPath = join(process.cwd(), "src", "hooks.server.ts");
+const hooksPath = existsSync(prebuiltHooksPath)
+	? prebuiltHooksPath
+	: existsSync(srcHooksPath)
+		? srcHooksPath
+		: null;
+if (hooksPath) {
 	try {
 		const mod = await import(hooksPath);
 		if (typeof mod.handle === "function") {
 			userHandle = mod.handle as Handle;
-			console.log("🪝 Loaded hooks.server.ts");
+			console.log(
+				`🪝 Loaded ${hooksPath === prebuiltHooksPath ? "dist/hooks.server.js" : "src/hooks.server.ts"}`,
+			);
 		}
 	} catch (err) {
-		console.warn("⚠️  Failed to load hooks.server.ts:", err);
+		console.warn("⚠️  Failed to load hooks.server:", err);
 	}
 }
 

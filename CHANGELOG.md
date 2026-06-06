@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.17] - 2026-06-07
+
+### Changed
+
+- Production runtime no longer needs `src/hooks.server.ts` or `bosia.config.ts` — build bundles them to `dist/hooks.server.js` and `dist/bosia.config.js`; runtime loads from `dist/` first and falls back to source for dev.
+- Static assets in `public/` are also served from `dist/static/` in production, so containers can ship only `dist/` (plus `node_modules/`).
+
 ## [0.6.16] - 2026-06-06
 
 ### Changed
