@@ -1,7 +1,18 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.15**
+> Current version: **0.6.16**
+
+---
+
+## Same-day addition (2026-06-06) — production runtime needed `src/app.html`
+
+> Bug report from komba Dockerfile build: runner stage copies only `dist/`, `package.json`, `node_modules`, `CHANGELOG.md`. Container boots → `core/renderer.ts:119` calls `getAppHtmlSegments()` at module load → reads `src/app.html` from `process.cwd()` → file missing → throws `src/app.html is required but not found`. Unlike SvelteKit (whose Vite plugin compiles `app.html` into the build bundle), Bosia kept the template as a runtime file. Forces every consumer to copy `src/` into the runtime image or hand-list `src/app.html`.
+
+Decision: emit parsed segments to `dist/app-html.json` during build; renderer reads dist first, falls back to `src/app.html` for dev/HMR. Zero app changes — `dist/` is already in every Docker COPY.
+
+- [x] 🟠 `packages/bosia/src/core/appHtml.ts` — add `writeAppHtmlSegments(segments, outDir)` (serializes to `${outDir}/app-html.json`); `getAppHtmlSegments(cwd)` now tries persisted artifact first, falls back to `loadAppHtmlTemplate(cwd)`.
+- [x] 🟠 `packages/bosia/src/core/build.ts` — after writing route-manifest, call `writeAppHtmlSegments(appHtml)` so production runtime has the segments inside `dist/`.
 
 ---
 

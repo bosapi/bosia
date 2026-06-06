@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.16] - 2026-06-06
+
+### Changed
+
+- Production runtime no longer needs `src/app.html` — build now writes parsed segments to `dist/app-html.json`, so Docker images can copy only `dist/`.
+
 ## [0.6.15] - 2026-06-05
 
 ### Fixed

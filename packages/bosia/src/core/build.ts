@@ -12,7 +12,7 @@ import { generateEnvModules } from "./envCodegen.ts";
 import { BOSIA_NODE_PATH, OUT_DIR, resolveBosiaBin } from "./paths.ts";
 import { loadPlugins } from "./config.ts";
 import type { BuildContext } from "./types/plugin.ts";
-import { loadAppHtmlTemplate } from "./appHtml.ts";
+import { loadAppHtmlTemplate, writeAppHtmlSegments } from "./appHtml.ts";
 
 // Resolved from this file's location inside the bosia package
 const CORE_DIR = import.meta.dir;
@@ -249,6 +249,11 @@ console.log(`✅ Server entry:  ${OUT_DIR}/server/${serverEntry}`);
 
 // 8b. Persist route manifest for runtime plugins (backend.after consumers like OpenAPI).
 writeFileSync(`${OUT_DIR}/route-manifest.json`, JSON.stringify(manifest, null, 2));
+
+// 8c. Persist parsed app.html segments so the production runtime doesn't need
+// `src/app.html` in the image. Renderer reads `${OUT_DIR}/app-html.json` first,
+// falls back to parsing `src/app.html` for dev.
+writeAppHtmlSegments(appHtml);
 
 // 9. Prerender static routes
 await prerenderStaticRoutes(manifest);

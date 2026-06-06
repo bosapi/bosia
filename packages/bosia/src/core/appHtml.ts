@@ -1,5 +1,7 @@
-import { existsSync, readFileSync } from "fs";
-import { join } from "path";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
+import { join, dirname } from "path";
+
+import { OUT_DIR } from "./paths.ts";
 
 // ─── Types ────────────────────────────────────────────────
 
@@ -70,13 +72,37 @@ function replaceStaticPlaceholders(template: string): string {
 	return template;
 }
 
+// ─── Persisted Segments (production runtime) ──────────────
+// At build time we serialize the parsed segments to `${OUT_DIR}/app-html.json`
+// so the production runtime can read them without needing `src/app.html` in
+// the image. This lets minimal Docker images copy only `dist/`.
+
+export function writeAppHtmlSegments(segments: AppHtmlSegments, outDir: string = OUT_DIR): string {
+	const target = join(outDir, "app-html.json");
+	mkdirSync(dirname(target), { recursive: true });
+	writeFileSync(target, JSON.stringify(segments));
+	return target;
+}
+
+function readPersistedSegments(cwd: string): AppHtmlSegments | undefined {
+	const persistedPath = join(cwd, OUT_DIR, "app-html.json");
+	if (!existsSync(persistedPath)) return undefined;
+	try {
+		return JSON.parse(readFileSync(persistedPath, "utf-8")) as AppHtmlSegments;
+	} catch {
+		return undefined;
+	}
+}
+
 // ─── Cached Getter ────────────────────────────────────────
 
 export function getAppHtmlSegments(cwd: string = process.cwd()): AppHtmlSegments {
 	if (cachedSegments !== undefined) {
 		return cachedSegments;
 	}
-	cachedSegments = loadAppHtmlTemplate(cwd);
+	// Prefer persisted dist artifact (production runtime — no `src/` in image).
+	// Fall back to parsing `src/app.html` directly (dev mode, build step).
+	cachedSegments = readPersistedSegments(cwd) ?? loadAppHtmlTemplate(cwd);
 	return cachedSegments;
 }
 
