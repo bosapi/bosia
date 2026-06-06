@@ -73,29 +73,28 @@ export const students = pgTable("students", {
 
 ### R2 — Repository owns DB calls; service owns logic
 
-Two files, two responsibilities. The repository is the **only** place that calls `db.select/insert/update/delete` for a feature. The service parses input with valibot, then calls repository functions. Auth checks, error mapping, and transaction orchestration live in the service. Auth contextual data (user id, scope) is passed in from the caller — the service does not read `locals`.
+Two files, two responsibilities. The repository is the **only** place that imports `db` and the **only** place that calls `db.select/insert/update/delete` for a feature. The service parses input with valibot, then calls repository functions with **domain args only** (no `db`, no `tx`). Auth checks and error mapping live in the service; transactions are wrapped inside one repository function via `db.transaction(...)`. Auth contextual data (user id, scope) is passed in from the caller — the service does not read `locals`.
 
 ```ts
-// students.repository.ts — pure DB layer
-import type { Database } from "../shared";
+// students.repository.ts — pure DB layer, owns the db singleton
 import { eq } from "drizzle-orm";
+import { db } from "../drizzle";
 import { students } from "./students.table";
 
-export async function listBySchool(db: Database, schoolId: string) {
+export async function listBySchool(schoolId: string) {
 	return db.select().from(students).where(eq(students.schoolId, schoolId));
 }
 ```
 
 ```ts
-// students.service.ts — business logic + validation
+// students.service.ts — business logic + validation, NEVER imports db
 import * as v from "valibot";
-import { db } from "../drizzle";
 import { uuidSchema } from "../shared";
 import * as StudentsRepository from "./students.repository";
 
 export async function listBySchool(rawSchoolId: unknown) {
 	const schoolId = v.parse(uuidSchema, rawSchoolId);
-	return StudentsRepository.listBySchool(db, schoolId);
+	return StudentsRepository.listBySchool(schoolId);
 }
 ```
 
@@ -179,8 +178,8 @@ For app-side updates of `updatedAt`, use `.$onUpdate(() => new Date())`.
 2. Run `bun run db:generate`.
 3. Apply: `bun run db:migrate`.
 4. Add `*.validator.ts` (derived via `drizzle-valibot`) and `*.dto.ts`.
-5. Add `*.repository.ts` with pure DB functions taking `(db, …args)`.
-6. Add `*.service.ts` that parses inputs with valibot and calls the repository.
+5. Add `*.repository.ts`. Import the `db` singleton (`import { db } from "../drizzle"`). Functions take **domain args only** — never `db` / `tx` as a parameter. Wrap any multi-statement write inside one function with `db.transaction(...)`.
+6. Add `*.service.ts` that parses inputs with valibot and calls the repository. **Service must not import `db`.**
 7. If demo / bootstrap data needed → new numbered seed.
 8. Run `bun run db:seed` to apply.
 9. Re-export Service, Repository, table, validators, and DTOs from `index.ts`.
@@ -190,6 +189,8 @@ For app-side updates of `updatedAt`, use `.$onUpdate(() => new Date())`.
 - Editing `001_rbac_bootstrap.ts` to change the admin email (add `004_change_admin.ts` instead).
 - Renumbering seed files to "reorder".
 - Combining DB calls and business logic in one `*.service.ts` file (no separate repository). The split is mandatory; see [`bosia-clean-architecture`](../bosia-clean-architecture/SKILL.md).
+- Importing `db` inside a `*.service.ts` file (even to pass into a repo call). Repositories own the singleton; services pass domain args only.
+- Repository function with a `db: Database` / `tx` parameter. Repos import the singleton; transactions live inside one repo function via `db.transaction(...)`.
 - Hand-writing a valibot schema that mirrors a drizzle table instead of using `createInsertSchema` / `createSelectSchema` from `drizzle-valibot`.
 - Putting auth checks (`if (locals.user.role !== 'admin')`) in service functions. Pass authorization decisions in from the caller.
 - Defining FKs in seeds rather than tables.
@@ -206,7 +207,8 @@ P0:
 
 P1:
 
-- [ ] Repository functions are pure DB calls (no `locals`, no HTTP, no business logic).
+- [ ] Repository functions are pure DB calls (no `locals`, no HTTP, no business logic). Signature takes domain args only — never `db: Database` / `tx`.
+- [ ] Repository imports `db` from `../drizzle`; service does **not** import `db` from anywhere.
 - [ ] Service functions parse untrusted input via `v.parse(...)` before calling the repository.
 - [ ] Validators are derived from drizzle tables, not hand-written.
 - [ ] Many-to-many seeds use `onConflictDoNothing()`.

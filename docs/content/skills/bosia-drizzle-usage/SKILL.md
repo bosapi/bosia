@@ -1,6 +1,6 @@
 ---
 name: bosia-drizzle-usage
-description: How to consume `db` from `src/features/drizzle` — only inside repository functions. Routes/loaders call services, services call repositories, repositories own `db`. Always `await db.select()...`, never reach past the export, pre-flight `db_test_connection` + `db_status` before the first read.
+description: How to consume `db` from `src/features/drizzle` — only inside repository functions, via the singleton import. Routes/loaders call services; services call repositories; **only repositories import `db`** (services never do). Always `await db.select()...`, never reach past the export, pre-flight `db_test_connection` + `db_status` before the first read.
 triggers:
     - +page.server.ts
     - load
@@ -44,8 +44,8 @@ Every time a route or service reads/writes the database. The P0 pre-flight runs 
 
 1. Run `db_status`. Then `db_test_connection`. Stop on failure — do NOT improvise paths or rewrite `.env`. See `references/troubleshooting.md`.
 2. Optional: `db_schema` to confirm tables/columns exist before referencing them.
-3. Write the **repository** function using `await db.select({...}).from(...)`. The first argument is always `db: Database`.
-4. Add a service wrapper that calls the repository (see [`bosia-clean-architecture`](../bosia-clean-architecture/SKILL.md)). The route handler imports the service, never `db` directly.
+3. Write the **repository** function using `await db.select({...}).from(...)`. The repo imports the `db` singleton directly (`import { db } from "../drizzle"`). Function parameters are **domain args only** — never `db: Database` / `tx`.
+4. Add a service wrapper that calls the repository (see [`bosia-clean-architecture`](../bosia-clean-architecture/SKILL.md)). The service does **not** import `db`. The route handler imports the service, never `db` directly.
 5. `shell({ cmd: "build" })` to surface type errors.
 6. On Inspector runtime error: re-read the repository file, re-run `db_test_connection`. Never jump to `bun:sqlite`.
 
@@ -63,16 +63,16 @@ export async function load() {
 }
 ```
 
-The query itself lives in the repository:
+The query itself lives in the repository — and the repo is the **only** place that imports `db`:
 
 ```ts
 // src/features/catalog/catalog.repository.ts
 import { and, count, eq } from "drizzle-orm";
 
-import type { Database } from "../shared";
+import { db } from "../drizzle";
 import { barang, kategori } from "./catalog.table";
 
-export async function categorySummary(db: Database) {
+export async function categorySummary() {
 	return db
 		.select({
 			id: kategori.id,
@@ -86,29 +86,28 @@ export async function categorySummary(db: Database) {
 		.orderBy(kategori.nama);
 }
 
-export async function totalBarang(db: Database) {
+export async function totalBarang() {
 	const rows = await db.select({ c: count() }).from(barang);
 	return rows[0]?.c ?? 0;
 }
 ```
 
-And the service composes them:
+And the service composes them — **without importing `db`**:
 
 ```ts
 // src/features/catalog/catalog.service.ts
-import { db } from "../drizzle";
 import * as CatalogRepository from "./catalog.repository";
 
 export async function summary() {
 	const [categories, totalBarang] = await Promise.all([
-		CatalogRepository.categorySummary(db),
-		CatalogRepository.totalBarang(db),
+		CatalogRepository.categorySummary(),
+		CatalogRepository.totalBarang(),
 	]);
 	return { categories, totalBarang };
 }
 ```
 
-Pure `await` on the builder inside repositories. No `.all()`. No `db.all(sql\`...\`)`. No `bun:sqlite`import. No`db` import in the route file.
+Pure `await` on the builder inside repositories. No `.all()`. No `db.all(sql\`...\`)`. No `bun:sqlite`import. No`db`import in the route file. **No`db`import in the service file either** — only repositories touch`db`.
 
 Full template + the controller/service/repository split rules: [`bosia-clean-architecture`](../bosia-clean-architecture/SKILL.md).
 
@@ -142,7 +141,8 @@ Full path-resolution recipe + the host-vs-app diagram: `references/troubleshooti
 ## P0 — must pass
 
 - [ ] `db_test_connection` ran green this session before the first repository read.
-- [ ] `db` imported only inside `src/features/<name>/<name>.repository.ts` or `src/features/<name>/<name>.service.ts` (to pass into the repository) — never inside `src/routes/**`. No `import { Database } from "bun:sqlite"` outside `src/features/drizzle/index.ts`.
+- [ ] `db` imported **only** inside `src/features/<name>/<name>.repository.ts` (plus `src/features/drizzle/**`). **Never** inside `src/features/**/*.service.ts` and **never** inside `src/routes/**`. No `import { Database } from "bun:sqlite"` outside `src/features/drizzle/index.ts`.
+- [ ] Repository function signatures take domain args only — no `db: Database` / `tx: Database` parameter. Transactions live inside one repo function via `db.transaction(...)`.
 - [ ] Table objects (`*.table` exports) imported only inside the owning feature folder — never from `src/routes/**`.
 - [ ] All consumer queries use `await db.select(...)...` or `await db.execute(sql\`...\`)`. No top-level `db.all(...)`/`db.get(...)` in consumer code.
 - [ ] No `process.cwd()` / `import.meta.dir` path-resolution helpers added to "find" the DB file.
@@ -155,7 +155,7 @@ Full path-resolution recipe + the host-vs-app diagram: `references/troubleshooti
 - [ ] Independent queries inside a loader use `Promise.all`.
 - [ ] Single-row reads use `const [row] = await db.select()...limit(1)`, not `.get()`.
 - [ ] Selects project columns explicitly (`db.select({ id, name })…`), not bare `db.select()`.
-- [ ] Multi-statement writes wrapped in `db.transaction(async (tx) => { ... })`.
+- [ ] Multi-statement writes wrapped in `db.transaction(async (tx) => { ... })` **inside a single repository function**. Never expose `tx` to the service layer.
 - [ ] Pagination uses cursor (`gt(t.id, lastSeenId).limit(n)`) for lists > one page.
 - [ ] No N+1: a `for (const x of xs) await db.select(...)` inside a loader is rewritten as a join or `db.query.X.findMany({ with })`.
 - [ ] Raw SQL paths annotated with a one-line comment explaining why the builder didn't fit.
@@ -165,6 +165,8 @@ Full path-resolution recipe + the host-vs-app diagram: `references/troubleshooti
 Stop and reconsider if you see any of these:
 
 - **Importing `db` or any table object inside `src/routes/**/\*.server.ts`/`+server.ts`.** Routes call services; services call repositories; only repositories see `db`. Refactor recipe: [`bosia-clean-architecture` → refactor-recipe](../bosia-clean-architecture/references/refactor-recipe.md).
+- **Importing `db` inside any `*.service.ts` file (even just to pass into a repository call).** Services never see `db`. Push the query — and any transaction — into the repository function; the service calls it with domain args only.
+- **Repository function with a `db: Database` (or `tx`) parameter.** Repos own the singleton. Transactions are wrapped inside one repo function via `db.transaction(...)`; the `tx` stays internal.
 - **Calling `db.select/insert/update/delete` directly inside a `*.service.ts` file.** Move it into the matching `*.repository.ts`.
 - `db.all(sql\`SELECT ...\`)`on top-level`db`. The bosia `db` export is not the sqlite sync object.
 - Building `sqlAll` / `sqlGet` / `ensureSqlite` helpers that open `bun:sqlite` directly.

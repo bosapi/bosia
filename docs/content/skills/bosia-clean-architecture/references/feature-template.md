@@ -75,25 +75,25 @@ Notes:
 ```ts
 import { eq } from "drizzle-orm";
 
-import type { Database } from "../shared";
+import { db } from "../drizzle";
 import { menuItems } from "./menu.table";
 import type { MenuInsertDto, MenuUpdateDto } from "./menu.dto";
 
-export async function listAll(db: Database) {
+export async function listAll() {
 	return db.select().from(menuItems).orderBy(menuItems.id);
 }
 
-export async function findById(db: Database, id: string) {
+export async function findById(id: string) {
 	const [row] = await db.select().from(menuItems).where(eq(menuItems.id, id)).limit(1);
 	return row ?? null;
 }
 
-export async function create(db: Database, input: MenuInsertDto) {
+export async function create(input: MenuInsertDto) {
 	const [row] = await db.insert(menuItems).values(input).returning();
 	return row;
 }
 
-export async function update(db: Database, id: string, patch: MenuUpdateDto) {
+export async function update(id: string, patch: MenuUpdateDto) {
 	const [row] = await db
 		.update(menuItems)
 		.set({ ...patch, updatedAt: new Date() })
@@ -102,7 +102,7 @@ export async function update(db: Database, id: string, patch: MenuUpdateDto) {
 	return row ?? null;
 }
 
-export async function remove(db: Database, id: string) {
+export async function remove(id: string) {
 	const [row] = await db
 		.delete(menuItems)
 		.where(eq(menuItems.id, id))
@@ -113,7 +113,8 @@ export async function remove(db: Database, id: string) {
 
 Notes:
 
-- First arg is **always** `db: Database`. This lets services pass either the singleton `db` or a `tx` from `withTx`.
+- The repository **imports the `db` singleton directly**. Function signatures take **only domain args** — never `db: Database` or `tx`.
+- Multi-statement writes are wrapped **inside the repo function** with `db.transaction(async (tx) => { ... })`. The `tx` stays internal to that one function — never bubbles up to the service.
 - No business logic, no validation, no auth, no error mapping. The repository tells the truth about the DB and nothing more.
 - Return raw rows. Service decides what to expose.
 - Single-row reads use `const [row] = await … .limit(1)` (see `bosia-drizzle-usage` P1).
@@ -123,7 +124,6 @@ Notes:
 ```ts
 import * as v from "valibot";
 
-import { db } from "../drizzle";
 import { NotFoundError } from "../shared";
 
 import type { MenuInsertDto, MenuUpdateDto } from "./menu.dto";
@@ -131,48 +131,42 @@ import * as MenuRepository from "./menu.repository";
 import { MenuIdSchema, MenuInsert, MenuUpdate } from "./menu.validator";
 
 export async function list() {
-	return MenuRepository.listAll(db);
+	return MenuRepository.listAll();
 }
 
 export async function getById(rawId: unknown) {
 	const id = v.parse(MenuIdSchema, rawId);
-	const row = await MenuRepository.findById(db, id);
+	const row = await MenuRepository.findById(id);
 	if (!row) throw new NotFoundError(`menu:${id}`);
 	return row;
 }
 
 export async function create(rawInput: unknown) {
 	const input = v.parse(MenuInsert, rawInput) satisfies MenuInsertDto;
-	return MenuRepository.create(db, input);
+	return MenuRepository.create(input);
 }
 
 export async function update(rawId: unknown, rawPatch: unknown) {
 	const id = v.parse(MenuIdSchema, rawId);
 	const patch = v.parse(MenuUpdate, rawPatch) satisfies MenuUpdateDto;
-	const row = await MenuRepository.update(db, id, patch);
+	const row = await MenuRepository.update(id, patch);
 	if (!row) throw new NotFoundError(`menu:${id}`);
 	return row;
 }
 
 export async function remove(rawId: unknown) {
 	const id = v.parse(MenuIdSchema, rawId);
-	const row = await MenuRepository.remove(db, id);
+	const row = await MenuRepository.remove(id);
 	if (!row) throw new NotFoundError(`menu:${id}`);
 }
 ```
 
 Notes:
 
+- **Services never import `db`.** Every database touch goes through a repository function whose signature takes only domain args.
 - Input from untrusted sources (route handlers, RPC calls, form actions) is `unknown`. `v.parse` is the boundary — once past it, types are guaranteed.
 - Service is the **only** layer allowed to throw `NotFoundError` / `ValidationError`. Route handlers catch these and map to HTTP status.
-- Multi-statement flows use `withTx`:
-    ```ts
-    import { withTx } from "../shared";
-    await withTx(db, async (tx) => {
-    	await MenuRepository.create(tx, input);
-    	await AuditService.record(tx, "menu.create", input);
-    });
-    ```
+- Multi-statement flows are **one repository function** that wraps everything in `db.transaction(...)`. The service calls that one function — it does not orchestrate a transaction. Example: instead of a service that calls `create` + `audit`, expose `MenuRepository.createWithAudit(input, actorId)` and let the repo do the transaction. Cross-feature transactions are an edge case — colocate them in the feature that owns the root entity.
 
 ## File 6 — `index.ts` (barrel)
 

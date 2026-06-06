@@ -53,27 +53,26 @@ export { menuItems } from "../menu/menu.table";
 
 ```ts
 // src/features/menu/menu.repository.ts
-import type { Database } from "../shared";
+import { db } from "../drizzle";
 import { menuItems } from "./menu.table";
 
-export async function listAll(db: Database) {
+export async function listAll() {
 	return db.select().from(menuItems).orderBy(menuItems.id);
 }
 ```
 
-Copy the exact query body. No optimization, no renames, no behavior changes in this pass. Verify against the original.
+Repo imports the `db` singleton directly. Function takes domain args only — never `db` as a parameter. Copy the exact query body. No optimization, no renames, no behavior changes in this pass. Verify against the original.
 
 ## Step 4 — Wrap with a service
 
-Pass-through is fine for the first pass. The layer is there so future validation/auth has a home.
+Pass-through is fine for the first pass. The layer is there so future validation/auth has a home. Service **never** imports `db`.
 
 ```ts
 // src/features/menu/menu.service.ts
-import { db } from "../drizzle";
 import * as MenuRepository from "./menu.repository";
 
 export async function list() {
-	return MenuRepository.listAll(db);
+	return MenuRepository.listAll();
 }
 ```
 
@@ -172,5 +171,6 @@ The route handler catches service errors and maps them to HTTP status. Do not bu
 - **Behavior change in the extraction step.** Resist the urge to "fix" a related bug while you move the code. Extract verbatim. Open a follow-up for the bug.
 - **Re-exporting the table from multiple locations.** Pick one home — the new feature folder. Delete the old re-export.
 - **Skipping the service layer "because it's pass-through".** That defeats the layering — the next write endpoint will be tempted to put `db.insert` back in the route. Always add the service file, even if its body is one line.
-- **Importing `db` inside the service implementation more than once.** Service file imports `db` at the top once and passes it into every repository call. Don't reach into `features/drizzle` from many places.
+- **Importing `db` inside the service file at all.** Services do not import `db`. If you see `import { db } from "../drizzle"` in a `*.service.ts`, the rule was broken — push the query (and any transaction) down into the repository function.
+- **Adding a `db: Database` parameter to a repository function.** The repo reads the singleton. If you need a transaction, wrap it inside one repo function with `db.transaction(...)`.
 - **Forgetting `runtime_restart` after moving the table file.** The dev server caches `bun:sqlite`/`postgres` connection objects and may also cache module exports. Restart once after the move.

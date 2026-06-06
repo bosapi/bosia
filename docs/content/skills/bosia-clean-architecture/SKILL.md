@@ -70,8 +70,8 @@ src/features/<name>/
 ├── <name>.table.ts        # Drizzle pgTable + $inferSelect / $inferInsert
 ├── <name>.validator.ts    # createInsertSchema / createSelectSchema via drizzle-valibot
 ├── <name>.dto.ts          # Public Input/Output types inferred from validators
-├── <name>.repository.ts   # Pure DB layer: (db: Database, …) => Promise<Row>. No business logic.
-├── <name>.service.ts      # Business logic. Validates with valibot. Calls repository. No raw db.select.
+├── <name>.repository.ts   # Pure DB layer. Imports singleton `db` directly. Functions take domain args only — never `db`/`tx` params. Wrap transactions inside the repo with `db.transaction(...)`.
+├── <name>.service.ts      # Business logic. Validates with valibot. Calls repository. NEVER imports `db`. No raw db.select.
 └── index.ts               # Barrel: re-exports Service, Repository (namespaced), DTOs, validators, table
 ```
 
@@ -82,7 +82,7 @@ src/features/shared/
 ├── types.ts          # Paginated<T>, Result<T,E>, common ID brand
 ├── errors.ts         # AppError / NotFoundError / ValidationError
 ├── validators.ts     # Reusable valibot primitives (uuidSchema, slugSchema, paginationSchema)
-├── repository.ts     # Database type re-export, withTx, paginate helper
+├── repository.ts     # Database type re-export, paginate helper. (No `withTx` — transactions live inside repository functions via `db.transaction(...)`.)
 ├── services/         # Cross-cutting services (mailer, audit, cache) — no entity owner
 └── index.ts
 ```
@@ -112,45 +112,57 @@ export async function load() {
 
 Lint hint: `rg "from .*features/drizzle" src/routes` should return zero matches.
 
-### R2 — Repositories own `db`
+### R2 — Repositories own `db` (singleton, not injected)
 
-Only `*.repository.ts` files and `src/features/drizzle/**` may import `db` or table objects. Repository signature is `(db: Database, …args) => Promise<Row | Row[]>`. No `locals`, no `cookies`, no `fetch`, no HTTP, no business decisions.
+Only `*.repository.ts` files and `src/features/drizzle/**` may import `db` or table objects. The repository imports the `db` singleton directly — **never** as a function parameter. Repository signature is `(…args) => Promise<Row | Row[]>`. No `locals`, no `cookies`, no `fetch`, no HTTP, no business decisions.
 
 ```ts
 // menu.repository.ts
 import { eq } from "drizzle-orm";
-import type { Database } from "../shared";
+import { db } from "../drizzle";
 import { menuItems } from "./menu.table";
 
-export async function listAll(db: Database) {
+export async function listAll() {
 	return db.select().from(menuItems).orderBy(menuItems.id);
 }
 
-export async function findById(db: Database, id: string) {
+export async function findById(id: string) {
 	const [row] = await db.select().from(menuItems).where(eq(menuItems.id, id)).limit(1);
 	return row ?? null;
 }
 ```
 
-### R3 — Services own logic + validation
+Multi-statement transactions live **inside** the repository — wrap with `db.transaction(...)` in a single repo function. Never expose `tx` to the service layer.
 
-Service entry points parse input with valibot, **then** call repository functions. Auth checks, business rules, error mapping, transaction orchestration all live here. Never call `db.select(...)` directly in a service — go through the repository.
+```ts
+// menu.repository.ts
+export async function createWithAudit(input: MenuInsertDto, actorId: string) {
+	return db.transaction(async (tx) => {
+		const [row] = await tx.insert(menuItems).values(input).returning();
+		await tx.insert(auditLog).values({ actorId, action: "menu.create", refId: row.id });
+		return row;
+	});
+}
+```
+
+### R3 — Services own logic + validation, never touch `db`
+
+Service entry points parse input with valibot, **then** call repository functions. Auth checks, business rules, error mapping all live here. Services **never import `db`**, never pass `db`, never call `db.*` directly — every database touch goes through a repository function whose signature takes only domain args.
 
 ```ts
 // menu.service.ts
 import * as v from "valibot";
-import { db } from "../drizzle";
 import { NotFoundError } from "../shared";
 import * as MenuRepository from "./menu.repository";
 import { MenuIdSchema } from "./menu.validator";
 
 export async function list() {
-	return MenuRepository.listAll(db);
+	return MenuRepository.listAll();
 }
 
 export async function getById(rawId: unknown) {
 	const id = v.parse(MenuIdSchema, rawId);
-	const row = await MenuRepository.findById(db, id);
+	const row = await MenuRepository.findById(id);
 	if (!row) throw new NotFoundError(`menu:${id}`);
 	return row;
 }
@@ -183,7 +195,7 @@ Tables belonging to one aggregate live in one feature folder. Cross-feature **FK
 
 ### R6 — `shared/` = no business entity
 
-If something has no clear owner feature, it goes in `features/shared/`. Examples: pagination types, error classes, valibot primitives, `withTx` transaction helper, mailer service. If you find yourself adding a domain entity to `shared/`, stop — give it a feature folder. Full guidance: [`references/shared-folder.md`](./references/shared-folder.md).
+If something has no clear owner feature, it goes in `features/shared/`. Examples: pagination types, error classes, valibot primitives, mailer service. If you find yourself adding a domain entity to `shared/`, stop — give it a feature folder. Full guidance: [`references/shared-folder.md`](./references/shared-folder.md).
 
 ### R7 — New tables must declare a home feature
 
@@ -221,7 +233,7 @@ Trigger: `db` import found in `src/routes/**/*.server.ts` or `+server.ts`.
 
 1. Grep: `rg "from .*features/drizzle|db\.(select|insert|update|delete)" src/routes`.
 2. For each hit, identify the entity. Pick (or create) `features/<name>/`.
-3. Move the drizzle query verbatim into `<name>.repository.ts` as a typed function. Repository signature is `(db: Database, …) => Promise<…>`.
+3. Move the drizzle query verbatim into `<name>.repository.ts` as a typed function. The repo imports the `db` singleton; the function signature takes **domain args only** — never `db: Database` / `tx`. If the original code had a multi-statement transaction, wrap it inside one repo function with `db.transaction(...)`.
 4. Add `<name>.service.ts` that calls the repository. Pass-through is fine for now — the layer exists so future validation/auth has a home.
 5. Replace the route code with `await <Name>Service.<fn>(...)`. Imports come from `../../features/<name>` only.
 6. `shell({ cmd: "check" })` → `shell({ cmd: "format" })` → `shell({ cmd: "build" })`.
@@ -241,6 +253,8 @@ When the user says "add a `xyz` table":
 - Loader importing `db` directly: `import { db } from "../../features/drizzle"` inside `+page.server.ts`.
 - Loader importing a `*.table` file: `import { menuItems } from "../../features/drizzle/tables/menu.table"`.
 - Combining DB calls + business logic in one `*.service.ts` (no separate repository).
+- Importing `db` inside a `*.service.ts` file (even just to pass into a repository). Repos own `db`; services pass domain args only.
+- Repository function signatures that accept `db: Database` / `tx` as a parameter. Repos read the singleton; transactions are wrapped inside one repo function via `db.transaction(...)`.
 - Hand-writing a valibot schema that mirrors a drizzle table instead of using `createInsertSchema` / `createSelectSchema`.
 - Deep-importing another feature's repository (`import { create } from "../order/order.repository"`). Use `OrderService.create(...)` via the barrel.
 - Stashing tables in `features/drizzle/tables/` (the bosapi-internal location). Generated-app tables live in their owning feature folder.
@@ -258,13 +272,15 @@ P0 — must pass before finishing:
 - [ ] Every new feature folder contains all six files (`*.table`, `*.validator`, `*.dto`, `*.repository`, `*.service`, `index.ts`).
 - [ ] Validators use `createInsertSchema` / `createSelectSchema` from `drizzle-valibot`, not hand-written.
 - [ ] Services do not contain raw `db.select(...)` / `db.insert(...)` / `db.update(...)` / `db.delete(...)`.
+- [ ] Services do not import `db` at all (`rg "from .*drizzle\"|from .*\"./drizzle\"" src/features/**/*.service.ts` → zero matches outside the drizzle feature itself).
+- [ ] Repository function signatures never start with `db: Database` / `tx: Database` — repos import the singleton.
 - [ ] Service input from untrusted sources is `v.parse(...)`d before reaching the repository.
 
 P1 — should pass:
 
 - [ ] Cross-feature calls go through the barrel namespace (`OtherService.fn(...)`), no deep imports.
 - [ ] `shared/` contains no domain entities.
-- [ ] Multi-statement service flows use `withTx` from `features/shared/repository.ts`.
+- [ ] Multi-statement flows are wrapped with `db.transaction(...)` inside a single repository function (services do not orchestrate transactions).
 - [ ] `bun run check && bun run format && bun run build` pass.
 
 ## References

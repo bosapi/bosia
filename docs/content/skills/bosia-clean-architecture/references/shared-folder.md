@@ -108,16 +108,12 @@ Belongs here: primitive validators that any feature might compose into its own s
 
 Does **not** belong here: composite schemas that describe a domain entity (`OrderSchema`, `UserUpdateSchema`). Those live next to their table.
 
-## `repository.ts` — database type + transaction + paginate
+## `repository.ts` — database type + paginate
 
 ```ts
 import type { Database as Db } from "../drizzle/types";
 
 export type Database = Db;
-
-export async function withTx<T>(db: Database, fn: (tx: Database) => Promise<T>): Promise<T> {
-	return db.transaction(async (tx) => fn(tx as Database));
-}
 
 export async function paginate<T extends { id: string }>(
 	fetchPage: (cursor: string | null, limit: number) => Promise<T[]>,
@@ -135,7 +131,9 @@ export async function paginate<T extends { id: string }>(
 }
 ```
 
-`Database` is the type alias every repository uses for its first argument. `withTx` is the only sanctioned way for a service to span multiple repository calls atomically. `paginate` is the cursor-pagination helper that pairs with `Paginated<T>` from `types.ts`.
+`Database` is the type alias used internally for the `tx` parameter of `db.transaction(...)` callbacks (and for typing repository helpers that operate on a tx handle). It is **not** a parameter on public repository functions — repos import the `db` singleton directly. `paginate` is the cursor-pagination helper that pairs with `Paginated<T>` from `types.ts`.
+
+**No `withTx` helper.** Transactions live inside a single repository function: the repo writes `db.transaction(async (tx) => { … })` and the `tx` never leaves that function. Services never orchestrate transactions and never see a `tx`. If two writes must be atomic, expose them as one repo function (e.g. `MenuRepository.createWithAudit(input, actorId)`).
 
 ## `services/` — cross-cutting services
 
@@ -173,6 +171,7 @@ Consumers import from `../shared` only, never deep into `../shared/services/mail
 
 - A `shared/utils.ts` grab-bag. If the helper is generic (date formatting, string utilities), put it in `src/lib/` — that's the existing home for project-wide utilities. `shared/` is reserved for cross-feature **application code** (errors, types, services), not generic utilities.
 - A `shared/constants.ts` that drifts into domain values (`MAX_ORDER_QUANTITY = 50`). Domain constants live with the feature.
-- Importing `db` from `shared/`. `shared/` exports the `Database` _type_ and the `withTx` helper; the runtime `db` instance comes from `features/drizzle`, and only repositories receive it as an argument.
+- Importing `db` from `shared/`. `shared/` only exports the `Database` _type_; the runtime `db` instance comes from `features/drizzle` and is imported **only** by repository files.
+- Re-introducing a `withTx` helper in `shared/`. Transactions belong inside a single repository function via `db.transaction(...)` — services never orchestrate transactions.
 - A `shared/services/<entity>.service.ts` that has its own table. Promote it to a feature.
 - A `shared/repositories/` folder. Repositories are always per-entity; there's no such thing as a "shared repository". The shared file is `repository.ts` (singular) and it only contains the `Database` type + helpers.
