@@ -1,7 +1,16 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.17**
+> Current version: **0.6.18**
+
+---
+
+## 0.6.18 (2026-06-07) — pure-SSR apps still lost `public/` in production containers
+
+> Bug: komba (pure SSR, zero prerendered routes) redeployed on 0.6.17 — `/bosia-tw.css` 404'd because `generateStaticSite()` early-returned when `dist/prerendered/` didn't exist, so `public/` never got mirrored to `dist/static/`. The 0.6.17 staticManifest walked `dist/static/` correctly, but the folder was empty for SSR-only apps. Fix: always mirror `public/` → `dist/static/` at build time; skip the prerender+client copy when there's no SSG output, but never skip the public mirror.
+
+- [x] 🟠 `packages/bosia/src/core/prerender.ts` — `generateStaticSite()` now copies `public/` unconditionally; SSG-specific copies (prerendered + client mirror) gated on `dist/prerendered/` existing.
+- [x] 🟠 Test: build emits `dist/static/` with `public/` contents even when no prerendered routes exist.
 
 ---
 

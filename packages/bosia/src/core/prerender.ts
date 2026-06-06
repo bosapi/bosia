@@ -295,23 +295,31 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 // ─── Static Site Output ──────────────────────────────────
 
 export function generateStaticSite(): void {
-	if (!existsSync(`${OUT_DIR}/prerendered`)) {
-		console.log("\n⏭️  No prerendered pages — skipping static site output");
+	const hasPublic = existsSync("./public");
+	const hasPrerender = existsSync(`${OUT_DIR}/prerendered`);
+
+	// Mirror `public/` → `dist/static/` on every build (not only SSG builds) so
+	// production containers can ship dist/ alone. Without this, apps with zero
+	// prerendered routes (pure SSR) would lose bosia-tw.css and favicons when
+	// public/ is dropped from the image.
+	if (!hasPublic && !hasPrerender) {
+		console.log("\n⏭️  No public/ or prerendered pages — skipping static site output");
 		return;
 	}
 
 	console.log("\n📦 Generating static site...");
 	mkdirSync(`${OUT_DIR}/static`, { recursive: true });
 
-	// 1. HTML files from prerendering
-	cpSync(`${OUT_DIR}/prerendered`, `${OUT_DIR}/static`, { recursive: true });
-
-	// 2. Client JS/CSS — preserves /dist/client/... absolute paths used in HTML
-	cpSync(`${OUT_DIR}/client`, `${OUT_DIR}/static/dist/client`, { recursive: true });
-
-	// 3. Public assets (bosia-tw.css, favicon, etc.) — preserves /bosia-tw.css path
-	if (existsSync("./public")) {
+	// 1. Public assets (bosia-tw.css, favicon, etc.) — preserves /bosia-tw.css path
+	if (hasPublic) {
 		cpSync("./public", `${OUT_DIR}/static`, { recursive: true });
+	}
+
+	// 2. HTML files from prerendering (SSG output only)
+	if (hasPrerender) {
+		cpSync(`${OUT_DIR}/prerendered`, `${OUT_DIR}/static`, { recursive: true });
+		// 3. Client JS/CSS — preserves /dist/client/... absolute paths used in HTML
+		cpSync(`${OUT_DIR}/client`, `${OUT_DIR}/static/dist/client`, { recursive: true });
 	}
 
 	console.log(`✅ Static site generated: ${OUT_DIR}/static/`);

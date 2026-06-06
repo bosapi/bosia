@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.18] - 2026-06-07
+
+### Fixed
+
+- Pure-SSR apps (zero prerendered routes) now also mirror `public/` → `dist/static/` at build time, so production containers that drop `public/` keep serving `bosia-tw.css`, favicons, and other public assets. 0.6.17 only ran the mirror when SSG output existed.
+
 ## [0.6.17] - 2026-06-07
 
 ### Changed
