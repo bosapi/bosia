@@ -92,7 +92,7 @@ Add when the app has any unauth-reachable surface.
 - `sitemap.xml` — list every genuinely public route
 - `hreflang` link tags when BRIEF.md `language` covers multiple locales
 - JSON-LD `Organization` + `WebSite` (with `SearchAction` if site search exists)
-- `noindex,nofollow` gate when `PUBLIC_ENV !== "production"`
+- `noindex,nofollow` gate when `process.env.NODE_ENV !== "production"`
 
 ### Tier 3 — Rich results (marketing-heavy apps)
 
@@ -130,7 +130,7 @@ The root layout owns the default block. Leaf `<svelte:head>` overrides title (an
 <script lang="ts">
 	import "../app.css";
 	import { page } from "bosia/client";
-	import { PUBLIC_ENV, PUBLIC_SITE_ORIGIN } from "$env";
+	import { PUBLIC_SITE_ORIGIN } from "$env";
 	import type { Snippet } from "svelte";
 
 	let { children, data }: { children: Snippet; data: { seo?: SeoOverride } } = $props();
@@ -144,7 +144,7 @@ The root layout owns the default block. Leaf `<svelte:head>` overrides title (an
 	};
 
 	const canonical = $derived(`${PUBLIC_SITE_ORIGIN}${page.url.pathname}`);
-	const isProd = PUBLIC_ENV === "production";
+	const isProd = process.env.NODE_ENV === "production";
 
 	type SeoOverride = { title?: string; description?: string; ogImage?: string };
 	const seo = $derived(data?.seo ?? {});
@@ -223,8 +223,8 @@ Static files in `public/` work but hardcode the origin. Prefer server routes so 
 
 ```ts
 // src/routes/robots.txt/+server.ts
-import type { RequestHandler } from "bosia";
-import { PUBLIC_SITE_ORIGIN, PUBLIC_ENV } from "$env";
+import type { RequestEvent } from "bosia";
+import { PUBLIC_SITE_ORIGIN } from "$env";
 
 const PRIVATE_PREFIXES = [
 	"/api/",
@@ -232,8 +232,8 @@ const PRIVATE_PREFIXES = [
 	// app-specific private folders go here
 ];
 
-export const GET: RequestHandler = () => {
-	const isProd = PUBLIC_ENV === "production";
+export function GET(_event: RequestEvent) {
+	const isProd = process.env.NODE_ENV === "production";
 	const body = isProd
 		? [
 				"User-agent: *",
@@ -247,17 +247,17 @@ export const GET: RequestHandler = () => {
 	return new Response(body, {
 		headers: { "content-type": "text/plain; charset=utf-8" },
 	});
-};
+}
 ```
 
 ```ts
 // src/routes/sitemap.xml/+server.ts
-import type { RequestHandler } from "bosia";
+import type { RequestEvent } from "bosia";
 import { PUBLIC_SITE_ORIGIN } from "$env";
 
 const PUBLIC_PATHS = ["/", "/login", "/onboarding", "/forgot-password"] as const;
 
-export const GET: RequestHandler = () => {
+export function GET(_event: RequestEvent) {
 	const now = new Date().toISOString().slice(0, 10);
 	const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -270,7 +270,7 @@ ${PUBLIC_PATHS.map(
 	return new Response(body, {
 		headers: { "content-type": "application/xml; charset=utf-8" },
 	});
-};
+}
 ```
 
 Both routes are `+server.ts` action endpoints — no `+page.svelte` siblings, per `bosia-routing`.
@@ -379,13 +379,25 @@ For auth-gated apps:
 
 ### R9 — Environment gate — staging emits `noindex`
 
+Use the built-in `process.env.NODE_ENV` — Bosia's bundler inlines it at build time (via `define`), so it's safe on BOTH the SSR pass and the client bundle. Do NOT introduce a separate `PUBLIC_ENV` user var; that's a duplicate of what the framework already provides and risks drifting from `NODE_ENV`.
+
 ```svelte
-{#if PUBLIC_ENV !== "production"}
-	<meta name="robots" content="noindex,nofollow" />
-{/if}
+<script lang="ts">
+	const isProd = process.env.NODE_ENV === "production";
+</script>
+
+<svelte:head>
+	{#if !isProd}
+		<meta name="robots" content="noindex,nofollow" />
+	{/if}
+</svelte:head>
 ```
 
+In `+server.ts` files (robots.txt, sitemap) the same `process.env.NODE_ENV === "production"` check works — server-side it's natively populated by `bosia dev` / `bosia build` / `bosia start`.
+
 Pair with the dynamic `robots.txt` returning `Disallow: /` in non-prod (see R3). Both layers, since meta covers HTML and robots.txt covers crawl budget.
+
+> Why not `PUBLIC_ENV`? Bosia's `.env` convention exposes `PUBLIC_*` vars via `$env` and inlines `process.env.NODE_ENV` separately. NODE_ENV is set automatically by the framework binary (`bosia dev` → `development`, `bosia build`/`start` → `production`); a hand-rolled `PUBLIC_ENV` is one more thing to keep in sync with no benefit.
 
 ### R10 — `<html lang>` lives in `src/app.html` via Bosia placeholder
 
@@ -469,22 +481,22 @@ export async function metadata({ params }) {
 
 ## Anti-patterns
 
-| ❌ Anti-pattern                                              | ✅ Correct                                                      |
-| ------------------------------------------------------------ | --------------------------------------------------------------- |
-| `<title>Welcome</title>` only — no description               | Title + description + canonical at minimum                      |
-| `og:image` is relative `/og.png`                             | Absolute `https://app.example.com/og.png`                       |
-| Canonical from `page.url.origin`                             | Canonical from `PUBLIC_SITE_ORIGIN` env                         |
-| Description > 160 chars                                      | ≤ 160 chars (Google truncates)                                  |
-| Title > 60 chars                                             | ≤ 60 chars (Google truncates)                                   |
-| OG image without declared width/height                       | Always include `og:image:width` / `og:image:height`             |
-| Hardcoded host in `robots.txt` / `sitemap.xml`               | Origin from `PUBLIC_SITE_ORIGIN`                                |
-| Staging deploys indexed by Google                            | `PUBLIC_ENV` gate emitting `noindex` + `robots: Disallow: /`    |
-| Duplicate OG tags from layout + page both setting `og:image` | Page omits tags identical to layout; only override what differs |
-| JSON-LD with user content not escaped                        | `JSON.stringify(...).replace(/</g, "\\u003c")` helper           |
-| Marketing-quality OG image (5MB) shipped to every share      | ≤ 300KB                                                         |
-| `og:locale=id` (wrong)                                       | `og:locale=id_ID` (BCP 47-ish; underscore, country code)        |
-| `hreflang="id"` with no `x-default`                          | Always pair with `x-default` when multilingual                  |
-| Skipping SEO because app is auth-gated                       | Tier 1 still required — share previews                          |
+| ❌ Anti-pattern                                              | ✅ Correct                                                             |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `<title>Welcome</title>` only — no description               | Title + description + canonical at minimum                             |
+| `og:image` is relative `/og.png`                             | Absolute `https://app.example.com/og.png`                              |
+| Canonical from `page.url.origin`                             | Canonical from `PUBLIC_SITE_ORIGIN` env                                |
+| Description > 160 chars                                      | ≤ 160 chars (Google truncates)                                         |
+| Title > 60 chars                                             | ≤ 60 chars (Google truncates)                                          |
+| OG image without declared width/height                       | Always include `og:image:width` / `og:image:height`                    |
+| Hardcoded host in `robots.txt` / `sitemap.xml`               | Origin from `PUBLIC_SITE_ORIGIN`                                       |
+| Staging deploys indexed by Google                            | `process.env.NODE_ENV` gate emitting `noindex` + `robots: Disallow: /` |
+| Duplicate OG tags from layout + page both setting `og:image` | Page omits tags identical to layout; only override what differs        |
+| JSON-LD with user content not escaped                        | `JSON.stringify(...).replace(/</g, "\\u003c")` helper                  |
+| Marketing-quality OG image (5MB) shipped to every share      | ≤ 300KB                                                                |
+| `og:locale=id` (wrong)                                       | `og:locale=id_ID` (BCP 47-ish; underscore, country code)               |
+| `hreflang="id"` with no `x-default`                          | Always pair with `x-default` when multilingual                         |
+| Skipping SEO because app is auth-gated                       | Tier 1 still required — share previews                                 |
 
 ## Workflow
 
@@ -514,7 +526,7 @@ After applying:
 
 - `bosia-brief-review` — locks BRIEF.md `language` → `<html lang>` and `og:locale`.
 - `bosia-routing` — `+server.ts` shape for `robots.txt` / `sitemap.xml`.
-- `bosia-env` — `PUBLIC_SITE_ORIGIN`, `PUBLIC_ENV` belong in the `PUBLIC_` tier.
+- `bosia-env` — `PUBLIC_SITE_ORIGIN` belongs in the `PUBLIC_` tier. For prod-vs-dev detection use the framework-managed `process.env.NODE_ENV` (inlined into the client bundle by Bosia's bundler), not a hand-rolled `PUBLIC_ENV`.
 - `bosia-page-shell` — root `+layout.svelte` is the single source of truth for site-wide meta, mirroring chrome rule R1.
 - `bosia-landing` / `bosia-saas-landing` — marketing page scaffolds depend on Tier 1 + 2 from this skill.
 - `bosia-security-review` — XSS check on JSON-LD escaping.

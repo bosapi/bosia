@@ -6,7 +6,7 @@
 <script lang="ts">
 	import "../app.css";
 	import { page } from "bosia/client";
-	import { PUBLIC_ENV, PUBLIC_SITE_ORIGIN } from "$env";
+	import { PUBLIC_SITE_ORIGIN } from "$env";
 	import type { Snippet } from "svelte";
 	import { jsonLd } from "$lib/seo/jsonld";
 
@@ -34,7 +34,7 @@
 	} as const;
 
 	const canonical = $derived(`${PUBLIC_SITE_ORIGIN}${page.url.pathname}`);
-	const isProd = PUBLIC_ENV === "production";
+	const isProd = process.env.NODE_ENV === "production";
 	const seo = $derived(data?.seo ?? {});
 	const title = $derived(seo.title ?? SITE.name);
 	const description = $derived(seo.description ?? SITE.tagline);

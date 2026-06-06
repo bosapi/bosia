@@ -8,7 +8,7 @@ Copy-paste blocks. Replace `{{NAME}}`, `{{TAGLINE}}`, `{{LOCALE}}`, `{{THEME_COL
 <script lang="ts">
 	import "../app.css";
 	import { page } from "bosia/client";
-	import { PUBLIC_ENV, PUBLIC_SITE_ORIGIN } from "$env";
+	import { PUBLIC_SITE_ORIGIN } from "$env";
 	import type { Snippet } from "svelte";
 	import { jsonLd } from "$lib/seo/jsonld";
 
@@ -36,7 +36,7 @@ Copy-paste blocks. Replace `{{NAME}}`, `{{TAGLINE}}`, `{{LOCALE}}`, `{{THEME_COL
 	} as const;
 
 	const canonical = $derived(`${PUBLIC_SITE_ORIGIN}${page.url.pathname}`);
-	const isProd = PUBLIC_ENV === "production";
+	const isProd = process.env.NODE_ENV === "production";
 	const seo = $derived(data?.seo ?? {});
 	const title = $derived(seo.title ?? SITE.name);
 	const description = $derived(seo.description ?? SITE.tagline);
@@ -260,8 +260,8 @@ export async function load({ params, metadata }: LoadEvent) {
 ## 7. `src/routes/robots.txt/+server.ts`
 
 ```ts
-import type { RequestHandler } from "bosia";
-import { PUBLIC_SITE_ORIGIN, PUBLIC_ENV } from "$env";
+import type { RequestEvent } from "bosia";
+import { PUBLIC_SITE_ORIGIN } from "$env";
 
 const PRIVATE_PREFIXES = [
 	"/api/",
@@ -269,8 +269,8 @@ const PRIVATE_PREFIXES = [
 	// app-specific private prefixes
 ];
 
-export const GET: RequestHandler = () => {
-	const isProd = PUBLIC_ENV === "production";
+export function GET(_event: RequestEvent) {
+	const isProd = process.env.NODE_ENV === "production";
 	const body = isProd
 		? [
 				"User-agent: *",
@@ -284,18 +284,18 @@ export const GET: RequestHandler = () => {
 	return new Response(body, {
 		headers: { "content-type": "text/plain; charset=utf-8" },
 	});
-};
+}
 ```
 
 ## 8. `src/routes/sitemap.xml/+server.ts`
 
 ```ts
-import type { RequestHandler } from "bosia";
+import type { RequestEvent } from "bosia";
 import { PUBLIC_SITE_ORIGIN } from "$env";
 
 const PUBLIC_PATHS = ["/", "/login", "/onboarding", "/forgot-password"] as const;
 
-export const GET: RequestHandler = () => {
+export function GET(_event: RequestEvent) {
 	const now = new Date().toISOString().slice(0, 10);
 	const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -308,17 +308,16 @@ ${PUBLIC_PATHS.map(
 	return new Response(body, {
 		headers: { "content-type": "application/xml; charset=utf-8" },
 	});
-};
+}
 ```
 
 ## 9. `.env.example` additions
 
 ```
 PUBLIC_SITE_ORIGIN=https://app.example.com
-PUBLIC_ENV=development
 ```
 
-In prod, set `PUBLIC_ENV=production` and point `PUBLIC_SITE_ORIGIN` at the canonical hostname.
+In prod, point `PUBLIC_SITE_ORIGIN` at the canonical hostname. Bosia sets `NODE_ENV=production` automatically when you run `bosia build` / `bosia start` — no extra env var is needed for the prod gate.
 
 ## 10. Multilingual block (only when BRIEF declares multiple locales)
 

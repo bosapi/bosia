@@ -70,7 +70,7 @@
 ### Environment gate (3)
 
 - [ ] `PUBLIC_SITE_ORIGIN` declared in `.env.example`.
-- [ ] `PUBLIC_ENV` declared in `.env.example`.
+- [ ] Prod-vs-dev gate uses `process.env.NODE_ENV` (auto-set by Bosia + inlined into the client bundle) — NOT a hand-rolled `PUBLIC_ENV` user var.
 - [ ] Non-prod emits both `<meta name="robots" content="noindex,nofollow">` AND `robots.txt` returning `Disallow: /`.
 
 ## Tier 3 — Rich results (marketing-heavy apps)
