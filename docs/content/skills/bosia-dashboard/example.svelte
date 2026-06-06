@@ -10,7 +10,29 @@
 		DropdownMenuContent,
 		DropdownMenuItem,
 	} from "$lib/components/ui/dropdown-menu";
-	import Icon from "$lib/components/ui/icon/Icon.svelte";
+	import {
+		Home,
+		Users,
+		Settings,
+		BarChart,
+		TrendingUp,
+		TrendingDown,
+		Minus,
+	} from "@lucide/svelte";
+	import type { Component } from "svelte";
+
+	const navIcons: Record<string, Component> = {
+		home: Home,
+		users: Users,
+		settings: Settings,
+		"bar-chart": BarChart,
+	};
+
+	const directionIcons = {
+		up: TrendingUp,
+		down: TrendingDown,
+		flat: Minus,
+	} as const;
 
 	let {
 		data,
@@ -36,11 +58,12 @@
 		<Separator />
 		<nav class="flex-1 space-y-1 p-2 text-sm">
 			{#each data.nav as item (item.href)}
+				{@const NavIcon = navIcons[item.icon] ?? Home}
 				<a
 					href={item.href}
 					class="flex items-center gap-3 rounded-md px-3 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
 				>
-					<Icon name={item.icon} class="size-4" />
+					<NavIcon class="size-4" />
 					{item.label}
 				</a>
 			{/each}
@@ -80,6 +103,7 @@
 		<main class="flex-1 space-y-6 overflow-y-auto p-6">
 			<section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				{#each data.kpis as k}
+					{@const DirIcon = directionIcons[k.direction]}
 					<Card>
 						<CardHeader class="pb-2">
 							<CardTitle class="text-sm font-medium text-muted-foreground"
@@ -89,14 +113,7 @@
 						<CardContent class="space-y-1">
 							<div class="text-3xl font-semibold">{k.value}</div>
 							<div class="flex items-center gap-1 text-sm text-muted-foreground">
-								<Icon
-									name={k.direction === "up"
-										? "trending-up"
-										: k.direction === "down"
-											? "trending-down"
-											: "minus"}
-									class="size-4"
-								/>
+								<DirIcon class="size-4" />
 								<span>{k.delta}</span>
 							</div>
 						</CardContent>

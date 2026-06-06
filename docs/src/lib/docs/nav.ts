@@ -92,7 +92,7 @@ export const sidebar: NavGroup[] = [
 					{ label: "Field", slug: "components/ui/field" },
 					{ label: "Form", slug: "components/ui/form" },
 					{ label: "Hover Card", slug: "components/ui/hover-card" },
-					{ label: "Icon", slug: "components/ui/icon" },
+					{ label: "Icons", slug: "components/ui/icon" },
 					{ label: "Input", slug: "components/ui/input" },
 					{ label: "Input Group", slug: "components/ui/input-group" },
 					{ label: "Input OTP", slug: "components/ui/input-otp" },

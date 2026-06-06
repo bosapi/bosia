@@ -4,6 +4,7 @@
 	import type { Snippet } from "svelte";
 	import { Popover, PopoverTrigger, PopoverContent } from "../popover";
 	import { Calendar, CalendarHeader, CalendarGrid } from "../calendar";
+	import { Calendar as CalendarIcon } from "@lucide/svelte";
 
 	let {
 		value = $bindable<Date | undefined>(undefined),
@@ -66,24 +67,7 @@
 			className,
 		)}
 	>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="16"
-			height="16"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			class="size-4 shrink-0 opacity-50"
-			aria-hidden="true"
-		>
-			<path d="M8 2v4" />
-			<path d="M16 2v4" />
-			<rect width="18" height="18" x="3" y="4" rx="2" />
-			<path d="M3 10h18" />
-		</svg>
+		<CalendarIcon size={16} class="size-4 shrink-0 opacity-50" aria-hidden="true" />
 		{#if trigger}
 			{@render trigger(value)}
 		{:else}

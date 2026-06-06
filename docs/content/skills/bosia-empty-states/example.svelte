@@ -3,7 +3,7 @@
 	import { Skeleton } from "$lib/components/ui/skeleton";
 	import { Alert, AlertTitle, AlertDescription } from "$lib/components/ui/alert";
 	import { Button } from "$lib/components/ui/button";
-	import Icon from "$lib/components/ui/icon/Icon.svelte";
+	import { Users } from "@lucide/svelte";
 
 	type Student = { id: string; name: string };
 
@@ -50,7 +50,7 @@
 	{:else if !students || students.length === 0}
 		<!-- Empty: icon + headline + body + primary action. -->
 		<Empty>
-			<Icon name="users" class="size-10 text-muted-foreground" />
+			<Users class="size-10 text-muted-foreground" />
 			<Empty.Title>No students yet</Empty.Title>
 			<Empty.Description>
 				Add your first student to start tracking attendance and grades.

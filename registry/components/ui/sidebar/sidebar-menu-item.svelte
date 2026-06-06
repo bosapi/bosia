@@ -4,6 +4,7 @@
 	import type { Snippet } from "svelte";
 	import { getSidebarContext } from "./context.ts";
 	import SidebarPopover from "./sidebar-popover.svelte";
+	import { ChevronDown } from "@lucide/svelte";
 
 	let {
 		class: className = "",
@@ -171,20 +172,10 @@
 					>
 				{/if}
 				<span class="flex-1 truncate text-left">{label}</span>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
+				<ChevronDown
+					size={14}
 					class={cn("shrink-0 transition-transform", open && "rotate-180")}
-				>
-					<path d="m6 9 6 6 6-6" />
-				</svg>
+				/>
 			</button>
 			{#if open}
 				<ul class="ml-4 mt-0.5 flex flex-col gap-0.5 border-l pl-2">

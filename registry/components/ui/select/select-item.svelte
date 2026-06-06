@@ -2,6 +2,7 @@
 	import { cn } from "$lib/utils.ts";
 	import { getContext } from "svelte";
 	import type { Snippet } from "svelte";
+	import { Check } from "@lucide/svelte";
 
 	let {
 		value,
@@ -65,19 +66,7 @@
 	{/if}
 	{#if isSelected}
 		<span class="absolute right-2 flex size-3.5 items-center justify-center">
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class="size-4"
-				aria-hidden="true"
-			>
-				<path d="M20 6 9 17l-5-5" />
-			</svg>
+			<Check size={16} class="size-4" aria-hidden="true" />
 		</span>
 	{/if}
 </div>

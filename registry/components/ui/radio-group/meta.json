@@ -3,5 +3,7 @@
 	"description": "A set of radio buttons for single-selection input.",
 	"dependencies": [],
 	"files": ["radio-group.svelte", "radio-group-item.svelte", "index.ts"],
-	"npmDeps": {}
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
 }

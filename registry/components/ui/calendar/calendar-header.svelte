@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.ts";
 	import { getContext } from "svelte";
+	import { ChevronLeft, ChevronRight } from "@lucide/svelte";
 
 	let {
 		class: className = "",
@@ -73,17 +74,7 @@
 		aria-label="Previous month"
 		onclick={() => calendar.prevMonth()}
 	>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="16"
-			height="16"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg
-		>
+		<ChevronLeft size={16} />
 	</button>
 
 	<div class="flex items-center gap-1">
@@ -119,16 +110,6 @@
 		aria-label="Next month"
 		onclick={() => calendar.nextMonth()}
 	>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="16"
-			height="16"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg
-		>
+		<ChevronRight size={16} />
 	</button>
 </div>

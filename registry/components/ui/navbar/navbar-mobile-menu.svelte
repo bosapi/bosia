@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.ts";
-	import { Icon } from "$lib/components/ui/icon";
+	import { Menu, X } from "@lucide/svelte";
 	import {
 		DropdownMenu,
 		DropdownMenuTrigger,
@@ -26,7 +26,11 @@
 <div class={cn("md:hidden", className)} {...restProps}>
 	<DropdownMenu bind:open={menuOpen}>
 		<DropdownMenuTrigger aria-label="Open menu" class="h-9 w-9 hover:bg-accent rounded-md">
-			<Icon name={menuOpen ? "x" : "menu"} size={20} />
+			{#if menuOpen}
+				<X size={20} />
+			{:else}
+				<Menu size={20} />
+			{/if}
 		</DropdownMenuTrigger>
 
 		{#if menuOpen}

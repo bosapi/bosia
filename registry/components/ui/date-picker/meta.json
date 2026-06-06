@@ -3,5 +3,7 @@
 	"description": "A date picker built on Popover + Calendar.",
 	"dependencies": ["ui/popover", "ui/calendar"],
 	"files": ["date-picker.svelte", "index.ts"],
-	"npmDeps": {}
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
 }

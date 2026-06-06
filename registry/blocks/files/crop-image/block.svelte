@@ -3,7 +3,7 @@
 	import { Button } from "$lib/components/ui/button";
 	import { Label } from "$lib/components/ui/label";
 	import { Slider } from "$lib/components/ui/slider";
-	import { Icon } from "$lib/components/ui/icon";
+	import { ZoomIn, Loader } from "@lucide/svelte";
 	import { toast } from "$lib/components/ui/sonner";
 
 	type Shape = "rect" | "round";
@@ -231,7 +231,7 @@
 		<div class="flex justify-center">
 			<div class="w-full max-w-[240px] space-y-2">
 				<div class="flex items-center gap-2">
-					<Icon name="zoom-in" size={16} />
+					<ZoomIn size={16} />
 					<Label for="crop-zoom">Zoom</Label>
 				</div>
 				<Slider id="crop-zoom" bind:value={zoom} min={1} max={3} step={0.1} />
@@ -242,7 +242,7 @@
 			<Button variant="outline" onclick={onCancel}>Cancel</Button>
 			<Button onclick={handleSave} disabled={isProcessing}>
 				{#if isProcessing}
-					<Icon name="loader" size={16} class="mr-2 animate-spin" />
+					<Loader size={16} class="mr-2 animate-spin" />
 					Processing...
 				{:else}
 					Crop

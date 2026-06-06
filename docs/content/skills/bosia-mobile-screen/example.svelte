@@ -8,7 +8,7 @@
 		DialogHeader,
 		DialogTitle,
 	} from "$lib/components/ui/dialog";
-	import Icon from "$lib/components/ui/icon/Icon.svelte";
+	import { ChevronLeft, ChevronRight } from "@lucide/svelte";
 
 	let query = $state("");
 </script>
@@ -18,7 +18,7 @@
 		class="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background px-4 pt-[env(safe-area-inset-top)] pb-3"
 	>
 		<Button variant="ghost" size="icon" aria-label="Back">
-			<Icon name="chevron-left" />
+			<ChevronLeft />
 		</Button>
 		<h1 class="text-lg font-semibold">Students</h1>
 	</header>
@@ -30,7 +30,7 @@
 				{#each [{ id: 1, name: "Aisyah" }, { id: 2, name: "Budi" }] as s (s.id)}
 					<li class="flex min-h-11 items-center justify-between p-4">
 						<span class="text-card-foreground">{s.name}</span>
-						<Icon name="chevron-right" class="text-muted-foreground" />
+						<ChevronRight class="text-muted-foreground" />
 					</li>
 				{/each}
 			</ul>

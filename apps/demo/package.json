@@ -9,6 +9,7 @@
 		"check": "bun run ../../packages/bosia/src/cli/index.ts sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit"
 	},
 	"dependencies": {
+		"@lucide/svelte": "^1.17.0",
 		"bosia": "workspace:*",
 		"svelte": "^5.20.0",
 		"tailwind-merge": "^3.5.0"

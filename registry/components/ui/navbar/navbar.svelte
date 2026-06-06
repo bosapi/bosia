@@ -10,7 +10,7 @@
 		DropdownMenuItem,
 		DropdownMenuSeparator,
 	} from "$lib/components/ui/dropdown-menu";
-	import { Icon } from "$lib/components/ui/icon";
+	import { Sun, Moon } from "@lucide/svelte";
 	import NavbarLink from "./navbar-link.svelte";
 	import NavbarMobileMenu from "./navbar-mobile-menu.svelte";
 
@@ -84,7 +84,11 @@
 		{@render children?.()}
 
 		<Button variant="ghost" size="icon" onclick={toggleDark} aria-label="Toggle theme">
-			<Icon name={isDark ? "sun" : "moon"} size={18} />
+			{#if isDark}
+				<Sun size={18} />
+			{:else}
+				<Moon size={18} />
+			{/if}
 		</Button>
 
 		{#if user}

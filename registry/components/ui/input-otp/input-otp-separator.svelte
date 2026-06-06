@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.ts";
 	import type { Snippet } from "svelte";
+	import { Minus } from "@lucide/svelte";
 
 	let {
 		class: className = "",
@@ -21,19 +22,6 @@
 	{#if children}
 		{@render children()}
 	{:else}
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="10"
-			height="10"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			aria-hidden="true"
-		>
-			<line x1="5" y1="12" x2="19" y2="12" />
-		</svg>
+		<Minus size={10} aria-hidden="true" />
 	{/if}
 </div>

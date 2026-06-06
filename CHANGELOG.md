@@ -11,6 +11,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Production runtime no longer needs `src/app.html` — build now writes parsed segments to `dist/app-html.json`, so Docker images can copy only `dist/`.
+- Switched icons to `@lucide/svelte`; registry components import lucide directly instead of a custom wrapper.
+
+### Removed
+
+- Custom `registry/components/ui/icon` component and its hand-curated SVG map.
+
+### Added
+
+- `bosia-icon` skill telling AI agents to use `@lucide/svelte` (not deprecated `lucide-svelte`).
 
 ## [0.6.15] - 2026-06-05
 

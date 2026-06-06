@@ -2,6 +2,7 @@
 	import { cn } from "$lib/utils.ts";
 	import { getContext } from "svelte";
 	import type { Snippet } from "svelte";
+	import { ChevronDown } from "@lucide/svelte";
 
 	let {
 		class: className = "",
@@ -45,17 +46,5 @@
 	{...restProps}
 >
 	{@render children?.()}
-	<svg
-		xmlns="http://www.w3.org/2000/svg"
-		viewBox="0 0 24 24"
-		fill="none"
-		stroke="currentColor"
-		stroke-width="2"
-		stroke-linecap="round"
-		stroke-linejoin="round"
-		class="size-4 shrink-0 opacity-50"
-		aria-hidden="true"
-	>
-		<path d="m6 9 6 6 6-6" />
-	</svg>
+	<ChevronDown size={16} class="size-4 shrink-0 opacity-50" aria-hidden="true" />
 </button>

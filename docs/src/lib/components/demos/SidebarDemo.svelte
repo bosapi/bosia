@@ -9,7 +9,18 @@
 		SidebarFooter,
 		SidebarTrigger,
 	} from "$registry/sidebar";
-	import { Icon } from "$registry/icon";
+	import {
+		Terminal,
+		Package,
+		Book,
+		Settings,
+		Hash,
+		Globe,
+		Map,
+		EllipsisVertical,
+		User,
+		ChevronUp,
+	} from "@lucide/svelte";
 
 	let collapsed = $state(false);
 </script>
@@ -42,26 +53,26 @@
 				<SidebarGroup label="Platform">
 					<SidebarMenu>
 						<SidebarMenuItem label="Playground" active trigger="hover">
-							{#snippet icon()}<Icon name="terminal" size={16} />{/snippet}
+							{#snippet icon()}<Terminal size={16} />{/snippet}
 							<SidebarMenuItem href="#" label="History" />
 							<SidebarMenuItem href="#" label="Starred" />
 							<SidebarMenuItem href="#" label="Settings" />
 						</SidebarMenuItem>
 						<SidebarMenuItem label="Models" trigger="hover">
-							{#snippet icon()}<Icon name="package" size={16} />{/snippet}
+							{#snippet icon()}<Package size={16} />{/snippet}
 							<SidebarMenuItem href="#" label="Genesis" />
 							<SidebarMenuItem href="#" label="Explorer" />
 							<SidebarMenuItem href="#" label="Quantum" />
 						</SidebarMenuItem>
 						<SidebarMenuItem label="Documentation" trigger="hover">
-							{#snippet icon()}<Icon name="book" size={16} />{/snippet}
+							{#snippet icon()}<Book size={16} />{/snippet}
 							<SidebarMenuItem href="#" label="Introduction" />
 							<SidebarMenuItem href="#" label="Get Started" />
 							<SidebarMenuItem href="#" label="Tutorials" />
 							<SidebarMenuItem href="#" label="Changelog" />
 						</SidebarMenuItem>
 						<SidebarMenuItem label="Settings" trigger="hover">
-							{#snippet icon()}<Icon name="settings" size={16} />{/snippet}
+							{#snippet icon()}<Settings size={16} />{/snippet}
 							<SidebarMenuItem href="#" label="General" />
 							<SidebarMenuItem href="#" label="Team" />
 							<SidebarMenuItem href="#" label="Billing" />
@@ -73,16 +84,16 @@
 				<SidebarGroup label="Projects">
 					<SidebarMenu>
 						<SidebarMenuItem href="#" label="Design Engineering">
-							{#snippet icon()}<Icon name="hash" size={16} />{/snippet}
+							{#snippet icon()}<Hash size={16} />{/snippet}
 						</SidebarMenuItem>
 						<SidebarMenuItem href="#" label="Sales & Marketing">
-							{#snippet icon()}<Icon name="globe" size={16} />{/snippet}
+							{#snippet icon()}<Globe size={16} />{/snippet}
 						</SidebarMenuItem>
 						<SidebarMenuItem href="#" label="Travel">
-							{#snippet icon()}<Icon name="map" size={16} />{/snippet}
+							{#snippet icon()}<Map size={16} />{/snippet}
 						</SidebarMenuItem>
 						<SidebarMenuItem href="#" label="More">
-							{#snippet icon()}<Icon name="ellipsis-vertical" size={16} />{/snippet}
+							{#snippet icon()}<EllipsisVertical size={16} />{/snippet}
 						</SidebarMenuItem>
 					</SidebarMenu>
 				</SidebarGroup>
@@ -93,14 +104,14 @@
 					<div
 						class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted"
 					>
-						<Icon name="user" size={14} class="text-muted-foreground" />
+						<User size={14} class="text-muted-foreground" />
 					</div>
 					{#if !collapsed}
 						<div class="flex flex-1 flex-col leading-tight">
 							<span class="text-sm font-medium">shadcn</span>
 							<span class="text-xs text-muted-foreground">m@example.com</span>
 						</div>
-						<Icon name="chevron-up" size={14} class="text-muted-foreground" />
+						<ChevronUp size={14} class="text-muted-foreground" />
 					{/if}
 				</div>
 			</SidebarFooter>

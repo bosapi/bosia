@@ -5,6 +5,19 @@
 
 ---
 
+## Same-day addition (2026-06-06) — replace custom `<Icon>` wrapper with `@lucide/svelte`
+
+> The hand-curated `registry/components/ui/icon` (95 inline SVG paths in `icons.ts`) plus 28 registry components with hardcoded `<svg>` blocks duplicated work every time a new glyph was needed. Decision: drop the wrapper, import each icon from the official `@lucide/svelte` Svelte components. Skill added so AI consumers know to use the scoped package (not the deprecated `lucide-svelte`).
+
+- [x] 🟠 `apps/demo/package.json`, `docs/package.json` — add `@lucide/svelte` dep.
+- [x] 🟠 `registry/components/ui/icon/` — delete; remove `ui/icon` from `registry/index.json`.
+- [x] 🟠 Migrate 17 registry components (accordion, select, checkbox, pagination, calendar, carousel, sidebar, breadcrumb, command, date-picker, input-otp, radio-group, resizable, navigation-menu, combobox, navbar, blocks/files/upload-area, blocks/files/crop-image) from inline `<svg>` / `<Icon>` to direct `@lucide/svelte` imports. Update each component's `meta.json` (`npmDeps` adds `@lucide/svelte`, drop `ui/icon` dep).
+- [x] 🟠 Update 3 skill examples (`bosia-dashboard`, `bosia-mobile-screen`, `bosia-empty-states`) and the docs `SidebarDemo`.
+- [x] 🟠 `docs/content/docs/components/ui/icon.md` rewritten as `@lucide/svelte` guide with deprecation callout; `docs/content/docs/components/overview.md`, `navbar.md`, `upload-area.md`, `crop-image.md` callouts updated; `docs/src/lib/components/IconGrid.svelte` deleted.
+- [x] ⚪ New `docs/content/skills/bosia-icon/` skill steering AI agents toward `@lucide/svelte` (never `lucide-svelte`).
+
+---
+
 ## Same-day addition (2026-06-06) — production runtime needed `src/app.html`
 
 > Bug report from komba Dockerfile build: runner stage copies only `dist/`, `package.json`, `node_modules`, `CHANGELOG.md`. Container boots → `core/renderer.ts:119` calls `getAppHtmlSegments()` at module load → reads `src/app.html` from `process.cwd()` → file missing → throws `src/app.html is required but not found`. Unlike SvelteKit (whose Vite plugin compiles `app.html` into the build bundle), Bosia kept the template as a runtime file. Forces every consumer to copy `src/` into the runtime image or hand-list `src/app.html`.

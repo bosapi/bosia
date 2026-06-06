@@ -9,5 +9,7 @@
 		"accordion-content.svelte",
 		"index.ts"
 	],
-	"npmDeps": {}
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
 }

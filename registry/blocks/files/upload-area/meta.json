@@ -3,8 +3,8 @@
 	"description": "Drag-and-drop file upload area with preview, size validation, progress bar, and optional crop hook.",
 	"category": "files",
 	"themes": [],
-	"dependencies": ["ui/button", "ui/label", "ui/progress", "ui/icon", "ui/sonner"],
+	"dependencies": ["ui/button", "ui/label", "ui/progress", "ui/sonner"],
 	"files": ["block.svelte"],
 	"fonts": {},
-	"npmDeps": {}
+	"npmDeps": { "@lucide/svelte": "^1.17.0" }
 }

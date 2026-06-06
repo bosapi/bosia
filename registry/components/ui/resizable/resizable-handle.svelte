@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.ts";
 	import { getContext, untrack } from "svelte";
+	import { GripVertical } from "@lucide/svelte";
 
 	let {
 		withHandle = false,
@@ -52,25 +53,7 @@
 				ctx.direction === "horizontal" ? "h-4 w-3" : "h-3 w-4",
 			)}
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="10"
-				height="10"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class={cn(ctx.direction === "vertical" && "rotate-90")}
-			>
-				<circle cx="9" cy="12" r="1" />
-				<circle cx="9" cy="5" r="1" />
-				<circle cx="9" cy="19" r="1" />
-				<circle cx="15" cy="12" r="1" />
-				<circle cx="15" cy="5" r="1" />
-				<circle cx="15" cy="19" r="1" />
-			</svg>
+			<GripVertical size={10} class={cn(ctx.direction === "vertical" && "rotate-90")} />
 		</div>
 	{/if}
 </div>

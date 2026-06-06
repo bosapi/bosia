@@ -76,7 +76,7 @@ Import from the component's barrel export:
 | [Chart](/components/ui/chart/)                 | SVG line and bar charts with tooltips               |
 | [Data Table](/components/ui/data-table/)       | Table with sorting, filtering, pagination           |
 | [Dropdown Menu](/components/ui/dropdown-menu/) | Context-managed dropdown                            |
-| [Icon](/components/ui/icon/)                   | Inline SVG icons (Lucide-style)                     |
+| [Icons](/components/ui/icon/)                  | Guide for using `@lucide/svelte`                    |
 | [Input](/components/ui/input/)                 | Styled text input with bindable value               |
 | [Navbar](/components/ui/navbar/)               | Responsive navbar with mobile menu and theme toggle |
 | [Separator](/components/ui/separator/)         | Horizontal or vertical divider                      |

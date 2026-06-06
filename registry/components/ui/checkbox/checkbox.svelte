@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.ts";
+	import { Check, Minus } from "@lucide/svelte";
 
 	let {
 		checked = $bindable(false),
@@ -56,30 +57,9 @@
 	{...restProps}
 >
 	{#if indeterminate}
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="3"
-			stroke-linecap="round"
-			class="size-full p-px"
-		>
-			<line x1="5" y1="12" x2="19" y2="12" />
-		</svg>
+		<Minus class="size-full p-px" strokeWidth={3} />
 	{:else if checked}
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="3"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			class="size-full p-px"
-		>
-			<polyline points="20 6 9 17 4 12" />
-		</svg>
+		<Check class="size-full p-px" strokeWidth={3} />
 	{/if}
 </button>
 

@@ -2,7 +2,7 @@
 	import type { Snippet } from "svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { Progress } from "$lib/components/ui/progress";
-	import { Icon } from "$lib/components/ui/icon";
+	import { Crop, X, Upload, Loader } from "@lucide/svelte";
 	import { toast } from "$lib/components/ui/sonner";
 
 	type UploadResponse = { url: string } & Record<string, unknown>;
@@ -179,7 +179,7 @@
 							onclick={requestCrop}
 							title="Crop"
 						>
-							<Icon name="crop" size={16} />
+							<Crop size={16} />
 						</button>
 					{/if}
 					<button
@@ -188,7 +188,7 @@
 						onclick={clearFile}
 						title="Remove"
 					>
-						<Icon name="x" size={16} />
+						<X size={16} />
 					</button>
 				</div>
 			</div>
@@ -199,7 +199,7 @@
 				onclick={() => inputEl?.click()}
 			>
 				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-					<Icon name="upload" size={24} class="text-muted-foreground" />
+					<Upload size={24} class="text-muted-foreground" />
 				</div>
 				{#if children}
 					{@render children()}
@@ -215,7 +215,7 @@
 		<div class="flex justify-end">
 			<Button disabled={!file || isUploading} onclick={upload}>
 				{#if isUploading}
-					<Icon name="loader" size={16} class="mr-2 animate-spin" />
+					<Loader size={16} class="mr-2 animate-spin" />
 					Uploading...
 				{:else}
 					Upload

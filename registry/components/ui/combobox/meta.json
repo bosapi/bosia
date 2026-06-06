@@ -3,5 +3,7 @@
 	"description": "A searchable select built on Popover + Command.",
 	"dependencies": ["ui/popover", "ui/command"],
 	"files": ["combobox.svelte", "index.ts"],
-	"npmDeps": {}
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
 }

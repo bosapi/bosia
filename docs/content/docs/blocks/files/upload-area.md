@@ -18,7 +18,7 @@ A composable drop zone. Click or drag a file in, see a preview, hit Upload — t
 bun x bosia@latest add block files/upload-area
 ```
 
-Pulls `ui/button`, `ui/label`, `ui/progress`, `ui/icon`, `ui/sonner`. No npm deps.
+Pulls `ui/button`, `ui/label`, `ui/progress`, `ui/sonner`, and the [`@lucide/svelte`](/components/ui/icon/) npm package.
 
 ## Usage
 

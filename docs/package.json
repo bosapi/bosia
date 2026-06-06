@@ -11,6 +11,7 @@
 		"test": "bun test"
 	},
 	"dependencies": {
+		"@lucide/svelte": "^1.17.0",
 		"bosia": "workspace:*",
 		"gray-matter": "^4.0.3",
 		"marked": "^15.0.0",

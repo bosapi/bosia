@@ -20,7 +20,7 @@ A self-contained image cropper. Pass `imageSrc`, get a `Blob` back via `onCropCo
 bun x bosia@latest add block files/crop-image
 ```
 
-Pulls `ui/button`, `ui/label`, `ui/slider`, `ui/icon`, `ui/sonner`, and the `svelte-easy-crop` npm package.
+Pulls `ui/button`, `ui/label`, `ui/slider`, `ui/sonner`, and the `svelte-easy-crop` and [`@lucide/svelte`](/components/ui/icon/) npm packages.
 
 ## Usage
 

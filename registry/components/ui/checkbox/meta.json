@@ -3,5 +3,7 @@
 	"description": "A checkbox control for toggling options on and off.",
 	"dependencies": [],
 	"files": ["checkbox.svelte", "index.ts"],
-	"npmDeps": {}
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
 }

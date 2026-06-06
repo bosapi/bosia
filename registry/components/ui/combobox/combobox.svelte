@@ -9,6 +9,7 @@
 		CommandGroup,
 		CommandItem,
 	} from "../command";
+	import { Check, ChevronsUpDown } from "@lucide/svelte";
 
 	type ComboboxItem = {
 		value: string;
@@ -63,22 +64,7 @@
 		)}
 	>
 		<span class="truncate">{selectedLabel ?? placeholder}</span>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="16"
-			height="16"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			class="ml-2 size-4 shrink-0 opacity-50"
-			aria-hidden="true"
-		>
-			<path d="m7 15 5 5 5-5" />
-			<path d="m7 9 5-5 5 5" />
-		</svg>
+		<ChevronsUpDown size={16} class="ml-2 size-4 shrink-0 opacity-50" aria-hidden="true" />
 	</PopoverTrigger>
 	<PopoverContent align="start" sideOffset={4} class={cn("w-[200px] p-0", contentClass)}>
 		<Command>
@@ -93,24 +79,14 @@
 							disabled={item.disabled}
 							onSelect={handleSelect}
 						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
+							<Check
+								size={16}
 								class={cn(
 									"mr-2 size-4",
 									item.value === value ? "opacity-100" : "opacity-0",
 								)}
 								aria-hidden="true"
-							>
-								<path d="M20 6 9 17l-5-5" />
-							</svg>
+							/>
 							{item.label}
 						</CommandItem>
 					{/each}
