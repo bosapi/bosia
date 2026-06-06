@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 45 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
+description: Top-level index of 46 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
     mode: catalog
     category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-45 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+46 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -77,24 +77,25 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 ## Conventions — framework · — always-active code rules
 
-| Name                           | Rule                                                                                                                                                            |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bosia-engineering-discipline` | Think before coding, simplicity first, surgical changes, goal-driven execution. Applies before every other skill's workflow.                                    |
-| `bosia-routing`                | `+page.svelte` registers the route. Folder with only `+page.server.ts` 404s. Use `+server.ts` for action-only endpoints.                                        |
-| `bosia-navigation`             | Client nav from `bosia/client` — `<a href>` / `goto()` / form `redirect()` / `window.location.href`. Hooks `beforeNavigate` & `afterNavigate`.                  |
-| `bosia-svelte-runes`           | Svelte 5 Runes — `$state` / `$derived` / `$effect` / `$props`. Never legacy `let`-reactivity, `$:`, or stores when runes work.                                  |
-| `bosia-elysia-routes`          | `+server.ts` shape — `{ body }: { body: T }` parsing, return plain objects or `new Response()` for status codes. No Express idioms.                             |
-| `bosia-hooks`                  | `hooks.server.ts` signature is `({ event, resolve })`, NOT SvelteKit's `({ request, cookies })`. Cookies on `event.cookies`, locals on `event.locals`.          |
-| `bosia-cookies`                | `event.cookies.set/get/delete`. `sameSite` accepts both cases. `Secure` is framework-decided per-request — never pass `secure: true` in route code.             |
-| `bosia-bun-runtime`            | Bun-native APIs replacing Node packages that crash under Bun. `Bun.password` (NOT `@node-rs/argon2` / `argon2` / `bcrypt`). `bun:sqlite` over `better-sqlite3`. |
-| `bosia-rbac-permission`        | Always `can('resource.action', scope?)`. Never `if (role === 'admin')`. Resources in `lib/rbac/resources.ts`.                                                   |
-| `bosia-clean-architecture`     | Strict controller → service → repository per feature. No `db` in routes. Valibot validators derived from drizzle tables via `drizzle-valibot`.                  |
-| `bosia-drizzle-feature`        | `*.table.ts` + repository + service + idempotent numbered seeds. Never edit applied seeds — add a new numbered file.                                            |
-| `bosia-drizzle-usage`          | Consumer side of `db`: repositories only. Routes/services never call `db.*` directly. Pre-flight `db_test_connection` before first read.                        |
-| `bosia-database-setup`         | On-demand engine swap (sqlite ↔ postgres / mysql) + new tables. Default scaffold = sqlite-file. Load only when the user explicitly asks for DB work.            |
-| `bosia-query-defaults`         | `list*` repositories take `{ limit=10, offset=0, orderBy }` and return `{ rows, total }`. Default sort `desc(createdAt)`. Service clamps `limit` ≤ 100.         |
-| `bosia-env`                    | Four-tier prefix (`PUBLIC_STATIC_`/`PUBLIC_`/`STATIC_`/none). User vars via `$env`, framework vars via `process.env`. `.env.example` is the contract.           |
-| `bosia-cors`                   | CORS env recipe (`CORS_ALLOWED_ORIGINS` + friends) and CSRF-vs-CORS triage. Preview-proxy apps usually need `TRUST_PROXY=true`, not CORS.                       |
+| Name                           | Rule                                                                                                                                                                                                  |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bosia-engineering-discipline` | Think before coding, simplicity first, surgical changes, goal-driven execution. Applies before every other skill's workflow.                                                                          |
+| `bosia-routing`                | `+page.svelte` registers the route. Folder with only `+page.server.ts` 404s. Use `+server.ts` for action-only endpoints.                                                                              |
+| `bosia-navigation`             | Client nav from `bosia/client` — `<a href>` / `goto()` / form `redirect()` / `window.location.href`. Hooks `beforeNavigate` & `afterNavigate`.                                                        |
+| `bosia-svelte-runes`           | Svelte 5 Runes — `$state` / `$derived` / `$effect` / `$props`. Never legacy `let`-reactivity, `$:`, or stores when runes work.                                                                        |
+| `bosia-elysia-routes`          | `+server.ts` shape — `{ body }: { body: T }` parsing, return plain objects or `new Response()` for status codes. No Express idioms.                                                                   |
+| `bosia-hooks`                  | `hooks.server.ts` signature is `({ event, resolve })`, NOT SvelteKit's `({ request, cookies })`. Cookies on `event.cookies`, locals on `event.locals`.                                                |
+| `bosia-cookies`                | `event.cookies.set/get/delete`. `sameSite` accepts both cases. `Secure` is framework-decided per-request — never pass `secure: true` in route code.                                                   |
+| `bosia-bun-runtime`            | Bun-native APIs replacing Node packages that crash under Bun. `Bun.password` (NOT `@node-rs/argon2` / `argon2` / `bcrypt`). `bun:sqlite` over `better-sqlite3`.                                       |
+| `bosia-rbac-permission`        | Always `can('resource.action', scope?)`. Never `if (role === 'admin')`. Resources in `lib/rbac/resources.ts`.                                                                                         |
+| `bosia-clean-architecture`     | Strict controller → service → repository per feature. No `db` in routes. Valibot validators derived from drizzle tables via `drizzle-valibot`.                                                        |
+| `bosia-drizzle-feature`        | `*.table.ts` + repository + service + idempotent numbered seeds. Never edit applied seeds — add a new numbered file.                                                                                  |
+| `bosia-drizzle-usage`          | Consumer side of `db`: repositories only. Routes/services never call `db.*` directly. Pre-flight `db_test_connection` before first read.                                                              |
+| `bosia-database-setup`         | On-demand engine swap (sqlite ↔ postgres / mysql) + new tables. Default scaffold = sqlite-file. Load only when the user explicitly asks for DB work.                                                  |
+| `bosia-query-defaults`         | `list*` repositories take `{ limit=10, offset=0, orderBy }` and return `{ rows, total }`. Default sort `desc(createdAt)`. Service clamps `limit` ≤ 100.                                               |
+| `bosia-env`                    | Four-tier prefix (`PUBLIC_STATIC_`/`PUBLIC_`/`STATIC_`/none). User vars via `$env`, framework vars via `process.env`. `.env.example` is the contract.                                                 |
+| `bosia-cors`                   | CORS env recipe (`CORS_ALLOWED_ORIGINS` + friends) and CSRF-vs-CORS triage. Preview-proxy apps usually need `TRUST_PROXY=true`, not CORS.                                                             |
+| `bosia-seo`                    | SEO baseline — title/description/canonical, Open Graph, Twitter card, favicons, web manifest, robots.txt, sitemap.xml, JSON-LD. Tier 1 required for every app, including auth-gated (share previews). |
 
 ## Quality gates — design ✦ — run before emitting any UI
 

@@ -100,7 +100,7 @@ P1:
 - [ ] Visual or screenshot in hero.
 - [ ] Logo row grayscale → color on hover.
 - [ ] Section anchors (`#features`, `#pricing`, `#faq`) link from nav.
-- [ ] Open-graph metadata.
+- [ ] Run `bosia-seo` Tier 1 + Tier 2; add Tier 3 schemas (`SoftwareApplication`, `FAQPage`) for sections present.
 
 ## References
 

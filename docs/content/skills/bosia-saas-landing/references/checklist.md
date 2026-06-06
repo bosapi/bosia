@@ -14,4 +14,4 @@
 - [ ] Logo row grayscale + uniform height.
 - [ ] Section anchors connect to nav.
 - [ ] Pricing tease links to full `/pricing`.
-- [ ] OG metadata for sharing.
+- [ ] Run `bosia-seo` (Tier 1 required, Tier 2 for marketing surface). Tier 3 schemas (`SoftwareApplication`, `FAQPage`) if the page carries those sections.

@@ -80,6 +80,7 @@ P1:
 - [ ] Hero image (if any) has descriptive `alt`.
 - [ ] Logo row uses grayscale; on hover restores color.
 - [ ] Footer is a real `<footer>` landmark.
+- [ ] Run `bosia-seo` Tier 1 + Tier 2 (this is the public root — share previews + sitemap matter).
 
 ## References
 
