@@ -6,11 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.19] - 2026-06-08
+
+### Fixed
+
+- `.webmanifest` files in `public/` now serve correctly instead of returning 404. Added `.webmanifest` to the static file extension whitelist (`isStaticPath`).
+
 ## [0.6.18] - 2026-06-07
 
 ### Fixed
 
 - Pure-SSR apps (zero prerendered routes) now also mirror `public/` → `dist/static/` at build time, so production containers that drop `public/` keep serving `bosia-tw.css`, favicons, and other public assets. 0.6.17 only ran the mirror when SSG output existed.
+
+### Changed
+
+- Clean architecture skill: services may only call their own repository. Cross-feature is service → service, never service → other repository.
+- Clean architecture skill: any file type (tables, validators, dtos, repositories, services) with 2+ files should promote into its matching subfolder; barrel still hides deep paths.
+- Clean architecture skill: sub-feature folders (`auth/oauth/`) only when the sub-domain owns its own tables. `login/`/`register/`-style sub-domains that share parent tables stay under `services/`.
 
 ## [0.6.17] - 2026-06-07
 

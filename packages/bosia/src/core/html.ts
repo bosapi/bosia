@@ -395,6 +395,7 @@ const STATIC_EXTS = new Set([
 	".ttf",
 	".xml",
 	".txt",
+	".webmanifest",
 ]);
 
 export function isStaticPath(path: string): boolean {
