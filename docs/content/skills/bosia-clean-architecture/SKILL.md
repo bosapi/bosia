@@ -75,6 +75,8 @@ src/features/<name>/
 └── index.ts               # Barrel: re-exports Service, Repository (namespaced), DTOs, validators, table
 ```
 
+When any file type reaches **2+ files** (tables, validators, dtos, repositories, or services), promote that kind into its own subfolder (`tables/`, `validators/`, `dtos/`, `repositories/`, `services/`). The threshold is per-type and independent — see [R9](#r9--promote-each-file-type-into-a-folder-when-it-grows-past-one).
+
 Cross-feature:
 
 ```
@@ -193,6 +195,28 @@ Forbidden: `zod`. Bosia generated apps standardize on valibot for bundle size an
 
 Tables belonging to one aggregate live in one feature folder. Cross-feature **FKs** reference sibling tables directly (drizzle needs the column object). Cross-feature **service** calls go through the barrel: `import { OrderService } from "../order"` then `OrderService.create(...)`. Never deep-import another feature's repository or table file.
 
+**A service NEVER calls another feature's repository.** Repositories are private to their own feature. Cross-feature data access goes service → service, so the owning feature's business rules (auth checks, validation, side effects) still run. Skipping the sibling service bypasses that contract and turns the caller into a second source of truth for the callee's data.
+
+```ts
+// ❌ auth.service.ts — VIOLATION: reaches into user's repository
+import * as UserRepository from "../user/user.repository";
+
+export async function login(email: string, password: string) {
+	const user = await UserRepository.findByEmail(email); // skips UserService rules
+	// ...
+}
+
+// ✅ auth.service.ts — call the sibling service
+import { UserService } from "../user";
+
+export async function login(email: string, password: string) {
+	const user = await UserService.getByEmail(email);
+	// ...
+}
+```
+
+If `UserService` doesn't expose what `AuthService` needs, **add a method to `UserService`** (or surface a narrow DTO from it). Do not reach past it into `UserRepository`. A service may only import its own `*.repository.ts`.
+
 ### R6 — `shared/` = no business entity
 
 If something has no clear owner feature, it goes in `features/shared/`. Examples: pagination types, error classes, valibot primitives, mailer service. If you find yourself adding a domain entity to `shared/`, stop — give it a feature folder. Full guidance: [`references/shared-folder.md`](./references/shared-folder.md).
@@ -213,6 +237,137 @@ export { menuItems } from "./menu.table";
 export * from "./menu.validator";
 export * from "./menu.dto";
 ```
+
+### R9 — Promote each file type into a folder when it grows past one
+
+Start flat: one `*.table.ts`, one `*.validator.ts`, one `*.dto.ts`, one `*.repository.ts`, one `*.service.ts` at the feature root. Promote a file type into its own subfolder the moment that feature owns **two or more** of that kind. The threshold is **per file type, independent**: a feature can have one flat `auth.table.ts` while its services already live under `services/`.
+
+| File type  | Flat (1 file)        | Promoted (2+ files)            |
+| ---------- | -------------------- | ------------------------------ |
+| Table      | `auth.table.ts`      | `tables/*.table.ts`            |
+| Validator  | `auth.validator.ts`  | `validators/*.validator.ts`    |
+| DTO        | `auth.dto.ts`        | `dtos/*.dto.ts`                |
+| Repository | `auth.repository.ts` | `repositories/*.repository.ts` |
+| Service    | `auth.service.ts`    | `services/*.service.ts`        |
+
+Fully-promoted feature:
+
+```
+src/features/auth/
+├── tables/
+│   ├── session.table.ts
+│   ├── token.table.ts
+│   └── credential.table.ts
+├── validators/
+│   ├── login.validator.ts
+│   └── signup.validator.ts
+├── dtos/
+│   ├── login.dto.ts
+│   └── signup.dto.ts
+├── repositories/
+│   ├── session.repository.ts
+│   ├── token.repository.ts
+│   └── credential.repository.ts
+├── services/
+│   ├── login.service.ts
+│   ├── signup.service.ts
+│   └── password-reset.service.ts
+└── index.ts                 # barrel — still the only public entry point
+```
+
+Mixed example (services promoted, everything else still flat — totally fine):
+
+```
+src/features/billing/
+├── billing.table.ts
+├── billing.validator.ts
+├── billing.dto.ts
+├── billing.repository.ts
+├── services/
+│   ├── checkout.service.ts
+│   └── refund.service.ts
+└── index.ts
+```
+
+Rules that carry through promotion:
+
+- **Barrel is unchanged contract.** Consumers still write `import { LoginService, sessions } from "../auth"`. The subfolder path never leaks across feature boundaries.
+- **Cross-feature FKs** import the table object **from the barrel**, not the deep path: `import { sessions } from "../auth"` — not `"../auth/tables/session.table"`. The barrel must re-export every table so sibling features (and `features/drizzle/schemas.ts`) keep working.
+- **Service ↔ repository scoping is unchanged.** A service in `services/` may import any repository in its own `repositories/`. Cross-feature is still service → service (R5).
+- **No empty placeholder folders.** Promote on the second file, not "for future use."
+- **Demotion is allowed.** If a feature shrinks back to one file of a kind, collapse the folder again. The barrel absorbs the move.
+
+```ts
+// src/features/auth/index.ts — fully promoted barrel
+export * as LoginService from "./services/login.service";
+export * as SignupService from "./services/signup.service";
+export * as PasswordResetService from "./services/password-reset.service";
+
+export * as SessionRepository from "./repositories/session.repository";
+export * as TokenRepository from "./repositories/token.repository";
+export * as CredentialRepository from "./repositories/credential.repository";
+
+export { sessions } from "./tables/session.table";
+export { tokens } from "./tables/token.table";
+export { credentials } from "./tables/credential.table";
+
+export * from "./validators/login.validator";
+export * from "./validators/signup.validator";
+export * from "./dtos/login.dto";
+export * from "./dtos/signup.dto";
+```
+
+### R10 — Sub-feature folders only when they own their own tables
+
+When a feature keeps growing, the tempting move is to group by **sub-domain** (`auth/login/`, `auth/register/`, `auth/forgot-password/`) instead of by file type. **Do not do this** when the sub-domains share tables — you'll either duplicate repositories for the same table (violates R2) or create awkward cross-sub-domain imports.
+
+Rule: a sub-feature folder is justified **only when the sub-domain owns its own tables** (and therefore its own repositories and validators). At that point it's effectively a full feature in the same shape as the 5-file root, nested one level.
+
+```
+src/features/auth/
+├── auth.table.ts                  # shared: users, sessions, credentials
+├── auth.validator.ts
+├── auth.dto.ts
+├── repositories/                  # share these across login/register/forgot-password
+│   ├── user.repository.ts
+│   └── session.repository.ts
+├── services/                      # login/register/forgot-password live here (R9)
+│   ├── login.service.ts
+│   ├── register.service.ts
+│   └── forgot-password.service.ts
+│
+├── oauth/                         # ✅ sub-feature — owns oauth_accounts table
+│   ├── oauth.table.ts
+│   ├── oauth.validator.ts
+│   ├── oauth.dto.ts
+│   ├── oauth.repository.ts
+│   ├── oauth.service.ts
+│   └── index.ts                   # sub-barrel
+│
+└── index.ts                       # parent barrel re-exports oauth sub-barrel
+```
+
+```ts
+// src/features/auth/index.ts
+export * as LoginService from "./services/login.service";
+export * as RegisterService from "./services/register.service";
+// …
+export * from "./oauth"; // re-export sub-feature so consumers stay flat: `import { OAuthService } from "../auth"`
+```
+
+Guardrails:
+
+- **No sub-feature without its own table(s).** `login/`, `register/`, `forgot-password/` are _services_, not sub-features — they share `users`/`sessions` and belong in `services/` per R9.
+- **Sub-features still obey R5.** Cross-call between `auth.OAuthService` and the root `auth.LoginService` goes through services, not repositories.
+- **One level deep, max.** If a sub-feature wants its own sub-feature, that's a signal to promote it to a top-level `features/<name>/` instead.
+- **Parent barrel still hides depth.** Consumers import from `../auth`, never `../auth/oauth`.
+- **Demotion allowed.** If the sub-feature's tables get absorbed into the parent, collapse the folder.
+
+Decision flow when a feature is getting big:
+
+1. New files of an existing type (2+ services, 2+ repos, …)? → R9, promote to `services/` / `repositories/` / etc.
+2. New cluster of behavior that introduces **its own table(s)**? → R10, create a sub-feature folder.
+3. New cluster of behavior that shares the parent's tables? → still R9 — add another service file under `services/`. Resist the sub-domain folder.
 
 ## Workflows
 
@@ -257,10 +412,12 @@ When the user says "add a `xyz` table":
 - Repository function signatures that accept `db: Database` / `tx` as a parameter. Repos read the singleton; transactions are wrapped inside one repo function via `db.transaction(...)`.
 - Hand-writing a valibot schema that mirrors a drizzle table instead of using `createInsertSchema` / `createSelectSchema`.
 - Deep-importing another feature's repository (`import { create } from "../order/order.repository"`). Use `OrderService.create(...)` via the barrel.
+- A service calling another feature's repository at all — even via the barrel (`OrderRepository.create(...)` from inside `auth.service.ts`). Services may only import their **own** repository. Cross-feature is always service → service. Wrong: `AuthService → UserRepository`. Correct: `AuthService → UserService`.
 - Stashing tables in `features/drizzle/tables/` (the bosapi-internal location). Generated-app tables live in their owning feature folder.
 - Putting a domain entity in `features/shared/` ("UserService is used everywhere"). It still has an owner — `features/user/`.
 - Using `zod` instead of `valibot`.
 - Combining repository + service into a single file "because it's only one query" — the layer separation is the rule, even when trivial.
+- Creating sub-domain folders (`auth/login/`, `auth/register/`, `auth/forgot-password/`) that share the parent's tables. That collapses into duplicate repositories for one table (violates R2). Use `services/` (R9). Sub-feature folders are only valid when the sub-domain owns its own tables (R10).
 
 ## Checklist gate
 
@@ -279,7 +436,10 @@ P0 — must pass before finishing:
 P1 — should pass:
 
 - [ ] Cross-feature calls go through the barrel namespace (`OtherService.fn(...)`), no deep imports.
+- [ ] Services import **only their own** `*.repository.ts`. Cross-feature data access is service → service, never service → other feature's repository (e.g. `AuthService` calls `UserService`, not `UserRepository`).
 - [ ] `shared/` contains no domain entities.
+- [ ] Any file type with 2+ files in a feature is promoted into its matching subfolder (`tables/`, `validators/`, `dtos/`, `repositories/`, `services/`). The barrel still hides the deep paths, and cross-feature imports (incl. FKs to sibling tables) come from the barrel — never the deep subfolder path.
+- [ ] Sub-feature folders (`auth/oauth/`, `billing/invoices/`) exist **only** when the sub-domain owns its own tables. `login/`, `register/`, `forgot-password/`-style folders that share parent tables are forbidden — those services live in `services/` under R9.
 - [ ] Multi-statement flows are wrapped with `db.transaction(...)` inside a single repository function (services do not orchestrate transactions).
 - [ ] `bun run check && bun run format && bun run build` pass.
 
