@@ -136,6 +136,45 @@ main().catch((err) => {
 	console.error("[bosia] hydration failed", err);
 });
 
+// ─── Stale-Build Recovery ─────────────────────────────────
+// After a deploy, browsers with the old HTML/entry cached may try to import
+// hashed chunks that no longer exist on the server. The dynamic import()
+// rejects and the router's promise chain has no .catch, so the rejection
+// surfaces here as an unhandledrejection. Trigger a single full reload with a
+// cache-busting query so the browser can't serve the old HTML from disk.
+// A 10s sessionStorage guard prevents an infinite reload loop if the new
+// build is also broken.
+if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
+	const KEY = "bosia:reload-attempt";
+	const STALE_CHUNK =
+		/Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError/i;
+
+	try {
+		const last = Number(sessionStorage.getItem(KEY) ?? 0);
+		if (last && Date.now() - last < 10_000) {
+			sessionStorage.removeItem(KEY);
+			console.error("[bosia] reload guard hit — new build may also be broken.");
+		} else {
+			window.addEventListener("unhandledrejection", (e) => {
+				const msg = String((e.reason as { message?: unknown })?.message ?? e.reason ?? "");
+				if (!STALE_CHUNK.test(msg)) return;
+				e.preventDefault();
+				try {
+					sessionStorage.setItem(KEY, String(Date.now()));
+				} catch {
+					// Storage may be unavailable (private mode) — best effort.
+				}
+				const sep = window.location.search ? "&" : "?";
+				window.location.replace(
+					`${window.location.pathname}${window.location.search}${sep}_v=${Date.now()}${window.location.hash}`,
+				);
+			});
+		}
+	} catch {
+		// sessionStorage may throw in restricted contexts — give up silently.
+	}
+}
+
 // ─── Hot Reload (dev only) ────────────────────────────────
 
 if (process.env.NODE_ENV !== "production") {

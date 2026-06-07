@@ -159,7 +159,7 @@ const clientPromise = Bun.build({
 	target: "browser",
 	conditions: ["svelte"],
 	splitting: true,
-	naming: { chunk: "[name]-[hash].[ext]" },
+	naming: { entry: "[name]-[hash].[ext]", chunk: "[name]-[hash].[ext]" },
 	minify: isProduction,
 	sourcemap: isProduction ? "none" : "linked",
 	define: {

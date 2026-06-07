@@ -10,7 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- `.webmanifest` files in `public/` now serve correctly instead of returning 404. Added `.webmanifest` to the static file extension whitelist (`isStaticPath`).
+- `.webmanifest` files in `public/` now serve correctly instead of returning 404.
+- Apps no longer loop forever after a new deploy when old cached assets are missing on the server.
+
+### Changed
+
+- Client entry file is now hashed so each new build gets a fresh URL the browser cannot serve stale.
 
 ## [0.6.18] - 2026-06-07
 

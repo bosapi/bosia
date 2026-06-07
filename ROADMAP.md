@@ -1,7 +1,18 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.18**
+> Current version: **0.6.19**
+
+---
+
+## 0.6.19 (2026-06-08) — `.webmanifest` 404 + stale-build recovery
+
+> Two unrelated production bugs surfaced on komba (pure-SSR) after the 0.6.18 deploy. **(1)** `/site.webmanifest` returned 404 because the static-ext whitelist (`isStaticPath`) was missing the extension. **(2)** Users with the app already open got stuck on a never-ending loading state on certain navigations after a new build was deployed — root cause: the SPA bootstrap entry `hydrate.js` was unhashed while its content (embedded chunk hashes) changes every build, and Cloudflare overrode the origin's `no-cache` header to `max-age=14400`. Old `hydrate.js` then references hashed chunks that no longer exist on the server → `import()` rejects → router only `console.warn`s → UI hangs.
+
+- [x] 🟠 `packages/bosia/src/core/server/staticServer.ts` — add `.webmanifest` to the `isStaticPath` whitelist.
+- [x] 🟠 `packages/bosia/src/core/build.ts:156-170` — hash the client entry filename (`naming.entry: "[name]-[hash].[ext]"`) so `staticManifest` serves it as `immutable` and per-build URL changes invalidate the browser cache automatically.
+- [x] 🟠 `packages/bosia/src/core/client/hydrate.ts` — add a production-only `unhandledrejection` handler that detects failed dynamic `import()` (Chromium/Safari/Firefox messages) and triggers `location.replace(?_v=…)`. Loop-guard via `sessionStorage["bosia:reload-attempt"]` (10s window).
+- [ ] ⚪ Follow-up: surface a stale-build event on the router (`onStaleChunk` hook?) so apps can show a soft toast instead of a hard reload — defer until the safety net proves insufficient.
 
 ---
 
