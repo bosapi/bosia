@@ -222,10 +222,19 @@ if (!isProduction && svelteMapCache.size > 0) {
 // 6. Collect output files for dist/manifest.json
 const jsFiles: string[] = [];
 const cssFiles: string[] = [];
+// 0.6.19 hashed the entry filename; the old `f === "hydrate.js"` exact-match
+// no longer hits, and the fallback `startsWith("hydrate")` picks the first
+// hydrate-* chunk by array order — which can be a small leaf module (e.g.
+// `src/lib/version.ts`) that sorts before the real entry. Use Bun's
+// `output.kind === "entry-point"` instead so we pin the actual entry.
+let clientEntry: string | null = null;
 for (const output of clientResult.outputs) {
 	const rel = relative(`${OUT_DIR}/client`, output.path);
 	if (output.path.endsWith(".js")) jsFiles.push(rel);
 	if (output.path.endsWith(".css")) cssFiles.push(rel);
+	if ((output as { kind?: string }).kind === "entry-point" && output.path.endsWith(".js")) {
+		clientEntry = rel;
+	}
 }
 
 // Entry is always "index.js" due to naming: { entry: "index.[ext]" }
@@ -241,6 +250,7 @@ const distManifest = {
 	js: jsFiles,
 	css: cssFiles,
 	entry:
+		clientEntry ??
 		jsFiles.find((f) => f === "hydrate.js") ??
 		jsFiles.find((f) => f.startsWith("hydrate")) ??
 		"hydrate.js",

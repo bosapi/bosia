@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.20] - 2026-06-08
+
+### Fixed
+
+- Client hydration broken when a leaf chunk happened to share the `hydrate-*` filename prefix and sort before the actual entry. 0.6.19 hashed the entry filename but kept the manifest detector's `find(f => f.startsWith("hydrate"))` fallback, which returned the first match by array order — sometimes a tiny chunk like a `version.ts` import, exporting only constants. The HTML then loaded that no-op script as the entry, so `main()` never ran, `router.init()` never fired, and no page hydrated. Manifest now identifies the entry via Bun's `output.kind === "entry-point"`.
+
 ## [0.6.19] - 2026-06-08
 
 ### Fixed
