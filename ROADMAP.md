@@ -5,6 +5,19 @@
 
 ---
 
+## 0.6.21 (2026-06-09) — `bosia-image-dialog` skill + block (multi-image picker)
+
+> AI-generated apps seed `images.unsplash.com/photo-…` placeholders into markup (per `bosapi/src/features/ai/system-prompt.ts` rule 10), but there was no UI primitive for swapping them out without clobbering — `files/upload-area` opens an empty drop zone with no concept of an "existing image," and nothing existed for multi-image fields at all. New `files/image-dialog` block composes `UploadArea` + an External URL tab + an existing-images gallery (current entity + user's library via `GET /api/files`). Returns `string[]` of URLs on Confirm so the caller atomically replaces the parent field. No server changes — reuses the `file-upload` feat as-is.
+
+- [x] 🟠 `registry/blocks/files/image-dialog/` — `block.svelte` (Dialog + Tabs + selection state, embeds `UploadArea` for the Upload tab, fetches `/api/files` once on mount for the library) and `meta.json` (deps: `ui/button`, `ui/dialog`, `ui/input`, `ui/label`, `ui/sonner`, `ui/tabs`, `blocks/files/upload-area`).
+- [x] 🟠 `registry/index.json` — add `files/image-dialog` to `blocks`.
+- [x] ⚪ `docs/content/skills/bosia-image-dialog/SKILL.md` — workflow steering, P0/P1 checklist, anti-patterns (single-image flows, id-vs-url storage, merge-with-stale-state).
+- [x] ⚪ `docs/content/skills/bosia-file-upload/SKILL.md` — cross-reference the new dialog for replace-existing / gallery flows.
+- [x] ⚪ `docs/content/docs/blocks/files/image-dialog.md` + `docs/src/lib/components/demos/FilesImageDialogDemo.svelte` registered in `docs/src/routes/(docs)/[...slug]/+page.svelte`.
+- [x] ⚪ `docs/src/lib/docs/nav.ts` — insert Image Dialog under Blocks → Files.
+
+---
+
 ## 0.6.21 (2026-06-09) — Drawer component (mobile bottom-sheet)
 
 > Drawer was the last unbuilt Priority-2 overlay in `backup/COMPONENT_PLAN.md`. Mobile action sheets had no first-class component — devs were styling Dialog into a bottom-pinned shape per app. Scope: tap-to-close only, bottom direction only, mirrors Dialog's API so consumers can swap Dialog ↔ Drawer at a breakpoint with minimal churn. No drag gesture, no snap points, no extra deps (pure Svelte 5 runes + Tailwind v4, in line with the no-deps-in-framework rule).

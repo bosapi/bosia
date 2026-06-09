@@ -156,6 +156,7 @@ export const sidebar: NavGroup[] = [
 				label: "Files",
 				children: [
 					{ label: "Crop Image", slug: "blocks/files/crop-image" },
+					{ label: "Image Dialog", slug: "blocks/files/image-dialog" },
 					{ label: "Upload Area", slug: "blocks/files/upload-area" },
 				],
 			},

@@ -190,4 +190,5 @@ P1:
 - [[bosia-drizzle-feature]] — the files table follows the standard Drizzle feature shape.
 - [[bosia-elysia-routes]] — POST /api/files is a standard route handler.
 - [[bosia-block-compose]] — composing UploadArea inside larger forms.
+- [[bosia-image-dialog]] — multi-image picker dialog for replace-existing / gallery flows; reuses UploadArea internally.
 - [[bosia-bun-runtime]] — `Bun.Image` API used by FileService.

@@ -66,6 +66,11 @@
 		"ui/slider"
 	],
 	"features": ["drizzle", "todo", "file-upload"],
-	"blocks": ["cards/feature-editorial", "files/crop-image", "files/upload-area"],
+	"blocks": [
+		"cards/feature-editorial",
+		"files/crop-image",
+		"files/image-dialog",
+		"files/upload-area"
+	],
 	"themes": ["neutral", "editorial", "zinc", "stone", "claude", "ocean", "forest", "rose"]
 }
