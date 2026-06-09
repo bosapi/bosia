@@ -145,7 +145,17 @@
 	}
 
 	$effect(() => {
-		if (!open) reset();
+		if (open) {
+			try {
+				selected = existingImages.map(resolveUrl);
+			} catch {
+				selected = [];
+			}
+			urlInput = "";
+			activeTab = "upload";
+		} else {
+			reset();
+		}
 	});
 </script>
 
@@ -208,7 +218,10 @@
 
 			{#if existingUrls.length > 0}
 				<section class="flex flex-col gap-2">
-					<h3 class="text-sm font-medium">Current</h3>
+					<div class="flex items-baseline justify-between">
+						<h3 class="text-sm font-medium">Current</h3>
+						<span class="text-xs text-muted-foreground">Click to remove</span>
+					</div>
 					<div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
 						{#each existingUrls as url (url)}
 							{@const isSelected = selected.includes(url)}

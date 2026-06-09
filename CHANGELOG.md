@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Image dialog block — pick multiple images via upload, URL, or existing library in one modal.
 - `bosia-image-dialog` skill — guides AI agents to use the new picker for gallery/replace flows.
 
+### Changed
+
+- Image dialog now pre-selects existing images on open so adding a new one no longer wipes them.
+
 ---
 
 ## [0.6.20] - 2026-06-08

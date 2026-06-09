@@ -55,6 +55,8 @@ Pulls `ui/button`, `ui/dialog`, `ui/input`, `ui/label`, `ui/sonner`, `ui/tabs`, 
 
 The dialog does **not** auto-close on Confirm — keep the selection visible while you persist, then flip `open = false` after the save resolves so failures can keep the picker mounted.
 
+When the dialog opens, `existingImages` are **pre-selected** so Confirm without further interaction is a no-op. Uploading or adding a URL **appends** to the selection; clicking an existing thumbnail toggles it off (removal). `onConfirm` always fires with the full intended set — caller does an atomic replace.
+
 ## Props
 
 | Prop             | Type                        | Default                                             | Description                                                                                                  |
@@ -75,7 +77,7 @@ The dialog does **not** auto-close on Confirm — keep the selection visible whi
 
 - **Upload tab** — embeds [`UploadArea`](/docs/blocks/files/upload-area/) pointed at `/api/files`. On success, `record.url` is pushed into the selection.
 - **External URL tab** — client-validated `http(s)://` only. Pass-through to the parent entity — there is no backend ingest. If the remote host rotates the image, the parent field references a dead URL.
-- **Existing gallery** — top row shows `existingImages` via `resolveUrl()`, below shows the signed-in user's full library fetched once on mount from `GET /api/files`. Each thumbnail is a multi-select toggle.
+- **Existing gallery** — top row shows `existingImages` via `resolveUrl()` (pre-selected on open; click to remove). Below, the signed-in user's full library is fetched once on mount from `GET /api/files`. Each thumbnail is a multi-select toggle.
 
 ## Storing URLs vs ids
 

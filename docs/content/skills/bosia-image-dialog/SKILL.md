@@ -63,9 +63,11 @@ The default `resolveUrl` returns entries starting with `http://`, `https://`, or
 
 The block returns URLs, never ids. If the persistence layer wants ids, the caller maps URL → id on save.
 
-### R4 — Confirm returns the full set
+### R4 — Confirm returns the full set; existing are pre-selected on open
 
 `onConfirm(urls)` fires with the complete intended array. The caller replaces the field atomically — do not merge `urls` with stale parent state. The dialog does not auto-close on Confirm; the caller closes it (`open = false`) only after persistence succeeds, so a failed save can keep the selection visible.
+
+On open, `existingImages` (resolved via `resolveUrl`) are pre-selected — so uploading or adding a URL **appends**, and clicking an existing thumbnail toggles it off (removal). Opening and Confirming with no other action is a no-op. This matches the user's mental model: "edit the gallery" rather than "rebuild from scratch."
 
 ### R5 — Single-image flows use `UploadArea` directly
 
@@ -118,7 +120,7 @@ Toggling thumbnails mutates internal state only. Cancel discards everything (inc
 - Using `image-dialog` for a single-image avatar (use `UploadArea`).
 - Persisting `record.id` on the parent entity — the block returns URLs, store URLs.
 - Adding a "save copy" backend ingest path inside this block — out of scope; open a follow-up feat.
-- Merging `onConfirm(urls)` with the parent's current list (e.g. `[...parent.images, ...urls]`). The dialog already shows the existing images for re-selection — merging double-counts them.
+- Merging `onConfirm(urls)` with the parent's current list (e.g. `[...parent.images, ...urls]`). Existing images are already pre-selected inside the dialog — merging double-counts them.
 - Forgetting `bind:open` on the dialog (one-way `open={open}` will leave the dialog stuck open after backdrop click).
 
 ## Checklist gate
