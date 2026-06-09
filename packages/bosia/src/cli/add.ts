@@ -7,6 +7,7 @@ import {
 	resolveLocalRegistryOrExit,
 	readRegistryJSON,
 	readRegistryFile,
+	writeRegistryFile,
 	mergePkgJson,
 	bunAdd,
 } from "./registry.ts";
@@ -150,7 +151,7 @@ export async function addComponent(name: string, root = false, options?: Install
 		const content = await readRegistryFile(registryRoot, "components", fullPath, file);
 		const dest = join(destDir, file);
 		if (file.includes("/")) mkdirSync(dirname(dest), { recursive: true });
-		writeFileSync(dest, content, "utf-8");
+		writeRegistryFile(dest, content);
 		console.log(`   ✍️  src/lib/components/${fullPath}/${file}`);
 	}
 

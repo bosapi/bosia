@@ -138,17 +138,12 @@ Rule: `{x}` shorthand is legal **only** when a script-scope `const/let x` exists
 
 ```svelte
 <script>
-	let currentPath = $state("/");
-	import { afterNavigate } from "bosia/client";
-	// removed: import { page } from "bosia/client";
-
-	afterNavigate((nav) => {
-		currentPath = nav.to.url.pathname;
-	});
+	let label = $state("Submit");
+	// removed: import { cn } from "$lib/utils";
 </script>
 
-<Navbar currentPath={page.url.pathname} /> {/* ❌ ReferenceError: page is not defined */}
-<Navbar {currentPath} /> {/* ✅ template synced with state */}
+<button class={cn("btn", extra)}>{label}</button> {/* ❌ ReferenceError: cn is not defined */}
+<button class="btn">{label}</button> {/* ✅ template synced with script scope */}
 ```
 
 After renaming a local or removing an import, grep the template for any identifier that no longer exists in script scope.
@@ -159,31 +154,21 @@ After renaming a local or removing an import, grep the template for any identifi
 
 ```svelte
 <script>
-	let currentPath = $state("/");
-	import { afterNavigate } from "bosia/client";
-	// removed: import { page } from "bosia/client";
-
-	afterNavigate((nav) => {
-		currentPath = nav.to.url.pathname;
-	});
+	let label = $state("Submit");
+	// removed: import { cn } from "$lib/utils";
 </script>
 
-<Navbar currentPath={page.url.pathname} /> {/* ERROR: page undefined */}
+<button class={cn("btn", extra)}>{label}</button> {/* ERROR: cn undefined */}
 ```
 
-✅ Right (template synced with state):
+✅ Right (template synced with script scope):
 
 ```svelte
 <script>
-	let currentPath = $state("/");
-	import { afterNavigate } from "bosia/client";
-
-	afterNavigate((nav) => {
-		currentPath = nav.to.url.pathname;
-	});
+	let label = $state("Submit");
 </script>
 
-<Navbar {currentPath} />
+<button class="btn">{label}</button>
 ```
 
 After refactoring imports or state setup, search the template for any references that no longer exist and update them to use the new variable.

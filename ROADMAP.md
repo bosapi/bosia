@@ -5,6 +5,24 @@
 
 ---
 
+## 0.6.21 (2026-06-09) — Fix three AI-agent app-building failures (block install, EACCES, `page` export)
+
+> AI agents building user apps via Bosia hit three reproducible failures: (1) `bosia add blocks/cards/feature-editorial` 404'd because the CLI only routed `block` (singular) to the block installer — the alias form fell through to `runAdd` and was treated as a component → `registry/components/blocks/cards/feature-editorial/meta.json` 404. (2) `bosia add ui/typography` aborted mid-loop on EACCES when a file already existed with foreign uid (tenant apps run sandboxed as `bosapi-app-N`; a follow-up install as the bosapi user couldn't overwrite). (3) `bosia-page-shell`, `bosia-seo`, `bosia-navigation` skills teach `import { page } from "bosia/client"`, but `page` was never exported — the import threw at module load.
+
+- [x] 🟠 `packages/bosia/src/cli/addRouter.ts` — new dispatcher; routes `blocks/<cat>/<name>` tokens to `runAddBlock`, splits mixed batches (components + blocks) into one `runAdd` call plus per-block calls.
+- [x] 🟠 `packages/bosia/src/cli/index.ts` — `add` case calls `routeAdd` with injected runners; help text adds the alias.
+- [x] 🟠 `packages/bosia/src/cli/registry.ts` — new `writeRegistryFile(dest, content)` helper does unlink + retry on EACCES/EPERM, then surfaces a chown hint if still failing.
+- [x] 🟠 `packages/bosia/src/cli/add.ts` and `block.ts` — component/block file write loops route through the new helper.
+- [x] 🟠 `packages/bosia/src/core/client/page.svelte.ts` (new) — reactive `page` object backed by `$derived` over `router.currentRoute`; exposes `page.url` and `page.pathname`. No `params` getter — Bosia already plumbs `params` into `+page.svelte` / `+layout.svelte` via `$props()`, matching modern SvelteKit `$app/state`.
+- [x] 🟠 `packages/bosia/src/lib/client.ts` — re-export `page`.
+- [x] 🟠 `docs/content/skills/bosia-block-compose/SKILL.md` — canonical `bosia add block cards/feature-editorial` example.
+- [x] 🟠 `docs/content/skills/bosia-saas-landing/SKILL.md` and `bosia-landing/SKILL.md` — split single install line into per-category calls (theme / components / block).
+- [x] 🟠 `docs/content/skills/bosia-svelte-runes/SKILL.md` R6.5 — illustrative "removed import" example switched from `page` to a deleted `cn` utility so the lesson no longer contradicts the now-real `page` export.
+- [x] ⚪ `packages/bosia/test/registry.test.ts` — coverage for `routeAdd` dispatch (block, alias, mixed batch, multi-block, plain components), `readRegistryJSON` blocks-category path, `writeRegistryFile` happy-path/overwrite.
+- [x] ⚪ `packages/bosia/test/page-store.test.ts` (new) — compile-and-wiring checks for the `page` module (compiles via `svelte/compiler`, output references `derived`, `bosia/client` re-exports `page`).
+
+---
+
 ## 0.6.21 (2026-06-09) — `bosia-image-dialog` skill + block (multi-image picker)
 
 > AI-generated apps seed `images.unsplash.com/photo-…` placeholders into markup (per `bosapi/src/features/ai/system-prompt.ts` rule 10), but there was no UI primitive for swapping them out without clobbering — `files/upload-area` opens an empty drop zone with no concept of an "existing image," and nothing existed for multi-image fields at all. New `files/image-dialog` block composes `UploadArea` + an External URL tab + an existing-images gallery (current entity + user's library via `GET /api/files`). Returns `string[]` of URLs on Confirm so the caller atomically replaces the parent field. No server changes — reuses the `file-upload` feat as-is.

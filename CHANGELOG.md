@@ -14,10 +14,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Image dialog block — pick multiple images via upload, URL, or existing library in one modal.
 - `bosia-image-dialog` skill — guides AI agents to use the new picker for gallery/replace flows.
 - `bosia-image-external` skill — guides AI agents to call bosapi's `image_external_search` tool for real stock photos with attribution.
+- Reactive `page` export on `bosia/client` so apps can read `page.url.pathname` like SvelteKit (params still come from `$props()` on routes).
+- `bosia add blocks/<cat>/<name>` now works as an alias for `bosia add block <cat>/<name>`.
 
 ### Changed
 
 - Image dialog now pre-selects existing images on open so adding a new one no longer wipes them.
+- `bosia add` keeps installing remaining files when one is owned by a different user, then prints a clear chown hint if it still cannot write.
 
 ---
 

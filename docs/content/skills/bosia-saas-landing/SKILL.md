@@ -43,7 +43,7 @@ User asks for a "SaaS landing", a homepage for a paid product, or anything with 
 ## Workflow
 
 1. **Read `BRIEF.md § Aesthetic`.** Apply the locked `Direction` to hero, feature grid rhythm, and testimonial card style (e.g. luxury → hairline gold rule + restrained palette, maximalist → overlapping rotated cards, industrial → square corners + tabular numerics in pricing tease). Place the named `Memorable detail` on the hero. This skill does not re-pick the stance.
-2. `bosia add theme/editorial blocks/cards/feature-editorial ui/button ui/card ui/badge ui/separator ui/avatar ui/typography`.
+2. `bosia add theme editorial` then `bosia add ui/button ui/card ui/badge ui/separator ui/avatar ui/typography` then `bosia add block cards/feature-editorial`.
 3. Optionally also add `ui/accordion` for FAQ if including.
 4. Compose section by section. Don't shortcut on testimonials — fake-feeling ones hurt conversion.
 

@@ -52,7 +52,7 @@ const reg = await list_registry();
 If a **block** (e.g. `blocks/cards/feature-editorial`) matches the section you're building → install it:
 
 ```bash
-bosia add blocks/cards/feature-editorial
+bosia add block cards/feature-editorial
 ```
 
 Then compose. Don't reinvent.

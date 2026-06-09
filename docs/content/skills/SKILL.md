@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 46 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
+description: Top-level index of 49 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
     mode: catalog
     category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-46 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+49 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -74,6 +74,7 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 | `bosia-block-compose`   | Registry-first — call `list_registry()`, prefer blocks over hand-rolling. If no block fits, compose from `ui/*` primitives.                                                                                |
 | `bosia-frontend-design` | Commit to a BOLD aesthetic direction before any UI emit. Distinctive type, dominant color + sharp accent, one memorable detail. Avoid AI defaults.                                                         |
 | `bosia-page-shell`      | Navbar/footer/sidebar live in `+layout.svelte`, not per page. `(private)` layout passes `user` to `ui/navbar` so the avatar dropdown is reachable. Lists use `ui/data-table`, never hand-rolled `<table>`. |
+| `bosia-image-external`  | Real stock photos via `image_external_search` tool (Unsplash/Pexels/Pixabay, cross-app DB cache). Mandatory attribution. Fallback: `picsum`. Use whenever the brief calls for real photos.                 |
 
 ## Conventions — framework · — always-active code rules
 
@@ -112,12 +113,14 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 ## Composition helpers
 
-| Name                      | Track | Purpose                                                                                                                    |
-| ------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------- |
-| `bosia-empty-states`      | ✦     | `ui/empty`, `ui/skeleton`, `ui/spinner`, error boundary. Never blank screen on async failure.                              |
-| `bosia-chat-form`         | ✦     | Chat composer — `ui/textarea` + `ui/button`, Enter/Shift+Enter IME-safe, disable-submit-on-stream.                         |
-| `bosia-chat-message-list` | ✦     | Chat feed — role markers, `parts[]` + inline markdown (bold/italic/link), respectful auto-scroll.                          |
-| `bosia-inspector-edit`    | ·     | Parse Inspector payload + `Component tree` chain → surgical `fs_edit` scoped to the call-site (default) or leaf component. |
+| Name                      | Track | Purpose                                                                                                                                       |
+| ------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bosia-empty-states`      | ✦     | `ui/empty`, `ui/skeleton`, `ui/spinner`, error boundary. Never blank screen on async failure.                                                 |
+| `bosia-chat-form`         | ✦     | Chat composer — `ui/textarea` + `ui/button`, Enter/Shift+Enter IME-safe, disable-submit-on-stream.                                            |
+| `bosia-chat-message-list` | ✦     | Chat feed — role markers, `parts[]` + inline markdown (bold/italic/link), respectful auto-scroll.                                             |
+| `bosia-drawer`            | ✦     | Mobile bottom-sheet overlay — slides up, tap-to-close, focus trap, scroll lock. Use for mobile action sheets/pickers; use Dialog for desktop. |
+| `bosia-image-dialog`      | ·     | Multi-image picker dialog — Upload tab, External URL tab, existing gallery. Returns `string[]` of URLs. Requires `bosia-file-upload` first.   |
+| `bosia-inspector-edit`    | ·     | Parse Inspector payload + `Component tree` chain → surgical `fs_edit` scoped to the call-site (default) or leaf component.                    |
 
 ---
 

@@ -1,8 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { mergePkgJson, resolveLocalRegistry } from "../src/cli/registry.ts";
+import {
+	mergePkgJson,
+	readRegistryJSON,
+	resolveLocalRegistry,
+	writeRegistryFile,
+} from "../src/cli/registry.ts";
+import { routeAdd, type AddRunners } from "../src/cli/addRouter.ts";
 
 let tmpDir: string;
 
@@ -92,5 +98,101 @@ describe("resolveLocalRegistry()", () => {
 		// This test runs inside the bosia repo, where registry/index.json exists at root.
 		const out = resolveLocalRegistry();
 		expect(out.endsWith("/registry")).toBe(true);
+	});
+});
+
+describe("readRegistryJSON() — local path construction", () => {
+	test("blocks category resolves to <root>/blocks/<cat>/<name>/<file>", async () => {
+		const root = join(tmpDir, "registry");
+		const blockDir = join(root, "blocks", "cards", "feature-editorial");
+		mkdirSync(blockDir, { recursive: true });
+		writeFileSync(
+			join(blockDir, "meta.json"),
+			JSON.stringify({ name: "cards/feature-editorial" }),
+		);
+
+		const meta = await readRegistryJSON<{ name: string }>(
+			root,
+			"blocks",
+			"cards/feature-editorial",
+			"meta.json",
+		);
+		expect(meta.name).toBe("cards/feature-editorial");
+	});
+});
+
+describe("writeRegistryFile()", () => {
+	test("writes when destination is fresh", () => {
+		const dest = join(tmpDir, "fresh.txt");
+		writeRegistryFile(dest, "hello");
+		expect(readFileSync(dest, "utf-8")).toBe("hello");
+	});
+
+	test("overwrites an existing writable file", () => {
+		const dest = join(tmpDir, "again.txt");
+		writeFileSync(dest, "old");
+		writeRegistryFile(dest, "new");
+		expect(readFileSync(dest, "utf-8")).toBe("new");
+	});
+});
+
+describe("routeAdd() — dispatch", () => {
+	type Call = { name: string; args: unknown[] };
+	function makeRunners(): { runners: AddRunners; calls: Call[] } {
+		const calls: Call[] = [];
+		const runners: AddRunners = {
+			runAdd: (names, flags) => {
+				calls.push({ name: "runAdd", args: [names, flags] });
+			},
+			runAddBlock: (name, flags) => {
+				calls.push({ name: "runAddBlock", args: [name, flags] });
+			},
+			runAddTheme: (name, flags) => {
+				calls.push({ name: "runAddTheme", args: [name, flags] });
+			},
+			runAddFont: (family, url) => {
+				calls.push({ name: "runAddFont", args: [family, url] });
+			},
+			runAddList: () => {
+				calls.push({ name: "runAddList", args: [] });
+			},
+		};
+		return { runners, calls };
+	}
+
+	test("`add block cards/feature-editorial` → runAddBlock", async () => {
+		const { runners, calls } = makeRunners();
+		await routeAdd(["block", "cards/feature-editorial"], runners);
+		expect(calls).toEqual([{ name: "runAddBlock", args: ["cards/feature-editorial", []] }]);
+	});
+
+	test("`add blocks/cards/feature-editorial` alias → runAddBlock", async () => {
+		const { runners, calls } = makeRunners();
+		await routeAdd(["blocks/cards/feature-editorial"], runners);
+		expect(calls).toEqual([{ name: "runAddBlock", args: ["cards/feature-editorial", []] }]);
+	});
+
+	test("mixed batch splits into runAdd + per-block runAddBlock", async () => {
+		const { runners, calls } = makeRunners();
+		await routeAdd(["ui/button", "blocks/cards/x", "ui/badge"], runners);
+		expect(calls).toEqual([
+			{ name: "runAdd", args: [["ui/button", "ui/badge"], []] },
+			{ name: "runAddBlock", args: ["cards/x", []] },
+		]);
+	});
+
+	test("multiple `blocks/...` tokens install one at a time", async () => {
+		const { runners, calls } = makeRunners();
+		await routeAdd(["blocks/cards/a", "blocks/cards/b"], runners);
+		expect(calls).toEqual([
+			{ name: "runAddBlock", args: ["cards/a", []] },
+			{ name: "runAddBlock", args: ["cards/b", []] },
+		]);
+	});
+
+	test("plain components fall through to runAdd unchanged", async () => {
+		const { runners, calls } = makeRunners();
+		await routeAdd(["ui/button", "ui/card", "-y"], runners);
+		expect(calls).toEqual([{ name: "runAdd", args: [["ui/button", "ui/card"], ["-y"]] }]);
 	});
 });

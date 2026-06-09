@@ -1,5 +1,5 @@
 import { join, dirname } from "path";
-import { writeFileSync, readFileSync, existsSync } from "fs";
+import { writeFileSync, readFileSync, existsSync, unlinkSync } from "fs";
 import { spawn } from "bun";
 
 // ─── Shared registry utilities for feat.ts and add.ts ─────
@@ -78,6 +78,42 @@ export async function readRegistryFile(
 		return readFileSync(path, "utf-8");
 	}
 	return fetchText(`${REGISTRY_URL}/${category}/${name}/${file}`);
+}
+
+// ─── Registry file writer ─────────────────────────────────
+
+/**
+ * Write a registry file with one EACCES/EPERM recovery attempt.
+ *
+ * Component/block file loops abort mid-install when a target path is owned by a
+ * different uid — bosapi tenant apps run sandboxed as `bosapi-app-N`, so a
+ * subsequent install from the bosapi user hits EACCES on the first foreign-owned
+ * file and leaves a partial install behind. Unlink + retry recovers; only the
+ * unrecoverable case surfaces the chown hint.
+ */
+export function writeRegistryFile(dest: string, content: string): void {
+	try {
+		writeFileSync(dest, content, "utf-8");
+		return;
+	} catch (err) {
+		const code = (err as NodeJS.ErrnoException).code;
+		if (code !== "EACCES" && code !== "EPERM") throw err;
+	}
+	try {
+		unlinkSync(dest);
+	} catch {
+		// ignore — retry will surface the real error
+	}
+	try {
+		writeFileSync(dest, content, "utf-8");
+	} catch (retry) {
+		const e = retry as NodeJS.ErrnoException;
+		throw new Error(
+			`Cannot write ${dest}: ${e.code}. ` +
+				`The existing file is owned by a different user (likely created from inside ` +
+				`the app sandbox). Fix from the project root: chown -R $(whoami) src/lib`,
+		);
+	}
 }
 
 // ─── package.json helpers ─────────────────────────────────

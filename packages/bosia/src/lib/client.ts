@@ -18,3 +18,4 @@ export {
 	invalidateAll,
 } from "../core/client/navigation.ts";
 export type { GotoOptions, Navigation, NavigationTarget } from "../core/client/navigation.ts";
+export { page } from "../core/client/page.svelte.ts";

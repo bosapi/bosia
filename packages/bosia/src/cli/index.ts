@@ -59,27 +59,29 @@ async function main() {
 			break;
 		}
 		case "add": {
-			const positional = args.filter((a) => !a.startsWith("-"));
-			const flags = args.filter((a) => a.startsWith("-"));
-			const sub = positional[0];
-			if (sub === "block") {
-				const blockFlags = flags;
-				const { runAddBlock } = await import("./block.ts");
-				await runAddBlock(positional[1], blockFlags);
-			} else if (sub === "theme") {
-				const themeFlags = args.filter((a) => a.startsWith("--"));
-				const { runAddTheme } = await import("./theme.ts");
-				await runAddTheme(positional[1], themeFlags);
-			} else if (sub === "font") {
-				const { runAddFont } = await import("./font.ts");
-				await runAddFont(positional[1], positional[2]);
-			} else if (sub === "list") {
-				const { runAddList } = await import("./add.ts");
-				runAddList();
-			} else {
-				const { runAdd } = await import("./add.ts");
-				await runAdd(positional, flags);
-			}
+			const { routeAdd } = await import("./addRouter.ts");
+			await routeAdd(args, {
+				runAdd: async (names, flags) => {
+					const { runAdd } = await import("./add.ts");
+					await runAdd(names, flags);
+				},
+				runAddBlock: async (name, flags) => {
+					const { runAddBlock } = await import("./block.ts");
+					await runAddBlock(name, flags);
+				},
+				runAddTheme: async (name, flags) => {
+					const { runAddTheme } = await import("./theme.ts");
+					await runAddTheme(name, flags);
+				},
+				runAddFont: async (family, url) => {
+					const { runAddFont } = await import("./font.ts");
+					await runAddFont(family, url);
+				},
+				runAddList: async () => {
+					const { runAddList } = await import("./add.ts");
+					runAddList();
+				},
+			});
 			break;
 		}
 		case "feat": {
@@ -137,6 +139,7 @@ Examples:
   bun x bosia@latest add -y button card      → auto-confirm overwrites (CI / scripts)
   bun x bosia@latest add shop/cart           → src/lib/components/shop/cart/
   bun x bosia@latest add block cards/feature-editorial
+  bun x bosia@latest add blocks/cards/feature-editorial   (alias for: add block cards/feature-editorial)
   bun x bosia@latest add theme editorial
   bun x bosia@latest add font "Fredoka" "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap"
   bun x bosia@latest feat login
