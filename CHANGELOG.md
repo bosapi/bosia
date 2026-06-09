@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Drawer component — mobile bottom-sheet overlay with slide-up animation and tap-to-close.
 - Image dialog block — pick multiple images via upload, URL, or existing library in one modal.
 - `bosia-image-dialog` skill — guides AI agents to use the new picker for gallery/replace flows.
+- `bosia-image-external` skill — guides AI agents to call bosapi's `image_external_search` tool for real stock photos with attribution.
 
 ### Changed
 
