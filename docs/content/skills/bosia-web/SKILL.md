@@ -1,6 +1,6 @@
 ---
 name: bosia-web
-description: Look up live web info via web_search (Tavily/SearXNG/DuckDuckGo, keyword-cached) and pull a specific URL/domain/IP to readable markdown via web_fetch — SSRF-safe.
+description: Look up live web info via web_search (Tavily/Brave/DuckDuckGo/SearXNG, keyword-cached) and pull a specific URL/domain/IP to readable markdown via web_fetch — SSRF-safe.
 triggers:
     - search the web
     - search web
@@ -76,13 +76,14 @@ Repeat queries with the same normalized keyword are served from the bosapi DB fo
 
 ### R3 — Provider fallback is automatic
 
-`provider: "auto"` (default) tries Tavily → SearXNG → DuckDuckGo, skipping any provider that isn't configured. DuckDuckGo needs no key, so the tool always returns something even on a fresh install. Only pin a specific provider when you're debugging quota.
+`provider: "auto"` (default) tries Tavily → Brave → DuckDuckGo → SearXNG, skipping any provider that isn't configured. DuckDuckGo needs no key, so the tool always returns something even on a fresh install. Only pin a specific provider when you're debugging quota.
 
 Provider config:
 
 - Tavily (`BOSAPI_TAVILY_API_KEY`) — free 1k queries/mo, AI-tuned, best quality.
-- SearXNG (`BOSAPI_SEARXNG_URL`) — point at any SearXNG instance (e.g. `https://searx.be`); no key, but public instances rate-limit.
-- DuckDuckGo HTML — no env at all, always on as last resort.
+- Brave (`BOSAPI_BRAVE_SEARCH_API_KEY`) — metered: $5/mo prepaid credits ≈ 1k queries free, then $5/1k. Card required.
+- DuckDuckGo HTML — no env at all, always on.
+- SearXNG (`BOSAPI_SEARXNG_URL`) — point at any SearXNG instance (e.g. `https://searx.be`); no key, but public instances rate-limit. Sits last as extra fallback.
 
 ### R4 — `web_fetch` blocks private addresses
 
@@ -107,7 +108,7 @@ When you take a fact from `web_search` / `web_fetch` and surface it into the app
     title: string;
     url: string;
     snippet: string | null;
-    provider: "tavily" | "searxng" | "duckduckgo";
+    provider: "tavily" | "brave" | "duckduckgo" | "searxng";
   }>;
 }
 
