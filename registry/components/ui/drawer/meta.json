@@ -1,0 +1,17 @@
+{
+	"name": "drawer",
+	"description": "A mobile-first bottom-sheet overlay with focus trap, scroll lock, and slide-up animation.",
+	"dependencies": [],
+	"files": [
+		"drawer.svelte",
+		"drawer-content.svelte",
+		"drawer-trigger.svelte",
+		"drawer-close.svelte",
+		"drawer-header.svelte",
+		"drawer-title.svelte",
+		"drawer-description.svelte",
+		"drawer-footer.svelte",
+		"index.ts"
+	],
+	"npmDeps": {}
+}

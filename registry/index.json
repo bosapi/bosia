@@ -25,6 +25,7 @@
 		"ui/data-table",
 		"ui/date-picker",
 		"ui/dialog",
+		"ui/drawer",
 		"ui/direction",
 		"ui/dropdown-menu",
 		"ui/empty",

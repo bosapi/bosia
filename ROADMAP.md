@@ -1,7 +1,21 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.19**
+> Current version: **0.6.21**
+
+---
+
+## 0.6.21 (2026-06-09) — Drawer component (mobile bottom-sheet)
+
+> Drawer was the last unbuilt Priority-2 overlay in `backup/COMPONENT_PLAN.md`. Mobile action sheets had no first-class component — devs were styling Dialog into a bottom-pinned shape per app. Scope: tap-to-close only, bottom direction only, mirrors Dialog's API so consumers can swap Dialog ↔ Drawer at a breakpoint with minimal churn. No drag gesture, no snap points, no extra deps (pure Svelte 5 runes + Tailwind v4, in line with the no-deps-in-framework rule).
+
+- [x] 🟠 `registry/components/ui/drawer/` — 8 svelte sub-components (`drawer`, `drawer-content`, `drawer-trigger`, `drawer-close`, `drawer-header`, `drawer-title`, `drawer-description`, `drawer-footer`) + `index.ts` + `meta.json`. Mirrors Dialog plumbing (focus trap, escape, scroll lock, `$props.id()`) with slide-up `translateY` animation, bottom-pinned panel, decorative handle bar.
+- [x] 🟠 `registry/index.json` — add `ui/drawer`.
+- [x] 🟠 `docs/content/docs/components/ui/drawer.md` — usage, props, sub-components, accessibility, Drawer-vs-Dialog guidance.
+- [x] 🟠 `docs/src/lib/components/demos/DrawerDemo.svelte` + register in `docs/src/routes/(docs)/[...slug]/+page.svelte`.
+- [x] 🟠 `docs/src/lib/docs/nav.ts` — insert Drawer entry under UI children.
+- [x] ⚪ `docs/content/skills/bosia-drawer/SKILL.md` — workflow steering for AI agents (mobile-first contract, P0/P1 checklist).
+- [x] ⚪ `backup/COMPONENT_PLAN.md` — flip Drawer to `[x]`.
 
 ---
 

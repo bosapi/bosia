@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.21] - 2026-06-09
+
+### Added
+
+- Drawer component — mobile bottom-sheet overlay with slide-up animation and tap-to-close.
+
+---
+
 ## [0.6.20] - 2026-06-08
 
 ### Fixed

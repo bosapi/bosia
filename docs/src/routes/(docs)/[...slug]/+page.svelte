@@ -38,6 +38,7 @@
 	import SidebarDemo from "$lib/components/demos/SidebarDemo.svelte";
 	import CheckboxDemo from "$lib/components/demos/CheckboxDemo.svelte";
 	import DialogDemo from "$lib/components/demos/DialogDemo.svelte";
+	import DrawerDemo from "$lib/components/demos/DrawerDemo.svelte";
 	import LabelDemo from "$lib/components/demos/LabelDemo.svelte";
 	import MenubarDemo from "$lib/components/demos/MenubarDemo.svelte";
 	import RadioGroupDemo from "$lib/components/demos/RadioGroupDemo.svelte";
@@ -92,6 +93,7 @@
 		DropdownMenuDemo,
 		ChartDemo,
 		DialogDemo,
+		DrawerDemo,
 		DatePickerDemo,
 		DataTableDemo,
 		DirectionDemo,
