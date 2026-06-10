@@ -25,6 +25,10 @@ The CLI copies tokens to `src/lib/themes/<name>.css` and rewrites the active imp
 - [ocean](/docs/themes/ocean/) — deep navy + teal, SaaS and data app aesthetic
 - [forest](/docs/themes/forest/) — earthy green + amber, nature and sustainability aesthetic
 - [rose](/docs/themes/rose/) — rose palette, creative and lifestyle aesthetic
+- [sunset](/docs/themes/sunset/) — warm orange + pink accent, consumer and marketing aesthetic
+- [midnight](/docs/themes/midnight/) — indigo, dark-first dashboard and analytics aesthetic
+- [mono](/docs/themes/mono/) — brutalist monochrome, sharp corners + monospace stack
+- [amber](/docs/themes/amber/) — amber + yellow, cozy hospitality and food aesthetic
 
 ## Authoring a theme
 

@@ -1029,6 +1029,8 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 - [x] 🟠 Extend `registry/index.json` with `blocks` and `themes` arrays
 - [x] 🟠 `registry/themes/neutral/` — extracted from current `apps/demo/src/app.css` `@theme` block
 - [x] 🟠 `registry/themes/editorial/` — warm cream palette + Instrument Serif display
+- [x] 🟢 Six existing themes wired into sidebar nav + skill metadata (zinc, stone, claude, ocean, forest, rose) — v0.6.22 (2026-06-10)
+- [x] 🟢 Four new themes added: sunset (warm orange), midnight (indigo dark-first), mono (brutalist), amber (cozy hospitality) — v0.6.22 (2026-06-10)
 - [x] 🟠 `registry/blocks/cards/feature-editorial/` — first block; matches Open Design reference (eyebrow numeral, serif title, tight leading, circular CTA)
 - [x] 🟡 Refactor `apps/demo/src/app.css` to `@import "./lib/themes/neutral.css"` (visually unchanged)
 

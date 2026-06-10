@@ -14,7 +14,21 @@ bosia:
     design: true
     requires:
         blocks: []
-        themes: [neutral, editorial]
+        themes:
+            [
+                neutral,
+                editorial,
+                zinc,
+                stone,
+                claude,
+                ocean,
+                forest,
+                rose,
+                sunset,
+                midnight,
+                mono,
+                amber,
+            ]
         components: []
         feats: []
     targets:
@@ -71,7 +85,7 @@ Exception: brand-locked illustrations / SVGs embedded as data — and even then,
 
 ## Theme swap
 
-Two themes ship in the registry: `theme/neutral` (default) and `theme/editorial`.
+Twelve themes ship in the registry — see [Themes overview](/docs/themes/overview/) for the full list. Default is `theme/neutral`.
 
 ```bash
 # inside a Bosia project
@@ -98,7 +112,7 @@ Nothing in components changes.
 P0:
 
 - [ ] Zero raw color classes in committed `.svelte` (grep above).
-- [ ] A theme registry entry is installed (`theme/neutral` or `theme/editorial`).
+- [ ] A theme registry entry is installed (any of the 12 in `registry/themes/`).
 - [ ] Border colors use `border-border` / `border-input`.
 
 P1:

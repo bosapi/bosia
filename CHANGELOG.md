@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.22] - 2026-06-10
+
+### Added
+
+- Four new themes: sunset, midnight, mono, amber. Twelve total now ship in the registry.
+
+### Fixed
+
+- Sidebar now lists all themes; bosia-theme-tokens skill no longer claims only two ship.
+
+---
+
 ## [0.6.21] - 2026-06-09
 
 ### Added

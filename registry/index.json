@@ -72,5 +72,18 @@
 		"files/image-dialog",
 		"files/upload-area"
 	],
-	"themes": ["neutral", "editorial", "zinc", "stone", "claude", "ocean", "forest", "rose"]
+	"themes": [
+		"neutral",
+		"editorial",
+		"zinc",
+		"stone",
+		"claude",
+		"ocean",
+		"forest",
+		"rose",
+		"sunset",
+		"midnight",
+		"mono",
+		"amber"
+	]
 }

@@ -1,0 +1,7 @@
+{
+	"name": "midnight",
+	"description": "Indigo primary, dark-first. Pro dashboard and analytics aesthetic.",
+	"files": ["tokens.css"],
+	"fonts": {},
+	"npmDeps": {}
+}

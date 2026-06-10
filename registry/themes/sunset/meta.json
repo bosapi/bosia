@@ -1,0 +1,7 @@
+{
+	"name": "sunset",
+	"description": "Warm orange + pink accent. Energetic consumer and marketing aesthetic.",
+	"files": ["tokens.css"],
+	"fonts": {},
+	"npmDeps": {}
+}

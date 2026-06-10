@@ -1,0 +1,109 @@
+/*
+ * Bosia theme: midnight
+ * Indigo primary. Tuned for dark dashboards but ships a clean light variant.
+ * Light + dark via :root / .dark.
+ */
+
+@theme {
+	--color-background: hsl(var(--background));
+	--color-foreground: hsl(var(--foreground));
+
+	--color-card: hsl(var(--card));
+	--color-card-foreground: hsl(var(--card-foreground));
+
+	--color-popover: hsl(var(--popover));
+	--color-popover-foreground: hsl(var(--popover-foreground));
+
+	--color-primary: hsl(var(--primary));
+	--color-primary-foreground: hsl(var(--primary-foreground));
+
+	--color-secondary: hsl(var(--secondary));
+	--color-secondary-foreground: hsl(var(--secondary-foreground));
+
+	--color-muted: hsl(var(--muted));
+	--color-muted-foreground: hsl(var(--muted-foreground));
+
+	--color-accent: hsl(var(--accent));
+	--color-accent-foreground: hsl(var(--accent-foreground));
+
+	--color-destructive: hsl(var(--destructive));
+	--color-destructive-foreground: hsl(var(--destructive-foreground));
+
+	--color-border: hsl(var(--border));
+	--color-input: hsl(var(--input));
+	--color-ring: hsl(var(--ring));
+
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+
+	--font-display:
+		system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+		sans-serif;
+	--font-body:
+		system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+		sans-serif;
+}
+
+:root {
+	--background: 234 40% 99%;
+	--foreground: 234 40% 10%;
+
+	--card: 0 0% 100%;
+	--card-foreground: 234 40% 10%;
+
+	--popover: 0 0% 100%;
+	--popover-foreground: 234 40% 10%;
+
+	--primary: 234 80% 55%;
+	--primary-foreground: 0 0% 100%;
+
+	--secondary: 234 30% 95%;
+	--secondary-foreground: 234 40% 10%;
+
+	--muted: 234 30% 95%;
+	--muted-foreground: 234 16% 42%;
+
+	--accent: 234 30% 95%;
+	--accent-foreground: 234 40% 10%;
+
+	--destructive: 0 84.2% 60.2%;
+	--destructive-foreground: 0 0% 100%;
+
+	--border: 234 25% 90%;
+	--input: 234 25% 90%;
+	--ring: 234 80% 55%;
+
+	--radius: 0.5rem;
+}
+
+.dark {
+	--background: 234 30% 7%;
+	--foreground: 234 20% 96%;
+
+	--card: 234 28% 10%;
+	--card-foreground: 234 20% 96%;
+
+	--popover: 234 30% 7%;
+	--popover-foreground: 234 20% 96%;
+
+	--primary: 234 80% 65%;
+	--primary-foreground: 234 40% 8%;
+
+	--secondary: 234 24% 16%;
+	--secondary-foreground: 234 20% 96%;
+
+	--muted: 234 24% 16%;
+	--muted-foreground: 234 16% 64%;
+
+	--accent: 234 24% 16%;
+	--accent-foreground: 234 20% 96%;
+
+	--destructive: 0 62.8% 45%;
+	--destructive-foreground: 234 20% 96%;
+
+	--border: 234 24% 18%;
+	--input: 234 24% 18%;
+	--ring: 234 80% 65%;
+}
