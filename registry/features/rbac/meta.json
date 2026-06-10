@@ -1,0 +1,72 @@
+{
+	"name": "rbac",
+	"description": "Role-free permission grants — (userId, resource, action, scope) rows with `*` wildcards. Adds `locals.can(...)` to auth-handle. First registered user is granted ('*','*',null) by seed bootstrap.",
+	"features": ["auth"],
+	"components": [],
+	"blocks": [],
+	"options": [
+		{
+			"name": "dialect",
+			"flag": "-d",
+			"long": "--dialect",
+			"prompt": "Which database dialect should rbac use?",
+			"choices": [
+				{ "value": "sqlite", "label": "SQLite", "hint": "default — zero-config" },
+				{ "value": "postgres", "label": "Postgres" },
+				{ "value": "mysql", "label": "MySQL" }
+			],
+			"default": "sqlite"
+		}
+	],
+	"files": [
+		{
+			"src": "permission.pg.table.ts",
+			"target": "src/features/rbac/schemas/permission.table.ts",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "permission.mysql.table.ts",
+			"target": "src/features/rbac/schemas/permission.table.ts",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "permission.sqlite.table.ts",
+			"target": "src/features/rbac/schemas/permission.table.ts",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "resources.ts",
+			"target": "src/lib/rbac/resources.ts",
+			"strategy": "skip-if-exists"
+		},
+		{
+			"src": "can.ts",
+			"target": "src/features/rbac/can.ts"
+		},
+		{
+			"src": "rbac-index.ts",
+			"target": "src/features/rbac/index.ts"
+		},
+		{
+			"src": "auth-handle.patch.ts",
+			"target": "src/features/auth/auth-handle.ts"
+		},
+		{
+			"src": "seed-bootstrap.ts",
+			"target": "src/features/drizzle/seeds/001_rbac_bootstrap.ts"
+		},
+		{
+			"src": "app-d-ts.ts",
+			"target": "src/app.d.ts",
+			"strategy": "append-block",
+			"marker": "locals"
+		},
+		{
+			"src": "schemas.ts",
+			"target": "src/features/drizzle/schemas.ts",
+			"strategy": "append-line"
+		}
+	],
+	"npmDeps": {},
+	"envVars": {}
+}
