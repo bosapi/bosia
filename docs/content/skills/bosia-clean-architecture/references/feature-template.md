@@ -1,8 +1,8 @@
 # Feature template
 
-Copy-adapt this template when scaffolding `src/features/<name>/`. Examples use `menu` as the feature name. Replace consistently: folder = `menu`, namespace = `Menu`, table = `menuItems` (plural). Adjust to match drizzle naming for your project.
+Copy-adapt this template when scaffolding `src/features/<name>/`. Examples use `menu` as the feature name. Replace consistently: folder = `menu`, namespace = `Menu`, table file = `menu-items.table.ts`, table variable + SQL identifier = `menuItems` / `"menu_items"` (plural everywhere). Adjust to match drizzle naming for your project.
 
-## File 1 — `menu.table.ts`
+## File 1 — `menu-items.table.ts`
 
 ```ts
 import { pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
@@ -32,7 +32,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-valibot";
 import * as v from "valibot";
 
 import { uuidSchema } from "../shared";
-import { menuItems } from "./menu.table";
+import { menuItems } from "./menu-items.table";
 
 // Derived from the drizzle table — keeps types in sync automatically.
 export const MenuRow = createSelectSchema(menuItems);
@@ -76,7 +76,7 @@ Notes:
 import { eq } from "drizzle-orm";
 
 import { db } from "../drizzle";
-import { menuItems } from "./menu.table";
+import { menuItems } from "./menu-items.table";
 import type { MenuInsertDto, MenuUpdateDto } from "./menu.dto";
 
 export async function listAll() {
@@ -173,8 +173,8 @@ Notes:
 ```ts
 export * as MenuService from "./menu.service";
 export * as MenuRepository from "./menu.repository";
-export { menuItems } from "./menu.table";
-export type { MenuItemRow, MenuItemInsertRow } from "./menu.table";
+export { menuItems } from "./menu-items.table";
+export type { MenuItemRow, MenuItemInsertRow } from "./menu-items.table";
 export * from "./menu.validator";
 export * from "./menu.dto";
 ```

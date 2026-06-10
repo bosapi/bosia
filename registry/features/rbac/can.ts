@@ -1,6 +1,6 @@
 import { and, eq, or, isNull, sql } from "drizzle-orm";
 import { db } from "../drizzle";
-import { permission } from "./schemas/permission.table";
+import { permissions } from "./schemas/permissions.table";
 
 /**
  * Check whether `userId` is granted `resource.action` (optionally on `scope`).
@@ -20,17 +20,17 @@ export async function can(
 	if (!userId) return false;
 
 	const scopeMatches = scope
-		? or(isNull(permission.scope), eq(permission.scope, ""), eq(permission.scope, scope))
-		: or(isNull(permission.scope), eq(permission.scope, ""));
+		? or(isNull(permissions.scope), eq(permissions.scope, ""), eq(permissions.scope, scope))
+		: or(isNull(permissions.scope), eq(permissions.scope, ""));
 
 	const rows = await db
 		.select({ one: sql<number>`1` })
-		.from(permission)
+		.from(permissions)
 		.where(
 			and(
-				eq(permission.userId, userId),
-				or(eq(permission.resource, resource), eq(permission.resource, "*")),
-				or(eq(permission.action, action), eq(permission.action, "*")),
+				eq(permissions.userId, userId),
+				or(eq(permissions.resource, resource), eq(permissions.resource, "*")),
+				or(eq(permissions.action, action), eq(permissions.action, "*")),
 				scopeMatches,
 			),
 		)
@@ -46,7 +46,7 @@ export async function grant(
 	scope: string | null = null,
 ) {
 	await db
-		.insert(permission)
+		.insert(permissions)
 		.values({ userId, resource, action, scope: scope ?? "" })
 		.onConflictDoNothing?.();
 }

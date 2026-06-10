@@ -1,17 +1,17 @@
 import { mysqlTable, varchar, int } from "drizzle-orm/mysql-core";
-import { order } from "./order.table";
-import { product } from "./product.table";
+import { orders } from "./orders.table";
+import { products } from "./products.table";
 
-export const orderItem = mysqlTable("order_item", {
+export const orderItems = mysqlTable("order_items", {
 	id: varchar("id", { length: 36 })
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
 	orderId: varchar("order_id", { length: 36 })
 		.notNull()
-		.references(() => order.id, { onDelete: "cascade" }),
+		.references(() => orders.id, { onDelete: "cascade" }),
 	productId: varchar("product_id", { length: 36 })
 		.notNull()
-		.references(() => product.id, { onDelete: "restrict" }),
+		.references(() => products.id, { onDelete: "restrict" }),
 	quantity: int("quantity").notNull(),
 	unitPriceCents: int("unit_price_cents").notNull(),
 });

@@ -20,33 +20,33 @@
 	],
 	"files": [
 		{
-			"src": "user.pg.table.ts",
-			"target": "src/features/auth/schemas/user.table.ts",
+			"src": "users.pg.table.ts",
+			"target": "src/features/auth/schemas/users.table.ts",
 			"when": { "dialect": "postgres" }
 		},
 		{
-			"src": "user.mysql.table.ts",
-			"target": "src/features/auth/schemas/user.table.ts",
+			"src": "users.mysql.table.ts",
+			"target": "src/features/auth/schemas/users.table.ts",
 			"when": { "dialect": "mysql" }
 		},
 		{
-			"src": "user.sqlite.table.ts",
-			"target": "src/features/auth/schemas/user.table.ts",
+			"src": "users.sqlite.table.ts",
+			"target": "src/features/auth/schemas/users.table.ts",
 			"when": { "dialect": "sqlite" }
 		},
 		{
-			"src": "session.pg.table.ts",
-			"target": "src/features/auth/schemas/session.table.ts",
+			"src": "sessions.pg.table.ts",
+			"target": "src/features/auth/schemas/sessions.table.ts",
 			"when": { "dialect": "postgres" }
 		},
 		{
-			"src": "session.mysql.table.ts",
-			"target": "src/features/auth/schemas/session.table.ts",
+			"src": "sessions.mysql.table.ts",
+			"target": "src/features/auth/schemas/sessions.table.ts",
 			"when": { "dialect": "mysql" }
 		},
 		{
-			"src": "session.sqlite.table.ts",
-			"target": "src/features/auth/schemas/session.table.ts",
+			"src": "sessions.sqlite.table.ts",
+			"target": "src/features/auth/schemas/sessions.table.ts",
 			"when": { "dialect": "sqlite" }
 		},
 		{

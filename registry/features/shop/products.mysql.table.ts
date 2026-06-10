@@ -1,7 +1,7 @@
 import { mysqlTable, varchar, text, int, json, timestamp } from "drizzle-orm/mysql-core";
-import { user } from "../../auth/schemas/user.table";
+import { users } from "../../auth/schemas/users.table";
 
-export const product = mysqlTable("product", {
+export const products = mysqlTable("products", {
 	id: varchar("id", { length: 36 })
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
@@ -12,7 +12,7 @@ export const product = mysqlTable("product", {
 	images: json("images").$type<string[]>().notNull(),
 	createdBy: varchar("created_by", { length: 36 })
 		.notNull()
-		.references(() => user.id, { onDelete: "restrict" }),
+		.references(() => users.id, { onDelete: "restrict" }),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

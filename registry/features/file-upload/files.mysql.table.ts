@@ -1,6 +1,6 @@
 import { mysqlTable, varchar, text, int, timestamp } from "drizzle-orm/mysql-core";
 
-export const file = mysqlTable("file", {
+export const files = mysqlTable("files", {
 	id: varchar("id", { length: 36 })
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),

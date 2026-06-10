@@ -255,9 +255,9 @@ Fully-promoted feature:
 ```
 src/features/auth/
 ├── tables/
-│   ├── session.table.ts
-│   ├── token.table.ts
-│   └── credential.table.ts
+│   ├── sessions.table.ts
+│   ├── tokens.table.ts
+│   └── credentials.table.ts
 ├── validators/
 │   ├── login.validator.ts
 │   └── signup.validator.ts
@@ -292,7 +292,7 @@ src/features/billing/
 Rules that carry through promotion:
 
 - **Barrel is unchanged contract.** Consumers still write `import { LoginService, sessions } from "../auth"`. The subfolder path never leaks across feature boundaries.
-- **Cross-feature FKs** import the table object **from the barrel**, not the deep path: `import { sessions } from "../auth"` — not `"../auth/tables/session.table"`. The barrel must re-export every table so sibling features (and `features/drizzle/schemas.ts`) keep working.
+- **Cross-feature FKs** import the table object **from the barrel**, not the deep path: `import { sessions } from "../auth"` — not `"../auth/tables/sessions.table"`. The barrel must re-export every table so sibling features (and `features/drizzle/schemas.ts`) keep working.
 - **Service ↔ repository scoping is unchanged.** A service in `services/` may import any repository in its own `repositories/`. Cross-feature is still service → service (R5).
 - **No empty placeholder folders.** Promote on the second file, not "for future use."
 - **Demotion is allowed.** If a feature shrinks back to one file of a kind, collapse the folder again. The barrel absorbs the move.
@@ -307,9 +307,9 @@ export * as SessionRepository from "./repositories/session.repository";
 export * as TokenRepository from "./repositories/token.repository";
 export * as CredentialRepository from "./repositories/credential.repository";
 
-export { sessions } from "./tables/session.table";
-export { tokens } from "./tables/token.table";
-export { credentials } from "./tables/credential.table";
+export { sessions } from "./tables/sessions.table";
+export { tokens } from "./tables/tokens.table";
+export { credentials } from "./tables/credentials.table";
 
 export * from "./validators/login.validator";
 export * from "./validators/signup.validator";

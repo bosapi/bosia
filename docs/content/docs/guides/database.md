@@ -21,10 +21,10 @@ No per-engine npm package — Drizzle ships `drizzle-orm/bun-sql` and `drizzle-o
 ## Setup
 
 ```bash
-bunx bosia feat drizzle
+bunx bosia feat drizzle -d postgres   # or mysql / sqlite
 ```
 
-This drops `src/features/drizzle/index.ts` (multi-engine adapter), `schemas.ts`, `seeds/runner.ts`, and `drizzle.config.ts` into your app and adds `db:generate`, `db:migrate`, `db:seed` to `package.json`.
+This drops a dialect-specific `src/features/drizzle/index.ts`, `schemas.ts`, `seeds/runner.ts`, `migrate.ts`, and `drizzle.config.ts` into your app and adds `db:generate`, `db:migrate`, `db:seed` to `package.json`. The dialect choice fixes the `db` type to the concrete drizzle adapter (`BunSQLDatabase` for pg/mysql, `BunSQLiteDatabase` for sqlite) — repository methods typecheck without union-narrowing gymnastics.
 
 Then set `DATABASE_URL` in `.env.local`:
 
@@ -46,7 +46,7 @@ bun run db:seed       # runs *.ts in src/features/drizzle/seeds/ in order
 
 ## Adding a table
 
-See the `bosia-drizzle-feature` skill for the canonical pattern: one `*.table.ts` per table, a colocated service, and a numbered seed (`001_*.ts`, `002_*.ts`) when initial data is needed. Re-export tables from `schemas.ts` so Drizzle Kit picks them up.
+See the `bosia-drizzle-feature` skill for the canonical pattern: one `*.table.ts` per table, a colocated service, and a numbered seed (`001_*.ts`, `002_*.ts`) when initial data is needed. Re-export tables from `schemas.ts` so Drizzle Kit picks them up. Table names — filename, variable, and SQL identifier — are plural (`users.table.ts` → `export const users = pgTable("users", ...)`); foreign-key columns stay singular (`userId`).
 
 ## SQLite in-memory
 

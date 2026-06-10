@@ -1,8 +1,8 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
-import { user } from "../../auth/schemas/user.table";
+import { users } from "../../auth/schemas/users.table";
 
-export const product = sqliteTable("product", {
+export const products = sqliteTable("products", {
 	id: text("id")
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
@@ -13,7 +13,7 @@ export const product = sqliteTable("product", {
 	images: text("images", { mode: "json" }).$type<string[]>().notNull().default([]),
 	createdBy: text("created_by")
 		.notNull()
-		.references(() => user.id, { onDelete: "restrict" }),
+		.references(() => users.id, { onDelete: "restrict" }),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.notNull()
 		.default(sql`(unixepoch())`),

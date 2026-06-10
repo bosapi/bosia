@@ -1,5 +1,5 @@
 import type { Database } from "../index";
-import { todos } from "../../todo/schemas/todo.table";
+import { todos } from "../../todo/schemas/todos.table";
 
 export async function seed(db: Database) {
 	await db

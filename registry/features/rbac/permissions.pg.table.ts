@@ -1,12 +1,12 @@
 import { pgTable, uuid, text, timestamp, primaryKey } from "drizzle-orm/pg-core";
-import { user } from "../../auth/schemas/user.table";
+import { users } from "../../auth/schemas/users.table";
 
-export const permission = pgTable(
-	"permission",
+export const permissions = pgTable(
+	"permissions",
 	{
 		userId: uuid("user_id")
 			.notNull()
-			.references(() => user.id, { onDelete: "cascade" }),
+			.references(() => users.id, { onDelete: "cascade" }),
 		resource: text("resource").notNull(),
 		action: text("action").notNull(),
 		scope: text("scope"),

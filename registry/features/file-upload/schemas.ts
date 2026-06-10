@@ -1,1 +1,1 @@
-export * from "../file-upload/schemas/file.table";
+export * from "../file-upload/schemas/files.table";

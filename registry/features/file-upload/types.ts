@@ -1,8 +1,8 @@
 import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
-import type { file } from "./schemas/file.table";
+import type { files } from "./schemas/files.table";
 
-export type FileRecord = InferSelectModel<typeof file>;
-export type NewFileRecord = InferInsertModel<typeof file>;
+export type FileRecord = InferSelectModel<typeof files>;
+export type NewFileRecord = InferInsertModel<typeof files>;
 
 export type StorageDriver = "local" | "s3";
 

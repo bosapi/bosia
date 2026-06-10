@@ -172,6 +172,21 @@ For app-side updates of `updatedAt`, use `.$onUpdate(() => new Date())`.
 
 `bun run db:generate` produces `drizzle/migrations/NNNN_*.sql`. Once committed, treat as historical record — same rule as seeds.
 
+### R10 — Table names are plural (variable + SQL identifier + filename)
+
+A table holds many rows, so it's plural. Apply consistently:
+
+```ts
+// src/features/students/students.table.ts
+export const students = pgTable("students", { ... });   // variable + SQL identifier
+```
+
+- File: `students.table.ts` (not `student.table.ts`).
+- Variable: `export const students` (not `student`).
+- SQL identifier: `pgTable("students", ...)` (not `"student"`).
+- Compound names use the same plural convention: `order_items`, `cart_items`, `permissions`.
+- Foreign-key **column** names stay singular — `userId`, `productId` — because each reference points to one row.
+
 ## Workflow
 
 1. Add `*.table.ts` with schema.
@@ -201,6 +216,7 @@ For app-side updates of `updatedAt`, use `.$onUpdate(() => new Date())`.
 P0:
 
 - [ ] All tables in `*.table.ts` files.
+- [ ] Table variable + SQL identifier + filename are plural (R10). FK columns stay singular.
 - [ ] No applied seed file edited.
 - [ ] Every seed is idempotent (re-runnable).
 - [ ] Migration generated for schema change.

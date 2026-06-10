@@ -35,63 +35,63 @@
 	],
 	"files": [
 		{
-			"src": "product.pg.table.ts",
-			"target": "src/features/shop/schemas/product.table.ts",
+			"src": "products.pg.table.ts",
+			"target": "src/features/shop/schemas/products.table.ts",
 			"when": { "dialect": "postgres" }
 		},
 		{
-			"src": "product.mysql.table.ts",
-			"target": "src/features/shop/schemas/product.table.ts",
+			"src": "products.mysql.table.ts",
+			"target": "src/features/shop/schemas/products.table.ts",
 			"when": { "dialect": "mysql" }
 		},
 		{
-			"src": "product.sqlite.table.ts",
-			"target": "src/features/shop/schemas/product.table.ts",
+			"src": "products.sqlite.table.ts",
+			"target": "src/features/shop/schemas/products.table.ts",
 			"when": { "dialect": "sqlite" }
 		},
 		{
-			"src": "order.pg.table.ts",
-			"target": "src/features/shop/schemas/order.table.ts",
+			"src": "orders.pg.table.ts",
+			"target": "src/features/shop/schemas/orders.table.ts",
 			"when": { "dialect": "postgres" }
 		},
 		{
-			"src": "order.mysql.table.ts",
-			"target": "src/features/shop/schemas/order.table.ts",
+			"src": "orders.mysql.table.ts",
+			"target": "src/features/shop/schemas/orders.table.ts",
 			"when": { "dialect": "mysql" }
 		},
 		{
-			"src": "order.sqlite.table.ts",
-			"target": "src/features/shop/schemas/order.table.ts",
+			"src": "orders.sqlite.table.ts",
+			"target": "src/features/shop/schemas/orders.table.ts",
 			"when": { "dialect": "sqlite" }
 		},
 		{
-			"src": "order-item.pg.table.ts",
-			"target": "src/features/shop/schemas/order-item.table.ts",
+			"src": "order-items.pg.table.ts",
+			"target": "src/features/shop/schemas/order-items.table.ts",
 			"when": { "dialect": "postgres" }
 		},
 		{
-			"src": "order-item.mysql.table.ts",
-			"target": "src/features/shop/schemas/order-item.table.ts",
+			"src": "order-items.mysql.table.ts",
+			"target": "src/features/shop/schemas/order-items.table.ts",
 			"when": { "dialect": "mysql" }
 		},
 		{
-			"src": "order-item.sqlite.table.ts",
-			"target": "src/features/shop/schemas/order-item.table.ts",
+			"src": "order-items.sqlite.table.ts",
+			"target": "src/features/shop/schemas/order-items.table.ts",
 			"when": { "dialect": "sqlite" }
 		},
 		{
-			"src": "cart-item.pg.table.ts",
-			"target": "src/features/shop/schemas/cart-item.table.ts",
+			"src": "cart-items.pg.table.ts",
+			"target": "src/features/shop/schemas/cart-items.table.ts",
 			"when": { "dialect": "postgres" }
 		},
 		{
-			"src": "cart-item.mysql.table.ts",
-			"target": "src/features/shop/schemas/cart-item.table.ts",
+			"src": "cart-items.mysql.table.ts",
+			"target": "src/features/shop/schemas/cart-items.table.ts",
 			"when": { "dialect": "mysql" }
 		},
 		{
-			"src": "cart-item.sqlite.table.ts",
-			"target": "src/features/shop/schemas/cart-item.table.ts",
+			"src": "cart-items.sqlite.table.ts",
+			"target": "src/features/shop/schemas/cart-items.table.ts",
 			"when": { "dialect": "sqlite" }
 		},
 		{

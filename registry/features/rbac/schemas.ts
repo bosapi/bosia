@@ -1,1 +1,1 @@
-export * from "../rbac/schemas/permission.table";
+export * from "../rbac/schemas/permissions.table";

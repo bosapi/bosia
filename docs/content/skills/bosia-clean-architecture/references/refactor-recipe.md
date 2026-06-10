@@ -7,7 +7,7 @@ Use this when a route file imports `db` or a `*.table` file directly. The worked
 ```ts
 // data/users/<userId>/<projectSlug>/warung-nasi/src/routes/(public)/+page.server.ts
 import { db } from "../../features/drizzle";
-import { menuItems } from "../../features/drizzle/tables/menu.table";
+import { menuItems } from "../../features/drizzle/tables/menu-items.table";
 
 export async function load() {
 	const menu = await db.select().from(menuItems).orderBy(menuItems.id);
@@ -36,17 +36,17 @@ Collect every hit. Refactor in passes — one entity at a time. Don't try to fix
 
 For the `warung-nasi` example the entity is "menu". Plan: `src/features/menu/`. If a folder already exists, extend it. If not, scaffold from [`feature-template.md`](./feature-template.md).
 
-If the table currently lives at `src/features/drizzle/tables/menu.table.ts`:
+If the table currently lives at `src/features/drizzle/tables/menu-items.table.ts`:
 
 ```bash
-mv src/features/drizzle/tables/menu.table.ts src/features/menu/menu.table.ts
+mv src/features/drizzle/tables/menu-items.table.ts src/features/menu/menu-items.table.ts
 ```
 
 Update any `features/drizzle/schemas.ts` re-export so the table is still discovered by the seed runner and migration generator:
 
 ```ts
 // src/features/drizzle/schemas.ts
-export { menuItems } from "../menu/menu.table";
+export { menuItems } from "../menu/menu-items.table";
 ```
 
 ## Step 3 — Extract the query into the repository
@@ -54,7 +54,7 @@ export { menuItems } from "../menu/menu.table";
 ```ts
 // src/features/menu/menu.repository.ts
 import { db } from "../drizzle";
-import { menuItems } from "./menu.table";
+import { menuItems } from "./menu-items.table";
 
 export async function listAll() {
 	return db.select().from(menuItems).orderBy(menuItems.id);
@@ -84,7 +84,7 @@ If the route is read-only and there's no input to validate, you can ship the ref
 // src/features/menu/index.ts
 export * as MenuService from "./menu.service";
 export * as MenuRepository from "./menu.repository";
-export { menuItems } from "./menu.table";
+export { menuItems } from "./menu-items.table";
 ```
 
 Full templates: [`feature-template.md`](./feature-template.md).
@@ -113,7 +113,7 @@ bun run format
 bun run build
 ```
 
-If `bun run build` errors on a path import (e.g. `../../features/drizzle/tables/menu.table` from elsewhere), update the offending file to import from the new feature barrel (`features/menu`) instead.
+If `bun run build` errors on a path import (e.g. `../../features/drizzle/tables/menu-items.table` from elsewhere), update the offending file to import from the new feature barrel (`features/menu`) instead.
 
 ## Step 8 — Spot-check the running app
 

@@ -34,6 +34,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `bun x bosia create --template shop` no longer scatters a stray `src/lib/utils.ts` next to the new project directory; the block installer now writes utils.ts into the project, not into `process.cwd()`.
 - Registry + framework now use `tabWidth: 2` (matching templates and the wider Svelte/TS ecosystem) so scaffolded projects pass `bun run check` without reformatting.
 
+### Changed
+
+- Drizzle tables across all registry features are now plural (variable + SQL identifier + filename): `user` → `users`, `session` → `sessions`, `permission` → `permissions`, `file` → `files`, `product` → `products`, `order` → `orders`, `orderItem` → `orderItems`, `cartItem` → `cartItems`. Foreign-key columns stay singular (`userId`, `productId`). New R10 rule in `bosia-drizzle-feature` and updates to `bosia-database-setup` / `bosia-clean-architecture` codify the convention.
+
 ---
 
 ## [0.6.21] - 2026-06-09

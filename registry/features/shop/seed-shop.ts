@@ -2,11 +2,11 @@ import type { Database } from "../index";
 
 /**
  * Shop seed scaffold — intentionally empty. Add demo products,
- * categories, or sample orders here when the user wants demo data.
+ * categories, or sample orders here when you want demo data.
  *
  * Example:
- *   import { product } from "../../shop/schemas/product.table";
- *   await db.insert(product).values({ ... }).onConflictDoNothing();
+ *   import { products } from "../../shop/schemas/products.table";
+ *   await db.insert(products).values({ ... }).onConflictDoNothing();
  */
 export async function seed(_db: Database) {
 	// no-op

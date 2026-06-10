@@ -24,18 +24,18 @@
 	],
 	"files": [
 		{
-			"src": "file.pg.table.ts",
-			"target": "src/features/file-upload/schemas/file.table.ts",
+			"src": "files.pg.table.ts",
+			"target": "src/features/file-upload/schemas/files.table.ts",
 			"when": { "dialect": "postgres" }
 		},
 		{
-			"src": "file.mysql.table.ts",
-			"target": "src/features/file-upload/schemas/file.table.ts",
+			"src": "files.mysql.table.ts",
+			"target": "src/features/file-upload/schemas/files.table.ts",
 			"when": { "dialect": "mysql" }
 		},
 		{
-			"src": "file.sqlite.table.ts",
-			"target": "src/features/file-upload/schemas/file.table.ts",
+			"src": "files.sqlite.table.ts",
+			"target": "src/features/file-upload/schemas/files.table.ts",
 			"when": { "dialect": "sqlite" }
 		},
 		{

@@ -1,7 +1,7 @@
 import { pgTable, uuid, text, integer, jsonb, timestamp } from "drizzle-orm/pg-core";
-import { user } from "../../auth/schemas/user.table";
+import { users } from "../../auth/schemas/users.table";
 
-export const product = pgTable("product", {
+export const products = pgTable("products", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	name: text("name").notNull(),
 	slug: text("slug").notNull().unique(),
@@ -10,7 +10,7 @@ export const product = pgTable("product", {
 	images: jsonb("images").$type<string[]>().notNull().default([]),
 	createdBy: uuid("created_by")
 		.notNull()
-		.references(() => user.id, { onDelete: "restrict" }),
+		.references(() => users.id, { onDelete: "restrict" }),
 	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

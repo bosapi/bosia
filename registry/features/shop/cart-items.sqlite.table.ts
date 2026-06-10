@@ -1,20 +1,20 @@
 import { sqliteTable, text, integer, unique } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
-import { user } from "../../auth/schemas/user.table";
-import { product } from "./product.table";
+import { users } from "../../auth/schemas/users.table";
+import { products } from "./products.table";
 
-export const cartItem = sqliteTable(
-	"cart_item",
+export const cartItems = sqliteTable(
+	"cart_items",
 	{
 		id: text("id")
 			.primaryKey()
 			.$defaultFn(() => crypto.randomUUID()),
 		userId: text("user_id")
 			.notNull()
-			.references(() => user.id, { onDelete: "cascade" }),
+			.references(() => users.id, { onDelete: "cascade" }),
 		productId: text("product_id")
 			.notNull()
-			.references(() => product.id, { onDelete: "cascade" }),
+			.references(() => products.id, { onDelete: "cascade" }),
 		quantity: integer("quantity").notNull().default(1),
 		createdAt: integer("created_at", { mode: "timestamp" })
 			.notNull()

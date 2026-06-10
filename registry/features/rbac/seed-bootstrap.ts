@@ -1,26 +1,26 @@
 import { sql } from "drizzle-orm";
 import type { Database } from "../index";
-import { user } from "../../auth/schemas/user.table";
-import { permission } from "../../rbac/schemas/permission.table";
+import { users } from "../../auth/schemas/users.table";
+import { permissions } from "../../rbac/schemas/permissions.table";
 
 /**
  * First-user bootstrap: when exactly one user exists and they have no
  * permissions yet, grant them `(*, *, '')` — full access. Idempotent.
  */
 export async function seed(db: Database) {
-	const users = await db.select({ id: user.id }).from(user).limit(2);
-	if (users.length !== 1) return;
+	const rows = await db.select({ id: users.id }).from(users).limit(2);
+	if (rows.length !== 1) return;
 
-	const firstUser = users[0];
+	const firstUser = rows[0];
 
 	const existing = await db
 		.select({ one: sql<number>`1` })
-		.from(permission)
-		.where(sql`${permission.userId} = ${firstUser.id}`)
+		.from(permissions)
+		.where(sql`${permissions.userId} = ${firstUser.id}`)
 		.limit(1);
 	if (existing.length > 0) return;
 
-	await db.insert(permission).values({
+	await db.insert(permissions).values({
 		userId: firstUser.id,
 		resource: "*",
 		action: "*",

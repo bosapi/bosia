@@ -1,17 +1,17 @@
 import { pgTable, uuid, integer, timestamp, unique } from "drizzle-orm/pg-core";
-import { user } from "../../auth/schemas/user.table";
-import { product } from "./product.table";
+import { users } from "../../auth/schemas/users.table";
+import { products } from "./products.table";
 
-export const cartItem = pgTable(
-	"cart_item",
+export const cartItems = pgTable(
+	"cart_items",
 	{
 		id: uuid("id").defaultRandom().primaryKey(),
 		userId: uuid("user_id")
 			.notNull()
-			.references(() => user.id, { onDelete: "cascade" }),
+			.references(() => users.id, { onDelete: "cascade" }),
 		productId: uuid("product_id")
 			.notNull()
-			.references(() => product.id, { onDelete: "cascade" }),
+			.references(() => products.id, { onDelete: "cascade" }),
 		quantity: integer("quantity").notNull().default(1),
 		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 	},

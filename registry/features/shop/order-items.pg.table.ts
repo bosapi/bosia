@@ -1,15 +1,15 @@
 import { pgTable, uuid, integer } from "drizzle-orm/pg-core";
-import { order } from "./order.table";
-import { product } from "./product.table";
+import { orders } from "./orders.table";
+import { products } from "./products.table";
 
-export const orderItem = pgTable("order_item", {
+export const orderItems = pgTable("order_items", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	orderId: uuid("order_id")
 		.notNull()
-		.references(() => order.id, { onDelete: "cascade" }),
+		.references(() => orders.id, { onDelete: "cascade" }),
 	productId: uuid("product_id")
 		.notNull()
-		.references(() => product.id, { onDelete: "restrict" }),
+		.references(() => products.id, { onDelete: "restrict" }),
 	quantity: integer("quantity").notNull(),
 	unitPriceCents: integer("unit_price_cents").notNull(),
 });

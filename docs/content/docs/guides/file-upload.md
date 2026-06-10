@@ -25,15 +25,15 @@ bun run db:migrate
 
 ## What you get
 
-| Path                                             | Purpose                                |
-| ------------------------------------------------ | -------------------------------------- |
-| `src/features/file-upload/schemas/file.table.ts` | Drizzle table (matches your dialect)   |
-| `src/features/file-upload/file.service.ts`       | Validation + compression orchestration |
-| `src/features/file-upload/file.repository.ts`    | DB queries                             |
-| `src/features/file-upload/storage/`              | `local` + `s3` adapters                |
-| `src/routes/api/files/+server.ts`                | `GET` list, `POST` upload              |
-| `src/routes/api/files/[id]/+server.ts`           | `DELETE` (cascades to storage)         |
-| `src/routes/uploads/[...path]/+server.ts`        | Streams local files (skipped for S3)   |
+| Path                                              | Purpose                                |
+| ------------------------------------------------- | -------------------------------------- |
+| `src/features/file-upload/schemas/files.table.ts` | Drizzle table (matches your dialect)   |
+| `src/features/file-upload/file.service.ts`        | Validation + compression orchestration |
+| `src/features/file-upload/file.repository.ts`     | DB queries                             |
+| `src/features/file-upload/storage/`               | `local` + `s3` adapters                |
+| `src/routes/api/files/+server.ts`                 | `GET` list, `POST` upload              |
+| `src/routes/api/files/[id]/+server.ts`            | `DELETE` (cascades to storage)         |
+| `src/routes/uploads/[...path]/+server.ts`         | Streams local files (skipped for S3)   |
 
 ## Env vars
 

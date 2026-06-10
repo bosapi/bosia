@@ -83,7 +83,7 @@ When the user says "pakai postgres" / "ganti ke mysql" / etc.:
    - mysql: `bun add mysql2`
    - sqlite: no install needed.
      Use the `bash` / `shell` tool.
-7. **Update `src/features/drizzle/index.ts`** to import the matching drizzle adapter (`drizzle-orm/bun-sql`, `drizzle-orm/mysql2`, `drizzle-orm/bun-sqlite`). Re-use existing patterns; see `bosia-drizzle-feature`.
+7. **Swap `src/features/drizzle/{index.ts,migrate.ts,seeds/runner.ts}`** for the new dialect variants. The drizzle feature ships dialect-specific files (`drizzle-index.{pg,mysql,sqlite}.ts`, `drizzle-migrate.{pg,mysql,sqlite}.ts`, `seed-runner.{pg,mysql,sqlite}.ts`); fastest path is re-running `bunx bosia feat drizzle -d <new dialect>` which overwrites all three. Each variant pins `db` to a concrete drizzle adapter type — repository methods typecheck cleanly.
 8. **Re-generate + migrate.** `bun run db:generate` then `bun run db:migrate`. If existing tables are present and the engine changed, surface the truth: cross-engine migration is data export + re-import, NOT just `migrate`. Stop and ask the user before running anything that could lose data.
 9. **Verify.** `bun run check` to confirm types resolve.
 
@@ -92,7 +92,7 @@ When the user says "pakai postgres" / "ganti ke mysql" / etc.:
 When the user says "buat tabel produk" / "add column `price` to `orders`":
 
 1. **Read schema.** `fs_read("src/features/drizzle/schemas.ts")` + `fs_list("src/features/<feature>/")`.
-2. **Write new schema file** under the matching feature folder (e.g. `src/features/products/products.table.ts`) using the engine's drizzle helper (`sqliteTable` / `pgTable` / `mysqlTable`). UUID primary key + `sql\`CURRENT_TIMESTAMP\``defaults per`bosia-drizzle-feature` R-rules.
+2. **Write new schema file** under the matching feature folder (e.g. `src/features/products/products.table.ts`) using the engine's drizzle helper (`sqliteTable` / `pgTable` / `mysqlTable`). UUID primary key + `sql\`CURRENT_TIMESTAMP\``defaults per`bosia-drizzle-feature` R-rules. Table name is plural in three places: filename (`products.table.ts`), variable (`export const products`), and SQL identifier (`pgTable("products", ...)`). FK columns stay singular (`userId`, `orderId`).
 3. **Re-export** from the schema aggregator (`schemas.ts`) — usually a single `export * from "./products.table"` line.
 4. **Generate + migrate.** `bun run db:generate` (writes a new `drizzle/000X_*.sql`) then `bun run db:migrate`.
 5. **Sanity check.** `bun run check` and, if there's a service layer, surface the new table to the relevant `*.service.ts`. Don't write CRUD wholesale — that's `bosia-crud-flow`.

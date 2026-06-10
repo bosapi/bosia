@@ -1,2 +1,2 @@
-export * from "../auth/schemas/user.table";
-export * from "../auth/schemas/session.table";
+export * from "../auth/schemas/users.table";
+export * from "../auth/schemas/sessions.table";

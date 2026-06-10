@@ -1,1 +1,1 @@
-export * from "../todo/schemas/todo.table";
+export * from "../todo/schemas/todos.table";

@@ -5,8 +5,8 @@
 	"components": ["todo"],
 	"files": [
 		{
-			"src": "todo.table.ts",
-			"target": "src/features/todo/schemas/todo.table.ts"
+			"src": "todos.table.ts",
+			"target": "src/features/todo/schemas/todos.table.ts"
 		},
 		{
 			"src": "types.ts",

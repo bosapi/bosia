@@ -1,12 +1,12 @@
 import { mysqlTable, varchar, timestamp, primaryKey } from "drizzle-orm/mysql-core";
-import { user } from "../../auth/schemas/user.table";
+import { users } from "../../auth/schemas/users.table";
 
-export const permission = mysqlTable(
-	"permission",
+export const permissions = mysqlTable(
+	"permissions",
 	{
 		userId: varchar("user_id", { length: 36 })
 			.notNull()
-			.references(() => user.id, { onDelete: "cascade" }),
+			.references(() => users.id, { onDelete: "cascade" }),
 		resource: varchar("resource", { length: 64 }).notNull(),
 		action: varchar("action", { length: 64 }).notNull(),
 		scope: varchar("scope", { length: 128 }).notNull().default(""),

@@ -1,13 +1,13 @@
 import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
-import { user } from "../../auth/schemas/user.table";
+import { users } from "../../auth/schemas/users.table";
 
-export const permission = sqliteTable(
-	"permission",
+export const permissions = sqliteTable(
+	"permissions",
 	{
 		userId: text("user_id")
 			.notNull()
-			.references(() => user.id, { onDelete: "cascade" }),
+			.references(() => users.id, { onDelete: "cascade" }),
 		resource: text("resource").notNull(),
 		action: text("action").notNull(),
 		scope: text("scope").notNull().default(""),

@@ -1,18 +1,18 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../drizzle";
-import { cartItem } from "./schemas/cart-item.table";
+import { cartItems } from "./schemas/cart-items.table";
 
 export class CartRepository {
 	static listForUser(userId: string) {
-		return db.query.cartItem.findMany({
-			where: eq(cartItem.userId, userId),
+		return db.query.cartItems.findMany({
+			where: eq(cartItems.userId, userId),
 			orderBy: (c, { desc }) => [desc(c.createdAt)],
 		});
 	}
 
 	static find(userId: string, productId: string) {
-		return db.query.cartItem.findFirst({
-			where: and(eq(cartItem.userId, userId), eq(cartItem.productId, productId)),
+		return db.query.cartItems.findFirst({
+			where: and(eq(cartItems.userId, userId), eq(cartItems.productId, productId)),
 		});
 	}
 
@@ -20,32 +20,32 @@ export class CartRepository {
 		const existing = await CartRepository.find(userId, productId);
 		if (existing) {
 			const [row] = await db
-				.update(cartItem)
+				.update(cartItems)
 				.set({ quantity: existing.quantity + quantity })
-				.where(eq(cartItem.id, existing.id))
+				.where(eq(cartItems.id, existing.id))
 				.returning();
 			return row;
 		}
-		const [row] = await db.insert(cartItem).values({ userId, productId, quantity }).returning();
+		const [row] = await db.insert(cartItems).values({ userId, productId, quantity }).returning();
 		return row;
 	}
 
 	static async setQuantity(userId: string, productId: string, quantity: number) {
 		const [row] = await db
-			.update(cartItem)
+			.update(cartItems)
 			.set({ quantity })
-			.where(and(eq(cartItem.userId, userId), eq(cartItem.productId, productId)))
+			.where(and(eq(cartItems.userId, userId), eq(cartItems.productId, productId)))
 			.returning();
 		return row;
 	}
 
 	static async remove(userId: string, productId: string) {
 		await db
-			.delete(cartItem)
-			.where(and(eq(cartItem.userId, userId), eq(cartItem.productId, productId)));
+			.delete(cartItems)
+			.where(and(eq(cartItems.userId, userId), eq(cartItems.productId, productId)));
 	}
 
 	static async clear(userId: string) {
-		await db.delete(cartItem).where(eq(cartItem.userId, userId));
+		await db.delete(cartItems).where(eq(cartItems.userId, userId));
 	}
 }

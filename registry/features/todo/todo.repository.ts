@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "../drizzle";
-import { todos } from "./schemas/todo.table";
+import { todos } from "./schemas/todos.table";
 import type { NewTodo } from "./types";
 
 export class TodoRepository {

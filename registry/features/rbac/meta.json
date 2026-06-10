@@ -20,18 +20,18 @@
 	],
 	"files": [
 		{
-			"src": "permission.pg.table.ts",
-			"target": "src/features/rbac/schemas/permission.table.ts",
+			"src": "permissions.pg.table.ts",
+			"target": "src/features/rbac/schemas/permissions.table.ts",
 			"when": { "dialect": "postgres" }
 		},
 		{
-			"src": "permission.mysql.table.ts",
-			"target": "src/features/rbac/schemas/permission.table.ts",
+			"src": "permissions.mysql.table.ts",
+			"target": "src/features/rbac/schemas/permissions.table.ts",
 			"when": { "dialect": "mysql" }
 		},
 		{
-			"src": "permission.sqlite.table.ts",
-			"target": "src/features/rbac/schemas/permission.table.ts",
+			"src": "permissions.sqlite.table.ts",
+			"target": "src/features/rbac/schemas/permissions.table.ts",
 			"when": { "dialect": "sqlite" }
 		},
 		{
