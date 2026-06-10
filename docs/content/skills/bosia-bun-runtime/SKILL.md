@@ -93,6 +93,30 @@ Per-format encoders: `.webp({ quality })`, `.jpeg({ quality })`, `.png()`, `.avi
 
 ❌ Wrong: `Bun.Image.open(bytes)`, `Bun.Image.decode(bytes)`, `img.width`, `img.resize({ width, height })`, `img.encode({ format: "webp", quality: 0.85 })`.
 
+## S3 — `Bun.s3`
+
+Bun ships a built-in S3 client. **Do not install `@aws-sdk/client-s3` or `aws4fetch`** — `Bun.s3` covers upload, download, delete, and presign with zero deps. It speaks the S3 protocol, so any S3-compatible backend works: AWS S3, **MinIO**, Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Wasabi.
+
+```ts
+// upload
+await Bun.s3.file("avatars/u-42.webp", { bucket: "uploads", type: "image/webp" }).write(bytes);
+
+// download
+const bytes = await Bun.s3.file("avatars/u-42.webp", { bucket: "uploads" }).bytes();
+
+// delete
+await Bun.s3.file("avatars/u-42.webp", { bucket: "uploads" }).delete();
+
+// presigned URL (15 min default)
+const url = Bun.s3.presign("avatars/u-42.webp", { bucket: "uploads", expiresIn: 900 });
+```
+
+Credentials and endpoint come from env: `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION`, `S3_BUCKET`, `S3_ENDPOINT`. Override per call by passing `accessKeyId`/`secretAccessKey`/`endpoint`/`region` in the options object, or construct a scoped client with `new Bun.S3Client({...})` and reuse it.
+
+**Do not invent a `S3_URL` DSN.** It is not a standard (AWS SDK, Bun, rclone, mc all use discrete vars); a fake one will mislead future AI agents. Stick to the names above.
+
+Bosia's `file-upload` feature uses `Bun.s3` directly — see `registry/features/file-upload/storage-s3.ts` and [[bosia-file-upload]] R3 for MinIO/R2/AWS endpoint examples. Full API: https://bun.com/docs/runtime/s3.
+
 ## Spawning processes — `Bun.spawn`
 
 `Bun.spawn` is preferred over `child_process.spawn` for ergonomics and speed. `child_process` still works for compatibility with libraries that depend on it.
@@ -105,4 +129,4 @@ The AI repeatedly generates Bosia user apps that import `@node-rs/argon2`, which
 
 - [[bosia-auth-flow]] — uses `Bun.password` for password hashing.
 - [[bosia-hooks]] — `event.cookies` for session storage.
-- [[bosia-file-upload]] — uses `Bun.Image` for image compression on upload.
+- [[bosia-file-upload]] — uses `Bun.Image` for image compression and `Bun.s3` for the S3 storage adapter.

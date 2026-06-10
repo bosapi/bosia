@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Four new themes: sunset, midnight, mono, amber. Twelve total now ship in the registry.
+- Docs: file-upload skill explains MinIO / R2 / DO Spaces setup via `S3_ENDPOINT`, plus AWS Jakarta (`ap-southeast-3`).
+- Docs: bun-runtime skill now covers `Bun.s3` (the zero-dep client behind the S3 adapter).
+- Docs: both skills warn against inventing a non-standard `S3_URL` DSN — stick to Bun's discrete `S3_*` env names.
 
 ### Fixed
 

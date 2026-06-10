@@ -60,7 +60,18 @@ FileService accepts only `image/jpeg | png | webp | heic | avif`. Files are deco
 ### R3 — Storage adapter via env
 
 - `STORAGE_DRIVER=local` (default) → writes to `./uploads/`, served by `uploads-static-server.ts`.
-- `STORAGE_DRIVER=s3` → set `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENDPOINT`.
+- `STORAGE_DRIVER=s3` → set Bun's standard S3 vars: `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENDPOINT`.
+
+These names are **Bun's native env contract** (https://bun.com/docs/runtime/s3) — `Bun.s3` reads them automatically. Do **not** invent a `S3_URL` / DSN-style variable: it is not a standard, AI agents will hallucinate it on other tools (`@aws-sdk`, `rclone`, `mc`), and Bun has no parser for it.
+
+The S3 adapter is built on **Bun's native S3 client** (`Bun.s3`) — zero dependencies, no `@aws-sdk/*` install. Implementation: `registry/features/file-upload/storage-s3.ts` (uses `Bun.s3.file(key, { bucket }).write(data)` / `.delete()`). See [[bosia-bun-runtime]] § "S3 — `Bun.s3`".
+
+**S3-compatible backends** (MinIO, Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Wasabi) work via `S3_ENDPOINT`. Examples:
+
+- MinIO (local dev): `S3_ENDPOINT=http://localhost:9000`, `S3_REGION=us-east-1` (placeholder), `S3_BUCKET=uploads`, plus MinIO root user / password as access key / secret.
+- Cloudflare R2: `S3_ENDPOINT=https://<accountid>.r2.cloudflarestorage.com`, `S3_REGION=auto`.
+- AWS S3 Jakarta: `S3_ENDPOINT=https://s3.ap-southeast-3.amazonaws.com`, `S3_REGION=ap-southeast-3`.
+- AWS S3 (any region): leave `S3_ENDPOINT` unset; URLs fall back to `https://<bucket>.s3.amazonaws.com/<key>`.
 
 Add chosen keys to `.env.example` (see [[bosia-env]] R5).
 
@@ -191,4 +202,4 @@ P1:
 - [[bosia-elysia-routes]] — POST /api/files is a standard route handler.
 - [[bosia-block-compose]] — composing UploadArea inside larger forms.
 - [[bosia-image-dialog]] — multi-image picker dialog for replace-existing / gallery flows; reuses UploadArea internally.
-- [[bosia-bun-runtime]] — `Bun.Image` API used by FileService.
+- [[bosia-bun-runtime]] — `Bun.Image` API used by FileService; `Bun.s3` used by the S3 adapter.
