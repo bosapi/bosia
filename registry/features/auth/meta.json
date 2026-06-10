@@ -1,0 +1,117 @@
+{
+	"name": "auth",
+	"description": "Email/password auth — Drizzle-backed users/sessions, argon2id via Bun.password, opaque session tokens, /login + /register + /logout routes. Pick dialect with -d sqlite|postgres|mysql.",
+	"features": ["drizzle"],
+	"components": ["ui/form", "ui/input", "ui/label", "ui/button", "ui/alert"],
+	"blocks": [],
+	"options": [
+		{
+			"name": "dialect",
+			"flag": "-d",
+			"long": "--dialect",
+			"prompt": "Which database dialect should auth use?",
+			"choices": [
+				{ "value": "sqlite", "label": "SQLite", "hint": "default — zero-config" },
+				{ "value": "postgres", "label": "Postgres" },
+				{ "value": "mysql", "label": "MySQL" }
+			],
+			"default": "sqlite"
+		}
+	],
+	"files": [
+		{
+			"src": "user.pg.table.ts",
+			"target": "src/features/auth/schemas/user.table.ts",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "user.mysql.table.ts",
+			"target": "src/features/auth/schemas/user.table.ts",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "user.sqlite.table.ts",
+			"target": "src/features/auth/schemas/user.table.ts",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "session.pg.table.ts",
+			"target": "src/features/auth/schemas/session.table.ts",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "session.mysql.table.ts",
+			"target": "src/features/auth/schemas/session.table.ts",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "session.sqlite.table.ts",
+			"target": "src/features/auth/schemas/session.table.ts",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "password.ts",
+			"target": "src/features/auth/password.ts"
+		},
+		{
+			"src": "tokens.ts",
+			"target": "src/features/auth/tokens.ts"
+		},
+		{
+			"src": "session-resolver.ts",
+			"target": "src/features/auth/session-resolver.ts"
+		},
+		{
+			"src": "user.repository.ts",
+			"target": "src/features/auth/user.repository.ts"
+		},
+		{
+			"src": "session.repository.ts",
+			"target": "src/features/auth/session.repository.ts"
+		},
+		{
+			"src": "auth.service.ts",
+			"target": "src/features/auth/auth.service.ts"
+		},
+		{
+			"src": "auth-handle.ts",
+			"target": "src/features/auth/auth-handle.ts"
+		},
+		{
+			"src": "auth-index.ts",
+			"target": "src/features/auth/index.ts"
+		},
+		{
+			"src": "schemas.ts",
+			"target": "src/features/drizzle/schemas.ts",
+			"strategy": "append-line"
+		},
+		{
+			"src": "login-page.svelte",
+			"target": "src/routes/(public)/login/+page.svelte"
+		},
+		{
+			"src": "login-page.server.ts",
+			"target": "src/routes/(public)/login/+page.server.ts"
+		},
+		{
+			"src": "register-page.svelte",
+			"target": "src/routes/(public)/register/+page.svelte"
+		},
+		{
+			"src": "register-page.server.ts",
+			"target": "src/routes/(public)/register/+page.server.ts"
+		},
+		{
+			"src": "logout-server.ts",
+			"target": "src/routes/logout/+server.ts"
+		}
+	],
+	"npmDeps": {
+		"valibot": "^1.0.0",
+		"drizzle-valibot": "^0.4.0"
+	},
+	"envVars": {
+		"SESSION_SECRET": "change-me-in-production"
+	}
+}
