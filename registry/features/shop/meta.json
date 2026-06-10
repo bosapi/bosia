@@ -1,0 +1,157 @@
+{
+	"name": "shop",
+	"description": "Online-store domain — products / orders / cart tables, repositories, services, PublicNavbar + AdminSidebar, plus RBAC resource registry append. Pick dialect with -d sqlite|postgres|mysql.",
+	"features": ["drizzle", "auth", "rbac", "file-upload"],
+	"components": [
+		"ui/navbar",
+		"ui/sidebar",
+		"ui/form",
+		"ui/data-table",
+		"ui/dialog",
+		"ui/dropdown-menu",
+		"ui/alert-dialog",
+		"ui/input",
+		"ui/button",
+		"ui/badge",
+		"ui/card",
+		"ui/avatar",
+		"ui/separator",
+		"ui/typography"
+	],
+	"blocks": ["files/image-dialog"],
+	"options": [
+		{
+			"name": "dialect",
+			"flag": "-d",
+			"long": "--dialect",
+			"prompt": "Which database dialect should shop use?",
+			"choices": [
+				{ "value": "sqlite", "label": "SQLite", "hint": "default — zero-config" },
+				{ "value": "postgres", "label": "Postgres" },
+				{ "value": "mysql", "label": "MySQL" }
+			],
+			"default": "sqlite"
+		}
+	],
+	"files": [
+		{
+			"src": "product.pg.table.ts",
+			"target": "src/features/shop/schemas/product.table.ts",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "product.mysql.table.ts",
+			"target": "src/features/shop/schemas/product.table.ts",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "product.sqlite.table.ts",
+			"target": "src/features/shop/schemas/product.table.ts",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "order.pg.table.ts",
+			"target": "src/features/shop/schemas/order.table.ts",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "order.mysql.table.ts",
+			"target": "src/features/shop/schemas/order.table.ts",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "order.sqlite.table.ts",
+			"target": "src/features/shop/schemas/order.table.ts",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "order-item.pg.table.ts",
+			"target": "src/features/shop/schemas/order-item.table.ts",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "order-item.mysql.table.ts",
+			"target": "src/features/shop/schemas/order-item.table.ts",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "order-item.sqlite.table.ts",
+			"target": "src/features/shop/schemas/order-item.table.ts",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "cart-item.pg.table.ts",
+			"target": "src/features/shop/schemas/cart-item.table.ts",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "cart-item.mysql.table.ts",
+			"target": "src/features/shop/schemas/cart-item.table.ts",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "cart-item.sqlite.table.ts",
+			"target": "src/features/shop/schemas/cart-item.table.ts",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "product.validator.ts",
+			"target": "src/features/shop/product.validator.ts"
+		},
+		{
+			"src": "product.repository.ts",
+			"target": "src/features/shop/product.repository.ts"
+		},
+		{
+			"src": "product.service.ts",
+			"target": "src/features/shop/product.service.ts"
+		},
+		{
+			"src": "order.repository.ts",
+			"target": "src/features/shop/order.repository.ts"
+		},
+		{
+			"src": "order.service.ts",
+			"target": "src/features/shop/order.service.ts"
+		},
+		{
+			"src": "cart.repository.ts",
+			"target": "src/features/shop/cart.repository.ts"
+		},
+		{
+			"src": "cart.service.ts",
+			"target": "src/features/shop/cart.service.ts"
+		},
+		{
+			"src": "shop-index.ts",
+			"target": "src/features/shop/index.ts"
+		},
+		{
+			"src": "resources.append.ts",
+			"target": "src/lib/rbac/resources.ts",
+			"strategy": "append-block",
+			"marker": "resources"
+		},
+		{
+			"src": "schemas.ts",
+			"target": "src/features/drizzle/schemas.ts",
+			"strategy": "append-line"
+		},
+		{
+			"src": "public-navbar.svelte",
+			"target": "src/lib/components/PublicNavbar.svelte"
+		},
+		{
+			"src": "admin-sidebar.svelte",
+			"target": "src/lib/components/AdminSidebar.svelte"
+		},
+		{
+			"src": "seed-shop.ts",
+			"target": "src/features/drizzle/seeds/002_shop.ts"
+		}
+	],
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	},
+	"envVars": {}
+}

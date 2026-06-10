@@ -1,0 +1,10 @@
+RESOURCES.push(
+	"shop.product.read",
+	"shop.product.create",
+	"shop.product.update",
+	"shop.product.delete",
+	"shop.order.read",
+	"shop.order.update",
+	"shop.cart.read",
+	"shop.cart.update",
+);
