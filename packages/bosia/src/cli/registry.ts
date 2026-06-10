@@ -176,7 +176,7 @@ export function mergePkgJson(
 	}
 
 	if (changed) {
-		writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
+		writeFileSync(pkgPath, JSON.stringify(pkg, null, "\t") + "\n", "utf-8");
 	}
 
 	return { addedDeps, addedScripts };

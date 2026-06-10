@@ -67,7 +67,7 @@ export function readManifest(cwd: string = process.cwd()): Manifest {
 
 export function writeManifest(manifest: Manifest, cwd: string = process.cwd()): void {
 	const path = join(cwd, MANIFEST_FILE);
-	writeFileSync(path, JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+	writeFileSync(path, JSON.stringify(manifest, null, "\t") + "\n", "utf-8");
 }
 
 export function recordFeature(
