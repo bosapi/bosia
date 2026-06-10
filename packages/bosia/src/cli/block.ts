@@ -44,11 +44,14 @@ export async function runAddBlock(
 
 	const local = flags.includes("--local");
 	const flagYes = flags.includes("-y") || flags.includes("--yes");
-	const registryRoot = local ? resolveLocalRegistryOrExit() : null;
-	if (local) console.log(`⬡ Using local registry: ${registryRoot}\n`);
+	// Honor an inherited registry root from options (e.g. when called from feat.ts in --local mode).
+	const inheritedRoot = options?.registryRoot ?? null;
+	const registryRoot = inheritedRoot ?? (local ? resolveLocalRegistryOrExit() : null);
+	if (local && !inheritedRoot) console.log(`⬡ Using local registry: ${registryRoot}\n`);
 
 	const resolvedOptions: InstallOptions = {
 		...(options ?? {}),
+		registryRoot,
 		skipPrompts: options?.skipPrompts ?? flagYes,
 	};
 
@@ -59,9 +62,15 @@ export async function runAddBlock(
 
 	const meta = await readRegistryJSON<BlockMeta>(registryRoot, "blocks", name, "meta.json");
 
-	// 1. Install primitive dependencies first
+	// 1. Install primitive dependencies first.
+	// Component deps (e.g. "ui/button") go through addComponent.
+	// Block deps (e.g. "blocks/files/upload-area") recurse into runAddBlock.
 	for (const dep of meta.dependencies ?? []) {
-		await addComponent(dep, false, resolvedOptions);
+		if (dep.startsWith("blocks/")) {
+			await runAddBlock(dep.slice("blocks/".length), [], resolvedOptions);
+		} else {
+			await addComponent(dep, false, resolvedOptions);
+		}
 	}
 
 	// 2. Copy block files to src/lib/blocks/<path>/

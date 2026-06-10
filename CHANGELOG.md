@@ -22,6 +22,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Hydration crashed on components spreading `{...restProps}` because Svelte 5.55.x emits the exclude list as an Array but the runtime expects a Set; framework now pins svelte to ^5.56.3 which emits the Set form.
+- `bosia create --template shop` now scaffolds Postgres tables by default instead of falling back to sqlite.
+- Drizzle feature: workaround for Bun 1.3.x bug where `new Bun.SQL("postgres://...")` errored `FailedToOpenSocket`; the URL is now parsed into an object before passing to Bun.SQL.
+- `bosia create` no longer 404s when a block depends on another block (e.g. `image-dialog` → `upload-area`).
+- Auth feature: `/login` and `/register` server actions now import `features/auth` with the correct relative path.
 - Sidebar user-menu dropdown was clipped by `Sidebar`'s overflow — `floating side="top"` now lets it open upward into the page.
 - `DropdownMenuContent` floating mode: first open was mispositioned because the menu briefly rendered in normal flow before the fixed-position style applied. The class now sets `position: fixed` from the first paint, and the menu stays `visibility: hidden` until the measure resolves — so the first click lands at the same coordinates as subsequent clicks.
 - Sidebar now lists all themes; bosia-theme-tokens skill no longer claims only two ship.

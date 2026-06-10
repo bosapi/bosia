@@ -26,8 +26,19 @@ export const isPersistent = engine !== "sqlite-memory";
 function build() {
 	if (engine === "postgres" || engine === "mysql") {
 		// Bun.SQL covers both postgres and mysql via URL scheme.
+		// NOTE: Bun 1.3.x has a bug where `new Bun.SQL("postgres://...")` errors
+		// `FailedToOpenSocket` even on valid URLs. The object form works, so parse
+		// the URL ourselves.
 		const { drizzle } = require("drizzle-orm/bun-sql") as typeof import("drizzle-orm/bun-sql");
-		const client = new (Bun as unknown as { SQL: new (u: string) => unknown }).SQL(url);
+		const u = new URL(url);
+		const opts = {
+			hostname: u.hostname,
+			port: u.port ? Number(u.port) : engine === "postgres" ? 5432 : 3306,
+			user: u.username ? decodeURIComponent(u.username) : undefined,
+			password: u.password ? decodeURIComponent(u.password) : undefined,
+			database: u.pathname.slice(1) || undefined,
+		};
+		const client = new (Bun as unknown as { SQL: new (o: unknown) => unknown }).SQL(opts);
 		return drizzle(client as never, { schema });
 	}
 

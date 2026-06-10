@@ -90,11 +90,13 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
 			await initAddRegistry(localRegistry);
 			initFeatRegistry(localRegistry);
 
+			const featureOptions: Record<string, string> = config.featureOptions ?? {};
 			for (const feat of config.features) {
 				await installFeature(feat, true, {
 					skipInstall: true,
 					skipPrompts: true,
 					cwd: targetDir,
+					featureOptions,
 				});
 			}
 		}

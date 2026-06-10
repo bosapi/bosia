@@ -1,3 +1,9 @@
 {
-	"features": ["auth", "rbac", "file-upload", "shop"]
+	"features": ["auth", "rbac", "file-upload", "shop"],
+	"featureOptions": {
+		"auth.dialect": "postgres",
+		"rbac.dialect": "postgres",
+		"file-upload.dialect": "postgres",
+		"shop.dialect": "postgres"
+	}
 }

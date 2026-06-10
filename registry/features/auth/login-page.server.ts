@@ -1,6 +1,6 @@
 import { fail, redirect } from "bosia";
 import type { RequestEvent } from "bosia";
-import { AuthService, SESSION_COOKIE, SESSION_TTL_MS } from "../../features/auth";
+import { AuthService, SESSION_COOKIE, SESSION_TTL_MS } from "../../../features/auth";
 
 export async function load({ locals }: RequestEvent) {
 	if (locals.user) throw redirect(303, "/dashboard");

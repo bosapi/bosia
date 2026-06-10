@@ -109,8 +109,11 @@ async function resolveFeatureOptions(
 	options: FeatureOption[],
 	args: string[],
 	skipPrompts: boolean,
+	seed: Record<string, string> = {},
 ): Promise<Record<string, string>> {
-	const values: Record<string, string> = {};
+	// Seed values come from inherited featureOptions (e.g. template-level defaults).
+	// They beat per-feature `default` but lose to explicit CLI args.
+	const values: Record<string, string> = { ...seed };
 	const byFlag = new Map<string, FeatureOption>();
 	for (const opt of options) {
 		if (opt.flag) byFlag.set(opt.flag, opt);
@@ -217,19 +220,28 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 	const inheritedOptions = options?.featureOptions ?? {};
 	let myOptions: Record<string, string> = {};
 	if (meta.options && meta.options.length > 0) {
+		// Extract this feature's seed values from the namespaced inherited map.
+		const seed: Record<string, string> = {};
+		for (const [k, v] of Object.entries(inheritedOptions)) {
+			const [feat, optName] = k.split(".");
+			if (feat === name) seed[optName] = v;
+		}
 		myOptions = isRoot
 			? await resolveFeatureOptions(
 					name,
 					meta.options,
 					options?.featureArgs ?? [],
 					options?.skipPrompts ?? false,
+					seed,
 				)
 			: // Dependency features inherit any caller-provided values; prompt only for unresolved required opts.
-				await resolveFeatureOptions(name, meta.options, [], options?.skipPrompts ?? false);
-		for (const [k, v] of Object.entries(inheritedOptions)) {
-			const [feat, optName] = k.split(".");
-			if (feat === name && !(optName in myOptions)) myOptions[optName] = v;
-		}
+				await resolveFeatureOptions(
+					name,
+					meta.options,
+					[],
+					options?.skipPrompts ?? false,
+					seed,
+				);
 	}
 
 	// Merge into the namespaced map for downstream dependency features.
@@ -262,7 +274,7 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 	if (meta.blocks && meta.blocks.length > 0) {
 		console.log("🧱 Installing required blocks...");
 		for (const blockName of meta.blocks) {
-			await runAddBlock(blockName, [], options);
+			await runAddBlock(blockName, [], { ...options, registryRoot });
 		}
 		console.log("");
 	}
