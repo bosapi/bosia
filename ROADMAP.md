@@ -5,6 +5,19 @@
 
 ---
 
+## 0.6.22 (2026-06-10) — `shop` template + `auth` / `rbac` / `shop` registry features
+
+> Templates today bottom-out at `todo` (one CRUD feature). The most common "build me an app" prompt is a storefront, but there was no auth, no permission system, no product/order domain in the registry — every consumer reinvented login from scratch. This adds three composable registry features (`auth`: email/password + sessions via `Bun.password` argon2id, no `argon2` npm dep; `rbac`: `(userId, resource, action, scope)` rows with `*` wildcards and `locals.can()`; `shop`: products/orders/cart with repositories, services, and a `PublicNavbar`/`AdminSidebar` pair) and a thin `shop` template that declares `features: ["auth","rbac","file-upload","shop"]` so `bosia create my-shop --template shop` wires everything via the existing `installFeature` plumbing — no CLI changes needed.
+
+- [x] 🟠 `registry/features/auth/` — multi-dialect (pg/mysql/sqlite) `user`/`session` tables, `Bun.password.hash({ algorithm: "argon2id" })` (zero npm crypto deps), opaque base64url session tokens, cookie-based resolver via `event.cookies`, sequence-able `authHandle`, `(public)/login` + `(public)/register` pages with `<!-- EDIT THIS FILE -->` AI markers, `POST /logout`, `valibot` + `drizzle-valibot` deps, `SESSION_SECRET` env var.
+- [x] 🟠 `registry/features/rbac/` — `permission` table with composite PK, `can(userId, resource, action, scope?)` reader with `*` wildcards, `lib/rbac/resources.ts` registry (extended via append-block by feature consumers), `auth-handle.ts` rewritten on install to attach `locals.can(...)`, `001_rbac_bootstrap.ts` seed grants `('*','*','')` to the first registered user (idempotent), `App.Locals` extension declared via append-block.
+- [x] 🟠 `registry/features/shop/` — multi-dialect `product`/`order`/`order_item`/`cart_item` tables, `valibot` validators, repositories + services for products / orders / cart, `PublicNavbar.svelte` (composes `ui/navbar`) and `AdminSidebar.svelte` (composes `ui/sidebar` with `@lucide/svelte` icons + `DropdownMenu floating side="top"` footer), `resources.append.ts` adds eight `shop.*` permissions via append-block, empty `002_shop.ts` seed scaffold.
+- [x] 🟠 `packages/bosia/templates/shop/` — thin glue only: `template.json` declares `features: ["auth","rbac","file-upload","shop"]`; ships `hooks.server.ts` (`sequence(dbHandle, authHandle, loggingHandle)`), `(public)/+layout` with `PublicNavbar`, `(private)/+layout.server.ts` gate redirecting to `/login?next=…`, empty `(private)/dashboard/+page.svelte`, `.env.example` with `STORAGE_DRIVER=s3` + `S3_*` skeleton, README with first-user-becomes-admin note. Verbatim default landing copy, swapped to "Welcome to your shop."
+- [x] ⚪ `packages/bosia/src/cli/create.ts` — `TEMPLATE_DESCRIPTIONS` map gains `shop: "Online store starter with auth, RBAC, S3 uploads, products/orders/cart"`.
+- [x] ⚪ `docs/content/docs/getting-started.md` — template table gains a `shop` row.
+
+---
+
 ## 0.6.22 (2026-06-10) — Sidebar docs + skill (fix three AI mis-uses) + `DropdownMenu` floating mode
 
 > AI agents kept hitting the same three failures when scaffolding a sidebar: (1) wrapping leaf `SidebarMenuItem`s in `DropdownMenu` so the `href` was swallowed and "Dashboard" became un-clickable; (2) skipping the user footer because the doc's stub only showed `v0.1.0`; (3) building the user row as plain markup so Profile/Settings/Sign out had nowhere to live. During the docs/demo build we found the would-be fix (compose `DropdownMenu` in `SidebarFooter`) didn't actually work — `Sidebar` has `overflow-hidden` for the collapse width transition, so the default `position: absolute` menu was clipped invisible. Patched `DropdownMenu` with an opt-in `floating` mode (`position: fixed`, trigger rect via context, viewport clamp) plus a `side` prop so consumers can anchor upward from a bottom trigger.

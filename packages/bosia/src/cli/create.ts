@@ -15,6 +15,7 @@ const TEMPLATE_DESCRIPTIONS: Record<string, string> = {
 	default: "Minimal starter with routing and Tailwind",
 	demo: "Full-featured demo with hooks, API routes, form actions, and more",
 	todo: "Todo app with PostgreSQL + Drizzle ORM",
+	shop: "Online store starter with auth, RBAC, S3 uploads, products/orders/cart",
 };
 
 export async function runCreate(name: string | undefined, args: string[] = []) {
