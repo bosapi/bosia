@@ -115,7 +115,7 @@ export function dev500Response({
 			message,
 			stack: detail,
 		},
-  ])}</script>
+	])}</script>
   ${bodyEndExtras?.join("\n") ?? ""}
 </body>
 </html>`;

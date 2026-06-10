@@ -86,8 +86,8 @@
 			<EmptyHeader>
 				<EmptyTitle>Belum ada pesan</EmptyTitle>
 				<EmptyDescription>
-					Tulis pertanyaan di kolom bawah, atau alt-click elemen di pratinjau untuk
-					meninggalkan catatan inspector.
+					Tulis pertanyaan di kolom bawah, atau alt-click elemen di pratinjau untuk meninggalkan
+					catatan inspector.
 				</EmptyDescription>
 			</EmptyHeader>
 		</Empty>
@@ -97,29 +97,21 @@
 				<div class="text-muted-foreground mb-1 flex items-center gap-2 font-mono text-xs">
 					<span>{m.role}</span>
 					{#if isInspector(m)}
-						<Badge variant="secondary" class="text-[10px] uppercase tracking-wide">
-							Inspector
-						</Badge>
+						<Badge variant="secondary" class="text-[10px] uppercase tracking-wide">Inspector</Badge>
 					{/if}
 				</div>
 				{#each m.parts as p, i (i)}
 					{#if p.type === "text"}
 						<div class="whitespace-pre-wrap">{@html renderInlineMd(p.text)}</div>
 					{:else if p.type === "reasoning"}
-						<div
-							class="text-muted-foreground border-border mb-1 border-l-2 pl-2 text-xs italic"
-						>
+						<div class="text-muted-foreground border-border mb-1 border-l-2 pl-2 text-xs italic">
 							{p.text}
 						</div>
 					{:else}
 						{@const tp = asToolPart(p as AnyPart)}
 						{#if tp}
-							<details
-								class="border-border bg-muted/30 my-2 rounded-md border text-xs"
-							>
-								<summary
-									class="hover:bg-muted/50 cursor-pointer px-2 py-1 font-mono"
-								>
+							<details class="border-border bg-muted/30 my-2 rounded-md border text-xs">
+								<summary class="hover:bg-muted/50 cursor-pointer px-2 py-1 font-mono">
 									{tp.name}{tp.state === "output-error"
 										? " — error"
 										: tp.state === "output-available"
@@ -128,8 +120,7 @@
 								</summary>
 								<div class="border-border border-t p-2">
 									<div class="text-muted-foreground mb-1">input</div>
-									<pre
-										class="overflow-x-auto whitespace-pre-wrap text-[11px]">{JSON.stringify(
+									<pre class="overflow-x-auto whitespace-pre-wrap text-[11px]">{JSON.stringify(
 											tp.input,
 											null,
 											2,
@@ -140,8 +131,7 @@
 										</div>
 									{:else if tp.output !== undefined}
 										<div class="text-muted-foreground mt-2 mb-1">output</div>
-										<pre
-											class="overflow-x-auto whitespace-pre-wrap text-[11px]">{JSON.stringify(
+										<pre class="overflow-x-auto whitespace-pre-wrap text-[11px]">{JSON.stringify(
 												tp.output,
 												null,
 												2,

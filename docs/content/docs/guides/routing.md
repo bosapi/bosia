@@ -176,11 +176,11 @@ export const trailingSlash = "never"; // canonicalize URL form: "never" | "alway
 - `csr = false` — no JS shipped for the page. Static HTML only.
 - `prerender = true` — captured at build time. For dynamic routes, also export `entries()` returning the param values to prerender.
 - `trailingSlash` — canonicalize the URL form. Defaults to `"never"`.
-    - `"never"` (default) — `/about/` → 308 → `/about`. Static export emits `about.html`.
-    - `"always"` — `/about` → 308 → `/about/`. Static export emits `about/index.html`.
-    - `"ignore"` — accept both forms with no redirect. Discouraged for SEO; useful when behind a CDN that already canonicalizes.
-    - Set on `+layout.server.ts` to cascade to all child pages; child page wins on conflict.
-    - 308 (permanent) preserves the request method, so form `POST`s submitted to the wrong slash still reach the action.
-    - Root `/` is never modified. API routes (`+server.ts`) are unaffected.
+  - `"never"` (default) — `/about/` → 308 → `/about`. Static export emits `about.html`.
+  - `"always"` — `/about` → 308 → `/about/`. Static export emits `about/index.html`.
+  - `"ignore"` — accept both forms with no redirect. Discouraged for SEO; useful when behind a CDN that already canonicalizes.
+  - Set on `+layout.server.ts` to cascade to all child pages; child page wins on conflict.
+  - 308 (permanent) preserves the request method, so form `POST`s submitted to the wrong slash still reach the action.
+  - Root `/` is never modified. API routes (`+server.ts`) are unaffected.
 
 `ssr = false` together with `csr = false` would render nothing and is overridden to `csr = true` (with a dev warning). `ssr = false` together with `prerender = true` is contradictory; the route is skipped during prerender.

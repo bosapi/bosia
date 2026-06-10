@@ -2,31 +2,31 @@
 name: bosia-svelte-runes
 description: Svelte 5 Runes are the only reactive primitives in Bosia code. Never legacy `let`-reactivity, `$:`, `export let`, or stores when runes work.
 triggers:
-    - svelte component
-    - reactive state
-    - component props
-    - derived value
-    - effect
-    - $state
-    - $derived
-    - $effect
-    - currentPath
-    - page.url.pathname
-    - ReferenceError
-    - undefined variable
+  - svelte component
+  - reactive state
+  - component props
+  - derived value
+  - effect
+  - $state
+  - $derived
+  - $effect
+  - currentPath
+  - page.url.pathname
+  - ReferenceError
+  - undefined variable
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes]
 ---
 
 # bosia-svelte-runes

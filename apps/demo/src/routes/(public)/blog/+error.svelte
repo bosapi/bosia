@@ -12,10 +12,7 @@
 	<p class="text-3xl font-bold">{error.status}</p>
 	<p class="text-base text-red-800 dark:text-red-200">{error.message}</p>
 	<div class="flex gap-2 pt-2">
-		<a
-			href="/blog"
-			class="rounded-md bg-red-700 text-white text-sm px-3 py-1.5 hover:bg-red-800"
-		>
+		<a href="/blog" class="rounded-md bg-red-700 text-white text-sm px-3 py-1.5 hover:bg-red-800">
 			Back to blog
 		</a>
 		<a href="/" class="rounded-md border text-sm px-3 py-1.5 hover:bg-background"> Home </a>

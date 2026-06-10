@@ -148,8 +148,7 @@ function makeFetch(req: Request, url: URL) {
 
 		const headers = new Headers(init?.headers);
 		const trusted =
-			targetOrigin !== null &&
-			(targetOrigin === sameOrigin || INTERNAL_HOSTS.has(targetOrigin));
+			targetOrigin !== null && (targetOrigin === sameOrigin || INTERNAL_HOSTS.has(targetOrigin));
 		if (cookie && trusted && !headers.has("cookie")) headers.set("cookie", cookie);
 
 		return globalThis.fetch(resolved, { ...init, headers });
@@ -927,9 +926,7 @@ export async function renderErrorPage(
 				const K = picked.depth;
 				const [errorMod, layoutMods] = await Promise.all([
 					picked.loader(),
-					Promise.all(
-						route.layoutModules.slice(0, K).map((l: () => Promise<any>) => l()),
-					),
+					Promise.all(route.layoutModules.slice(0, K).map((l: () => Promise<any>) => l())),
 				]);
 				const layoutData: Record<string, any>[] = [];
 				for (let i = 0; i < K; i++) layoutData.push(partialLayoutData?.[i] ?? {});
@@ -962,11 +959,7 @@ export async function renderErrorPage(
 				return compress(html, "text/html; charset=utf-8", req, status);
 			} catch (err) {
 				if (isDev) console.error("Nested error page render failed:", err);
-				else
-					console.error(
-						"Nested error page render failed:",
-						(err as Error).message ?? err,
-					);
+				else console.error("Nested error page render failed:", (err as Error).message ?? err);
 				if (isDev) reportDevErrorFromCatch(err);
 				// fall through to global / text fallback
 			}

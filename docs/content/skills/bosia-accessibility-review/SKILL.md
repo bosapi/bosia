@@ -2,23 +2,23 @@
 name: bosia-accessibility-review
 description: A11y quality gate — labels, focus rings, keyboard nav, contrast ≥4.5:1, ARIA only when native HTML insufficient.
 triggers:
-    - accessibility review
-    - a11y check
-    - keyboard nav
-    - screen reader
+  - accessibility review
+  - a11y check
+  - keyboard nav
+  - screen reader
 od:
-    mode: quality-gate
-    category: design
+  mode: quality-gate
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-accessibility-review

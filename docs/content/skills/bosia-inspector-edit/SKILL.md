@@ -2,25 +2,25 @@
 name: bosia-inspector-edit
 description: Surgical edits driven by Bosia Inspector payloads. Parse the `Component tree (outer → leaf)` chain when present and default to the outermost call-site (page/layout) rather than the shared component definition. Use `fs_edit`, never full rewrite.
 triggers:
-    - inspector
-    - overlay comment
-    - file:line edit
-    - point edit
-    - component tree
-    - call-site chain
+  - inspector
+  - overlay comment
+  - file:line edit
+  - point edit
+  - component tree
+  - call-site chain
 od:
-    mode: composition
-    category: framework
+  mode: composition
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: []
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: []
 ---
 
 # bosia-inspector-edit

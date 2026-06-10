@@ -2,24 +2,24 @@
 name: bosia-elysia-routes
 description: "`+server.ts` conventions — handler signature, body parsing, return shape, status codes. No Express idioms."
 triggers:
-    - api route
-    - server endpoint
-    - POST handler
-    - REST endpoint
-    - webhook
+  - api route
+  - server endpoint
+  - POST handler
+  - REST endpoint
+  - webhook
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [elysia-routes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [elysia-routes]
 ---
 
 # bosia-elysia-routes

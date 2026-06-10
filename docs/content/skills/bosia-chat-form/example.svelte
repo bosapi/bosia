@@ -38,8 +38,7 @@
 		rows={2}
 	/>
 	<div class="flex items-center justify-between">
-		<span class="text-muted-foreground text-xs">Enter untuk kirim · Shift+Enter baris baru</span
-		>
+		<span class="text-muted-foreground text-xs">Enter untuk kirim · Shift+Enter baris baru</span>
 		<Button type="submit" disabled={!canSend}>{busy ? "Mengirim…" : "Kirim"}</Button>
 	</div>
 </form>

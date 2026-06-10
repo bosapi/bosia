@@ -17,9 +17,7 @@
 			<div class="rounded-lg border bg-card p-4">
 				<div class="mb-3">
 					<h3 class="text-sm font-semibold leading-none">Account</h3>
-					<p class="mt-1 text-sm text-muted-foreground">
-						Make changes to your account here.
-					</p>
+					<p class="mt-1 text-sm text-muted-foreground">Make changes to your account here.</p>
 				</div>
 				<div class="flex flex-col gap-3">
 					<div class="grid gap-1.5">

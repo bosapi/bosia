@@ -156,9 +156,7 @@ async function resolveFeatureOptions(
 				continue;
 			}
 			if (opt.required) {
-				console.error(
-					`❌ Feature "${featName}" requires "${opt.flag ?? opt.long ?? opt.name}".`,
-				);
+				console.error(`❌ Feature "${featName}" requires "${opt.flag ?? opt.long ?? opt.name}".`);
 				process.exit(1);
 			}
 			continue;
@@ -235,13 +233,7 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 					seed,
 				)
 			: // Dependency features inherit any caller-provided values; prompt only for unresolved required opts.
-				await resolveFeatureOptions(
-					name,
-					meta.options,
-					[],
-					options?.skipPrompts ?? false,
-					seed,
-				);
+				await resolveFeatureOptions(name, meta.options, [], options?.skipPrompts ?? false, seed);
 	}
 
 	// Merge into the namespaced map for downstream dependency features.
@@ -320,16 +312,13 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 				devDeps: meta.npmDevDeps,
 				scripts: meta.scripts,
 			});
-			if (addedDeps.length > 0)
-				console.log(`\n📥 Added to package.json: ${addedDeps.join(", ")}`);
-			if (addedScripts.length > 0)
-				console.log(`\n📜 Added scripts: ${addedScripts.join(", ")}`);
+			if (addedDeps.length > 0) console.log(`\n📥 Added to package.json: ${addedDeps.join(", ")}`);
+			if (addedScripts.length > 0) console.log(`\n📜 Added scripts: ${addedScripts.join(", ")}`);
 		} else {
 			await bunAdd(cwd, meta.npmDeps, meta.npmDevDeps);
 			if (hasScripts) {
 				const { addedScripts } = mergePkgJson(cwd, { scripts: meta.scripts });
-				if (addedScripts.length > 0)
-					console.log(`\n📜 Added scripts: ${addedScripts.join(", ")}`);
+				if (addedScripts.length > 0) console.log(`\n📜 Added scripts: ${addedScripts.join(", ")}`);
 			}
 		}
 	} else if (hasScripts) {
@@ -371,9 +360,7 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 		(meta.blocks && meta.blocks.length > 0)
 			? {
 					deps: {
-						...(meta.features && meta.features.length > 0
-							? { features: meta.features }
-							: {}),
+						...(meta.features && meta.features.length > 0 ? { features: meta.features } : {}),
 						...(meta.components.length > 0 ? { components: meta.components } : {}),
 						...(meta.blocks && meta.blocks.length > 0 ? { blocks: meta.blocks } : {}),
 					},
@@ -451,9 +438,7 @@ async function applyStrategy(args: StrategyArgs): Promise<void> {
 
 			const nl = existing.length > 0 && !existing.endsWith("\n") ? "\n" : "";
 			writeFileSync(dest, existing + nl + newLines.join("\n") + "\n", "utf-8");
-			console.log(
-				`   ➕ ${target} (+${newLines.length} line${newLines.length === 1 ? "" : "s"})`,
-			);
+			console.log(`   ➕ ${target} (+${newLines.length} line${newLines.length === 1 ? "" : "s"})`);
 			return;
 		}
 

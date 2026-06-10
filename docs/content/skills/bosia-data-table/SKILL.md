@@ -2,32 +2,32 @@
 name: bosia-data-table
 description: Lists of rows always render through `ui/data-table` — never a hand-rolled `<table>` or `<ul>` of cards. Wires column defs + server pagination/sort against the `bosia-query-defaults` repository signature `{ rows, total }`.
 triggers:
-    - data table
-    - data-table
-    - table
-    - list
-    - list view
-    - admin list
-    - rows
-    - data grid
-    - crud table
-    - paginate
-    - column definitions
+  - data table
+  - data-table
+  - table
+  - list
+  - list view
+  - admin list
+  - rows
+  - data grid
+  - crud table
+  - paginate
+  - column definitions
 od:
-    mode: convention
-    category: design
+  mode: convention
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: [ui/data-table, ui/empty, ui/skeleton]
-        feats: []
-    targets:
-        routes:
-            - "src/routes/**/+page.svelte"
-            - "src/routes/**/+page.server.ts"
-    stack: [svelte-5-runes]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: [ui/data-table, ui/empty, ui/skeleton]
+    feats: []
+  targets:
+    routes:
+      - "src/routes/**/+page.svelte"
+      - "src/routes/**/+page.server.ts"
+  stack: [svelte-5-runes]
 ---
 
 # bosia-data-table

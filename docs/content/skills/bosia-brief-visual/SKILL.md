@@ -2,27 +2,27 @@
 name: bosia-brief-visual
 description: Capture visual direction — palette intent → theme pick, shape (radius), density (shadows), type, icon set, custom marks. Ends by running `bosia_add_theme` so subsequent UI emits inherit the chosen tokens.
 triggers:
-    - palette
-    - colors
-    - theme
-    - typography
-    - icons
-    - visual direction
+  - palette
+  - colors
+  - theme
+  - typography
+  - icons
+  - visual direction
 od:
-    mode: intake
-    category: discovery
+  mode: intake
+  category: discovery
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: [neutral, editorial]
-        components: []
-        feats: []
-    targets:
-        files:
-            - "BRIEF.md"
-            - "src/app.css"
-    stack: [tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: [neutral, editorial]
+    components: []
+    feats: []
+  targets:
+    files:
+      - "BRIEF.md"
+      - "src/app.css"
+  stack: [tailwind-v4]
 ---
 
 # bosia-brief-visual

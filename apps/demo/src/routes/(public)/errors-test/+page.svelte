@@ -20,9 +20,7 @@
 			try {
 				throw new Error("loop");
 			} catch (e) {
-				window.dispatchEvent(
-					new ErrorEvent("error", { error: e, message: (e as Error).message }),
-				);
+				window.dispatchEvent(new ErrorEvent("error", { error: e, message: (e as Error).message }));
 			}
 		}
 	}
@@ -37,8 +35,8 @@
 
 	<p class="text-muted-foreground">
 		Trigger each error class below and watch the bottom-right badge populate. Click the badge to
-		expand the panel; click <b>Send to AI</b> on a row to POST to <code>aiEndpoint</code> — the
-		demo handler at <code>/api/inspector-ai</code> logs the resolved source path to the dev terminal.
+		expand the panel; click <b>Send to AI</b> on a row to POST to <code>aiEndpoint</code> — the demo
+		handler at <code>/api/inspector-ai</code> logs the resolved source path to the dev terminal.
 	</p>
 
 	<section class="space-y-3">
@@ -78,11 +76,10 @@
 	<section class="space-y-3">
 		<h2 class="text-xl font-semibold">Server</h2>
 		<p class="text-sm text-muted-foreground">
-			Navigate to <a class="underline" href="/errors-test/server-throw"
-				>/errors-test/server-throw</a
+			Navigate to <a class="underline" href="/errors-test/server-throw">/errors-test/server-throw</a
 			>
-			— the <code>+page.server.ts</code> <code>load()</code> throws; the inspector catches it
-			via Elysia
+			— the <code>+page.server.ts</code> <code>load()</code> throws; the inspector catches it via
+			Elysia
 			<code>.onError()</code> and pushes through SSE to all open tabs.
 		</p>
 	</section>

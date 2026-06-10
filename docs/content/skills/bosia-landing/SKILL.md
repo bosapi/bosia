@@ -2,22 +2,22 @@
 name: bosia-landing
 description: Marketing landing — hero, features, social-proof, CTA, footer. Editorial theme by default. Single +page.svelte under (public).
 triggers:
-    - landing page
-    - marketing page
-    - homepage
+  - landing page
+  - marketing page
+  - homepage
 od:
-    mode: page-scaffold
-    category: marketing
+  mode: page-scaffold
+  category: marketing
 bosia:
-    design: true
-    requires:
-        blocks: [cards/feature-editorial]
-        themes: [editorial]
-        components: [ui/button, ui/badge, ui/typography, ui/separator]
-        feats: []
-    targets:
-        routes: ["src/routes/(public)/+page.svelte"]
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: [cards/feature-editorial]
+    themes: [editorial]
+    components: [ui/button, ui/badge, ui/typography, ui/separator]
+    feats: []
+  targets:
+    routes: ["src/routes/(public)/+page.svelte"]
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-landing

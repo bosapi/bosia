@@ -2,29 +2,29 @@
 name: bosia-response-cache
 description: Server response cache — skip-render on cache hit, keyed by URL + identity (CACHE_KEYS cookies/headers). Invalidate from server actions with `invalidate(key)` / `invalidateAll(prefix)`. Opt routes out with `export const cache = false`.
 triggers:
-    - invalidate
-    - response cache
-    - server cache
-    - depends
-    - cache hit
-    - cache miss
-    - skip render
-    - CACHE_KEYS
-    - CACHE_MAX_ENTRIES
-    - export const cache
+  - invalidate
+  - response cache
+  - server cache
+  - depends
+  - cache hit
+  - cache miss
+  - skip render
+  - CACHE_KEYS
+  - CACHE_MAX_ENTRIES
+  - export const cache
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [elysia-routes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [elysia-routes]
 ---
 
 # bosia-response-cache

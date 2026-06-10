@@ -32,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Sidebar now lists all themes; bosia-theme-tokens skill no longer claims only two ship.
 - Drizzle feature: typecheck failures when a project mixed engine variants — `drizzle/index.ts` now ships per-dialect (pg / mysql / sqlite) so `db.insert / update / delete / select / execute / run` all typecheck.
 - `bun x bosia create --template shop` no longer scatters a stray `src/lib/utils.ts` next to the new project directory; the block installer now writes utils.ts into the project, not into `process.cwd()`.
+- Registry + framework now use `tabWidth: 2` (matching templates and the wider Svelte/TS ecosystem) so scaffolded projects pass `bun run check` without reformatting.
 
 ---
 

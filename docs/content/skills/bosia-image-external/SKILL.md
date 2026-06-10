@@ -2,30 +2,30 @@
 name: bosia-image-external
 description: Fetch real keyword-matched stock photos via the image_external_search tool, with cross-app DB cache to preserve provider quota.
 triggers:
-    - image
-    - photo
-    - stock image
-    - unsplash
-    - pexels
-    - pixabay
-    - hero image
-    - product image
-    - gallery
-    - real photo
-    - cover image
+  - image
+  - photo
+  - stock image
+  - unsplash
+  - pexels
+  - pixabay
+  - hero image
+  - product image
+  - gallery
+  - real photo
+  - cover image
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-runes]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-runes]
 ---
 
 # bosia-image-external

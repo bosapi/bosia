@@ -98,8 +98,7 @@ export class CookieJar implements Cookies {
 		}
 		let header = `${name}=${encodeURIComponent(value)}`;
 		if (opts.path) {
-			if (UNSAFE_COOKIE_VALUE.test(opts.path))
-				throw new Error(`Invalid cookie path: ${opts.path}`);
+			if (UNSAFE_COOKIE_VALUE.test(opts.path)) throw new Error(`Invalid cookie path: ${opts.path}`);
 			header += `; Path=${opts.path}`;
 		}
 		if (opts.domain) {

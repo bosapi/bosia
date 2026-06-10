@@ -46,16 +46,14 @@
 						type="text"
 						placeholder={filter.placeholder ?? filter.label}
 						value={values[filter.id] ?? ""}
-						oninput={(e) =>
-							handleTextInput(filter.id, (e.currentTarget as HTMLInputElement).value)}
+						oninput={(e) => handleTextInput(filter.id, (e.currentTarget as HTMLInputElement).value)}
 						class={cn(inputClass, "w-48 placeholder:text-muted-foreground")}
 					/>
 				{:else if filter.type === "select"}
 					<select
 						id="filter-{filter.id}"
 						value={values[filter.id] ?? ""}
-						onchange={(e) =>
-							handleChange(filter.id, (e.currentTarget as HTMLSelectElement).value)}
+						onchange={(e) => handleChange(filter.id, (e.currentTarget as HTMLSelectElement).value)}
 						class={cn(inputClass, "w-36")}
 					>
 						{#each filter.options ?? [] as opt (opt.value)}
@@ -67,8 +65,7 @@
 						id="filter-{filter.id}"
 						type="date"
 						value={values[filter.id] ?? ""}
-						onchange={(e) =>
-							handleChange(filter.id, (e.currentTarget as HTMLInputElement).value)}
+						onchange={(e) => handleChange(filter.id, (e.currentTarget as HTMLInputElement).value)}
 						class={inputClass}
 					/>
 				{/if}

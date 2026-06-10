@@ -26,9 +26,7 @@ async function getAppliedSeeds(): Promise<Set<string>> {
 }
 
 async function markSeedApplied(name: string) {
-	await db.execute(
-		sql`INSERT INTO drizzle.${sql.identifier(SEEDS_TABLE)} (name) VALUES (${name})`,
-	);
+	await db.execute(sql`INSERT INTO drizzle.${sql.identifier(SEEDS_TABLE)} (name) VALUES (${name})`);
 }
 
 async function run() {

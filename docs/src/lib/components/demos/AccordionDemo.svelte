@@ -26,8 +26,8 @@
 		<AccordionItem value="item-3">
 			<AccordionTrigger>Is it animated?</AccordionTrigger>
 			<AccordionContent>
-				The chevron rotates on open. You can layer your own height/opacity transitions on
-				top if desired.
+				The chevron rotates on open. You can layer your own height/opacity transitions on top if
+				desired.
 			</AccordionContent>
 		</AccordionItem>
 	</Accordion>

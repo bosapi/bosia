@@ -113,10 +113,7 @@ export function makeBosiaSvelteCompiler(target: "browser" | "bun"): BunPlugin {
 				// Server (Bun) compile output has different line numbers and would
 				// clobber the client entry under the same cache key.
 				if (dev && target === "browser" && result.js.map) {
-					const m =
-						typeof result.js.map === "string"
-							? JSON.parse(result.js.map)
-							: result.js.map;
+					const m = typeof result.js.map === "string" ? JSON.parse(result.js.map) : result.js.map;
 					svelteMapCache.set(args.path, m);
 				}
 				const contents = dev ? fixBindShadow(result.js.code) : result.js.code;
@@ -134,10 +131,7 @@ export function makeBosiaSvelteCompiler(target: "browser" | "bun"): BunPlugin {
 					filename: args.path,
 				});
 				if (dev && target === "browser" && result.js.map) {
-					const m =
-						typeof result.js.map === "string"
-							? JSON.parse(result.js.map)
-							: result.js.map;
+					const m = typeof result.js.map === "string" ? JSON.parse(result.js.map) : result.js.map;
 					svelteMapCache.set(args.path, m);
 				}
 				return { contents: result.js.code, loader: "js" };

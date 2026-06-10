@@ -16,9 +16,7 @@
 		<ScrollArea class="rounded-md border p-4" orientation="horizontal">
 			<div class="flex gap-4" style="width: max-content">
 				{#each Array.from({ length: 20 }, (_, i) => i + 1) as n}
-					<div
-						class="shrink-0 w-24 h-16 rounded bg-muted flex items-center justify-center text-sm"
-					>
+					<div class="shrink-0 w-24 h-16 rounded bg-muted flex items-center justify-center text-sm">
 						Item {n}
 					</div>
 				{/each}

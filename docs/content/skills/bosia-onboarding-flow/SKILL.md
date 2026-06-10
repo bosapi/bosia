@@ -2,29 +2,29 @@
 name: bosia-onboarding-flow
 description: Multi-step onboarding — welcome → value prop → sign-in/up → profile setup. Progress indicator. Skip-where-safe.
 triggers:
-    - onboarding
-    - first-run
-    - wizard
-    - getting started
+  - onboarding
+  - first-run
+  - wizard
+  - getting started
 od:
-    mode: flow
-    category: ux
+  mode: flow
+  category: ux
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: [editorial]
-        components: [ui/progress, ui/button, ui/form, ui/field, ui/input, ui/card, ui/badge]
-        feats: []
-    targets:
-        routes:
-            - "src/routes/(public)/welcome/+page.svelte"
-            - "src/routes/(public)/welcome/+layout.svelte"
-            - "src/routes/(public)/welcome/value/+page.svelte"
-            - "src/routes/(public)/welcome/signin/+page.svelte"
-            - "src/routes/(public)/welcome/profile/+page.svelte"
-            - "src/routes/(public)/welcome/profile/+page.server.ts"
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: [editorial]
+    components: [ui/progress, ui/button, ui/form, ui/field, ui/input, ui/card, ui/badge]
+    feats: []
+  targets:
+    routes:
+      - "src/routes/(public)/welcome/+page.svelte"
+      - "src/routes/(public)/welcome/+layout.svelte"
+      - "src/routes/(public)/welcome/value/+page.svelte"
+      - "src/routes/(public)/welcome/signin/+page.svelte"
+      - "src/routes/(public)/welcome/profile/+page.svelte"
+      - "src/routes/(public)/welcome/profile/+page.server.ts"
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-onboarding-flow

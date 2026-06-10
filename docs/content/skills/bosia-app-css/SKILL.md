@@ -2,28 +2,28 @@
 name: bosia-app-css
 description: Canonical `src/app.css` structure. `@import url(...)` (fonts) must come FIRST, before `@import "tailwindcss"` — Tailwind v4 + LightningCSS silently drops out-of-order imports. Fonts wire through theme tokens (`--font-display`/`--font-body`), never raw `font-family` stacks. Use `bosia add theme/<name>` for fonts; for ad-hoc fonts, prepend the `@import url(...)` (mirror `mergeFontImports()`).
 triggers:
-    - app.css
-    - fonts
-    - google fonts
-    - "@import"
-    - "@theme"
-    - "@source"
-    - font-family
-    - tailwind setup
-    - css build
+  - app.css
+  - fonts
+  - google fonts
+  - "@import"
+  - "@theme"
+  - "@source"
+  - font-family
+  - tailwind setup
+  - css build
 od:
-    mode: convention
-    category: design
+  mode: convention
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: [neutral, editorial]
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: [neutral, editorial]
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [tailwind-v4]
 ---
 
 # bosia-app-css

@@ -15,8 +15,8 @@
 			Ship interfaces, not arguments.
 		</h1>
 		<p class="max-w-2xl text-lg text-muted-foreground">
-			A registry-first build system for Svelte 5 — consistent components, semantic tokens, no
-			design drift.
+			A registry-first build system for Svelte 5 — consistent components, semantic tokens, no design
+			drift.
 		</p>
 		<div class="flex gap-3">
 			<Button size="lg">Get started</Button>

@@ -13,16 +13,14 @@
 
 {#if post}
 	<article class="space-y-6 max-w-2xl">
-		<a
-			href="/blog"
-			class="text-sm text-muted-foreground hover:text-foreground transition-colors">← Blog</a
+		<a href="/blog" class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+			>← Blog</a
 		>
 
 		<div class="space-y-2">
 			<div class="flex flex-wrap gap-1">
 				{#each post.tags as tag}
-					<span
-						class="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+					<span class="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
 						>{tag}</span
 					>
 				{/each}

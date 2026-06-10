@@ -2,31 +2,31 @@
 name: bosia-drizzle-feature
 description: Feature-folder layout for Drizzle — `*.table.ts` + `*.repository.ts` + `*.service.ts` + `*.validator.ts` + `*.dto.ts` + idempotent numbered seeds. Layered split is mandatory (see `bosia-clean-architecture`). Seeds are immutable once applied; add a new numbered file for changes.
 triggers:
-    - new feature
-    - db schema
-    - add table
-    - seed data
-    - migration
-    - schema
-    - drizzle
-    - table.ts
-    - uuid
-    - primary key
-    - timestamp
-    - created_at
+  - new feature
+  - db schema
+  - add table
+  - seed data
+  - migration
+  - schema
+  - drizzle
+  - table.ts
+  - uuid
+  - primary key
+  - timestamp
+  - created_at
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: [drizzle]
-    targets:
-        routes: []
-    stack: [drizzle, elysia-routes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: [drizzle]
+  targets:
+    routes: []
+  stack: [drizzle, elysia-routes]
 ---
 
 # bosia-drizzle-feature

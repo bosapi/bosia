@@ -2,24 +2,24 @@
 name: bosia-mobile-screen
 description: Mobile-first +page.svelte at 375px viewport. Touch targets ≥44px. Safe-area insets. Bottom action bar pattern.
 triggers:
-    - mobile screen
-    - mobile page
-    - 375
-    - phone view
-    - touch ui
+  - mobile screen
+  - mobile page
+  - 375
+  - phone view
+  - touch ui
 od:
-    mode: page-scaffold
-    category: mobile
+  mode: page-scaffold
+  category: mobile
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: [neutral]
-        components: [ui/button, ui/input, ui/dialog, ui/icon, ui/typography]
-        feats: []
-    targets:
-        routes: ["src/routes/m/+page.svelte"]
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: [neutral]
+    components: [ui/button, ui/input, ui/dialog, ui/icon, ui/typography]
+    feats: []
+  targets:
+    routes: ["src/routes/m/+page.svelte"]
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-mobile-screen

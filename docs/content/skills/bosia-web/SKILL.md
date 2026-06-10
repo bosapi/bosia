@@ -2,35 +2,35 @@
 name: bosia-web
 description: Look up live web info via web_search (Tavily/Brave/DuckDuckGo/SearXNG, keyword-cached) and pull a specific URL/domain/IP to readable markdown via web_fetch — SSRF-safe.
 triggers:
-    - search the web
-    - search web
-    - look up
-    - lookup
-    - research
-    - latest
-    - current
-    - news
-    - fetch url
-    - fetch website
-    - fetch domain
-    - scrape
-    - google
-    - berita
-    - cari di internet
-    - cari di web
+  - search the web
+  - search web
+  - look up
+  - lookup
+  - research
+  - latest
+  - current
+  - news
+  - fetch url
+  - fetch website
+  - fetch domain
+  - scrape
+  - google
+  - berita
+  - cari di internet
+  - cari di web
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-runes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-runes]
 ---
 
 # bosia-web

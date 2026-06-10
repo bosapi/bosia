@@ -10,35 +10,26 @@
 			<a href="/" class="font-bold tracking-tight flex items-center gap-2"
 				><img src="/favicon.svg" alt="" class="size-5" /> Bosia</a
 			>
-			<a
-				href="/"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+			<a href="/" class="text-sm text-muted-foreground hover:text-foreground transition-colors"
 				>Home</a
 			>
-			<a
-				href="/about"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+			<a href="/about" class="text-sm text-muted-foreground hover:text-foreground transition-colors"
 				>About</a
 			>
-			<a
-				href="/blog"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+			<a href="/blog" class="text-sm text-muted-foreground hover:text-foreground transition-colors"
 				>Blog</a
 			>
 			<a
 				href="/all/foo/bar"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-				>Catch-all</a
+				class="text-sm text-muted-foreground hover:text-foreground transition-colors">Catch-all</a
 			>
 			<a
 				href="/ssr-off"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-				>SSR off</a
+				class="text-sm text-muted-foreground hover:text-foreground transition-colors">SSR off</a
 			>
 			<a
 				href="/dedup-demo"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-				>Dedup</a
+				class="text-sm text-muted-foreground hover:text-foreground transition-colors">Dedup</a
 			>
 			<a
 				href="/api/hello"

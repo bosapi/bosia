@@ -2,32 +2,32 @@
 name: bosia-sidebar
 description: App-shell sidebar — composable `Sidebar`, `SidebarMenu`, `SidebarMenuItem` (auto leaf/parent), `SidebarFooter` with working user menu via `DropdownMenu` + `Avatar`. Use when building any dashboard or admin layout that needs left-rail navigation with collapse + user dropdown.
 triggers:
-    - sidebar
-    - side nav
-    - side-nav
-    - left rail
-    - app shell
-    - admin layout
-    - dashboard layout
-    - collapsible nav
-    - user menu
-    - profile menu
-    - logout button
-    - SidebarMenuItem
-    - SidebarFooter
+  - sidebar
+  - side nav
+  - side-nav
+  - left rail
+  - app shell
+  - admin layout
+  - dashboard layout
+  - collapsible nav
+  - user menu
+  - profile menu
+  - logout button
+  - SidebarMenuItem
+  - SidebarFooter
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: [ui/sidebar, ui/dropdown-menu, ui/avatar]
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: [ui/sidebar, ui/dropdown-menu, ui/avatar]
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes]
 ---
 
 # bosia-sidebar
@@ -224,23 +224,23 @@ Per `SidebarMenuItem`, `trigger="hover"` opens the collapsed popover on hover. U
 
 1. **Install the pieces in one call.**
 
-    ```bash
-    bun x bosia@latest add sidebar dropdown-menu avatar
-    ```
+   ```bash
+   bun x bosia@latest add sidebar dropdown-menu avatar
+   ```
 
-    (`@lucide/svelte` is already a dep of the icon-using components; see [[bosia-icon]].)
+   (`@lucide/svelte` is already a dep of the icon-using components; see [[bosia-icon]].)
 
 2. **Define the nav structure.** List routes the app exposes. Mark each as leaf, parent (with children), or label-only per R1. Don't ship a sidebar with one item — scaffold ≥3 (matches [[bosia-navigation]] R7).
 
 3. **Wire collapse state at the layout root.**
 
-    ```svelte
-    <script>
-    	let collapsed = $state(false);
-    </script>
+   ```svelte
+   <script>
+   	let collapsed = $state(false);
+   </script>
 
-    <Sidebar collapsible="icon" bind:collapsed>…</Sidebar>
-    ```
+   <Sidebar collapsible="icon" bind:collapsed>…</Sidebar>
+   ```
 
 4. **Build the user footer with `DropdownMenu`.** Pull `user` from layout data (typically `(private)/+layout.server.ts` per [[bosia-dashboard]] / [[bosia-page-shell]]). `onLogout` POSTs to a `+server.ts` action, never a plain link.
 

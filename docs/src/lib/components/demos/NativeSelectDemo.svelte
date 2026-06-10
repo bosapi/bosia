@@ -1,9 +1,5 @@
 <script lang="ts">
-	import {
-		NativeSelect,
-		NativeSelectOption,
-		NativeSelectOptGroup,
-	} from "$registry/native-select";
+	import { NativeSelect, NativeSelectOption, NativeSelectOptGroup } from "$registry/native-select";
 	import { Label } from "$registry/label";
 
 	let fruit = $state("apple");

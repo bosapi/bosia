@@ -124,9 +124,7 @@
 					stroke-linejoin="round"
 				>
 					<circle cx="12" cy="12" r="3" />
-					<path
-						d="M12 1v6m0 6v6m8.66-14.5-5.2 3m-7 4-5.2 3M22.66 18.5l-5.2-3m-7-4-5.2-3"
-					/>
+					<path d="M12 1v6m0 6v6m8.66-14.5-5.2 3m-7 4-5.2 3M22.66 18.5l-5.2-3m-7-4-5.2-3" />
 				</svg>
 			</ItemMedia>
 			<ItemContent>

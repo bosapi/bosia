@@ -81,10 +81,7 @@
 						>
 							<Check
 								size={16}
-								class={cn(
-									"mr-2 size-4",
-									item.value === value ? "opacity-100" : "opacity-0",
-								)}
+								class={cn("mr-2 size-4", item.value === value ? "opacity-100" : "opacity-0")}
 								aria-hidden="true"
 							/>
 							{item.label}

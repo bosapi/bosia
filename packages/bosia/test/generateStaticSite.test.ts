@@ -42,9 +42,7 @@ describe("generateStaticSite", () => {
 
 		expect(existsSync(join(workdir, "dist", "static", "bosia-tw.css"))).toBe(true);
 		expect(existsSync(join(workdir, "dist", "static", "favicon.svg"))).toBe(true);
-		expect(readFileSync(join(workdir, "dist", "static", "bosia-tw.css"), "utf8")).toBe(
-			"body{}",
-		);
+		expect(readFileSync(join(workdir, "dist", "static", "bosia-tw.css"), "utf8")).toBe("body{}");
 	});
 
 	test("SSG build still copies prerendered HTML + client bundles", () => {
@@ -56,9 +54,7 @@ describe("generateStaticSite", () => {
 
 		expect(existsSync(join(workdir, "dist", "static", "bosia-tw.css"))).toBe(true);
 		expect(existsSync(join(workdir, "dist", "static", "about.html"))).toBe(true);
-		expect(existsSync(join(workdir, "dist", "static", "dist", "client", "hydrate.js"))).toBe(
-			true,
-		);
+		expect(existsSync(join(workdir, "dist", "static", "dist", "client", "hydrate.js"))).toBe(true);
 	});
 
 	test("skips entirely when neither public/ nor prerendered/ exists", () => {

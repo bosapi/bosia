@@ -100,9 +100,7 @@ try {
 			}
 			for (const file of FORBIDDEN_PER_TEMPLATE) {
 				if (existsSync(join(dir, file))) {
-					fail(
-						`templates/${name}: contains "${file}" — npm strips this; rename to "_gitignore"`,
-					);
+					fail(`templates/${name}: contains "${file}" — npm strips this; rename to "_gitignore"`);
 				}
 			}
 			for (const { file, lines } of REQUIRED_IGNORE_ENTRIES) {

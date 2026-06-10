@@ -2,47 +2,47 @@
 name: bosia-seo
 description: SEO baseline — title/description/canonical, Open Graph, Twitter cards, favicons, web manifest, robots.txt, sitemap.xml, JSON-LD structured data, hreflang. Layout-wide defaults via `$page`; per-page overrides via `<svelte:head>`. Required even for auth-gated apps (share previews).
 triggers:
-    - seo
-    - meta tags
-    - open graph
-    - og tags
-    - og image
-    - twitter card
-    - share preview
-    - link preview
-    - sitemap
-    - robots.txt
-    - structured data
-    - json-ld
-    - canonical url
-    - favicon
-    - apple-touch-icon
-    - web manifest
-    - pwa manifest
-    - hreflang
-    - search ranking
-    - google indexing
+  - seo
+  - meta tags
+  - open graph
+  - og tags
+  - og image
+  - twitter card
+  - share preview
+  - link preview
+  - sitemap
+  - robots.txt
+  - structured data
+  - json-ld
+  - canonical url
+  - favicon
+  - apple-touch-icon
+  - web manifest
+  - pwa manifest
+  - hreflang
+  - search ranking
+  - google indexing
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    framework: true
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes:
-            - "src/routes/+layout.svelte"
-            - "src/routes/sitemap.xml/+server.ts"
-            - "src/routes/robots.txt/+server.ts"
-        files:
-            - "src/app.html"
-            - "public/og-image.png"
-            - "public/apple-touch-icon.png"
-            - "public/site.webmanifest"
-    stack: [svelte-5-runes, sveltekit]
+  framework: true
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes:
+      - "src/routes/+layout.svelte"
+      - "src/routes/sitemap.xml/+server.ts"
+      - "src/routes/robots.txt/+server.ts"
+    files:
+      - "src/app.html"
+      - "public/og-image.png"
+      - "public/apple-touch-icon.png"
+      - "public/site.webmanifest"
+  stack: [svelte-5-runes, sveltekit]
 ---
 
 # bosia-seo

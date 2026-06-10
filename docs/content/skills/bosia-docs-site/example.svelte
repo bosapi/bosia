@@ -67,9 +67,7 @@
 
 		<aside class="hidden w-52 shrink-0 border-l border-border xl:block">
 			<div class="sticky top-14 p-4 text-sm">
-				<div
-					class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-				>
+				<div class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 					On this page
 				</div>
 				<ul class="space-y-1 text-muted-foreground">

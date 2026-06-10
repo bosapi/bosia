@@ -93,9 +93,7 @@ export function scanRoutes(): RouteManifest {
 				? join(dir, "+page.server.ts")
 				: null;
 
-			const pageTs = pageServerFile
-				? readTrailingSlash(join(ROUTES_DIR, pageServerFile))
-				: null;
+			const pageTs = pageServerFile ? readTrailingSlash(join(ROUTES_DIR, pageServerFile)) : null;
 			const effectiveTs: TrailingSlash = pageTs ?? currentTrailingSlash;
 
 			pages.push({

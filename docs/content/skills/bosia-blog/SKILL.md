@@ -2,25 +2,25 @@
 name: bosia-blog
 description: Editorial blog — `/blog` index + `/blog/[slug]` post. Typography-led, generous whitespace, editorial theme.
 triggers:
-    - blog
-    - article
-    - editorial
-    - posts
+  - blog
+  - article
+  - editorial
+  - posts
 od:
-    mode: page-scaffold
-    category: editorial
+  mode: page-scaffold
+  category: editorial
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: [editorial]
-        components: [ui/typography, ui/card, ui/separator, ui/badge]
-        feats: []
-    targets:
-        routes:
-            - "src/routes/blog/+page.svelte"
-            - "src/routes/blog/[slug]/+page.svelte"
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: [editorial]
+    components: [ui/typography, ui/card, ui/separator, ui/badge]
+    feats: []
+  targets:
+    routes:
+      - "src/routes/blog/+page.svelte"
+      - "src/routes/blog/[slug]/+page.svelte"
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-blog

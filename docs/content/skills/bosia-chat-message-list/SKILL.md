@@ -2,24 +2,24 @@
 name: bosia-chat-message-list
 description: Chat feed — scrollable region, role-tagged messages, multi-part rendering (text, reasoning, tool calls), auto-scroll on append, empty/streaming/error states.
 triggers:
-    - chat messages
-    - chat feed
-    - message list
-    - message thread
-    - conversation view
+  - chat messages
+  - chat feed
+  - message list
+  - message thread
+  - conversation view
 od:
-    mode: composition
-    category: design
+  mode: composition
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: [ui/empty, ui/badge]
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: [ui/empty, ui/badge]
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-chat-message-list
@@ -105,18 +105,14 @@ bosia add ui/empty ui/badge
 				<div class="text-muted-foreground mb-1 flex items-center gap-2 font-mono text-xs">
 					<span>{m.role}</span>
 					{#if isInspector(m)}
-						<Badge variant="secondary" class="text-[10px] uppercase tracking-wide">
-							Inspector
-						</Badge>
+						<Badge variant="secondary" class="text-[10px] uppercase tracking-wide">Inspector</Badge>
 					{/if}
 				</div>
 				{#each m.parts as p, i (i)}
 					{#if p.type === "text"}
 						<div class="whitespace-pre-wrap">{@html renderInlineMd(p.text)}</div>
 					{:else if p.type === "reasoning"}
-						<div
-							class="text-muted-foreground border-border mb-1 border-l-2 pl-2 text-xs italic"
-						>
+						<div class="text-muted-foreground border-border mb-1 border-l-2 pl-2 text-xs italic">
 							{p.text}
 						</div>
 					{/if}

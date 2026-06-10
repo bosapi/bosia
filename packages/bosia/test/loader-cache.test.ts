@@ -72,11 +72,7 @@ describe("captureSnapshot", () => {
 describe("shouldRerun", () => {
 	test("zero deps → never re-runs", () => {
 		const e = entry(emptyDeps(), ctx({ pathname: "/", params: { a: "1" } }));
-		const result = shouldRerun(
-			e,
-			emptyDirty(),
-			ctx({ pathname: "/about", params: { a: "2" } }),
-		);
+		const result = shouldRerun(e, emptyDirty(), ctx({ pathname: "/about", params: { a: "2" } }));
 		expect(result).toBe(false);
 	});
 
@@ -90,9 +86,7 @@ describe("shouldRerun", () => {
 	test("does NOT re-run when an untracked param changes", () => {
 		const deps: LoaderDeps = { ...emptyDeps(), params: ["slug"] };
 		const e = entry(deps, ctx({ params: { slug: "foo", other: "x" } }));
-		expect(shouldRerun(e, emptyDirty(), ctx({ params: { slug: "foo", other: "y" } }))).toBe(
-			false,
-		);
+		expect(shouldRerun(e, emptyDirty(), ctx({ params: { slug: "foo", other: "y" } }))).toBe(false);
 	});
 
 	test("re-runs when a tracked searchParam changes", () => {

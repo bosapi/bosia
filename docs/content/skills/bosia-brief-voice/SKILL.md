@@ -2,25 +2,25 @@
 name: bosia-brief-voice
 description: Capture product voice — tone adjectives, emoji/exclamation policy, microcopy spine (empty/error/confirm/success/primary-action with ❌✅ pairs), domain glossary, copy no-go. Every string the agent ever writes will be checked against this.
 triggers:
-    - voice
-    - tone
-    - copy
-    - microcopy
-    - emoji policy
+  - voice
+  - tone
+  - copy
+  - microcopy
+  - emoji policy
 od:
-    mode: intake
-    category: discovery
+  mode: intake
+  category: discovery
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        files:
-            - "BRIEF.md"
-    stack: []
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    files:
+      - "BRIEF.md"
+  stack: []
 ---
 
 # bosia-brief-voice
@@ -45,12 +45,12 @@ A 5-row ❌✅ table at brief-time prevents 80% of late-stage copy review damage
 ## Questions to ask
 
 1. **Tone — pick 2–4 adjectives.** Show a starter menu:
-    - `disciplined, calm, technical` (B2B SaaS)
-    - `warm, friendly, encouraging` (consumer)
-    - `bold, energetic, modern` (marketing-heavy)
-    - `quiet, premium, restrained` (luxury / editorial)
-    - `playful, bright, casual` (social, gaming)
-    - Or freetype.
+   - `disciplined, calm, technical` (B2B SaaS)
+   - `warm, friendly, encouraging` (consumer)
+   - `bold, energetic, modern` (marketing-heavy)
+   - `quiet, premium, restrained` (luxury / editorial)
+   - `playful, bright, casual` (social, gaming)
+   - Or freetype.
 2. **Reference vibe — "feels like X."** One analogy. `Stripe dashboard for peternakan`, `Notion for plumbers`, `Linear but warmer`.
 3. **Emoji in product UI?** `[never | sparingly (empty states only, max 1×) | freely; default: never]`
 4. **Exclamation marks?** `[never | sparingly (positive feedback only) | freely; default: sparingly]`

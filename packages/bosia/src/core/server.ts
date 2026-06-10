@@ -234,21 +234,11 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			const mask = invalidatedBits
 				? buildMaskFromBits(
 						invalidatedBits,
-						pageMatch?.route
-							? ((pageMatch.route as any).layoutModules?.length ?? 0)
-							: 0,
+						pageMatch?.route ? ((pageMatch.route as any).layoutModules?.length ?? 0) : 0,
 					)
 				: undefined;
 			const runLoad = async () => {
-				const data = await loadRouteData(
-					routeUrl,
-					locals,
-					request,
-					cookies,
-					null,
-					pageMatch,
-					mask,
-				);
+				const data = await loadRouteData(routeUrl, locals, request, cookies, null, pageMatch, mask);
 
 				let metadata = null;
 				if (pageMatch) {
@@ -278,14 +268,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				? `${dedupKey(routeUrl)}|m=${invalidatedBits}`
 				: dedupKey(routeUrl);
 			const result =
-				pageMatch?.route.scope === "private"
-					? await runLoad()
-					: await dedup(dedupK, runLoad);
+				pageMatch?.route.scope === "private" ? await runLoad() : await dedup(dedupK, runLoad);
 
 			const cookiesWereAccessed = (cookies as CookieJar).accessed || result.cookiesAccessed;
-			const cc = cookiesWereAccessed
-				? "private, no-cache"
-				: "public, max-age=0, must-revalidate";
+			const cc = cookiesWereAccessed ? "private, no-cache" : "public, max-age=0, must-revalidate";
 
 			if (!result.data) {
 				return compress(
@@ -461,9 +447,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			if (hit) {
 				return new Response(
 					Bun.file(hit.absPath),
-					hit.cacheControl
-						? { headers: { "Cache-Control": hit.cacheControl } }
-						: undefined,
+					hit.cacheControl ? { headers: { "Cache-Control": hit.cacheControl } } : undefined,
 				);
 			}
 			return new Response("Not Found", { status: 404 });
@@ -510,9 +494,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 	if (!isDev) {
 		// Try both `<path>/index.html` (always/ignore mode) and `<path>.html` (never mode)
 		const prerenderCandidates =
-			path === "/"
-				? ["index.html"]
-				: [`${path}/index.html`, `${path.replace(/\/$/, "")}.html`];
+			path === "/" ? ["index.html"] : [`${path}/index.html`, `${path.replace(/\/$/, "")}.html`];
 		for (const candidate of prerenderCandidates) {
 			const prerenderPath = safePath(`${OUT_DIR}/prerendered`, candidate);
 			if (!prerenderPath) continue;
@@ -533,10 +515,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 
 	// Trailing-slash canonicalization — 308 preserves method (form POSTs included)
 	if (pageMatch) {
-		const canonical = canonicalPathname(
-			path,
-			(pageMatch.route as any).trailingSlash ?? "never",
-		);
+		const canonical = canonicalPathname(path, (pageMatch.route as any).trailingSlash ?? "never");
 		if (canonical !== null) {
 			return new Response(null, {
 				status: 308,
@@ -854,15 +833,11 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 function parseCorsMaxAge(value?: string): number | undefined {
 	if (!value) return undefined;
 	if (!/^\d+$/.test(value)) {
-		throw new Error(
-			`Invalid CORS_MAX_AGE: "${value}" — must be a non-negative integer (seconds)`,
-		);
+		throw new Error(`Invalid CORS_MAX_AGE: "${value}" — must be a non-negative integer (seconds)`);
 	}
 	const n = parseInt(value, 10);
 	if (!Number.isFinite(n) || n > Number.MAX_SAFE_INTEGER) {
-		throw new Error(
-			`Invalid CORS_MAX_AGE: "${value}" — must be a non-negative integer (seconds)`,
-		);
+		throw new Error(`Invalid CORS_MAX_AGE: "${value}" — must be a non-negative integer (seconds)`);
 	}
 	return n;
 }

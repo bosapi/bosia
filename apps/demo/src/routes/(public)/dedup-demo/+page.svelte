@@ -46,8 +46,8 @@
 	<div class="rounded-lg border bg-card p-6 space-y-3">
 		<p class="font-medium">Fire 5 parallel data fetches</p>
 		<p class="text-sm text-muted-foreground">
-			Expected: all 5 share <strong>one</strong> in-flight loader. Counter advances by 1; all
-			5 responses share the same <code class="font-mono">loadedAt</code>.
+			Expected: all 5 share <strong>one</strong> in-flight loader. Counter advances by 1; all 5
+			responses share the same <code class="font-mono">loadedAt</code>.
 		</p>
 		<Button onclick={fireParallel} disabled={busy}>
 			{busy ? "Loading…" : "Fire 5 parallel"}

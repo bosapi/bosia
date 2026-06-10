@@ -32,8 +32,7 @@
 		<h1 class="text-3xl font-bold tracking-tight">Private dedup demo</h1>
 		<p class="text-muted-foreground">
 			This route lives under <code class="font-mono">(private)</code> — so the loader runs
-			<strong>per request</strong>, never shared. Required for any per-user data (cookies,
-			session).
+			<strong>per request</strong>, never shared. Required for any per-user data (cookies, session).
 		</p>
 	</div>
 

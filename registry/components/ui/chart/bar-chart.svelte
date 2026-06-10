@@ -99,9 +99,9 @@
 			{#each prepared.bars as bar}
 				{@const r = Math.min(barRadius, bar.height / 2, bar.width / 2)}
 				<path
-					d="M {bar.x + r},{bar.y} H {bar.x + bar.width - r} Q {bar.x +
-						bar.width},{bar.y} {bar.x + bar.width},{bar.y + r} V {bar.y +
-						bar.height} H {bar.x} V {bar.y + r} Q {bar.x},{bar.y} {bar.x + r},{bar.y} Z"
+					d="M {bar.x + r},{bar.y} H {bar.x + bar.width - r} Q {bar.x + bar.width},{bar.y} {bar.x +
+						bar.width},{bar.y + r} V {bar.y + bar.height} H {bar.x} V {bar.y +
+						r} Q {bar.x},{bar.y} {bar.x + r},{bar.y} Z"
 					fill={color}
 					fill-opacity="0.85"
 					role="graphics-symbol"

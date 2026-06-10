@@ -11,8 +11,7 @@
 			slug: "route-groups",
 			title: "Route Groups Explained",
 			date: "2026-03-04",
-			excerpt:
-				"How (public), (auth), (admin) groups work — invisible in URLs, share layouts.",
+			excerpt: "How (public), (auth), (admin) groups work — invisible in URLs, share layouts.",
 			tags: ["routing", "layouts"],
 		},
 		{
@@ -50,8 +49,7 @@
 					</div>
 					<div class="flex gap-1 shrink-0">
 						{#each post.tags as tag}
-							<span
-								class="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+							<span class="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
 								>{tag}</span
 							>
 						{/each}

@@ -57,10 +57,7 @@ export const router = new (class Router {
 			return;
 		}
 		// Canonicalize trailing slash before navigating (matches server 308 behavior)
-		const canonical = canonicalPathname(
-			pathname,
-			(match.route as any).trailingSlash ?? "never",
-		);
+		const canonical = canonicalPathname(pathname, (match.route as any).trailingSlash ?? "never");
 		const finalPath = canonical !== null ? canonical + queryHash : path;
 
 		const navType: NavType = opts.source ?? "link";
@@ -108,8 +105,7 @@ export const router = new (class Router {
 			// Same-page hash navigation: skip page reload, just update URL and scroll
 			// to the target element. Mirrors browser default for in-page anchors.
 			const samePage =
-				anchor.pathname === window.location.pathname &&
-				anchor.search === window.location.search;
+				anchor.pathname === window.location.pathname && anchor.search === window.location.search;
 			if (samePage && anchor.hash) {
 				e.preventDefault();
 				const finalPath = anchor.pathname + anchor.search + anchor.hash;
@@ -127,8 +123,7 @@ export const router = new (class Router {
 
 		// Browser back/forward
 		window.addEventListener("popstate", () => {
-			const finalPath =
-				window.location.pathname + window.location.search + window.location.hash;
+			const finalPath = window.location.pathname + window.location.search + window.location.hash;
 			// Fire beforeNavigate listeners; popstate can't be reliably cancelled
 			// (browser history already advanced), so we surface the event for
 			// observation only — `cancel()` is a no-op for this source.

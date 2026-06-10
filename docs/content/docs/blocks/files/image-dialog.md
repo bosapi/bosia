@@ -27,9 +27,7 @@ Pulls `ui/button`, `ui/dialog`, `ui/input`, `ui/label`, `ui/sonner`, `ui/tabs`, 
 	import ImageDialog from "$lib/blocks/files/image-dialog/block.svelte";
 
 	let open = $state(false);
-	let gallery = $state<string[]>([
-		"https://images.unsplash.com/photo-1517694712202-14dd9538aa97",
-	]);
+	let gallery = $state<string[]>(["https://images.unsplash.com/photo-1517694712202-14dd9538aa97"]);
 
 	async function save(urls: string[]) {
 		await fetch(`/api/posts/${post.id}`, {

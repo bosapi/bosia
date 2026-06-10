@@ -88,9 +88,7 @@ let appHtml: any;
 try {
 	appHtml = loadAppHtmlTemplate(process.cwd());
 	console.log(
-		"📄 Loaded src/app.html (favicon override: " +
-			(appHtml.hasCustomFavicon ? "yes" : "no") +
-			")",
+		"📄 Loaded src/app.html (favicon override: " + (appHtml.hasCustomFavicon ? "yes" : "no") + ")",
 	);
 } catch (err) {
 	console.error(`❌ src/app.html validation failed:\n${(err as Error).message}`);

@@ -114,8 +114,7 @@
 		// We always issue the fetch (even when all loaders skip) so page-level
 		// metadata stays fresh on every navigation; only the loaders flagged in
 		// the mask actually run server-side.
-		const maskBits =
-			(pageRun ? "1" : "0") + layoutRunFlags.map((b) => (b ? "1" : "0")).join("");
+		const maskBits = (pageRun ? "1" : "0") + layoutRunFlags.map((b) => (b ? "1" : "0")).join("");
 
 		// Clear dirty set now — we've baked it into the mask.
 		clearDirty();
@@ -173,9 +172,7 @@
 							? errInfo
 							: "Internal Server Error";
 				const errDepth: number =
-					typeof result?.errorDepth === "number"
-						? result.errorDepth
-						: match.route.layouts.length;
+					typeof result?.errorDepth === "number" ? result.errorDepth : match.route.layouts.length;
 				const errOrigin = result?.errorOrigin === "layout" ? "layout" : "page";
 				const picked = pickErrorPage(match.route.errorPages ?? [], errDepth, errOrigin);
 				if (!picked) {
@@ -309,9 +306,7 @@
 			if (result?.metadata) {
 				if (result.metadata.title) document.title = result.metadata.title;
 				if (result.metadata.description) {
-					let meta = document.querySelector(
-						'meta[name="description"]',
-					) as HTMLMetaElement | null;
+					let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
 					if (!meta) {
 						meta = document.createElement("meta");
 						meta.name = "description";

@@ -2,27 +2,27 @@
 name: bosia-brief-platform
 description: Capture platform & data conventions — form factors, primary surface, ID format, number/date locale, imagery strategy, first screens to scaffold, must-have features. Ends by batched `bosia_add_block` for first screens.
 triggers:
-    - platform
-    - mobile
-    - desktop
-    - id format
-    - locale
-    - first screens
-    - what to build first
+  - platform
+  - mobile
+  - desktop
+  - id format
+  - locale
+  - first screens
+  - what to build first
 od:
-    mode: intake
-    category: discovery
+  mode: intake
+  category: discovery
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        files:
-            - "BRIEF.md"
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    files:
+      - "BRIEF.md"
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-brief-platform
@@ -57,28 +57,28 @@ Where the app runs, how it formats data, what it scaffolds first.
 2. **Primary surface — which is the daily-use one?** One choice from the above. Determines design priorities (touch-target sizes, nav pattern, photo crop ratios).
 3. **ID format — does this domain use entity IDs in UI?** If yes: `prefix-pattern` (e.g. `DMB-\d{5}`) + example (`DMB-00142`). If no: skip and document `id_format: none`.
 4. **Number formatting — locale + key unit + decimal places.**
-    - Locale: `id-ID`, `en-US`, etc.
-    - Primary unit: e.g. `kg` (1 decimal), `USD` (2 decimals), `count` (no decimal)
-    - Tabular numerals always on for data — non-negotiable.
+   - Locale: `id-ID`, `en-US`, etc.
+   - Primary unit: e.g. `kg` (1 decimal), `USD` (2 decimals), `count` (no decimal)
+   - Tabular numerals always on for data — non-negotiable.
 5. **Date formatting — long form + compact form.**
-    - Long: human-reading (table cells, history) — `12 Mei 2026` / `May 12, 2026`
-    - Compact: tight UI (badges, mobile) — `12/05/26` / `5/12/26`
+   - Long: human-reading (table cells, history) — `12 Mei 2026` / `May 12, 2026`
+   - Compact: tight UI (badges, mobile) — `12/05/26` / `5/12/26`
 6. **Imagery — does this app show photos?**
-    - `real-photo` (catalog, profiles, content): aspect 1:1 or 4:5, `rounded-xl`, `shadow-xs`.
-    - `illustration` (marketing, empty states): flat, brand-color, no photo.
-    - `glyph` (data-only apps): icon stand-ins in lieu of imagery.
-    - `none` (pure data tool): never show imagery.
+   - `real-photo` (catalog, profiles, content): aspect 1:1 or 4:5, `rounded-xl`, `shadow-xs`.
+   - `illustration` (marketing, empty states): flat, brand-color, no photo.
+   - `glyph` (data-only apps): icon stand-ins in lieu of imagery.
+   - `none` (pure data tool): never show imagery.
 7. **Placeholder strategy — when image missing?**
-    - `solid` (brand soft color + centered glyph),
-    - `svg-glyph` (domain-specific mark from `bosia-brief-visual.custom_marks`),
-    - `stock` (Unsplash hotlink for prototypes only, replaced for prod).
+   - `solid` (brand soft color + centered glyph),
+   - `svg-glyph` (domain-specific mark from `bosia-brief-visual.custom_marks`),
+   - `stock` (Unsplash hotlink for prototypes only, replaced for prod).
 8. **First screens — what to scaffold today?** Pick from the page-scaffold + flow catalog:
-    - `bosia-auth-flow` — login + register (almost always yes for multi-user apps).
-    - `bosia-landing` / `bosia-saas-landing` — only if a public marketing surface exists.
-    - `bosia-dashboard` — for `web-admin` or `web-desktop` primary.
-    - `bosia-mobile-screen` — for `mobile` primary; agent will tailor.
-    - `bosia-crud-flow` — bootstraps the first domain resource (sheep, customer, ticket).
-    - `bosia-onboarding-flow` — only if user needs first-run setup (rare for internal tools).
+   - `bosia-auth-flow` — login + register (almost always yes for multi-user apps).
+   - `bosia-landing` / `bosia-saas-landing` — only if a public marketing surface exists.
+   - `bosia-dashboard` — for `web-admin` or `web-desktop` primary.
+   - `bosia-mobile-screen` — for `mobile` primary; agent will tailor.
+   - `bosia-crud-flow` — bootstraps the first domain resource (sheep, customer, ticket).
+   - `bosia-onboarding-flow` — only if user needs first-run setup (rare for internal tools).
 9. **Must-have features — bullet list, MVP only.** Push back on >7 items. "Later" is fine.
 
 ## Rules
@@ -173,10 +173,10 @@ Write under `## Platform`:
 - Placeholder strategy: svg-glyph (custom sheep mark)
 - First screens: bosia-auth-flow, bosia-mobile-screen (dashboard), bosia-crud-flow (sheep resource)
 - Must-have features:
-    - QR scan kalung → catat berat
-    - Riwayat berat per domba (chart)
-    - List + filter kawanan
-    - Add/edit/archive domba
+  - QR scan kalung → catat berat
+  - Riwayat berat per domba (chart)
+  - List + filter kawanan
+  - Add/edit/archive domba
 
 ### Later (not in v0.1)
 

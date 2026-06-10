@@ -2,28 +2,28 @@
 name: bosia-brief-review
 description: Quality gate after intake. Verifies BRIEF.md sections complete (incl. § Aesthetic stance), theme installed matches `visual.theme_choice`, distinctive fonts wired in app.css `@theme`, accent override applied, ID/number/date formatters scaffolded, first-screen blocks present, no contradictions. Run before any non-brief UI emit.
 triggers:
-    - brief review
-    - intake review
-    - before first build
-    - is the brief done
+  - brief review
+  - intake review
+  - before first build
+  - is the brief done
 od:
-    mode: quality-gate
-    category: discovery
+  mode: quality-gate
+  category: discovery
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        files:
-            - "BRIEF.md"
-            - "src/app.css"
-            - "src/lib/format/id.ts"
-            - "src/lib/format/num.ts"
-            - "src/lib/format/date.ts"
-    stack: []
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    files:
+      - "BRIEF.md"
+      - "src/app.css"
+      - "src/lib/format/id.ts"
+      - "src/lib/format/num.ts"
+      - "src/lib/format/date.ts"
+  stack: []
 ---
 
 # bosia-brief-review

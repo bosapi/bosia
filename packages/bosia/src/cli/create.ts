@@ -20,9 +20,7 @@ const TEMPLATE_DESCRIPTIONS: Record<string, string> = {
 
 export async function runCreate(name: string | undefined, args: string[] = []) {
 	if (!name) {
-		console.error(
-			"❌ Please provide a project name.\n   Usage: bun x bosia@latest create my-app",
-		);
+		console.error("❌ Please provide a project name.\n   Usage: bun x bosia@latest create my-app");
 		process.exit(1);
 	}
 
@@ -69,10 +67,7 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
 	copyDir(templateDir, targetDir, name, isLocal);
 
 	if (existsSync(join(targetDir, ".env.example"))) {
-		writeFileSync(
-			join(targetDir, ".env"),
-			readFileSync(join(targetDir, ".env.example"), "utf-8"),
-		);
+		writeFileSync(join(targetDir, ".env"), readFileSync(join(targetDir, ".env.example"), "utf-8"));
 	}
 
 	// Install template features from registry
@@ -180,10 +175,7 @@ function copyDir(src: string, dest: string, projectName: string, isLocal: boolea
 		if (entry.isDirectory()) {
 			copyDir(srcPath, destPath, projectName, isLocal);
 		} else {
-			let content = readFileSync(srcPath, "utf-8").replaceAll(
-				"{{PROJECT_NAME}}",
-				projectName,
-			);
+			let content = readFileSync(srcPath, "utf-8").replaceAll("{{PROJECT_NAME}}", projectName);
 
 			if (entry.name === "package.json" && isLocal) {
 				const bosiaPath = resolve(import.meta.dir, "../../");

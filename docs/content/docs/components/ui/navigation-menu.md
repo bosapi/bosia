@@ -53,14 +53,10 @@ A compound horizontal navigation menu where each item can reveal a popover of re
 			<NavigationMenuContent>
 				<ul class="grid w-[420px] gap-3">
 					<li>
-						<NavigationMenuLink href="/getting-started">
-							Introduction
-						</NavigationMenuLink>
+						<NavigationMenuLink href="/getting-started">Introduction</NavigationMenuLink>
 					</li>
 					<li>
-						<NavigationMenuLink href="/project-structure">
-							Project Structure
-						</NavigationMenuLink>
+						<NavigationMenuLink href="/project-structure">Project Structure</NavigationMenuLink>
 					</li>
 				</ul>
 			</NavigationMenuContent>

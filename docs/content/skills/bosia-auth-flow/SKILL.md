@@ -2,38 +2,38 @@
 name: bosia-auth-flow
 description: Login + register + logout + forgot-password — Bun.password (NOT argon2 npm package), session cookie, RBAC bootstrap, public route group. Already-signed-in visitors bounce off /login and /register to the dashboard. A login page always ships alongside its post-login destination (no orphan auth). Spans multiple files. Uses Bun.password not argon2 npm package.
 triggers:
-    - auth
-    - login
-    - register
-    - sign-up
-    - sign-in
-    - forgot password
-    - session
-    - +page.server.ts
-    - cookies.set
-    - password hashing
-    - session cookie
-    - auth route
+  - auth
+  - login
+  - register
+  - sign-up
+  - sign-in
+  - forgot password
+  - session
+  - +page.server.ts
+  - cookies.set
+  - password hashing
+  - session cookie
+  - auth route
 od:
-    mode: flow
-    category: auth
+  mode: flow
+  category: auth
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: [neutral]
-        components: [ui/form, ui/field, ui/input, ui/button, ui/label, ui/alert]
-        feats: [drizzle]
-    targets:
-        routes:
-            - "src/routes/(public)/login/+page.svelte"
-            - "src/routes/(public)/login/+page.server.ts"
-            - "src/routes/(public)/register/+page.svelte"
-            - "src/routes/(public)/register/+page.server.ts"
-            - "src/routes/(public)/forgot/+page.svelte"
-            - "src/routes/(public)/forgot/+page.server.ts"
-            - "src/routes/logout/+server.ts"
-    stack: [svelte-5-runes, tailwind-v4, elysia-routes, drizzle]
+  design: false
+  requires:
+    blocks: []
+    themes: [neutral]
+    components: [ui/form, ui/field, ui/input, ui/button, ui/label, ui/alert]
+    feats: [drizzle]
+  targets:
+    routes:
+      - "src/routes/(public)/login/+page.svelte"
+      - "src/routes/(public)/login/+page.server.ts"
+      - "src/routes/(public)/register/+page.svelte"
+      - "src/routes/(public)/register/+page.server.ts"
+      - "src/routes/(public)/forgot/+page.svelte"
+      - "src/routes/(public)/forgot/+page.server.ts"
+      - "src/routes/logout/+server.ts"
+  stack: [svelte-5-runes, tailwind-v4, elysia-routes, drizzle]
 ---
 
 # bosia-auth-flow

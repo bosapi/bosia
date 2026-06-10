@@ -2,20 +2,20 @@
 name: bosia-image-dialog
 description: Multi-image picker dialog — Upload tab, External URL tab, and existing-images gallery. Returns string[] of URLs.
 triggers:
-    - image gallery
-    - multi image picker
-    - image dialog
-    - replace image
-    - gallery picker
-    - select images
+  - image gallery
+  - multi image picker
+  - image dialog
+  - replace image
+  - gallery picker
+  - select images
 od:
-    mode: scaffold
-    category: framework
+  mode: scaffold
+  category: framework
 bosia:
-    requires:
-        blocks: [files/image-dialog, files/upload-area]
-        feats: [file-upload]
-    stack: [svelte-runes]
+  requires:
+    blocks: [files/image-dialog, files/upload-area]
+    feats: [file-upload]
+  stack: [svelte-runes]
 ---
 
 # bosia-image-dialog
@@ -83,33 +83,33 @@ Toggling thumbnails mutates internal state only. Cancel discards everything (inc
 2. `bosia_add_block files/image-dialog` (depends on `files/upload-area`, which is already installed by step 1).
 3. Import + mount:
 
-    ```svelte
-    <script lang="ts">
-    	import ImageDialog from "$lib/blocks/files/image-dialog/block.svelte";
+   ```svelte
+   <script lang="ts">
+   	import ImageDialog from "$lib/blocks/files/image-dialog/block.svelte";
 
-    	let open = $state(false);
-    	let gallery = $state<string[]>(post.images);
+   	let open = $state(false);
+   	let gallery = $state<string[]>(post.images);
 
-    	async function save(urls: string[]) {
-    		await fetch(`/api/posts/${post.id}`, {
-    			method: "PATCH",
-    			body: JSON.stringify({ images: urls }),
-    		});
-    		gallery = urls;
-    		open = false;
-    	}
-    </script>
+   	async function save(urls: string[]) {
+   		await fetch(`/api/posts/${post.id}`, {
+   			method: "PATCH",
+   			body: JSON.stringify({ images: urls }),
+   		});
+   		gallery = urls;
+   		open = false;
+   	}
+   </script>
 
-    <button onclick={() => (open = true)}>Edit images</button>
+   <button onclick={() => (open = true)}>Edit images</button>
 
-    <ImageDialog
-    	bind:open
-    	existingImages={gallery}
-    	max={10}
-    	onConfirm={save}
-    	onCancel={() => (open = false)}
-    />
-    ```
+   <ImageDialog
+   	bind:open
+   	existingImages={gallery}
+   	max={10}
+   	onConfirm={save}
+   	onCancel={() => (open = false)}
+   />
+   ```
 
 4. The Upload tab posts to `/api/files` and pushes `record.url` into the selection on success.
 5. The External URL tab validates `http(s)://` client-side, then pushes the URL into the selection.

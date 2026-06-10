@@ -2,25 +2,25 @@
 name: bosia-brief-identity
 description: Capture product identity — name, tagline, audience, language, formality, self-reference noun. Locks decisions every later skill depends on (UI string language, "Anda" vs "kamu", sentence case).
 triggers:
-    - identity
-    - audience
-    - language
-    - formality
-    - tagline
+  - identity
+  - audience
+  - language
+  - formality
+  - tagline
 od:
-    mode: intake
-    category: discovery
+  mode: intake
+  category: discovery
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        files:
-            - "BRIEF.md"
-    stack: []
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    files:
+      - "BRIEF.md"
+  stack: []
 ---
 
 # bosia-brief-identity
@@ -54,9 +54,9 @@ In order. Show the default in `[brackets]`. User can override or accept.
 3. **Who uses this day-to-day?** `[1–2 sentences]`
 4. **UI language?** `[en | id | <other ISO code>; default: detect from user's chat language]`
 5. **Formality?** `[formal | semi-formal | casual; default: semi-formal]`
-    - `formal` → "Anda" / "you" with full grammar, no contractions
-    - `semi-formal` → "Anda" / "you" but warmer, contractions allowed in English, sentence case
-    - `casual` → "kamu" / "you" with contractions, plain language
+   - `formal` → "Anda" / "you" with full grammar, no contractions
+   - `semi-formal` → "Anda" / "you" but warmer, contractions allowed in English, sentence case
+   - `casual` → "kamu" / "you" with contractions, plain language
 6. **How should the app refer to itself in copy?** `["{Name}" | "kami" / "we" | none; default: "{Name}" when name is short, "kami"/"we" otherwise]`
 
 ## Decisions this locks

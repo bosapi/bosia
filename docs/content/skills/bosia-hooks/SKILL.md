@@ -2,27 +2,27 @@
 name: bosia-hooks
 description: Bosia hooks.server.ts signature — handle({ event, resolve }) NOT SvelteKit's ({ request, cookies }). Cookies live on event.cookies, locals on event.locals. Covers sequence(), redirect/error from "bosia", typical session-resolver wiring.
 triggers:
-    - hooks.server.ts
-    - hooks.server
-    - handle hook
-    - event.cookies
-    - event.locals
-    - sequence
-    - session resolver hook
+  - hooks.server.ts
+  - hooks.server
+  - handle hook
+  - event.cookies
+  - event.locals
+  - sequence
+  - session resolver hook
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes:
-            - "src/hooks.server.ts"
-    stack: [elysia-routes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes:
+      - "src/hooks.server.ts"
+  stack: [elysia-routes]
 ---
 
 # bosia-hooks

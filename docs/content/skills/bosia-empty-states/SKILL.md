@@ -2,26 +2,26 @@
 name: bosia-empty-states
 description: Async UI must cover loading + empty + error. Use `ui/skeleton` for loading, `ui/empty` for no-data, error boundary for failure. Never blank screen on async.
 triggers:
-    - empty state
-    - loading state
-    - error state
-    - skeleton
-    - no data
-    - placeholder
-    - empty list
+  - empty state
+  - loading state
+  - error state
+  - skeleton
+  - no data
+  - placeholder
+  - empty list
 od:
-    mode: composition
-    category: design
+  mode: composition
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: [ui/empty, ui/skeleton, ui/spinner, ui/alert]
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: [ui/empty, ui/skeleton, ui/spinner, ui/alert]
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-empty-states

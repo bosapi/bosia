@@ -2,26 +2,26 @@
 name: bosia-env
 description: Env var conventions — four-tier prefix system (`PUBLIC_STATIC_` / `PUBLIC_` / `STATIC_` / none), `$env` virtual module for user vars, `process.env` for framework-reserved vars, `.env` load order.
 triggers:
-    - env variable
-    - .env
-    - PUBLIC_
-    - DATABASE_URL
-    - framework env
-    - environment variable
-    - process.env
+  - env variable
+  - .env
+  - PUBLIC_
+  - DATABASE_URL
+  - framework env
+  - environment variable
+  - process.env
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [elysia-routes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [elysia-routes]
 ---
 
 # bosia-env

@@ -2,30 +2,30 @@
 name: bosia-debug-discipline
 description: Debug by root-cause, not by patching symptoms. After two wrong guesses, stop editing — read the framework source that owns the symptom, write a minimal reproduction, state the hypothesis before the next change.
 triggers:
-    - error
-    - crash
-    - doesn't work
-    - not working
-    - broken
-    - debug
-    - TypeError
-    - ReferenceError
-    - 500
-    - 404
-    - fix
+  - error
+  - crash
+  - doesn't work
+  - not working
+  - broken
+  - debug
+  - TypeError
+  - ReferenceError
+  - 500
+  - 404
+  - fix
 od:
-    mode: discipline
-    category: process
+  mode: discipline
+  category: process
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: []
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: []
 ---
 
 # bosia-debug-discipline

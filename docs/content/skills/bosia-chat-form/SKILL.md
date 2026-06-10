@@ -2,24 +2,24 @@
 name: bosia-chat-form
 description: Chat composer — `ui/textarea` (auto-resize, Enter/Shift+Enter, IME-safe) + submit button. Disabled-during-stream gating, trim-empty guard, optimistic clear, a11y label.
 triggers:
-    - chat input
-    - chat composer
-    - message form
-    - send message form
-    - prompt input
+  - chat input
+  - chat composer
+  - message form
+  - send message form
+  - prompt input
 od:
-    mode: composition
-    category: design
+  mode: composition
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: [ui/textarea, ui/button]
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: [ui/textarea, ui/button]
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-chat-form
@@ -100,9 +100,7 @@ bosia add ui/textarea ui/button
 		rows={2}
 	/>
 	<div class="flex items-center justify-between">
-		<span class="text-muted-foreground text-xs">
-			Enter untuk kirim · Shift+Enter baris baru
-		</span>
+		<span class="text-muted-foreground text-xs"> Enter untuk kirim · Shift+Enter baris baru </span>
 		<Button type="submit" disabled={!canSend}>{busy ? "Mengirim…" : "Kirim"}</Button>
 	</div>
 </form>

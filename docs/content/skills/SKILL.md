@@ -2,8 +2,8 @@
 name: bosia-skills-catalog
 description: Top-level index of 49 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
-    mode: catalog
-    category: index
+  mode: catalog
+  category: index
 ---
 
 # Bosia Skills Catalog

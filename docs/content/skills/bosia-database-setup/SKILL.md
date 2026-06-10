@@ -2,42 +2,42 @@
 name: bosia-database-setup
 description: On-demand database engine setup and schema work. Default scaffold ships sqlite-file (bun:sqlite); load this skill ONLY when the user explicitly asks to swap engines or create tables. Guides the AI through drizzle.config.ts, .env.local, driver install, and bun-native migrate.
 triggers:
-    - pakai postgres
-    - pakai mysql
-    - ganti database
-    - ganti db
-    - swap database
-    - swap engine
-    - set up database
-    - setup database
-    - sqlite ke postgres
-    - postgres ke sqlite
-    - drizzle migration
-    - drizzle migrate
-    - buat tabel
-    - tambah tabel
-    - create table
-    - new table
-    - add column
-    - tambah kolom
-    - DATABASE_URL
+  - pakai postgres
+  - pakai mysql
+  - ganti database
+  - ganti db
+  - swap database
+  - swap engine
+  - set up database
+  - setup database
+  - sqlite ke postgres
+  - postgres ke sqlite
+  - drizzle migration
+  - drizzle migrate
+  - buat tabel
+  - tambah tabel
+  - create table
+  - new table
+  - add column
+  - tambah kolom
+  - DATABASE_URL
 od:
-    mode: setup
-    category: database
+  mode: setup
+  category: database
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: [drizzle]
-    targets:
-        files:
-            - "drizzle.config.ts"
-            - ".env.local"
-            - ".env.example"
-            - "src/features/drizzle/**"
-    stack: [bun, drizzle]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: [drizzle]
+  targets:
+    files:
+      - "drizzle.config.ts"
+      - ".env.local"
+      - ".env.example"
+      - "src/features/drizzle/**"
+  stack: [bun, drizzle]
 ---
 
 # bosia-database-setup
@@ -73,16 +73,16 @@ When the user says "pakai postgres" / "ganti ke mysql" / etc.:
 2. **Read current state.** `fs_read("drizzle.config.ts")`, `fs_read(".env.local")`. Capture existing tables count to estimate migration risk.
 3. **Update `drizzle.config.ts`.** Set `dialect: "postgresql" | "mysql" | "sqlite"`. Keep `schema` + `out` paths.
 4. **Update `.env`** with the new `DATABASE_URL`:
-    - postgres: `postgres://user:pass@host:5432/dbname`
-    - mysql: `mysql://user:pass@host:3306/dbname`
-    - sqlite file: `sqlite://./data/app.db`
-    - sqlite memory: `sqlite://:memory:` (warn: flushes on restart)
+   - postgres: `postgres://user:pass@host:5432/dbname`
+   - mysql: `mysql://user:pass@host:3306/dbname`
+   - sqlite file: `sqlite://./data/app.db`
+   - sqlite memory: `sqlite://:memory:` (warn: flushes on restart)
 5. **Update `.env.example`** with the same key, mask the password.
 6. **Install the driver** if the engine changed from sqlite:
-    - postgres: `bun add postgres` (Bun's built-in `Bun.SQL` already handles it; only add `postgres` if the scaffold uses node-postgres adapter — check first)
-    - mysql: `bun add mysql2`
-    - sqlite: no install needed.
-      Use the `bash` / `shell` tool.
+   - postgres: `bun add postgres` (Bun's built-in `Bun.SQL` already handles it; only add `postgres` if the scaffold uses node-postgres adapter — check first)
+   - mysql: `bun add mysql2`
+   - sqlite: no install needed.
+     Use the `bash` / `shell` tool.
 7. **Update `src/features/drizzle/index.ts`** to import the matching drizzle adapter (`drizzle-orm/bun-sql`, `drizzle-orm/mysql2`, `drizzle-orm/bun-sqlite`). Re-use existing patterns; see `bosia-drizzle-feature`.
 8. **Re-generate + migrate.** `bun run db:generate` then `bun run db:migrate`. If existing tables are present and the engine changed, surface the truth: cross-engine migration is data export + re-import, NOT just `migrate`. Stop and ask the user before running anything that could lose data.
 9. **Verify.** `bun run check` to confirm types resolve.

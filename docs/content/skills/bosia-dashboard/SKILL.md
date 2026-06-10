@@ -2,41 +2,41 @@
 name: bosia-dashboard
 description: Admin / app dashboard — sidebar nav, top bar, KPI cards, data table, chart panel. Neutral theme. RBAC-driven nav.
 triggers:
-    - dashboard
-    - admin panel
-    - app shell
-    - sidebar layout
+  - dashboard
+  - admin panel
+  - app shell
+  - sidebar layout
 od:
-    mode: page-scaffold
-    category: admin
+  mode: page-scaffold
+  category: admin
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: [neutral]
-        components:
-            [
-                ui/sidebar,
-                ui/data-table,
-                ui/card,
-                ui/chart,
-                ui/button,
-                ui/avatar,
-                ui/separator,
-                ui/dropdown-menu,
-                ui/badge,
-                ui/icon,
-                ui/skeleton,
-                ui/empty,
-            ]
-        feats: []
-    targets:
-        routes:
-            - "src/routes/(private)/+layout.svelte"
-            - "src/routes/(private)/+layout.server.ts"
-            - "src/routes/(private)/dashboard/+page.svelte"
-            - "src/routes/(private)/dashboard/+page.server.ts"
-    stack: [svelte-5-runes, tailwind-v4, elysia-routes]
+  design: true
+  requires:
+    blocks: []
+    themes: [neutral]
+    components:
+      [
+        ui/sidebar,
+        ui/data-table,
+        ui/card,
+        ui/chart,
+        ui/button,
+        ui/avatar,
+        ui/separator,
+        ui/dropdown-menu,
+        ui/badge,
+        ui/icon,
+        ui/skeleton,
+        ui/empty,
+      ]
+    feats: []
+  targets:
+    routes:
+      - "src/routes/(private)/+layout.svelte"
+      - "src/routes/(private)/+layout.server.ts"
+      - "src/routes/(private)/dashboard/+page.svelte"
+      - "src/routes/(private)/dashboard/+page.server.ts"
+  stack: [svelte-5-runes, tailwind-v4, elysia-routes]
 ---
 
 # bosia-dashboard

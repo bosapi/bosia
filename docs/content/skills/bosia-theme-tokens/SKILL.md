@@ -2,38 +2,25 @@
 name: bosia-theme-tokens
 description: Use semantic Tailwind tokens only — `bg-card`, `text-foreground`, `border-border`. Never raw colors (`bg-white`, `text-zinc-900`). Theme swap = swap `tokens.css`, no code change.
 triggers:
-    - colors
-    - theme
-    - dark mode
-    - styling
-    - tailwind classes
+  - colors
+  - theme
+  - dark mode
+  - styling
+  - tailwind classes
 od:
-    mode: convention
-    category: design
+  mode: convention
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes:
-            [
-                neutral,
-                editorial,
-                zinc,
-                stone,
-                claude,
-                ocean,
-                forest,
-                rose,
-                sunset,
-                midnight,
-                mono,
-                amber,
-            ]
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes:
+      [neutral, editorial, zinc, stone, claude, ocean, forest, rose, sunset, midnight, mono, amber]
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [tailwind-v4]
 ---
 
 # bosia-theme-tokens

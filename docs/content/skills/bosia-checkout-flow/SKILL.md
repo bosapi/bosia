@@ -2,42 +2,42 @@
 name: bosia-checkout-flow
 description: Cart → address → payment → confirmation. Progress per step. Trust signals (lock, refund, secure-pay icons). Order summary persistent.
 triggers:
-    - checkout
-    - cart to payment
-    - purchase flow
-    - buy flow
+  - checkout
+  - cart to payment
+  - purchase flow
+  - buy flow
 od:
-    mode: flow
-    category: commerce
+  mode: flow
+  category: commerce
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: [editorial]
-        components:
-            [
-                ui/progress,
-                ui/form,
-                ui/field,
-                ui/input,
-                ui/card,
-                ui/separator,
-                ui/button,
-                ui/badge,
-                ui/alert,
-                ui/radio-group,
-            ]
-        feats: []
-    targets:
-        routes:
-            - "src/routes/checkout/+layout.svelte"
-            - "src/routes/checkout/cart/+page.svelte"
-            - "src/routes/checkout/address/+page.svelte"
-            - "src/routes/checkout/address/+page.server.ts"
-            - "src/routes/checkout/payment/+page.svelte"
-            - "src/routes/checkout/payment/+page.server.ts"
-            - "src/routes/checkout/confirmation/+page.svelte"
-    stack: [svelte-5-runes, tailwind-v4, elysia-routes]
+  design: true
+  requires:
+    blocks: []
+    themes: [editorial]
+    components:
+      [
+        ui/progress,
+        ui/form,
+        ui/field,
+        ui/input,
+        ui/card,
+        ui/separator,
+        ui/button,
+        ui/badge,
+        ui/alert,
+        ui/radio-group,
+      ]
+    feats: []
+  targets:
+    routes:
+      - "src/routes/checkout/+layout.svelte"
+      - "src/routes/checkout/cart/+page.svelte"
+      - "src/routes/checkout/address/+page.svelte"
+      - "src/routes/checkout/address/+page.server.ts"
+      - "src/routes/checkout/payment/+page.svelte"
+      - "src/routes/checkout/payment/+page.server.ts"
+      - "src/routes/checkout/confirmation/+page.svelte"
+  stack: [svelte-5-runes, tailwind-v4, elysia-routes]
 ---
 
 # bosia-checkout-flow

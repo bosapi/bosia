@@ -2,23 +2,23 @@
 name: bosia-design-review
 description: Pre-emit visual checklist — semantic tokens, Runes, empty/loading/error coverage, mobile-safe, typography hierarchy. Run before finalizing any UI.
 triggers:
-    - design review
-    - ui review
-    - before emit
-    - visual check
+  - design review
+  - ui review
+  - before emit
+  - visual check
 od:
-    mode: quality-gate
-    category: design
+  mode: quality-gate
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-design-review

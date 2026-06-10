@@ -18,8 +18,8 @@
 		style="max-width: 400px; border: 1px solid #ccc; margin-top: 1rem;"
 	/>
 	<p style="margin-top: 1rem;">
-		If you see the image, API routes correctly shadow static fallthrough for extension-bearing
-		URLs. Inspect the response — <code>X-Handler: uploads-route</code>
+		If you see the image, API routes correctly shadow static fallthrough for extension-bearing URLs.
+		Inspect the response — <code>X-Handler: uploads-route</code>
 		confirms the +server.ts ran.
 	</p>
 </div>

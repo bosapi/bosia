@@ -17,10 +17,7 @@ function scanPages(dir: string, prefix: string): PageEntry[] {
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
 		if (entry.isDirectory()) {
 			entries.push(
-				...scanPages(
-					join(dir, entry.name),
-					prefix ? `${prefix}/${entry.name}` : entry.name,
-				),
+				...scanPages(join(dir, entry.name), prefix ? `${prefix}/${entry.name}` : entry.name),
 			);
 		} else if (entry.name.endsWith(".md")) {
 			const base = entry.name.replace(/\.md$/, "");

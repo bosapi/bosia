@@ -6,11 +6,7 @@
 </script>
 
 <div class="min-h-screen flex flex-col">
-	<DocsNavbar
-		version={data.version}
-		locale={data.locale}
-		switchLocaleUrl={data.switchLocaleUrl}
-	/>
+	<DocsNavbar version={data.version} locale={data.locale} switchLocaleUrl={data.switchLocaleUrl} />
 
 	<!-- Hero -->
 	<section class="flex-1 px-4 py-24 sm:py-32 text-center">
@@ -88,10 +84,7 @@
 				{/each}
 			</div>
 			<div class="text-center mt-8">
-				<a
-					href="/getting-started"
-					class="text-sm text-primary hover:underline underline-offset-4"
-				>
+				<a href="/getting-started" class="text-sm text-primary hover:underline underline-offset-4">
 					Read the full getting started guide →
 				</a>
 			</div>

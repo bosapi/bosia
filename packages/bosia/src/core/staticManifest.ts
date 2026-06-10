@@ -50,9 +50,7 @@ export function buildStaticManifest(outDir: string): StaticManifest {
 	const clientRoot = join(outAbs, "client");
 	if (existsSync(clientRoot)) {
 		for (const { abs, rel } of walk(clientRoot)) {
-			const cacheControl = HASHED_BASENAME.test(basename(rel))
-				? IMMUTABLE_CACHE
-				: DEFAULT_CACHE;
+			const cacheControl = HASHED_BASENAME.test(basename(rel)) ? IMMUTABLE_CACHE : DEFAULT_CACHE;
 			addOnce(manifest, `/dist/client/${rel}`, { absPath: abs, cacheControl });
 		}
 	}

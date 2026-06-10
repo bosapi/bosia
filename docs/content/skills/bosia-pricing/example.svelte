@@ -21,12 +21,7 @@
 			name: "Pro",
 			price: 19,
 			recommended: true,
-			features: [
-				"Unlimited projects",
-				"Private themes",
-				"Priority support",
-				"Custom domains",
-			],
+			features: ["Unlimited projects", "Private themes", "Priority support", "Custom domains"],
 		},
 		{
 			name: "Team",
@@ -83,8 +78,7 @@
 			<AccordionItem value="cancel">
 				<AccordionTrigger>Can I cancel any time?</AccordionTrigger>
 				<AccordionContent
-					>Yes. Cancel from your billing page; access continues until the end of the
-					period.</AccordionContent
+					>Yes. Cancel from your billing page; access continues until the end of the period.</AccordionContent
 				>
 			</AccordionItem>
 			<AccordionItem value="seats">

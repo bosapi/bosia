@@ -2,24 +2,24 @@
 name: bosia-rbac-permission
 description: Permission-based RBAC — always `can('resource.action', scope?)`, never `if (role === 'admin')`. Roles are mutable DB data; the app must never branch on role names.
 triggers:
-    - authorization
-    - permission check
-    - role gating
-    - protected route
-    - access control
+  - authorization
+  - permission check
+  - role gating
+  - protected route
+  - access control
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: [drizzle]
-    targets:
-        routes: []
-    stack: [elysia-routes, svelte-5-runes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: [drizzle]
+  targets:
+    routes: []
+  stack: [elysia-routes, svelte-5-runes]
 ---
 
 # bosia-rbac-permission

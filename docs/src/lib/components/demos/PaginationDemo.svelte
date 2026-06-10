@@ -42,11 +42,7 @@
 <Pagination>
 	<PaginationContent>
 		<PaginationItem>
-			<PaginationPrevious
-				href="#"
-				disabled={currentPage === 1}
-				onclick={goTo(currentPage - 1)}
-			/>
+			<PaginationPrevious href="#" disabled={currentPage === 1} onclick={goTo(currentPage - 1)} />
 		</PaginationItem>
 
 		{#each pages as item (item)}

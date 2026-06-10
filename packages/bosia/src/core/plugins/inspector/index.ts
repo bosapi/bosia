@@ -174,9 +174,7 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 		name: "inspector",
 
 		build: {
-			bunPlugins: (target) => [
-				createInspectorBunPlugin({ cwd: process.cwd(), target, dev: true }),
-			],
+			bunPlugins: (target) => [createInspectorBunPlugin({ cwd: process.cwd(), target, dev: true })],
 		},
 
 		backend: {
@@ -195,13 +193,10 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 					const line = Number.isFinite(data.line) ? Number(data.line) : null;
 					const col = Number.isFinite(data.col) ? Number(data.col) : 1;
 					if (!file || line === null) {
-						return new Response(
-							JSON.stringify({ ok: false, error: "missing file/line" }),
-							{
-								status: 400,
-								headers: { "content-type": "application/json" },
-							},
-						);
+						return new Response(JSON.stringify({ ok: false, error: "missing file/line" }), {
+							status: 400,
+							headers: { "content-type": "application/json" },
+						});
 					}
 
 					const comment = typeof data.comment === "string" ? data.comment.trim() : "";
@@ -245,13 +240,10 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 							return { ok: true, mode: "ai" as const };
 						} catch (err) {
 							console.error("[inspector] aiEndpoint POST failed:", err);
-							return new Response(
-								JSON.stringify({ ok: false, error: "ai endpoint failed" }),
-								{
-									status: 502,
-									headers: { "content-type": "application/json" },
-								},
-							);
+							return new Response(JSON.stringify({ ok: false, error: "ai endpoint failed" }), {
+								status: 502,
+								headers: { "content-type": "application/json" },
+							});
 						}
 					}
 
@@ -266,13 +258,10 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 						});
 					} catch (err) {
 						console.error(`[inspector] failed to launch "${editor}":`, err);
-						return new Response(
-							JSON.stringify({ ok: false, error: "editor launch failed" }),
-							{
-								status: 500,
-								headers: { "content-type": "application/json" },
-							},
-						);
+						return new Response(JSON.stringify({ ok: false, error: "editor launch failed" }), {
+							status: 500,
+							headers: { "content-type": "application/json" },
+						});
 					}
 					return { ok: true, mode: "editor" as const };
 				});
@@ -297,46 +286,43 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 					// Live SSE stream. New clients also get a flush of the bounded
 					// replay buffer so errors that fired during a failing render
 					// (before the 500 page's overlay could subscribe) are visible.
-					chained = chained.get(
-						"/__bosia/errors",
-						({ request }: { request: Request }) => {
-							const stream = new ReadableStream<Uint8Array>({
-								start(ctrl) {
-									sseClients.add(ctrl);
+					chained = chained.get("/__bosia/errors", ({ request }: { request: Request }) => {
+						const stream = new ReadableStream<Uint8Array>({
+							start(ctrl) {
+								sseClients.add(ctrl);
+								try {
+									ctrl.enqueue(encode(":ok\n\n"));
+								} catch {
+									sseClients.delete(ctrl);
+									return;
+								}
+								flushReplay(ctrl);
+								const ping = setInterval(() => {
 									try {
-										ctrl.enqueue(encode(":ok\n\n"));
+										ctrl.enqueue(encode(":ping\n\n"));
 									} catch {
-										sseClients.delete(ctrl);
-										return;
-									}
-									flushReplay(ctrl);
-									const ping = setInterval(() => {
-										try {
-											ctrl.enqueue(encode(":ping\n\n"));
-										} catch {
-											clearInterval(ping);
-											sseClients.delete(ctrl);
-										}
-									}, 25_000);
-
-									request.signal.addEventListener("abort", () => {
 										clearInterval(ping);
 										sseClients.delete(ctrl);
-										try {
-											ctrl.close();
-										} catch {}
-									});
-								},
-							});
-							return new Response(stream, {
-								headers: {
-									"Content-Type": "text/event-stream; charset=utf-8",
-									"Cache-Control": "no-cache",
-									Connection: "keep-alive",
-								},
-							});
-						},
-					) as unknown as Elysia;
+									}
+								}, 25_000);
+
+								request.signal.addEventListener("abort", () => {
+									clearInterval(ping);
+									sseClients.delete(ctrl);
+									try {
+										ctrl.close();
+									} catch {}
+								});
+							},
+						});
+						return new Response(stream, {
+							headers: {
+								"Content-Type": "text/event-stream; charset=utf-8",
+								"Cache-Control": "no-cache",
+								Connection: "keep-alive",
+							},
+						});
+					}) as unknown as Elysia;
 				}
 
 				return chained;

@@ -106,10 +106,7 @@ describe("readRegistryJSON() — local path construction", () => {
 		const root = join(tmpDir, "registry");
 		const blockDir = join(root, "blocks", "cards", "feature-editorial");
 		mkdirSync(blockDir, { recursive: true });
-		writeFileSync(
-			join(blockDir, "meta.json"),
-			JSON.stringify({ name: "cards/feature-editorial" }),
-		);
+		writeFileSync(join(blockDir, "meta.json"), JSON.stringify({ name: "cards/feature-editorial" }));
 
 		const meta = await readRegistryJSON<{ name: string }>(
 			root,

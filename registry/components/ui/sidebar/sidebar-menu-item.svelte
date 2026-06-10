@@ -125,8 +125,7 @@
 				)}
 			>
 				{#if icon}
-					<span
-						class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
+					<span class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
 						>{@render icon()}</span
 					>
 				{/if}
@@ -166,16 +165,12 @@
 				)}
 			>
 				{#if icon}
-					<span
-						class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
+					<span class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
 						>{@render icon()}</span
 					>
 				{/if}
 				<span class="flex-1 truncate text-left">{label}</span>
-				<ChevronDown
-					size={14}
-					class={cn("shrink-0 transition-transform", open && "rotate-180")}
-				/>
+				<ChevronDown size={14} class={cn("shrink-0 transition-transform", open && "rotate-180")} />
 			</button>
 			{#if open}
 				<ul class="ml-4 mt-0.5 flex flex-col gap-0.5 border-l pl-2">
@@ -196,8 +191,7 @@
 				)}
 			>
 				{#if icon}
-					<span
-						class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
+					<span class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
 						>{@render icon()}</span
 					>
 				{/if}
@@ -214,8 +208,7 @@
 				)}
 			>
 				{#if icon}
-					<span
-						class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
+					<span class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
 						>{@render icon()}</span
 					>
 				{/if}
@@ -230,8 +223,7 @@
 			)}
 		>
 			{#if icon}
-				<span
-					class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
+				<span class="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
 					>{@render icon()}</span
 				>
 			{/if}

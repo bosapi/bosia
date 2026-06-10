@@ -112,8 +112,7 @@ export async function runAddBlock(
 	if (meta.npmDeps && Object.keys(meta.npmDeps).length > 0) {
 		if (resolvedOptions.skipInstall) {
 			const { addedDeps } = mergePkgJson(cwd, { deps: meta.npmDeps });
-			if (addedDeps.length > 0)
-				console.log(`   📥 Added to package.json: ${addedDeps.join(", ")}`);
+			if (addedDeps.length > 0) console.log(`   📥 Added to package.json: ${addedDeps.join(", ")}`);
 		} else {
 			await bunAdd(cwd, meta.npmDeps);
 		}
@@ -128,9 +127,7 @@ export async function runAddBlock(
 		...(meta.dependencies && meta.dependencies.length > 0
 			? { dependencies: meta.dependencies }
 			: {}),
-		...(meta.fonts && Object.keys(meta.fonts).length > 0
-			? { fonts: Object.keys(meta.fonts) }
-			: {}),
+		...(meta.fonts && Object.keys(meta.fonts).length > 0 ? { fonts: Object.keys(meta.fonts) } : {}),
 	});
 
 	console.log(`\n✅ ${name} installed at src/lib/blocks/${name}/`);

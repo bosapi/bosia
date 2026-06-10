@@ -22,9 +22,7 @@ describe("dedupKey()", () => {
 	});
 
 	test("different paths produce different keys", () => {
-		expect(dedupKey(new URL("https://x.test/a"))).not.toBe(
-			dedupKey(new URL("https://x.test/b")),
-		);
+		expect(dedupKey(new URL("https://x.test/a"))).not.toBe(dedupKey(new URL("https://x.test/b")));
 	});
 });
 

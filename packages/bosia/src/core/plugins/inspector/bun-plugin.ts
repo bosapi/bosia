@@ -160,10 +160,7 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 				// line numbers differ. The resolver translates browser-side stack
 				// frames (delivered via SSE), which run client code.
 				if (dev && generate === "client" && result.js.map) {
-					const m =
-						typeof result.js.map === "string"
-							? JSON.parse(result.js.map)
-							: result.js.map;
+					const m = typeof result.js.map === "string" ? JSON.parse(result.js.map) : result.js.map;
 					svelteMapCache.set(args.path, m);
 				}
 

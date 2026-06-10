@@ -134,9 +134,7 @@
 							{#if !collapsed}
 								<div class="flex min-w-0 flex-col text-left leading-tight">
 									<span class="truncate text-sm font-medium">{user.name}</span>
-									<span class="truncate text-xs text-muted-foreground"
-										>{user.email}</span
-									>
+									<span class="truncate text-xs text-muted-foreground">{user.email}</span>
 								</div>
 							{/if}
 						</div>
@@ -150,13 +148,7 @@
 							</span>
 						{/if}
 					</DropdownMenuTrigger>
-					<DropdownMenuContent
-						floating
-						side="top"
-						align="end"
-						anchor={chevronEl}
-						class="min-w-48"
-					>
+					<DropdownMenuContent floating side="top" align="end" anchor={chevronEl} class="min-w-48">
 						<DropdownMenuItem href="#">Profile</DropdownMenuItem>
 						<DropdownMenuItem href="#">Settings</DropdownMenuItem>
 						<DropdownMenuSeparator />

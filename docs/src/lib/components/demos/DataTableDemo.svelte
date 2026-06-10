@@ -34,8 +34,7 @@
 		const search = state.filters.search?.toLowerCase();
 		if (search) {
 			result = result.filter(
-				(u) =>
-					u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search),
+				(u) => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search),
 			);
 		}
 

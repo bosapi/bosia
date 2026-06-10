@@ -2,26 +2,26 @@
 name: bosia-query-defaults
 description: Every list query is paginated and ordered. Repository `list*` functions accept `{ limit = 10, offset = 0, orderBy }` and always return `{ rows, total }`. Default sort is `created_at desc`. No unbounded `db.select().from(...)` reaching production code.
 triggers:
-    - list query
-    - pagination
-    - limit offset
-    - default order
-    - created_at desc
-    - data-table loader
-    - repository list
+  - list query
+  - pagination
+  - limit offset
+  - default order
+  - created_at desc
+  - data-table loader
+  - repository list
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: [drizzle]
-    targets:
-        routes: []
-    stack: [drizzle, svelte-5-runes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: [drizzle]
+  targets:
+    routes: []
+  stack: [drizzle, svelte-5-runes]
 ---
 
 # bosia-query-defaults

@@ -38,11 +38,7 @@ Drag-to-resize panel groups. Supports horizontal and vertical layouts, nested gr
 
 ```svelte
 <script lang="ts">
-	import {
-		ResizablePaneGroup,
-		ResizablePane,
-		ResizableHandle,
-	} from "$lib/components/ui/resizable";
+	import { ResizablePaneGroup, ResizablePane, ResizableHandle } from "$lib/components/ui/resizable";
 </script>
 
 <ResizablePaneGroup direction="horizontal" class="rounded-lg border">

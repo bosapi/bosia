@@ -2,25 +2,25 @@
 name: bosia-drawer
 description: Mobile bottom-sheet overlay — slides up from bottom, tap-to-close, focus trap, scroll lock. Use for mobile action sheets and pickers; use Dialog for desktop modals.
 triggers:
-    - drawer
-    - bottom sheet
-    - mobile action sheet
-    - mobile modal
-    - action sheet
-    - picker sheet
+  - drawer
+  - bottom sheet
+  - mobile action sheet
+  - mobile modal
+  - action sheet
+  - picker sheet
 od:
-    mode: composition
-    category: design
+  mode: composition
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: [ui/drawer, ui/button]
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: [ui/drawer, ui/button]
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-drawer

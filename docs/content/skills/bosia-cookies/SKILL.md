@@ -2,26 +2,26 @@
 name: bosia-cookies
 description: cookies.set/get/delete on event.cookies. CookieOptions shape, sameSite accepts both cases, Secure auto-applies only when request is HTTPS (downgrades + warns on HTTP). Defaults HttpOnly+Secure+SameSite=Lax+Path=/. Do not pass `secure:true` literal — framework decides per-request.
 triggers:
-    - cookies.set
-    - cookies.get
-    - cookies.delete
-    - sameSite
-    - secure cookie
-    - session cookie
-    - Set-Cookie
+  - cookies.set
+  - cookies.get
+  - cookies.delete
+  - sameSite
+  - secure cookie
+  - session cookie
+  - Set-Cookie
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [elysia-routes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [elysia-routes]
 ---
 
 # bosia-cookies

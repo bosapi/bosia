@@ -40,19 +40,14 @@ describe("prerendered /api/**/*.json artifacts", () => {
 	test("list endpoints have expected top-level shape", async () => {
 		const expectations: Array<[string, (j: any) => boolean, string]> = [
 			["skills.json", (j) => Array.isArray(j.skills), "expected { skills: [...] }"],
-			[
-				"components.json",
-				(j) => Array.isArray(j.components),
-				"expected { components: [...] }",
-			],
+			["components.json", (j) => Array.isArray(j.components), "expected { components: [...] }"],
 			["blocks.json", (j) => Array.isArray(j.blocks), "expected { blocks: [...] }"],
 		];
 		for (const [name, check, hint] of expectations) {
 			const file = join(STATIC_API, name);
 			if (!existsSync(file)) continue;
 			const j = JSON.parse(await readFile(file, "utf-8"));
-			if (!check(j))
-				throw new Error(`${name}: ${hint}, got ${JSON.stringify(j).slice(0, 80)}`);
+			if (!check(j)) throw new Error(`${name}: ${hint}, got ${JSON.stringify(j).slice(0, 80)}`);
 		}
 	});
 
@@ -78,9 +73,7 @@ describe("prerendered /api/**/*.json artifacts", () => {
 				const rel = item.path.slice("/api/".length);
 				const onDisk = join(STATIC_API, rel);
 				if (!existsSync(onDisk)) {
-					throw new Error(
-						`${file}: path ${item.path} does not resolve to a file on disk`,
-					);
+					throw new Error(`${file}: path ${item.path} does not resolve to a file on disk`);
 				}
 			}
 		}

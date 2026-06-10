@@ -96,8 +96,7 @@ async function main() {
 			// First non-flag token is the feature name; everything else flows through to the
 			// feature's own option parser. Global flags (-y, --local) are also accepted here
 			// and get split out inside runFeat.
-			const rest =
-				nameIdx === -1 ? args : [...args.slice(0, nameIdx), ...args.slice(nameIdx + 1)];
+			const rest = nameIdx === -1 ? args : [...args.slice(0, nameIdx), ...args.slice(nameIdx + 1)];
 			await runFeat(featName, rest);
 			break;
 		}

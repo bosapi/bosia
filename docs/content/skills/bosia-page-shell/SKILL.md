@@ -2,40 +2,40 @@
 name: bosia-page-shell
 description: Page shell hygiene — navbar/footer/sidebar live in `+layout.svelte` (one place), never duplicated per page. Authenticated layouts render `ui/navbar` with the avatar-dropdown `user` prop. Lists of rows always use `ui/data-table`, never a hand-rolled `<table>`.
 triggers:
-    - navbar
-    - footer
-    - sidebar
-    - layout
-    - app shell
-    - page shell
-    - root layout
-    - +page.svelte
-    - +layout.svelte
-    - chrome
-    - header
-    - user avatar
-    - avatar dropdown
-    - table
-    - list view
-    - layout data
-    - await parent
-    - data overwrite
+  - navbar
+  - footer
+  - sidebar
+  - layout
+  - app shell
+  - page shell
+  - root layout
+  - +page.svelte
+  - +layout.svelte
+  - chrome
+  - header
+  - user avatar
+  - avatar dropdown
+  - table
+  - list view
+  - layout data
+  - await parent
+  - data overwrite
 od:
-    mode: convention
-    category: design
+  mode: convention
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: [ui/navbar, ui/data-table, ui/avatar, ui/dropdown-menu]
-        feats: []
-    targets:
-        routes:
-            - "src/routes/+layout.svelte"
-            - "src/routes/(public)/+layout.svelte"
-            - "src/routes/(private)/+layout.svelte"
-    stack: [svelte-5-runes]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: [ui/navbar, ui/data-table, ui/avatar, ui/dropdown-menu]
+    feats: []
+  targets:
+    routes:
+      - "src/routes/+layout.svelte"
+      - "src/routes/(public)/+layout.svelte"
+      - "src/routes/(private)/+layout.svelte"
+  stack: [svelte-5-runes]
 ---
 
 # bosia-page-shell

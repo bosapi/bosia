@@ -16,9 +16,7 @@
 				<img src="/favicon.svg" alt="" class="size-5" />
 				Todos
 			</a>
-			<a
-				href="/"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+			<a href="/" class="text-sm text-muted-foreground hover:text-foreground transition-colors"
 				>Home</a
 			>
 			<a
@@ -33,9 +31,7 @@
 		<div class="space-y-6">
 			<div>
 				<h1 class="text-2xl font-bold tracking-tight">Todos</h1>
-				<p class="mt-1 text-sm text-muted-foreground">
-					A full-stack CRUD demo with Drizzle ORM
-				</p>
+				<p class="mt-1 text-sm text-muted-foreground">A full-stack CRUD demo with Drizzle ORM</p>
 			</div>
 
 			<TodoForm error={form?.error} />
@@ -43,7 +39,5 @@
 		</div>
 	</main>
 
-	<footer class="border-t py-4 text-center text-sm text-muted-foreground">
-		Powered by Bosia
-	</footer>
+	<footer class="border-t py-4 text-center text-sm text-muted-foreground">Powered by Bosia</footer>
 </div>

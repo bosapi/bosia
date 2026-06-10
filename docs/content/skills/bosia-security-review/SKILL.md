@@ -2,23 +2,23 @@
 name: bosia-security-review
 description: Security quality gate — RBAC on every protected handler, input validation at boundaries, no secrets in client, path-jail on FS ops, CSRF via origin guard.
 triggers:
-    - security review
-    - before merge
-    - auth changes
-    - file system access
+  - security review
+  - before merge
+  - auth changes
+  - file system access
 od:
-    mode: quality-gate
-    category: framework
+  mode: quality-gate
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [elysia-routes, svelte-5-runes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [elysia-routes, svelte-5-runes]
 ---
 
 # bosia-security-review

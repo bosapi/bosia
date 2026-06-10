@@ -198,9 +198,7 @@
 					{@const isRangeEnd = rangeEnd ? isSameDay(date, rangeEnd) : false}
 					{@const isInRange =
 						rangeStart && rangeEnd
-							? isDateInRange(date, rangeStart, rangeEnd) &&
-								!isRangeStart &&
-								!isRangeEnd
+							? isDateInRange(date, rangeStart, rangeEnd) && !isRangeStart && !isRangeEnd
 							: false}
 					{@const previewEnd =
 						rangeCtx.isSelecting &&
@@ -211,8 +209,7 @@
 							: undefined}
 					{@const isInPreview =
 						previewEnd && rangeStart
-							? isDateInRange(date, rangeStart, previewEnd) &&
-								!isSameDay(date, rangeStart)
+							? isDateInRange(date, rangeStart, previewEnd) && !isSameDay(date, rangeStart)
 							: false}
 					<td role="gridcell" class="p-0">
 						<RangeCalendarDay

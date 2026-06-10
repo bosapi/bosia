@@ -36,8 +36,7 @@
 			"bg-popover text-emerald-600 border-emerald-200 dark:text-emerald-400 dark:border-emerald-800",
 		error: "bg-popover text-destructive border-destructive/30",
 		info: "bg-popover text-blue-600 border-blue-200 dark:text-blue-400 dark:border-blue-800",
-		warning:
-			"bg-popover text-amber-600 border-amber-200 dark:text-amber-400 dark:border-amber-800",
+		warning: "bg-popover text-amber-600 border-amber-200 dark:text-amber-400 dark:border-amber-800",
 	};
 
 	function handleDismiss(id: string) {
@@ -89,12 +88,7 @@
 							stroke-linecap="round"
 							stroke-linejoin="round"
 						>
-							<line x1="18" y1="6" x2="6" y2="18" /><line
-								x1="6"
-								y1="6"
-								x2="18"
-								y2="18"
-							/>
+							<line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
 						</svg>
 					</button>
 				</div>

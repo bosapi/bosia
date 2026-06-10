@@ -36,8 +36,8 @@
 				Ship interfaces, not arguments.
 			</h1>
 			<p class="max-w-xl text-lg text-muted-foreground">
-				Bosia is a registry-first build system for Svelte 5 — consistent components,
-				semantic tokens, RBAC, and Drizzle, with zero design drift.
+				Bosia is a registry-first build system for Svelte 5 — consistent components, semantic
+				tokens, RBAC, and Drizzle, with zero design drift.
 			</p>
 			<div class="flex gap-3">
 				<Button size="lg">Get started</Button>
@@ -84,8 +84,7 @@
 			<Card>
 				<CardContent class="space-y-4 p-6">
 					<p class="text-card-foreground">
-						"Cut our build time in half. The registry pattern is what shadcn always
-						wanted to be."
+						"Cut our build time in half. The registry pattern is what shadcn always wanted to be."
 					</p>
 					<div class="flex items-center gap-3">
 						<Avatar><AvatarFallback>AR</AvatarFallback></Avatar>

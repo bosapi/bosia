@@ -45,23 +45,9 @@ export async function parseMarkdown(raw: string): Promise<DocPage> {
 			code({ text, lang }: { text: string; lang?: string }) {
 				const language = lang || "text";
 				try {
-					const supported = [
-						"svelte",
-						"typescript",
-						"ts",
-						"bash",
-						"json",
-						"css",
-						"html",
-						"sh",
-					];
+					const supported = ["svelte", "typescript", "ts", "bash", "json", "css", "html", "sh"];
 					if (supported.includes(language)) {
-						const mapped =
-							language === "ts"
-								? "typescript"
-								: language === "sh"
-									? "bash"
-									: language;
+						const mapped = language === "ts" ? "typescript" : language === "sh" ? "bash" : language;
 						return hl.codeToHtml(text, {
 							lang: mapped,
 							themes: { light: "github-light", dark: "github-dark" },

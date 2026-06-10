@@ -46,13 +46,7 @@
 			<FieldLabel>Password</FieldLabel>
 			<FieldControl>
 				{#snippet child({ id, ...aria })}
-					<Input
-						{id}
-						{...aria}
-						name="password"
-						type="password"
-						placeholder="Enter password"
-					/>
+					<Input {id} {...aria} name="password" type="password" placeholder="Enter password" />
 				{/snippet}
 			</FieldControl>
 			<FieldDescription>Must be at least 8 characters.</FieldDescription>

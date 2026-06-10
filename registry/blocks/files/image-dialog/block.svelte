@@ -199,18 +199,13 @@
 									}
 								}}
 							/>
-							<Button
-								type="button"
-								onclick={addFromUrl}
-								disabled={!urlInput.trim() || atMax}
-							>
+							<Button type="button" onclick={addFromUrl} disabled={!urlInput.trim() || atMax}>
 								<Link2 size={16} class="mr-2" />
 								Add
 							</Button>
 						</div>
 						<p class="text-xs text-muted-foreground">
-							External URLs are stored as-is. Remote hosts may rotate or remove the
-							image.
+							External URLs are stored as-is. Remote hosts may rotate or remove the image.
 						</p>
 					</div>
 				</TabsContent>
@@ -301,9 +296,7 @@
 					<h3 class="text-sm font-medium">Selected ({selected.length})</h3>
 					<div class="flex flex-wrap gap-2">
 						{#each selected as url (url)}
-							<div
-								class="relative h-16 w-16 overflow-hidden rounded-md border bg-muted"
-							>
+							<div class="relative h-16 w-16 overflow-hidden rounded-md border bg-muted">
 								<img
 									src={url}
 									alt=""

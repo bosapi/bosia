@@ -37,9 +37,7 @@
 		queueMicrotask(() => {
 			const panel = document.getElementById(`${id}-content`);
 			if (!panel) return;
-			const target = panel.querySelector<HTMLElement>(
-				'a, button, [tabindex]:not([tabindex="-1"])',
-			);
+			const target = panel.querySelector<HTMLElement>('a, button, [tabindex]:not([tabindex="-1"])');
 			target?.focus();
 		});
 	}

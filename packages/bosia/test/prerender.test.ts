@@ -32,19 +32,13 @@ describe("substituteParams()", () => {
 	});
 
 	test("rejects `..` in any segment value", () => {
-		expect(() => substituteParams("/blog/[slug]", { slug: "../etc" })).toThrow(
-			/path traversal/,
-		);
-		expect(() => substituteParams("/docs/[...path]", { path: "a/../b" })).toThrow(
-			/path traversal/,
-		);
+		expect(() => substituteParams("/blog/[slug]", { slug: "../etc" })).toThrow(/path traversal/);
+		expect(() => substituteParams("/docs/[...path]", { path: "a/../b" })).toThrow(/path traversal/);
 	});
 
 	test("rejects backslash in any segment value", () => {
 		expect(() => substituteParams("/blog/[slug]", { slug: "a\\b" })).toThrow(/path traversal/);
-		expect(() => substituteParams("/docs/[...path]", { path: "a\\b" })).toThrow(
-			/path traversal/,
-		);
+		expect(() => substituteParams("/docs/[...path]", { path: "a\\b" })).toThrow(/path traversal/);
 	});
 
 	test("rejects `/` in non-rest dynamic segment value", () => {

@@ -21,10 +21,7 @@ beforeAll(() => {
 	mkdirSync(tmpDir, { recursive: true });
 	mkdirSync(join(tmpDir, "src", "routes"), { recursive: true });
 
-	writeFileSync(
-		join(tmpDir, "tsconfig.json"),
-		JSON.stringify({ compilerOptions: { paths: {} } }),
-	);
+	writeFileSync(join(tmpDir, "tsconfig.json"), JSON.stringify({ compilerOptions: { paths: {} } }));
 	// Match edupay-style app.css: tailwind directive + custom properties.
 	// The substantive CSS body matters — Bun emits CSS sidecars when app.css
 	// has real content, and they collide under splitting:true.

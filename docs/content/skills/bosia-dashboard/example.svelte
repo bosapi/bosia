@@ -10,15 +10,7 @@
 		DropdownMenuContent,
 		DropdownMenuItem,
 	} from "$lib/components/ui/dropdown-menu";
-	import {
-		Home,
-		Users,
-		Settings,
-		BarChart,
-		TrendingUp,
-		TrendingDown,
-		Minus,
-	} from "@lucide/svelte";
+	import { Home, Users, Settings, BarChart, TrendingUp, TrendingDown, Minus } from "@lucide/svelte";
 	import type { Component } from "svelte";
 
 	const navIcons: Record<string, Component> = {
@@ -73,9 +65,7 @@
 			<DropdownMenu>
 				<DropdownMenuTrigger>
 					<Button variant="ghost" class="w-full justify-start gap-2">
-						<Avatar class="size-7"
-							><AvatarFallback>{data.user.name[0]}</AvatarFallback></Avatar
-						>
+						<Avatar class="size-7"><AvatarFallback>{data.user.name[0]}</AvatarFallback></Avatar>
 						<div class="flex-1 text-left text-sm">
 							<div>{data.user.name}</div>
 							<div class="text-muted-foreground">{data.user.email}</div>
@@ -106,9 +96,7 @@
 					{@const DirIcon = directionIcons[k.direction]}
 					<Card>
 						<CardHeader class="pb-2">
-							<CardTitle class="text-sm font-medium text-muted-foreground"
-								>{k.label}</CardTitle
-							>
+							<CardTitle class="text-sm font-medium text-muted-foreground">{k.label}</CardTitle>
 						</CardHeader>
 						<CardContent class="space-y-1">
 							<div class="text-3xl font-semibold">{k.value}</div>

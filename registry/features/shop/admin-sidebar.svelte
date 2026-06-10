@@ -56,11 +56,7 @@
 		<SidebarGroup>
 			<SidebarMenu>
 				{#each items as item}
-					<SidebarMenuItem
-						href={item.href}
-						label={item.label}
-						active={currentPath === item.href}
-					>
+					<SidebarMenuItem href={item.href} label={item.label} active={currentPath === item.href}>
 						{#snippet icon()}<item.icon size={16} />{/snippet}
 					</SidebarMenuItem>
 				{/each}

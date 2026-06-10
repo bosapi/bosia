@@ -165,10 +165,7 @@ const employeeHierarchy = db.$with("employee_hierarchy").as(
 					level: sql<number>`employee_hierarchy.level + 1`,
 				})
 				.from(employees)
-				.innerJoin(
-					sql`employee_hierarchy`,
-					sql`${employees.managerId} = employee_hierarchy.id`,
-				),
+				.innerJoin(sql`employee_hierarchy`, sql`${employees.managerId} = employee_hierarchy.id`),
 		),
 );
 
@@ -402,14 +399,14 @@ await db.execute(sql`
     UPDATE ${users}
     SET ${users.role} = CASE ${users.id}
         ${sql.join(
-			updates.map((u) => sql`WHEN ${u.id} THEN ${u.role}`),
-			sql.raw(" "),
-		)}
+					updates.map((u) => sql`WHEN ${u.id} THEN ${u.role}`),
+					sql.raw(" "),
+				)}
     END
     WHERE ${users.id} IN (${sql.join(
-		updates.map((u) => u.id),
-		sql.raw(", "),
-	)})
+			updates.map((u) => u.id),
+			sql.raw(", "),
+		)})
 `);
 ```
 

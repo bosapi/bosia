@@ -2,23 +2,23 @@
 name: bosia-engineering-discipline
 description: Behavioral guardrails for every code-emitting task. Think before coding, keep changes minimal and surgical, define verifiable success criteria. Biases toward caution over speed; for trivial tasks, use judgment.
 triggers:
-    - any code emit
-    - editing existing code
-    - multi-step task
-    - ambiguous request
+  - any code emit
+  - editing existing code
+  - multi-step task
+  - ambiguous request
 od:
-    mode: convention
-    category: meta
+  mode: convention
+  category: meta
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: []
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: []
 ---
 
 # bosia-engineering-discipline

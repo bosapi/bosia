@@ -2,33 +2,33 @@
 name: bosia-navigation
 description: Client-side navigation in Bosia — `<a href>`, `goto()`, form-action `redirect()`, and `window.location.href`. Lifecycle hooks `beforeNavigate` / `afterNavigate`. Mirrors SvelteKit's `$app/navigation` surface; import from `bosia/client`.
 triggers:
-    - goto
-    - navigate
-    - programmatic navigation
-    - beforeNavigate
-    - afterNavigate
-    - block navigation
-    - unsaved changes prompt
-    - redirect after submit
-    - full reload
-    - window.location
-    - sidebar
-    - navbar
-    - menu item
-    - navigation
+  - goto
+  - navigate
+  - programmatic navigation
+  - beforeNavigate
+  - afterNavigate
+  - block navigation
+  - unsaved changes prompt
+  - redirect after submit
+  - full reload
+  - window.location
+  - sidebar
+  - navbar
+  - menu item
+  - navigation
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes, elysia-routes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes, elysia-routes]
 ---
 
 # bosia-navigation

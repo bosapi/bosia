@@ -60,9 +60,7 @@ export function makeBosiaPlugin(target: "browser" | "bun" = "bun") {
 			let svelteBrowserEntry: string | null = null;
 			if (target === "browser") {
 				try {
-					const svelteDir = dirname(
-						require.resolve("svelte/package.json", { paths: [appDir] }),
-					);
+					const svelteDir = dirname(require.resolve("svelte/package.json", { paths: [appDir] }));
 					const pkg = require(join(svelteDir, "package.json"));
 					const dotExport = pkg.exports?.["."];
 					const browserPath = typeof dotExport === "object" ? dotExport.browser : null;

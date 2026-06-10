@@ -47,25 +47,14 @@
 	<section class="space-y-2">
 		<h2 class="text-xl font-semibold">2. goto()</h2>
 		<div class="flex flex-wrap gap-2">
-			<button class="border px-3 py-1 rounded" onclick={() => go("/about")}>
-				goto /about
-			</button>
-			<button
-				class="border px-3 py-1 rounded"
-				onclick={() => go("/about", { replaceState: true })}
-			>
+			<button class="border px-3 py-1 rounded" onclick={() => go("/about")}> goto /about </button>
+			<button class="border px-3 py-1 rounded" onclick={() => go("/about", { replaceState: true })}>
 				goto /about (replaceState)
 			</button>
-			<button
-				class="border px-3 py-1 rounded"
-				onclick={() => go("/blog", { invalidateAll: true })}
-			>
+			<button class="border px-3 py-1 rounded" onclick={() => go("/blog", { invalidateAll: true })}>
 				goto /blog (invalidateAll)
 			</button>
-			<button
-				class="border px-3 py-1 rounded"
-				onclick={() => go("/about", { noScroll: true })}
-			>
+			<button class="border px-3 py-1 rounded" onclick={() => go("/about", { noScroll: true })}>
 				goto /about (noScroll)
 			</button>
 		</div>

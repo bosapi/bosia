@@ -19,8 +19,8 @@
 	<h1 class="text-3xl font-bold">Page with <code>ssr = false</code></h1>
 
 	<p class="text-muted-foreground">
-		This page reads <code>window</code> at module top-level. If SSR ran on the server it would
-		crash with <code>ReferenceError: window is not defined</code>. It works because
+		This page reads <code>window</code> at module top-level. If SSR ran on the server it would crash
+		with <code>ReferenceError: window is not defined</code>. It works because
 		<code>+page.server.ts</code>
 		exports <code>ssr = false</code>.
 	</p>
@@ -67,8 +67,7 @@
 			</li>
 			<li>Page renders after hydration with no SSR mismatch warnings in the console.</li>
 			<li>
-				Other pages (e.g. <code>/</code>) still SSR normally — view source shows rendered
-				markup.
+				Other pages (e.g. <code>/</code>) still SSR normally — view source shows rendered markup.
 			</li>
 		</ol>
 	</section>

@@ -2,26 +2,26 @@
 name: bosia-drizzle-usage
 description: How to consume `db` from `src/features/drizzle` — only inside repository functions, via the singleton import. Routes/loaders call services; services call repositories; **only repositories import `db`** (services never do). Always `await db.select()...`, never reach past the export, pre-flight `db_test_connection` + `db_status` before the first read.
 triggers:
-    - +page.server.ts
-    - load
-    - query database
-    - db.select
-    - drizzle query
-    - db.all
-    - repository
+  - +page.server.ts
+  - load
+  - query database
+  - db.select
+  - drizzle query
+  - db.all
+  - repository
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: [drizzle]
-    targets:
-        routes: []
-    stack: [drizzle, bun-sql, bun-sqlite]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: [drizzle]
+  targets:
+    routes: []
+  stack: [drizzle, bun-sql, bun-sqlite]
 ---
 
 # bosia-drizzle-usage

@@ -159,8 +159,7 @@ export async function addComponent(name: string, root = false, options?: Install
 	if (Object.keys(meta.npmDeps).length > 0) {
 		if (options?.skipInstall) {
 			const { addedDeps } = mergePkgJson(cwd, { deps: meta.npmDeps });
-			if (addedDeps.length > 0)
-				console.log(`   📥 Added to package.json: ${addedDeps.join(", ")}`);
+			if (addedDeps.length > 0) console.log(`   📥 Added to package.json: ${addedDeps.join(", ")}`);
 		} else {
 			await bunAdd(cwd, meta.npmDeps);
 		}

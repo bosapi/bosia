@@ -121,11 +121,7 @@ describe("computeCacheKey", () => {
 	});
 
 	test("appends |i=<hash> suffix", () => {
-		const k = computeCacheKey(
-			new URL("http://localhost/x"),
-			mkRequest("http://x/"),
-			mkCookies(),
-		);
+		const k = computeCacheKey(new URL("http://localhost/x"), mkRequest("http://x/"), mkCookies());
 		expect(k).toMatch(/\|i=/);
 	});
 

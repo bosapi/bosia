@@ -93,9 +93,7 @@ function buildSummary(
 			summary.install = `bun x bosia@latest add theme ${metaName}`;
 		}
 		if (Array.isArray(meta.dependencies)) {
-			summary.dependencies = meta.dependencies.filter(
-				(d): d is string => typeof d === "string",
-			);
+			summary.dependencies = meta.dependencies.filter((d): d is string => typeof d === "string");
 		}
 	}
 

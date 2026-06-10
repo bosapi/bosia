@@ -122,8 +122,7 @@ export function buildHtml(
 			? `window.__BOSIA_PAGE_DEPS__=${safeJsonStringify(pageDeps)};window.__BOSIA_LAYOUT_DEPS__=${safeJsonStringify(layoutDeps ?? [])};`
 			: "";
 
-	const sysScript =
-		ssrFlag || depsScript ? `\n  <script${n}>${ssrFlag}${depsScript}</script>` : "";
+	const sysScript = ssrFlag || depsScript ? `\n  <script${n}>${ssrFlag}${depsScript}</script>` : "";
 
 	const dataIslands = csr
 		? `\n  <script${n} type="application/json" id="__bosia-page-data__">${safeJsonForScript(pageData)}</script>` +

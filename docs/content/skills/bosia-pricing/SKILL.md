@@ -2,23 +2,23 @@
 name: bosia-pricing
 description: Pricing tiers + comparison table + FAQ. Recommended plan highlighted. Monthly/annual toggle.
 triggers:
-    - pricing page
-    - pricing tiers
-    - compare plans
-    - subscription tiers
+  - pricing page
+  - pricing tiers
+  - compare plans
+  - subscription tiers
 od:
-    mode: page-scaffold
-    category: marketing
+  mode: page-scaffold
+  category: marketing
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: [editorial]
-        components: [ui/card, ui/table, ui/badge, ui/accordion, ui/button, ui/separator, ui/switch]
-        feats: []
-    targets:
-        routes: ["src/routes/pricing/+page.svelte"]
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: [editorial]
+    components: [ui/card, ui/table, ui/badge, ui/accordion, ui/button, ui/separator, ui/switch]
+    feats: []
+  targets:
+    routes: ["src/routes/pricing/+page.svelte"]
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-pricing

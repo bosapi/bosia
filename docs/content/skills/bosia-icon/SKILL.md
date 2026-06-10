@@ -2,25 +2,25 @@
 name: bosia-icon
 description: Use `@lucide/svelte` for icons. Never install `lucide-svelte` (deprecated). Import each icon as a Svelte component — tree-shakes per import.
 triggers:
-    - icon
-    - icons
-    - lucide
-    - svg icon
-    - icon component
-    - add icon
+  - icon
+  - icons
+  - lucide
+  - svg icon
+  - icon component
+  - add icon
 od:
-    mode: composition
-    category: design
+  mode: composition
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-icon

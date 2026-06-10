@@ -23,14 +23,13 @@
 	<TypographyH2>The King's Plan</TypographyH2>
 
 	<TypographyP>
-		The king, seeing how much happier his subjects were, decided to tax jokes. "After all," he
-		said, "everyone enjoys a good joke, so it's only fair that they should pay for the
-		privilege."
+		The king, seeing how much happier his subjects were, decided to tax jokes. "After all," he said,
+		"everyone enjoys a good joke, so it's only fair that they should pay for the privilege."
 	</TypographyP>
 
 	<TypographyBlockquote>
-		"After all," he said, "everyone enjoys a good joke, so it's only fair that they should pay
-		for the privilege."
+		"After all," he said, "everyone enjoys a good joke, so it's only fair that they should pay for
+		the privilege."
 	</TypographyBlockquote>
 
 	<TypographyH3>The Joke Tax</TypographyH3>
@@ -51,8 +50,8 @@
 	<TypographyH4>People stopped telling jokes</TypographyH4>
 
 	<TypographyP>
-		The people of the kingdom realized that the joke tax was an unjust burden. They began to
-		speak in whispers, afraid that their words would be taxed next.
+		The people of the kingdom realized that the joke tax was an unjust burden. They began to speak
+		in whispers, afraid that their words would be taxed next.
 	</TypographyP>
 
 	<TypographyLarge>Aren't you glad this isn't real?</TypographyLarge>

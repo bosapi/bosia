@@ -2,28 +2,28 @@
 name: bosia-brief-intake
 description: First-conversation intake. Capture product identity, voice, visual direction, platform conventions BEFORE any UI emit. Writes BRIEF.md at app root and chains the four bosia-brief-* group skills. Mandatory when BRIEF.md is missing.
 triggers:
-    - new app
-    - first message
-    - empty conversation
-    - what are we building
-    - brief
-    - design system
-    - start a project
+  - new app
+  - first message
+  - empty conversation
+  - what are we building
+  - brief
+  - design system
+  - start a project
 od:
-    mode: intake
-    category: discovery
+  mode: intake
+  category: discovery
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        files:
-            - "BRIEF.md"
-            - "src/app.css"
-    stack: []
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    files:
+      - "BRIEF.md"
+      - "src/app.css"
+  stack: []
 ---
 
 # bosia-brief-intake
@@ -47,15 +47,15 @@ Skip only if `fs_read("BRIEF.md")` succeeds AND `## Status` line is `complete`.
 1. `fs_read("BRIEF.md")` → if missing or `## Status: pending`, enter intake.
 2. Greet in user's apparent language. One sentence. No emoji.
 3. Walk the four groups **in order**. For each group, read the matching skill body first, then ask its questions.
-    1. `read_skill({ name: "bosia-brief-identity" })` — name, tagline, audience, language, formality.
-    2. `read_skill({ name: "bosia-brief-voice" })` — tone, emoji/exclamation policy, microcopy spine.
-    3. `read_skill({ name: "bosia-brief-visual" })` — palette intent, theme pick, shape, density, type, icons. Runs `bosia_add_theme` at the end.
-    4. `read_skill({ name: "bosia-brief-platform" })` — form factors, ID/number/date formats, imagery, first screens. Runs batched `bosia_add_block` at the end.
+   1. `read_skill({ name: "bosia-brief-identity" })` — name, tagline, audience, language, formality.
+   2. `read_skill({ name: "bosia-brief-voice" })` — tone, emoji/exclamation policy, microcopy spine.
+   3. `read_skill({ name: "bosia-brief-visual" })` — palette intent, theme pick, shape, density, type, icons. Runs `bosia_add_theme` at the end.
+   4. `read_skill({ name: "bosia-brief-platform" })` — form factors, ID/number/date formats, imagery, first screens. Runs batched `bosia_add_block` at the end.
 4. **Lock the aesthetic stance.** `read_skill({ name: "bosia-frontend-design" })` and ask the four stance questions:
-    1. **Direction** — pick one extreme from the catalog (or invent one). Show the user `references/aesthetic-directions.md` summary inline. Direction MUST be compatible with the audience locked in step 3.1 and the palette intent locked in step 3.3 — flag and resolve any contradiction.
-    2. **Display + body fonts** — distinctive pair, NOT Inter / Roboto / Space Grotesk. Wire later via `app.css` `@theme`.
-    3. **Memorable detail** — one named element (staggered headline reveal, custom cursor, grain overlay, oversized footer wordmark, etc.). If user can't name one, the stance isn't locked.
-    4. **What we are NOT** — one sentence rejecting the default (e.g. "not a soft purple gradient SaaS landing").
+   1. **Direction** — pick one extreme from the catalog (or invent one). Show the user `references/aesthetic-directions.md` summary inline. Direction MUST be compatible with the audience locked in step 3.1 and the palette intent locked in step 3.3 — flag and resolve any contradiction.
+   2. **Display + body fonts** — distinctive pair, NOT Inter / Roboto / Space Grotesk. Wire later via `app.css` `@theme`.
+   3. **Memorable detail** — one named element (staggered headline reveal, custom cursor, grain overlay, oversized footer wordmark, etc.). If user can't name one, the stance isn't locked.
+   4. **What we are NOT** — one sentence rejecting the default (e.g. "not a soft purple gradient SaaS landing").
 5. **Approval gate (tool call, not text question).** Build the consolidated draft in memory and call `brief_request_approval({ summary })` where `summary` is the recap (identity + aesthetic stance + memorable detail). The host UI renders a **Setuju** button. DO NOT call `fs_write("BRIEF.md", ...)` yet. If the user types corrections instead of clicking, update the draft and call `brief_request_approval` again with the revised summary.
 6. After the user confirms (next turn carries "Setuju, tulis BRIEF.md." or `briefApproval: true`), `fs_write("BRIEF.md", ...)` with the consolidated answers, including the `## Aesthetic` section.
 7. `read_skill({ name: "bosia-brief-review" })` and walk its checklist (B18 covers the aesthetic stance).

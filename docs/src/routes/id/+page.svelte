@@ -14,11 +14,7 @@
 </svelte:head>
 
 <div class="min-h-screen flex flex-col">
-	<DocsNavbar
-		version={data.version}
-		locale={data.locale}
-		switchLocaleUrl={data.switchLocaleUrl}
-	/>
+	<DocsNavbar version={data.version} locale={data.locale} switchLocaleUrl={data.switchLocaleUrl} />
 
 	<!-- Hero -->
 	<section class="flex-1 px-4 py-24 sm:py-32 text-center">
@@ -32,8 +28,8 @@
 				Framework fullstack<br />untuk <span class="text-primary">Bun + Svelte</span>
 			</h1>
 			<p class="text-xl text-muted-foreground max-w-xl mx-auto">
-				Siap produksi sejak awal — keamanan, performa, dan keandalan sudah terpasang.
-				Lengkap dengan file-based routing, streaming SSR, dan registri komponen.
+				Siap produksi sejak awal — keamanan, performa, dan keandalan sudah terpasang. Lengkap dengan
+				file-based routing, streaming SSR, dan registri komponen.
 			</p>
 			<div class="flex flex-wrap gap-3 justify-center pt-2">
 				<a href="/id/getting-started">
@@ -57,9 +53,7 @@
 	<section class="px-4 py-20 border-t border-border">
 		<div class="mx-auto max-w-5xl">
 			<h2 class="text-3xl font-bold text-center mb-4">Semua yang Anda butuhkan</h2>
-			<p class="text-center text-muted-foreground mb-12">
-				Framework lengkap yang siap pakai.
-			</p>
+			<p class="text-center text-muted-foreground mb-12">Framework lengkap yang siap pakai.</p>
 			<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
 				{#each [{ icon: "⚡", title: "Ditenagai Bun", desc: "Dev server instan, build cepat, dan satu runtime untuk segalanya." }, { icon: "🎯", title: "File-based routing", desc: "+page.svelte, +layout.svelte, +server.ts — seperti SvelteKit." }, { icon: "🌊", title: "Streaming SSR", desc: "Render HTML sambil dialirkan (streaming) dengan metadata non-blocking." }, { icon: "🔒", title: "Aman dari awal", desc: "Proteksi CSRF, XSS escaping, dan security headers — tanpa konfigurasi." }, { icon: "🧩", title: "Registri komponen", desc: "Tambahkan komponen bergaya shadcn dengan `bun x bosia@latest add button`." }, { icon: "📐", title: "TypeScript first", desc: "Tipe PageData dan LayoutData dibuat otomatis untuk setiap rute." }] as f}
 					<div class="rounded-lg border border-border p-5 space-y-2">

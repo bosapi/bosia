@@ -2,22 +2,22 @@
 name: bosia-saas-landing
 description: SaaS marketing landing — hero, feature grid, pricing tease, testimonials, integrations, CTA. Heavier than `bosia-landing`.
 triggers:
-    - saas landing
-    - saas homepage
-    - product marketing
+  - saas landing
+  - saas homepage
+  - product marketing
 od:
-    mode: page-scaffold
-    category: marketing
+  mode: page-scaffold
+  category: marketing
 bosia:
-    design: true
-    requires:
-        blocks: [cards/feature-editorial]
-        themes: [editorial]
-        components: [ui/button, ui/card, ui/badge, ui/separator, ui/avatar, ui/typography]
-        feats: []
-    targets:
-        routes: ["src/routes/(public)/+page.svelte"]
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: [cards/feature-editorial]
+    themes: [editorial]
+    components: [ui/button, ui/card, ui/badge, ui/separator, ui/avatar, ui/typography]
+    feats: []
+  targets:
+    routes: ["src/routes/(public)/+page.svelte"]
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-saas-landing

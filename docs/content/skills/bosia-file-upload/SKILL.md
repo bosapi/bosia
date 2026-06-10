@@ -2,30 +2,30 @@
 name: bosia-file-upload
 description: Image/file upload — install the file-upload feature + upload-area block, wire the UI, and persist to per-app storage (local or S3) with auto WebP resize.
 triggers:
-    - upload image
-    - file upload
-    - avatar
-    - profile picture
-    - media library
-    - attachment
-    - drag and drop upload
-    - upload
-    - delete file
-    - unlink
-    - S3
+  - upload image
+  - file upload
+  - avatar
+  - profile picture
+  - media library
+  - attachment
+  - drag and drop upload
+  - upload
+  - delete file
+  - unlink
+  - S3
 od:
-    mode: scaffold
-    category: framework
+  mode: scaffold
+  category: framework
 bosia:
-    design: true
-    requires:
-        blocks: [files/upload-area]
-        themes: []
-        components: []
-        feats: [file-upload]
-    targets:
-        routes: ["api/files", "api/files/[id]"]
-    stack: [elysia-routes, svelte-runes]
+  design: true
+  requires:
+    blocks: [files/upload-area]
+    themes: []
+    components: []
+    feats: [file-upload]
+  targets:
+    routes: ["api/files", "api/files/[id]"]
+  stack: [elysia-routes, svelte-runes]
 ---
 
 # bosia-file-upload
@@ -161,10 +161,10 @@ If `file_upload_install` returns non-empty stderr OR a `404` anywhere in stdout/
 3. Import `UploadArea` into the target page/form.
 4. On `onUploaded`, store `record.url` on the parent entity (user.avatarUrl, post.coverUrl, etc.).
 5. Run drizzle migration so the `files` table exists:
-    ```
-    bun run db:generate   # drizzle-kit generate
-    bun run db:migrate    # apply
-    ```
+   ```
+   bun run db:generate   # drizzle-kit generate
+   bun run db:migrate    # apply
+   ```
 6. Verify in-browser: drag an image, see the toast, refresh and confirm the URL renders.
 
 ## Anti-patterns

@@ -2,27 +2,27 @@
 name: bosia-bun-runtime
 description: Bun-native APIs replacing Node packages that crash under Bun. Use Bun.password (NOT @node-rs/argon2, argon2, bcrypt). Bun.file for fs reads. Banned NAPI packages list. Covers password hashing, hashing config, common Node→Bun substitutions.
 triggers:
-    - password hashing
-    - argon2
-    - bcrypt
-    - Bun.password
-    - native module
-    - NAPI
-    - node-rs
-    - hash password
+  - password hashing
+  - argon2
+  - bcrypt
+  - Bun.password
+  - native module
+  - NAPI
+  - node-rs
+  - hash password
 od:
-    mode: convention
-    category: runtime
+  mode: convention
+  category: runtime
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [bun]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [bun]
 ---
 
 # bosia-bun-runtime

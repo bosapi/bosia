@@ -22,20 +22,14 @@
 
 	function registerPane(): number {
 		const index = paneCount++;
-		sizes = Array.from(
-			{ length: paneCount },
-			() => Math.round((100 / paneCount) * 1000) / 1000,
-		);
+		sizes = Array.from({ length: paneCount }, () => Math.round((100 / paneCount) * 1000) / 1000);
 		return index;
 	}
 
 	function unregisterPane(index: number): void {
 		paneCount--;
 		if (paneCount > 0) {
-			sizes = Array.from(
-				{ length: paneCount },
-				() => Math.round((100 / paneCount) * 1000) / 1000,
-			);
+			sizes = Array.from({ length: paneCount }, () => Math.round((100 / paneCount) * 1000) / 1000);
 		} else {
 			sizes = [];
 		}

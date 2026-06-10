@@ -70,10 +70,7 @@ export async function loadBosiaConfig(cwd: string = process.cwd()): Promise<Bosi
 	// the project's own node_modules. /tmp would have no node_modules to walk into.
 	const cacheDir = join(cwd, ".bosia");
 	mkdirSync(cacheDir, { recursive: true });
-	const tmpFile = join(
-		cacheDir,
-		`config.${Date.now()}.${Math.random().toString(36).slice(2)}.mjs`,
-	);
+	const tmpFile = join(cacheDir, `config.${Date.now()}.${Math.random().toString(36).slice(2)}.mjs`);
 	await Bun.write(tmpFile, code);
 
 	let mod: { default?: BosiaConfig };

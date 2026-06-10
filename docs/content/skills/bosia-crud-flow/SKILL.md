@@ -2,45 +2,45 @@
 name: bosia-crud-flow
 description: List + create + edit + delete a single resource. Table view + dialog form + RBAC + Drizzle service. Spans table, service, routes, UI.
 triggers:
-    - crud
-    - resource
-    - list create edit delete
-    - admin resource
-    - form action
-    - use:enhance
-    - create form
-    - edit form
-    - delete action
+  - crud
+  - resource
+  - list create edit delete
+  - admin resource
+  - form action
+  - use:enhance
+  - create form
+  - edit form
+  - delete action
 od:
-    mode: flow
-    category: data
+  mode: flow
+  category: data
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: [neutral]
-        components:
-            [
-                ui/data-table,
-                ui/dialog,
-                ui/form,
-                ui/field,
-                ui/input,
-                ui/button,
-                ui/badge,
-                ui/dropdown-menu,
-                ui/alert-dialog,
-                ui/empty,
-                ui/skeleton,
-            ]
-        feats: [drizzle]
-    targets:
-        routes:
-            - "src/routes/(private)/<resource>/+page.svelte"
-            - "src/routes/(private)/<resource>/+page.server.ts"
-            - "src/routes/(private)/<resource>/[id]/+page.svelte"
-            - "src/routes/(private)/<resource>/[id]/+page.server.ts"
-    stack: [svelte-5-runes, tailwind-v4, elysia-routes, drizzle]
+  design: false
+  requires:
+    blocks: []
+    themes: [neutral]
+    components:
+      [
+        ui/data-table,
+        ui/dialog,
+        ui/form,
+        ui/field,
+        ui/input,
+        ui/button,
+        ui/badge,
+        ui/dropdown-menu,
+        ui/alert-dialog,
+        ui/empty,
+        ui/skeleton,
+      ]
+    feats: [drizzle]
+  targets:
+    routes:
+      - "src/routes/(private)/<resource>/+page.svelte"
+      - "src/routes/(private)/<resource>/+page.server.ts"
+      - "src/routes/(private)/<resource>/[id]/+page.svelte"
+      - "src/routes/(private)/<resource>/[id]/+page.server.ts"
+  stack: [svelte-5-runes, tailwind-v4, elysia-routes, drizzle]
 ---
 
 # bosia-crud-flow

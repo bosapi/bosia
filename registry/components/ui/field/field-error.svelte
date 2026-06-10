@@ -17,12 +17,7 @@
 </script>
 
 {#if ctx.error || children}
-	<p
-		id={ctx.errorId}
-		role="alert"
-		class={cn("text-destructive text-sm", className)}
-		{...restProps}
-	>
+	<p id={ctx.errorId} role="alert" class={cn("text-destructive text-sm", className)} {...restProps}>
 		{#if children}
 			{@render children()}
 		{:else}

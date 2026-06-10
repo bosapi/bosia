@@ -2,26 +2,26 @@
 name: bosia-docs-site
 description: 3-column docs — left sidebar nav, center content (prose), right TOC. Sticky columns. Code blocks with copy. Search command palette.
 triggers:
-    - docs site
-    - documentation
-    - 3-column docs
-    - reference site
+  - docs site
+  - documentation
+  - 3-column docs
+  - reference site
 od:
-    mode: page-scaffold
-    category: docs
+  mode: page-scaffold
+  category: docs
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: [neutral]
-        components:
-            [ui/sidebar, ui/typography, ui/separator, ui/command, ui/button, ui/scroll-area, ui/kbd]
-        feats: []
-    targets:
-        routes:
-            - "src/routes/docs/+layout.svelte"
-            - "src/routes/docs/[...slug]/+page.svelte"
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: [neutral]
+    components:
+      [ui/sidebar, ui/typography, ui/separator, ui/command, ui/button, ui/scroll-area, ui/kbd]
+    feats: []
+  targets:
+    routes:
+      - "src/routes/docs/+layout.svelte"
+      - "src/routes/docs/[...slug]/+page.svelte"
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-docs-site

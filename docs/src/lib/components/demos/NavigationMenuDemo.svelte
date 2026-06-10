@@ -30,21 +30,15 @@
 						<li>
 							<NavigationMenuLink href="/getting-started">
 								<div class="text-sm font-medium leading-none">Introduction</div>
-								<p
-									class="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground"
-								>
+								<p class="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground">
 									Install Bosia and scaffold your first app.
 								</p>
 							</NavigationMenuLink>
 						</li>
 						<li>
 							<NavigationMenuLink href="/project-structure">
-								<div class="text-sm font-medium leading-none">
-									Project Structure
-								</div>
-								<p
-									class="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground"
-								>
+								<div class="text-sm font-medium leading-none">Project Structure</div>
+								<p class="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground">
 									Learn the conventions of a Bosia app.
 								</p>
 							</NavigationMenuLink>

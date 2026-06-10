@@ -32,9 +32,7 @@
 		return col.enableSorting !== false;
 	}
 
-	function resolveHeader(
-		col: ColumnDef<any>,
-	): { text: string } | { descriptor: RenderDescriptor } {
+	function resolveHeader(col: ColumnDef<any>): { text: string } | { descriptor: RenderDescriptor } {
 		if (typeof col.header === "string") return { text: col.header };
 		return {
 			descriptor: col.header({
@@ -50,11 +48,7 @@
 		{#each columns as col (col.id)}
 			{@const resolved = resolveHeader(col)}
 			<TableHead
-				class={cn(
-					"px-4 text-sm",
-					isSortable(col) && "cursor-pointer select-none",
-					col.headerClass,
-				)}
+				class={cn("px-4 text-sm", isSortable(col) && "cursor-pointer select-none", col.headerClass)}
 				onclick={() => isSortable(col) && handleSort(col)}
 			>
 				<div class="flex items-center gap-1">
@@ -63,18 +57,13 @@
 					{:else if resolved.descriptor.type === "snippet"}
 						{@render resolved.descriptor.snippet()}
 					{:else}
-						<svelte:component
-							this={resolved.descriptor.component}
-							{...resolved.descriptor.props}
-						/>
+						<svelte:component this={resolved.descriptor.component} {...resolved.descriptor.props} />
 					{/if}
 					{#if isSortable(col)}
 						<span
 							class={cn(
 								"text-xs",
-								sort?.id === col.id
-									? "text-foreground"
-									: "text-muted-foreground/50",
+								sort?.id === col.id ? "text-foreground" : "text-muted-foreground/50",
 							)}
 						>
 							{getSortIcon(col)}

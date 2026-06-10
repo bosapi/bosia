@@ -2,25 +2,25 @@
 name: bosia-routing
 description: File-based routing in Bosia — `+page.svelte` registers the route; folders with only `+page.server.ts` 404. Action-only endpoints use `+server.ts`. Page data does not auto-merge with layout data.
 triggers:
-    - new route
-    - add page
-    - server action
-    - form action
-    - layout data
-    - logout endpoint
+  - new route
+  - add page
+  - server action
+  - form action
+  - layout data
+  - logout endpoint
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes, elysia-routes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes, elysia-routes]
 ---
 
 # bosia-routing

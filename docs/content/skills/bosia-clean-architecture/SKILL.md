@@ -2,31 +2,31 @@
 name: bosia-clean-architecture
 description: Strict controller → service → repository layering per feature. Routes never import `db` or tables. Validators derived from drizzle tables via valibot. Scaffolds new features and refactors violations.
 triggers:
-    - new feature
-    - clean architecture
-    - layered architecture
-    - service layer
-    - repository layer
-    - controller service repository
-    - db in route
-    - db in loader
-    - +page.server.ts db
-    - valibot validator
-    - drizzle-valibot
-    - refactor route handler
+  - new feature
+  - clean architecture
+  - layered architecture
+  - service layer
+  - repository layer
+  - controller service repository
+  - db in route
+  - db in loader
+  - +page.server.ts db
+  - valibot validator
+  - drizzle-valibot
+  - refactor route handler
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: [drizzle]
-    targets:
-        routes: []
-    stack: [drizzle, valibot, drizzle-valibot, elysia-routes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: [drizzle]
+  targets:
+    routes: []
+  stack: [drizzle, valibot, drizzle-valibot, elysia-routes]
 ---
 
 # bosia-clean-architecture

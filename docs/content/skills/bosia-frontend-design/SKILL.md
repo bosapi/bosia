@@ -2,30 +2,30 @@
 name: bosia-frontend-design
 description: Commit to a BOLD aesthetic direction before emitting UI. Avoid generic AI slop — distinctive typography, dominant colors with sharp accents, intentional spatial composition, atmospheric backgrounds. Bosia-flavored (Svelte 5 + theme tokens + registry-first).
 triggers:
-    - aesthetic direction
-    - distinctive design
-    - design vision
-    - look and feel
-    - polish ui
-    - hero design
-    - landing aesthetic
-    - avoid generic
+  - aesthetic direction
+  - distinctive design
+  - design vision
+  - look and feel
+  - polish ui
+  - hero design
+  - landing aesthetic
+  - avoid generic
 od:
-    mode: convention
-    category: design
+  mode: convention
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: [neutral, editorial]
-        components: []
-        feats: []
-    targets:
-        files:
-            - "BRIEF.md"
-            - "src/app.css"
-        routes: []
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: [neutral, editorial]
+    components: []
+    feats: []
+  targets:
+    files:
+      - "BRIEF.md"
+      - "src/app.css"
+    routes: []
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-frontend-design
@@ -73,12 +73,12 @@ See `references/aesthetic-directions.md` for fuller breakdowns.
 - **Avoid**: Inter, Roboto, Arial, system stack, Space Grotesk (overused).
 - **Pair**: one distinctive **display** face + one refined **body** face. Or commit to a single mono.
 - **Suggestions by direction** (not a script — pick what fits):
-    - Editorial → `Fraunces` / `Cormorant` display + `Inter Tight` or `Newsreader` body.
-    - Brutalist → `Departure Mono` or `JetBrains Mono` for everything.
-    - Luxury → `Tenor Sans` or `Cormorant` display + `Inter Tight` body.
-    - Retro → `VT323` / `Major Mono Display` + `IBM Plex Mono` body.
-    - Maximalist → `Boldonse` or `Caprasimo` display + `DM Sans` body.
-    - Soft → `Fraunces` (with variable axis) + `Plus Jakarta Sans`.
+  - Editorial → `Fraunces` / `Cormorant` display + `Inter Tight` or `Newsreader` body.
+  - Brutalist → `Departure Mono` or `JetBrains Mono` for everything.
+  - Luxury → `Tenor Sans` or `Cormorant` display + `Inter Tight` body.
+  - Retro → `VT323` / `Major Mono Display` + `IBM Plex Mono` body.
+  - Maximalist → `Boldonse` or `Caprasimo` display + `DM Sans` body.
+  - Soft → `Fraunces` (with variable axis) + `Plus Jakarta Sans`.
 - **Wire it**: load via Fontsource or Google Fonts in `app.css`, override Tailwind's `font-sans` / `font-serif` / `font-mono` in `app.css` `@theme` block — never per-component `style="font-family:"`.
 
 ### 3. Color stance — dominant + sharp accent

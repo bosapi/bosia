@@ -137,11 +137,7 @@
 		return "image/jpeg";
 	}
 
-	async function getCroppedImg(
-		src: string,
-		pixels: PixelCrop,
-		shape: Shape,
-	): Promise<Blob | null> {
+	async function getCroppedImg(src: string, pixels: PixelCrop, shape: Shape): Promise<Blob | null> {
 		const image = await createImage(src);
 
 		// Step 1 — extract the crop into an off-screen canvas at native pixels.
@@ -199,10 +195,7 @@
 </script>
 
 <div class="flex w-full flex-col gap-4">
-	<div
-		class="relative w-full overflow-hidden rounded-lg border bg-black/5"
-		style="height: 400px;"
-	>
+	<div class="relative w-full overflow-hidden rounded-lg border bg-black/5" style="height: 400px;">
 		<Cropper
 			image={imageSrc}
 			bind:crop

@@ -2,25 +2,25 @@
 name: bosia-cors
 description: CORS recipe — when to enable, env vars (`CORS_ALLOWED_ORIGINS` + friends), preflight rules, credentials mode, and how to tell a real CORS failure apart from a CSRF rejection that looks like one.
 triggers:
-    - cors
-    - cross-origin
-    - access-control-allow-origin
-    - preflight
-    - "Cross-origin request blocked"
-    - iframe preview
+  - cors
+  - cross-origin
+  - access-control-allow-origin
+  - preflight
+  - "Cross-origin request blocked"
+  - iframe preview
 od:
-    mode: convention
-    category: framework
+  mode: convention
+  category: framework
 bosia:
-    design: false
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [elysia-routes]
+  design: false
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [elysia-routes]
 ---
 
 # bosia-cors

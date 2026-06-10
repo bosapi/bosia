@@ -2,24 +2,24 @@
 name: bosia-block-compose
 description: Registry-first composition — call `list_registry()`, prefer blocks over hand-rolling. If no block fits, compose from `ui/*` primitives before writing custom DOM.
 triggers:
-    - new section
-    - hero
-    - feature grid
-    - pricing card
-    - data table
+  - new section
+  - hero
+  - feature grid
+  - pricing card
+  - data table
 od:
-    mode: convention
-    category: design
+  mode: convention
+  category: design
 bosia:
-    design: true
-    requires:
-        blocks: []
-        themes: []
-        components: []
-        feats: []
-    targets:
-        routes: []
-    stack: [svelte-5-runes, tailwind-v4]
+  design: true
+  requires:
+    blocks: []
+    themes: []
+    components: []
+    feats: []
+  targets:
+    routes: []
+  stack: [svelte-5-runes, tailwind-v4]
 ---
 
 # bosia-block-compose

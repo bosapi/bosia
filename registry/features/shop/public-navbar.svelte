@@ -3,10 +3,8 @@
 	import { Navbar } from "$lib/components/ui/navbar";
 	import type { SessionUser } from "../../features/auth";
 
-	let {
-		currentPath = "/",
-		user = undefined,
-	}: { currentPath?: string; user?: SessionUser | null } = $props();
+	let { currentPath = "/", user = undefined }: { currentPath?: string; user?: SessionUser | null } =
+		$props();
 
 	const links = [
 		{ label: "Home", href: "/" },

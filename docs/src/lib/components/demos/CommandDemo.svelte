@@ -18,9 +18,7 @@
 			<CommandEmpty />
 			<CommandGroup heading="Suggestions">
 				<CommandItem value="calendar" keywords={["schedule", "date"]}>Calendar</CommandItem>
-				<CommandItem value="search-emoji" keywords={["emoji", "face"]}>
-					Search Emoji
-				</CommandItem>
+				<CommandItem value="search-emoji" keywords={["emoji", "face"]}>Search Emoji</CommandItem>
 				<CommandItem value="calculator" disabled>Calculator</CommandItem>
 			</CommandGroup>
 			<CommandSeparator />

@@ -121,9 +121,7 @@ function extractBindings(ast: AnyNode): Binding[] {
 				case "ImportDeclaration": {
 					const sourceNode = stmt.source as AnyNode | undefined;
 					const source =
-						sourceNode && typeof sourceNode.value === "string"
-							? (sourceNode.value as string)
-							: "";
+						sourceNode && typeof sourceNode.value === "string" ? (sourceNode.value as string) : "";
 					const specs = stmt.specifiers as AnyNode[] | undefined;
 					if (!Array.isArray(specs)) break;
 					for (const spec of specs) {
@@ -344,8 +342,7 @@ function collectTemplateRefs(source: string, fragment: AnyNode): TemplateRef[] {
 			// name into the surrounding scope so `<MySnippet/>` doesn't false-
 			// positive. The expression's name is the snippet's identifier.
 			const expr = n.expression as AnyNode | undefined;
-			const snippetName =
-				expr && typeof expr.name === "string" ? (expr.name as string) : null;
+			const snippetName = expr && typeof expr.name === "string" ? (expr.name as string) : null;
 			if (snippetName && scopeStack.length > 0) {
 				scopeStack[scopeStack.length - 1].add(snippetName);
 			} else if (snippetName) {
