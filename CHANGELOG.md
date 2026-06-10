@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.23] - 2026-06-11
+
+### Changed
+
+- Skills warn against installing the `postgres` or `pg` npm packages — Bun's built-in `Bun.SQL` covers Postgres.
+- `bosia-bun-runtime` gains a Postgres section with the `FailedToOpenSocket` URL-string gotcha and object-form fix.
+- `bosia-drizzle-feature` adds R11: registry files count relative imports from their `meta.json` target, not the source.
+
+### Removed
+
+- Dropped unused `postgres` runtime dep from `shop` template `package.json` (scaffold uses `Bun.SQL`).
+
+---
+
 ## [0.6.22] - 2026-06-10
 
 ### Added

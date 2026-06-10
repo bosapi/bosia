@@ -1,7 +1,19 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.22**
+> Current version: **0.6.23**
+
+---
+
+## 0.6.23 (2026-06-11) — Surface yesterday's shop-template bugs in skills + ban the `postgres` npm pkg
+
+> Yesterday's 0.6.22 shipped the `shop` template and patched 5 install-blocking bugs in code. Three of them reflect cross-cutting gotchas future registry/framework authors WILL hit again, and the shop `package.json` still carried a stale `postgres` dep that the `Bun.SQL` scaffold doesn't need. This is a doc/clarity follow-up: surface the gotchas in the skills layer (where future AI runs will read them) and remove the stale dep so the lock file doesn't keep installing it.
+
+- [x] 🟠 `packages/bosia/templates/shop/package.json` — drop unused `"postgres": "^3.4.0"`; scaffold uses Bun-native `drizzle-orm/bun-sql` against `Bun.SQL`, no userland driver needed.
+- [x] 🟠 `docs/content/skills/bosia-bun-runtime/SKILL.md` — new `## Postgres — Bun.SQL` section with the object-form snippet + Bun 1.3.x `FailedToOpenSocket` URL-string gotcha; banned-packages table gains `postgres` and `pg` rows pointing at `Bun.SQL` + `drizzle-orm/bun-sql`.
+- [x] 🟠 `docs/content/skills/bosia-database-setup/SKILL.md` — reversed the misleading "`bun add postgres`" line into a "**no install**" directive cross-linking [[bosia-bun-runtime]]; R5 gains a one-liner about the URL-string gotcha so the gotcha is discoverable from the database side without duplicating code.
+- [x] 🟠 `docs/content/skills/bosia-drizzle-feature/SKILL.md` — new R11 ("Registry files use import paths from their **target** location") covering `meta.json#files[].target` depth, with the `auth` feature's 3-up `../../../features/auth` import as the canonical example; P0 checklist gains a matching gate.
+- [ ] ⚪ CLI-internal bugs (block-deps 404 routing, `--local` flag drop, dialect default under `skipPrompts:true`) deliberately omitted — code-only fixes, no public API to document.
 
 ---
 

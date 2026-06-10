@@ -79,7 +79,7 @@ When the user says "pakai postgres" / "ganti ke mysql" / etc.:
    - sqlite memory: `sqlite://:memory:` (warn: flushes on restart)
 5. **Update `.env.example`** with the same key, mask the password.
 6. **Install the driver** if the engine changed from sqlite:
-   - postgres: `bun add postgres` (Bun's built-in `Bun.SQL` already handles it; only add `postgres` if the scaffold uses node-postgres adapter — check first)
+   - postgres: **no install** — `Bun.SQL` is built in. The scaffold uses `drizzle-orm/bun-sql` against `Bun.SQL` directly. Do not install `postgres` or `pg`. See [[bosia-bun-runtime]].
    - mysql: `bun add mysql2`
    - sqlite: no install needed.
      Use the `bash` / `shell` tool.
@@ -124,6 +124,8 @@ Don't dump everything into `schemas.ts`. Each table lives next to its feature (`
 ### R5 — `db.ts` import path tracks the engine
 
 `drizzle-orm/bun-sqlite` for sqlite, `drizzle-orm/bun-sql` for postgres (Bun.SQL), `drizzle-orm/mysql2` for mysql. Don't mix.
+
+For postgres, the scaffold constructs `Bun.SQL` from a parsed `DATABASE_URL` (object form) — the URL-string form throws `FailedToOpenSocket` on Bun 1.3.x. See [[bosia-bun-runtime]] for the gotcha.
 
 ## Anti-patterns
 

@@ -187,6 +187,20 @@ export const students = pgTable("students", { ... });   // variable + SQL identi
 - Compound names use the same plural convention: `order_items`, `cart_items`, `permissions`.
 - Foreign-key **column** names stay singular — `userId`, `productId` — because each reference points to one row.
 
+### R11 — Registry files use import paths from their **target** location, not their source
+
+Files emitted from `registry/features/<x>/` land at a specific path inside the consumer app (declared in `meta.json#files[].target`). Write imports as if you were in the target file, not in `registry/features/<x>/`.
+
+Example: `registry/features/auth/login-page.server.ts` ships to `src/routes/(public)/login/+page.server.ts`. From that target path, `src/features/auth/index.ts` is **3 dirs up**, so the import is:
+
+```ts
+import { auth } from "../../../features/auth"; // ✅ 3 levels — matches the target depth
+```
+
+Not `"../../features/auth"` — that resolves to `src/routes/features/auth` from inside `(public)/login/` and 404s.
+
+Apply the same rule to `.svelte` pages and any other file with a registry `target`. When in doubt, count dots from the **final destination**, not from the registry source.
+
 ## Workflow
 
 1. Add `*.table.ts` with schema.
@@ -220,6 +234,7 @@ P0:
 - [ ] No applied seed file edited.
 - [ ] Every seed is idempotent (re-runnable).
 - [ ] Migration generated for schema change.
+- [ ] Registry files' relative imports count from `meta.json#files[].target`, not from the registry source path (R11).
 
 P1:
 

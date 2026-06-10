@@ -52,12 +52,14 @@ export async function verifyPassword(pw: string, hash: string): Promise<boolean>
 
 ## Banned packages (do not import or install)
 
-| Package           | Why banned                         | Bun-native replacement    |
-| ----------------- | ---------------------------------- | ------------------------- |
-| `@node-rs/argon2` | NAPI binding incompatible with Bun | `Bun.password`            |
-| `argon2`          | NAPI binding incompatible with Bun | `Bun.password`            |
-| `bcrypt`          | NAPI binding incompatible with Bun | `Bun.password` (argon2id) |
-| `better-sqlite3`  | NAPI binding incompatible with Bun | `bun:sqlite`              |
+| Package           | Why banned                                             | Bun-native replacement            |
+| ----------------- | ------------------------------------------------------ | --------------------------------- |
+| `@node-rs/argon2` | NAPI binding incompatible with Bun                     | `Bun.password`                    |
+| `argon2`          | NAPI binding incompatible with Bun                     | `Bun.password`                    |
+| `bcrypt`          | NAPI binding incompatible with Bun                     | `Bun.password` (argon2id)         |
+| `better-sqlite3`  | NAPI binding incompatible with Bun                     | `bun:sqlite`                      |
+| `postgres`        | Userland Postgres driver — `Bun.SQL` already covers it | `Bun.SQL` + `drizzle-orm/bun-sql` |
+| `pg`              | node-postgres NAPI bindings; redundant with `Bun.SQL`  | `Bun.SQL` + `drizzle-orm/bun-sql` |
 
 If you see any of these in `package.json` of a Bosia user app, that's a bug — replace with the Bun-native API.
 
@@ -116,6 +118,30 @@ Credentials and endpoint come from env: `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KE
 **Do not invent a `S3_URL` DSN.** It is not a standard (AWS SDK, Bun, rclone, mc all use discrete vars); a fake one will mislead future AI agents. Stick to the names above.
 
 Bosia's `file-upload` feature uses `Bun.s3` directly — see `registry/features/file-upload/storage-s3.ts` and [[bosia-file-upload]] R3 for MinIO/R2/AWS endpoint examples. Full API: https://bun.com/docs/runtime/s3.
+
+## Postgres — `Bun.SQL`
+
+Bun ships a built-in Postgres client. **Do not install `postgres` (postgres.js) or `pg` (node-postgres).** Drizzle adapts directly to it via `drizzle-orm/bun-sql`.
+
+```ts
+import { drizzle } from "drizzle-orm/bun-sql";
+import * as schema from "./schemas";
+
+const u = new URL(process.env.DATABASE_URL!);
+const client = new Bun.SQL({
+	hostname: u.hostname,
+	port: u.port ? Number(u.port) : 5432,
+	user: u.username ? decodeURIComponent(u.username) : undefined,
+	password: u.password ? decodeURIComponent(u.password) : undefined,
+	database: u.pathname.slice(1) || undefined,
+});
+
+export const db = drizzle(client, { schema });
+```
+
+**Gotcha (Bun 1.3.x):** `new Bun.SQL("postgres://...")` (URL-string form) throws `FailedToOpenSocket` even on a valid URL. Use the **object form** above. The framework's `registry/features/drizzle/drizzle-index.pg.ts` parses `DATABASE_URL` for exactly this reason. Track upstream — when Bun ships the URL-string fix, the parse step can be dropped.
+
+**Credentials env:** `DATABASE_URL=postgres://user:pass@host:5432/db`. No `postgres` package needed.
 
 ## Spawning processes — `Bun.spawn`
 
