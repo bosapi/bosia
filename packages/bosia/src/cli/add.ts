@@ -239,8 +239,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 `;
 
-export function ensureUtils() {
-	const utilsPath = join(process.cwd(), "src", "lib", "utils.ts");
+export function ensureUtils(cwd: string = process.cwd()) {
+	const utilsPath = join(cwd, "src", "lib", "utils.ts");
 	if (!existsSync(utilsPath)) {
 		mkdirSync(dirname(utilsPath), { recursive: true });
 		writeFileSync(utilsPath, UTILS_CONTENT, "utf-8");

@@ -1,6 +1,7 @@
 {
 	"features": ["auth", "rbac", "file-upload", "shop"],
 	"featureOptions": {
+		"drizzle.dialect": "postgres",
 		"auth.dialect": "postgres",
 		"rbac.dialect": "postgres",
 		"file-upload.dialect": "postgres",

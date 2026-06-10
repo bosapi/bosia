@@ -1,3 +1,4 @@
+import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import { db, engine } from "./index";
 
 const MIGRATIONS_FOLDER = "./src/features/drizzle/migrations";
@@ -7,13 +8,7 @@ async function run() {
 	if (engine === "sqlite-memory") {
 		console.warn("⚠️  sqlite-memory: schema applies to ephemeral DB and is lost on restart.");
 	}
-	if (engine === "postgres" || engine === "mysql") {
-		const { migrate } = await import("drizzle-orm/bun-sql/migrator");
-		await migrate(db as never, { migrationsFolder: MIGRATIONS_FOLDER });
-	} else {
-		const { migrate } = await import("drizzle-orm/bun-sqlite/migrator");
-		migrate(db as never, { migrationsFolder: MIGRATIONS_FOLDER });
-	}
+	migrate(db as never, { migrationsFolder: MIGRATIONS_FOLDER });
 	console.log("Done.");
 	process.exit(0);
 }

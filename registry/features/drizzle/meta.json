@@ -2,11 +2,38 @@
 	"name": "drizzle",
 	"description": "Adds Drizzle ORM (postgres / mysql / sqlite via Bun built-in driver) — DB connection, schema aggregator, migration dir, and seed runner.",
 	"components": [],
+	"options": [
+		{
+			"name": "dialect",
+			"flag": "-d",
+			"long": "--dialect",
+			"prompt": "Which database dialect should drizzle use?",
+			"choices": [
+				{ "value": "sqlite", "label": "SQLite", "hint": "default — zero-config" },
+				{ "value": "postgres", "label": "Postgres" },
+				{ "value": "mysql", "label": "MySQL" }
+			],
+			"default": "sqlite"
+		}
+	],
 	"files": [
 		{
-			"src": "drizzle-index.ts",
+			"src": "drizzle-index.pg.ts",
 			"target": "src/features/drizzle/index.ts",
-			"strategy": "skip-if-exists"
+			"strategy": "skip-if-exists",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "drizzle-index.mysql.ts",
+			"target": "src/features/drizzle/index.ts",
+			"strategy": "skip-if-exists",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "drizzle-index.sqlite.ts",
+			"target": "src/features/drizzle/index.ts",
+			"strategy": "skip-if-exists",
+			"when": { "dialect": "sqlite" }
 		},
 		{
 			"src": "drizzle-schemas.ts",
@@ -19,14 +46,40 @@
 			"strategy": "skip-if-exists"
 		},
 		{
-			"src": "seed-runner.ts",
+			"src": "seed-runner.pg.ts",
 			"target": "src/features/drizzle/seeds/runner.ts",
-			"strategy": "skip-if-exists"
+			"strategy": "skip-if-exists",
+			"when": { "dialect": "postgres" }
 		},
 		{
-			"src": "drizzle-migrate.ts",
+			"src": "seed-runner.mysql.ts",
+			"target": "src/features/drizzle/seeds/runner.ts",
+			"strategy": "skip-if-exists",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "seed-runner.sqlite.ts",
+			"target": "src/features/drizzle/seeds/runner.ts",
+			"strategy": "skip-if-exists",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "drizzle-migrate.pg.ts",
 			"target": "src/features/drizzle/migrate.ts",
-			"strategy": "skip-if-exists"
+			"strategy": "skip-if-exists",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "drizzle-migrate.mysql.ts",
+			"target": "src/features/drizzle/migrate.ts",
+			"strategy": "skip-if-exists",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "drizzle-migrate.sqlite.ts",
+			"target": "src/features/drizzle/migrate.ts",
+			"strategy": "skip-if-exists",
+			"when": { "dialect": "sqlite" }
 		},
 		{
 			"src": "drizzle.config.ts",

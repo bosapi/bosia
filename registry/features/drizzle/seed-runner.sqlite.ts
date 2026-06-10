@@ -8,28 +8,6 @@ interface SeedModule {
 }
 
 async function ensureSeedsTable() {
-	if (engine === "postgres") {
-		await db.execute(sql`CREATE SCHEMA IF NOT EXISTS drizzle`);
-		await db.execute(sql`
-            CREATE TABLE IF NOT EXISTS drizzle.${sql.identifier(SEEDS_TABLE)} (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL UNIQUE,
-                applied_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            )
-        `);
-		return;
-	}
-	if (engine === "mysql") {
-		await db.execute(sql`
-            CREATE TABLE IF NOT EXISTS ${sql.identifier(SEEDS_TABLE)} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(255) NOT NULL UNIQUE,
-                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-		return;
-	}
-	// sqlite (file or memory)
 	await db.run(sql`
         CREATE TABLE IF NOT EXISTS ${sql.identifier(SEEDS_TABLE)} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,37 +18,13 @@ async function ensureSeedsTable() {
 }
 
 async function getAppliedSeeds(): Promise<Set<string>> {
-	if (engine === "postgres") {
-		const rows = await db.execute<{ name: string }>(
-			sql`SELECT name FROM drizzle.${sql.identifier(SEEDS_TABLE)} ORDER BY id`,
-		);
-		return new Set(rows.map((r) => r.name));
-	}
-	if (engine === "mysql") {
-		const rows = await db.execute<{ name: string }>(
-			sql`SELECT name FROM ${sql.identifier(SEEDS_TABLE)} ORDER BY id`,
-		);
-		return new Set(rows.map((r) => r.name));
-	}
 	const rows = (await db.all(
 		sql`SELECT name FROM ${sql.identifier(SEEDS_TABLE)} ORDER BY id`,
-	)) as Array<{
-		name: string;
-	}>;
+	)) as Array<{ name: string }>;
 	return new Set(rows.map((r) => r.name));
 }
 
 async function markSeedApplied(name: string) {
-	if (engine === "postgres") {
-		await db.execute(
-			sql`INSERT INTO drizzle.${sql.identifier(SEEDS_TABLE)} (name) VALUES (${name})`,
-		);
-		return;
-	}
-	if (engine === "mysql") {
-		await db.execute(sql`INSERT INTO ${sql.identifier(SEEDS_TABLE)} (name) VALUES (${name})`);
-		return;
-	}
 	await db.run(sql`INSERT INTO ${sql.identifier(SEEDS_TABLE)} (name) VALUES (${name})`);
 }
 

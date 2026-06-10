@@ -56,7 +56,7 @@ export async function runAddBlock(
 	};
 
 	await initAddRegistry(registryRoot);
-	ensureUtils();
+	ensureUtils(resolvedOptions.cwd);
 
 	console.log(`⬡ Installing block: ${name}\n`);
 

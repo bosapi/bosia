@@ -30,6 +30,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Sidebar user-menu dropdown was clipped by `Sidebar`'s overflow — `floating side="top"` now lets it open upward into the page.
 - `DropdownMenuContent` floating mode: first open was mispositioned because the menu briefly rendered in normal flow before the fixed-position style applied. The class now sets `position: fixed` from the first paint, and the menu stays `visibility: hidden` until the measure resolves — so the first click lands at the same coordinates as subsequent clicks.
 - Sidebar now lists all themes; bosia-theme-tokens skill no longer claims only two ship.
+- Drizzle feature: typecheck failures when a project mixed engine variants — `drizzle/index.ts` now ships per-dialect (pg / mysql / sqlite) so `db.insert / update / delete / select / execute / run` all typecheck.
+- `bun x bosia create --template shop` no longer scatters a stray `src/lib/utils.ts` next to the new project directory; the block installer now writes utils.ts into the project, not into `process.cwd()`.
 
 ---
 
