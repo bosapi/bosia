@@ -1,7 +1,18 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.21**
+> Current version: **0.6.22**
+
+---
+
+## 0.6.22 (2026-06-10) — Sidebar docs + skill (fix three AI mis-uses) + `DropdownMenu` floating mode
+
+> AI agents kept hitting the same three failures when scaffolding a sidebar: (1) wrapping leaf `SidebarMenuItem`s in `DropdownMenu` so the `href` was swallowed and "Dashboard" became un-clickable; (2) skipping the user footer because the doc's stub only showed `v0.1.0`; (3) building the user row as plain markup so Profile/Settings/Sign out had nowhere to live. During the docs/demo build we found the would-be fix (compose `DropdownMenu` in `SidebarFooter`) didn't actually work — `Sidebar` has `overflow-hidden` for the collapse width transition, so the default `position: absolute` menu was clipped invisible. Patched `DropdownMenu` with an opt-in `floating` mode (`position: fixed`, trigger rect via context, viewport clamp) plus a `side` prop so consumers can anchor upward from a bottom trigger.
+
+- [x] ⚪ `docs/content/docs/components/ui/sidebar.md` — new "Choosing the right item shape" decision table (leaf vs. parent vs. label-only) with bold "never wrap in `DropdownMenu`" callout; new "User Footer" section (avatar + name + email, respects `collapsed` via `getSidebarContext()`); new "User Menu (Profile / Logout)" section composing `SidebarFooter` + `DropdownMenu` + `Avatar` with **`floating side="top" anchor={chevronEl}`** so the menu escapes `Sidebar`'s overflow clip and opens from the chevron. No skill cross-references inside the component doc — component docs target humans, skills live in their own tree.
+- [x] ⚪ `docs/content/skills/bosia-sidebar/SKILL.md` — new skill matching `bosia-navigation` / `bosia-dashboard` house style. STOP block names the three failures. R1–R7 cover leaf/parent shape, no-foreign-trigger, `icon` snippet usage, `bind:collapsed` placement, user-footer composition, the floating/side/align table, and `trigger="hover"` opt-in. P0 checklist gates clickable leaves, working dropdown, `floating side="top"`, `justify-start` chevron, and `+server.ts` Sign-out.
+- [x] 🟠 `registry/components/ui/dropdown-menu/dropdown-menu.svelte` — context now exposes `triggerEl` + `setTriggerEl(el)`. `dropdown-menu-trigger.svelte` — `bind:this` on the button, syncs via `untrack` so the registration doesn't loop. `dropdown-menu-content.svelte` — new `floating` (default `false`), `side: "top" | "bottom"` (default `"bottom"`), and `anchor?: HTMLElement` props. When floating, computes `position: fixed` from `anchor.getBoundingClientRect()` (falls back to trigger), clamps to the viewport (8px margin), and re-positions on `scroll`/`resize`. `anchor` lets the menu open from a specific element (e.g. a chevron) instead of the whole trigger row. Non-floating call sites are unchanged.
+- [x] ⚪ `docs/src/lib/components/demos/SidebarDemo.svelte` — leading "Dashboard" leaf with `LayoutDashboard` icon (demonstrates R1); user footer rebuilt with `DropdownMenu` + `Avatar` + `AvatarFallback`, `justify-start` on the trigger (fixes chevron position), `floating side="top" align="start"` on the content (so the menu actually opens).
 
 ---
 

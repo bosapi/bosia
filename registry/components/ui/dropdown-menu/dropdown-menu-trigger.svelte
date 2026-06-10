@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.ts";
-	import { getContext } from "svelte";
+	import { getContext, untrack } from "svelte";
 	import type { Snippet } from "svelte";
 
 	let {
@@ -13,10 +13,21 @@
 		[key: string]: any;
 	} = $props();
 
-	const dropdown = getContext<{ toggle: () => void }>("dropdown");
+	const dropdown = getContext<{
+		toggle: () => void;
+		setTriggerEl?: (el: HTMLElement | undefined) => void;
+	}>("dropdown");
+
+	let buttonEl: HTMLButtonElement | undefined = $state();
+
+	$effect(() => {
+		untrack(() => dropdown?.setTriggerEl?.(buttonEl));
+		return () => untrack(() => dropdown?.setTriggerEl?.(undefined));
+	});
 </script>
 
 <button
+	bind:this={buttonEl}
 	type="button"
 	class={cn(
 		"inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors",

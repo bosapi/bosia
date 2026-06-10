@@ -16,10 +16,17 @@
 	} = $props();
 
 	let rootEl: HTMLDivElement;
+	let triggerEl: HTMLElement | undefined = $state();
 
 	setContext("dropdown", {
 		get open() {
 			return open;
+		},
+		get triggerEl() {
+			return triggerEl;
+		},
+		setTriggerEl(el: HTMLElement | undefined) {
+			triggerEl = el;
 		},
 		toggle() {
 			open = !open;

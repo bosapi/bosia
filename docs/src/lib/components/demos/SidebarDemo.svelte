@@ -9,6 +9,14 @@
 		SidebarFooter,
 		SidebarTrigger,
 	} from "$registry/sidebar";
+	import { Avatar, AvatarFallback } from "$registry/avatar";
+	import {
+		DropdownMenu,
+		DropdownMenuTrigger,
+		DropdownMenuContent,
+		DropdownMenuItem,
+		DropdownMenuSeparator,
+	} from "$registry/dropdown-menu";
 	import {
 		Terminal,
 		Package,
@@ -18,11 +26,23 @@
 		Globe,
 		Map,
 		EllipsisVertical,
-		User,
 		ChevronUp,
+		LayoutDashboard,
 	} from "@lucide/svelte";
 
 	let collapsed = $state(false);
+	let userMenuOpen = $state(false);
+	let chevronEl: HTMLElement | undefined = $state();
+
+	const user = {
+		name: "shadcn",
+		email: "m@example.com",
+		avatar: "",
+	};
+
+	function handleLogout() {
+		alert("Signed out (demo)");
+	}
 </script>
 
 <div class="w-full rounded-lg border overflow-hidden" style="height: 460px;">
@@ -52,7 +72,10 @@
 			<SidebarContent>
 				<SidebarGroup label="Platform">
 					<SidebarMenu>
-						<SidebarMenuItem label="Playground" active trigger="hover">
+						<SidebarMenuItem href="#" label="Dashboard" active>
+							{#snippet icon()}<LayoutDashboard size={16} />{/snippet}
+						</SidebarMenuItem>
+						<SidebarMenuItem label="Playground" trigger="hover">
 							{#snippet icon()}<Terminal size={16} />{/snippet}
 							<SidebarMenuItem href="#" label="History" />
 							<SidebarMenuItem href="#" label="Starred" />
@@ -100,20 +123,46 @@
 			</SidebarContent>
 
 			<SidebarFooter>
-				<div class="flex items-center gap-2">
-					<div
-						class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted"
+				<DropdownMenu bind:open={userMenuOpen} class="block w-full">
+					<DropdownMenuTrigger
+						class="flex w-full items-center justify-between gap-2 rounded-md p-1 hover:bg-sidebar-accent"
 					>
-						<User size={14} class="text-muted-foreground" />
-					</div>
-					{#if !collapsed}
-						<div class="flex flex-1 flex-col leading-tight">
-							<span class="text-sm font-medium">shadcn</span>
-							<span class="text-xs text-muted-foreground">m@example.com</span>
+						<div class="flex min-w-0 items-center gap-2">
+							<Avatar src={user.avatar} alt={user.name} class="h-8 w-8">
+								<AvatarFallback>SH</AvatarFallback>
+							</Avatar>
+							{#if !collapsed}
+								<div class="flex min-w-0 flex-col text-left leading-tight">
+									<span class="truncate text-sm font-medium">{user.name}</span>
+									<span class="truncate text-xs text-muted-foreground"
+										>{user.email}</span
+									>
+								</div>
+							{/if}
 						</div>
-						<ChevronUp size={14} class="text-muted-foreground" />
-					{/if}
-				</div>
+						{#if !collapsed}
+							<span
+								bind:this={chevronEl}
+								class="inline-flex shrink-0 items-center text-muted-foreground transition-transform duration-150"
+								style:transform={userMenuOpen ? "rotate(0deg)" : "rotate(180deg)"}
+							>
+								<ChevronUp size={14} />
+							</span>
+						{/if}
+					</DropdownMenuTrigger>
+					<DropdownMenuContent
+						floating
+						side="top"
+						align="end"
+						anchor={chevronEl}
+						class="min-w-48"
+					>
+						<DropdownMenuItem href="#">Profile</DropdownMenuItem>
+						<DropdownMenuItem href="#">Settings</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem onclick={handleLogout}>Sign out</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</SidebarFooter>
 		</Sidebar>
 

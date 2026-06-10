@@ -14,9 +14,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Docs: file-upload skill explains MinIO / R2 / DO Spaces setup via `S3_ENDPOINT`, plus AWS Jakarta (`ap-southeast-3`).
 - Docs: bun-runtime skill now covers `Bun.s3` (the zero-dep client behind the S3 adapter).
 - Docs: both skills warn against inventing a non-standard `S3_URL` DSN — stick to Bun's discrete `S3_*` env names.
+- Sidebar docs: decision table for leaf vs collapsible vs label-only items, plus a working user-menu footer pattern.
+- New `bosia-sidebar` skill so AI agents stop wrapping `SidebarMenuItem` in `DropdownMenu` and start building the avatar dropdown.
+- `DropdownMenu` gains `floating` mode, a `side` prop, and an `anchor` element prop — menus inside overflow-clipped parents (like Sidebar) actually appear, and can pop from a specific child (e.g. a chevron) rather than the whole trigger.
 
 ### Fixed
 
+- Sidebar user-menu dropdown was clipped by `Sidebar`'s overflow — `floating side="top"` now lets it open upward into the page.
+- `DropdownMenuContent` floating mode: first open was mispositioned because the menu briefly rendered in normal flow before the fixed-position style applied. The class now sets `position: fixed` from the first paint, and the menu stays `visibility: hidden` until the measure resolves — so the first click lands at the same coordinates as subsequent clicks.
 - Sidebar now lists all themes; bosia-theme-tokens skill no longer claims only two ship.
 
 ---

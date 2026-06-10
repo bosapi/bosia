@@ -58,6 +58,18 @@ A composable sidebar with header, scrollable content, grouped menus, collapsible
 </div>
 ```
 
+## Choosing the right item shape
+
+`SidebarMenuItem` auto-branches on its props — you don't pick a different component for leaves vs. parents. Pick the shape from what the item needs to do:
+
+| Use case                                               | Pattern                                                                                                                                                    |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Plain link (Dashboard, Settings)                       | `<SidebarMenuItem href="/x" label="X" />` — pass `href`, no children.                                                                                      |
+| Section with sub-pages (Analytics → Overview, Reports) | `<SidebarMenuItem label="X">…nested items…</SidebarMenuItem>` — pass children, no `href`. Auto-renders as accordion when expanded, popover when collapsed. |
+| Label-only (group hint, no nav)                        | `<SidebarMenuItem label="X" />` — no `href`, no children.                                                                                                  |
+
+> **Never wrap a `SidebarMenuItem` in a `DropdownMenu` or any other trigger.** The component handles parent/leaf branching internally — wrapping a leaf in `DropdownMenu` swallows the `href` and breaks the link.
+
 ## Sub-components
 
 | Component         | Description                                                  |
@@ -123,6 +135,115 @@ Set `trigger="hover"` on a `SidebarMenuItem` to open its collapsed popover on ho
 | Prop      | Type                   | Default   |
 | --------- | ---------------------- | --------- |
 | `trigger` | `"click"` \| `"hover"` | `"click"` |
+
+## User Footer
+
+Put the signed-in user at the bottom of the sidebar. Static variant — avatar + name + email row that collapses to just the avatar in icon mode. Use `getSidebarContext()` to read `collapsed`:
+
+```svelte
+<script lang="ts">
+	import { SidebarFooter, getSidebarContext } from "$lib/components/ui/sidebar";
+	import { Avatar, AvatarFallback } from "$lib/components/ui/avatar";
+
+	let { user }: { user: { name: string; email: string; avatar?: string } } = $props();
+	const sidebar = getSidebarContext();
+</script>
+
+<SidebarFooter>
+	<div class="flex items-center gap-2">
+		<Avatar src={user.avatar} alt={user.name}>
+			<AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+		</Avatar>
+		{#if !sidebar.collapsed}
+			<div class="flex flex-1 flex-col leading-tight">
+				<span class="text-sm font-medium">{user.name}</span>
+				<span class="text-xs text-muted-foreground">{user.email}</span>
+			</div>
+		{/if}
+	</div>
+</SidebarFooter>
+```
+
+## User Menu (Profile / Logout)
+
+Compose `SidebarFooter` with `DropdownMenu` so the user row is a real menu trigger — Profile / Settings / Sign out.
+
+> **Use `floating` and `side="top"` on `DropdownMenuContent`.** The default absolute positioning is clipped by `Sidebar`'s `overflow-hidden`. `floating` switches the menu to `position: fixed` (computed from the trigger rect) so it escapes the sidebar bounds, and `side="top"` opens it upward — away from the bottom edge.
+
+```svelte
+<script lang="ts">
+	import { SidebarFooter, getSidebarContext } from "$lib/components/ui/sidebar";
+	import { Avatar, AvatarFallback } from "$lib/components/ui/avatar";
+	import {
+		DropdownMenu,
+		DropdownMenuTrigger,
+		DropdownMenuContent,
+		DropdownMenuItem,
+		DropdownMenuSeparator,
+	} from "$lib/components/ui/dropdown-menu";
+	import { ChevronUp } from "@lucide/svelte";
+
+	let {
+		user,
+		onLogout,
+	}: {
+		user: { name: string; email: string; avatar?: string };
+		onLogout: () => void;
+	} = $props();
+
+	const sidebar = getSidebarContext();
+	let open = $state(false);
+	let chevronEl: HTMLElement | undefined = $state();
+</script>
+
+<SidebarFooter>
+	<DropdownMenu bind:open class="block w-full">
+		<DropdownMenuTrigger
+			class="flex w-full items-center justify-between gap-2 rounded-md p-1 hover:bg-sidebar-accent"
+		>
+			<div class="flex min-w-0 items-center gap-2">
+				<Avatar src={user.avatar} alt={user.name} class="h-8 w-8">
+					<AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+				</Avatar>
+				{#if !sidebar.collapsed}
+					<div class="flex min-w-0 flex-col text-left leading-tight">
+						<span class="truncate text-sm font-medium">{user.name}</span>
+						<span class="truncate text-xs text-muted-foreground">{user.email}</span>
+					</div>
+				{/if}
+			</div>
+			{#if !sidebar.collapsed}
+				<span
+					bind:this={chevronEl}
+					class="inline-flex shrink-0 items-center text-muted-foreground transition-transform duration-150"
+					style:transform={open ? "rotate(0deg)" : "rotate(180deg)"}
+				>
+					<ChevronUp size={14} />
+				</span>
+			{/if}
+		</DropdownMenuTrigger>
+		<DropdownMenuContent floating side="top" align="end" anchor={chevronEl} class="min-w-48">
+			<DropdownMenuItem href="/profile">Profile</DropdownMenuItem>
+			<DropdownMenuItem href="/settings">Settings</DropdownMenuItem>
+			<DropdownMenuSeparator />
+			<DropdownMenuItem onclick={onLogout}>Sign out</DropdownMenuItem>
+		</DropdownMenuContent>
+	</DropdownMenu>
+</SidebarFooter>
+```
+
+What's load-bearing here:
+
+- **`class="block w-full"` on `DropdownMenu`** — the root is `inline-block` by default, so the inner trigger's `w-full` collapses to content-width. Override with `block w-full` so the trigger actually spans the footer; only then does `justify-between` push the chevron to the right edge.
+- **`justify-between` on the trigger** with two children (avatar+text group, chevron) spaces them to opposite edges. `min-w-0` + `truncate` on the inner flexes keeps long emails from pushing the chevron offscreen.
+- **`anchor={chevronEl}` on `DropdownMenuContent`** — by default the menu positions from the trigger button's rect (so the menu would sit above the avatar). Passing a different element as `anchor` re-anchors the floating menu to that element's rect. Wrap the icon in a `<span>` and `bind:this={chevronEl}` because lucide components don't expose their underlying SVG via `bind:this`.
+- **`bind:open` + `style:transform`** rotates the chevron with the menu state — points down when closed, up when open.
+
+Install the dependencies if missing:
+
+```bash
+bun x bosia@latest add sidebar dropdown-menu avatar
+```
 
 ## Right-Side Sidebar
 
