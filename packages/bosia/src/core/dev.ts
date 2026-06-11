@@ -76,6 +76,41 @@ function broadcastReload() {
 	}
 }
 
+// 503 body served while the inner app server is mid-restart (rebuild after an
+// edit). Must be HTML carrying the SAME SSE reload client as the dev-500 page —
+// the bare text/plain version had no live `/__bosia/sse` connection, so once an
+// iframe landed here (e.g. a reload racing into a rebuild window) it stayed stuck
+// until a manual reload. With the client, the next `broadcastReload()` once the
+// app binds reloads this page automatically. Keep the literal phrase
+// "App server is starting" in the body: titoko's proxy retry matches on it.
+const STARTING_PAGE = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Starting…</title>
+  <style>
+    html,body{margin:0;padding:0;height:100%;background:#0a0a0a;color:#e5e5e5;font:14px/1.5 ui-sans-serif,system-ui,-apple-system,sans-serif}
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
+    .dot{display:inline-block;width:10px;height:10px;background:#16a34a;border-radius:50%;margin-right:8px;vertical-align:middle;animation:p 1.4s ease-in-out infinite}
+    @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+    h1{font-size:16px;font-weight:600;margin:0}
+  </style>
+</head>
+<body>
+  <div class="wrap"><h1><span class="dot"></span>App server is starting…</h1></div>
+  <script>
+    !function r(){
+      try{
+        var e=new EventSource("/__bosia/sse");
+        e.addEventListener("reload",function(){location.reload()});
+        e.onerror=function(){e.close();setTimeout(r,2000)};
+      }catch(_){setTimeout(r,2000)}
+    }();
+  </script>
+</body>
+</html>`;
+
 // ─── Build ────────────────────────────────────────────────
 
 const BUILD_SCRIPT = join(import.meta.dir, "build.ts");
@@ -344,9 +379,9 @@ const devServer = Bun.serve({
 					await Bun.sleep(250);
 					continue;
 				}
-				return new Response("App server is starting...", {
+				return new Response(STARTING_PAGE, {
 					status: 503,
-					headers: { "Content-Type": "text/plain", "Retry-After": "1" },
+					headers: { "Content-Type": "text/html; charset=utf-8", "Retry-After": "1" },
 				});
 			}
 		}
