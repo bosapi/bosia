@@ -75,8 +75,9 @@ grid), `home-goods` (lifestyle photo + product card), `apparel` (color/size pick
 **Services** (2) — `agency` (dark glow + logos), `consulting` (bullets + stat cards).
 **SaaS** (2) — `app` (feature list + phone mock), `product` (email capture + browser mock).
 
-Sample galleries: [Heros — Commerce](/docs/blocks/heros/commerce/) and the five other vertical
-pages.
+Each hero has its own page with a live preview and install line, e.g.
+[Heros — Shop Split](/docs/blocks/heros/shop-split/); browse the rest under **Blocks → Heros** in
+the sidebar.
 
 ## Usage
 

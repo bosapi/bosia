@@ -71,12 +71,23 @@
 	import CardsMediaDemo from "$lib/components/demos/CardsMediaDemo.svelte";
 	import CardsUtilityDemo from "$lib/components/demos/CardsUtilityDemo.svelte";
 	import CardsAuthDemo from "$lib/components/demos/CardsAuthDemo.svelte";
-	import HerosCommerceDemo from "$lib/components/demos/HerosCommerceDemo.svelte";
-	import HerosEducationDemo from "$lib/components/demos/HerosEducationDemo.svelte";
-	import HerosFoodDemo from "$lib/components/demos/HerosFoodDemo.svelte";
-	import HerosFashionDemo from "$lib/components/demos/HerosFashionDemo.svelte";
-	import HerosServicesDemo from "$lib/components/demos/HerosServicesDemo.svelte";
-	import HerosSaasDemo from "$lib/components/demos/HerosSaasDemo.svelte";
+	import HeroShopSplitDemo from "$lib/components/demos/HeroShopSplitDemo.svelte";
+	import HeroSaleDemo from "$lib/components/demos/HeroSaleDemo.svelte";
+	import HeroBagsDemo from "$lib/components/demos/HeroBagsDemo.svelte";
+	import HeroBookstoreDemo from "$lib/components/demos/HeroBookstoreDemo.svelte";
+	import HeroToysDemo from "$lib/components/demos/HeroToysDemo.svelte";
+	import HeroHomeGoodsDemo from "$lib/components/demos/HeroHomeGoodsDemo.svelte";
+	import HeroApparelDemo from "$lib/components/demos/HeroApparelDemo.svelte";
+	import HeroCourseDemo from "$lib/components/demos/HeroCourseDemo.svelte";
+	import HeroCampusDemo from "$lib/components/demos/HeroCampusDemo.svelte";
+	import HeroRestaurantDemo from "$lib/components/demos/HeroRestaurantDemo.svelte";
+	import HeroDeliveryDemo from "$lib/components/demos/HeroDeliveryDemo.svelte";
+	import HeroLookbookDemo from "$lib/components/demos/HeroLookbookDemo.svelte";
+	import HeroNewDropDemo from "$lib/components/demos/HeroNewDropDemo.svelte";
+	import HeroAgencyDemo from "$lib/components/demos/HeroAgencyDemo.svelte";
+	import HeroConsultingDemo from "$lib/components/demos/HeroConsultingDemo.svelte";
+	import HeroAppDemo from "$lib/components/demos/HeroAppDemo.svelte";
+	import HeroProductDemo from "$lib/components/demos/HeroProductDemo.svelte";
 
 	const demos: Record<string, any> = {
 		AspectRatioDemo,
@@ -147,12 +158,23 @@
 		CardsMediaDemo,
 		CardsUtilityDemo,
 		CardsAuthDemo,
-		HerosCommerceDemo,
-		HerosEducationDemo,
-		HerosFoodDemo,
-		HerosFashionDemo,
-		HerosServicesDemo,
-		HerosSaasDemo,
+		HeroShopSplitDemo,
+		HeroSaleDemo,
+		HeroBagsDemo,
+		HeroBookstoreDemo,
+		HeroToysDemo,
+		HeroHomeGoodsDemo,
+		HeroApparelDemo,
+		HeroCourseDemo,
+		HeroCampusDemo,
+		HeroRestaurantDemo,
+		HeroDeliveryDemo,
+		HeroLookbookDemo,
+		HeroNewDropDemo,
+		HeroAgencyDemo,
+		HeroConsultingDemo,
+		HeroAppDemo,
+		HeroProductDemo,
 	};
 
 	let { data }: { data: any } = $props();

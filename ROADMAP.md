@@ -10,7 +10,7 @@
 > Ports the standalone Hero Stock React design system (17 full-bleed hero sections across 6 verticals) into a new `heros/` block category alongside `cards/` and `files/`. Per-vertical hardcoded accents (flare/cobalt/grape/gold/blush) collapse to **`primary`**; dark photo heroes invert to `bg-foreground text-background`. Theme-agnostic semantic tokens only, so each hero restyles across all 18 themes — no new theme added.
 
 - [x] 🟠 Ported 17 hero blocks under `registry/blocks/heros/*` (commerce ×7, education ×2, food ×2, fashion ×2, services ×2, saas ×2); inline Tailwind on semantic tokens, inlined nav/badges/ratings/specs, interactive pickers as local `$state`, kept the original Unsplash images. Registered in `registry/index.json`.
-- [x] ⚪ Docs — 6 per-vertical hero pages with stacked full-width live demo galleries + per-hero install lines; new `bosia-heros` skill cataloguing all 17; nav `Heros` group; row added to the skills index.
+- [x] ⚪ Docs — 17 per-hero pages (one `.md` per hero, each backed by its `meta.json` so `/api/blocks` lists each hero with its own install line + category, mirroring `files/`); single-hero live previews; new `bosia-heros` skill cataloguing all 17; nav grouped by vertical (`Heros — Commerce`, etc.); row added to the skills index.
 
 ---
 

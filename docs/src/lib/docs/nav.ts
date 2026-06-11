@@ -147,14 +147,50 @@ export const sidebar: NavGroup[] = [
 				],
 			},
 			{
-				label: "Heros",
+				label: "Heros — Commerce",
 				children: [
-					{ label: "Commerce", slug: "blocks/heros/commerce" },
-					{ label: "Education", slug: "blocks/heros/education" },
-					{ label: "Food", slug: "blocks/heros/food" },
-					{ label: "Fashion", slug: "blocks/heros/fashion" },
-					{ label: "Services", slug: "blocks/heros/services" },
-					{ label: "SaaS", slug: "blocks/heros/saas" },
+					{ label: "Shop Split", slug: "blocks/heros/shop-split" },
+					{ label: "Sale", slug: "blocks/heros/sale" },
+					{ label: "Bags", slug: "blocks/heros/bags" },
+					{ label: "Bookstore", slug: "blocks/heros/bookstore" },
+					{ label: "Toys", slug: "blocks/heros/toys" },
+					{ label: "Home Goods", slug: "blocks/heros/home-goods" },
+					{ label: "Apparel", slug: "blocks/heros/apparel" },
+				],
+			},
+			{
+				label: "Heros — Education",
+				children: [
+					{ label: "Course", slug: "blocks/heros/course" },
+					{ label: "Campus", slug: "blocks/heros/campus" },
+				],
+			},
+			{
+				label: "Heros — Food",
+				children: [
+					{ label: "Restaurant", slug: "blocks/heros/restaurant" },
+					{ label: "Delivery", slug: "blocks/heros/delivery" },
+				],
+			},
+			{
+				label: "Heros — Fashion",
+				children: [
+					{ label: "Lookbook", slug: "blocks/heros/lookbook" },
+					{ label: "New Drop", slug: "blocks/heros/new-drop" },
+				],
+			},
+			{
+				label: "Heros — Services",
+				children: [
+					{ label: "Agency", slug: "blocks/heros/agency" },
+					{ label: "Consulting", slug: "blocks/heros/consulting" },
+				],
+			},
+			{
+				label: "Heros — SaaS",
+				children: [
+					{ label: "App", slug: "blocks/heros/app" },
+					{ label: "Product", slug: "blocks/heros/product" },
 				],
 			},
 			{

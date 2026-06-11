@@ -62,12 +62,10 @@ async function readRegistryMeta(kind: RegistryKind, path: string): Promise<Regis
 	}
 }
 
-function deriveName(data: Record<string, unknown>, path: string): string {
-	const title = data.title;
-	if (typeof title === "string") {
-		const single = title.trim().toLowerCase().split(/\s+/)[0];
-		if (single && /^[a-z0-9-]+$/.test(single)) return single;
-	}
+// The block/component name is its slug — the last path segment (e.g. `heros/shop-split` →
+// `shop-split`, `files/crop-image` → `crop-image`). This is distinct from `category` (the first
+// segment), so the two never collide.
+function deriveName(path: string): string {
 	const segments = path.split("/");
 	return segments[segments.length - 1];
 }
@@ -79,7 +77,7 @@ function buildSummary(
 	meta: RegistryMeta | null,
 ): { summary: RegistrySummary; content: string } {
 	const { data, content } = matter(raw);
-	const name = deriveName(data, path);
+	const name = deriveName(path);
 	const description = typeof data.description === "string" ? data.description : "";
 	const summary: RegistrySummary = { name, path, description };
 
