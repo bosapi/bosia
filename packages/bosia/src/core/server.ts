@@ -366,7 +366,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				}
 			}
 
-			const response = await handler({
+			const handlerResult = await handler({
 				request,
 				params: apiMatch.params,
 				url,
@@ -374,6 +374,15 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				cookies,
 			});
 
+			// Redirect returned (not thrown) — convert to a 303 Response.
+			if (handlerResult instanceof Redirect) {
+				return new Response(null, {
+					status: handlerResult.status,
+					headers: { Location: handlerResult.location },
+				});
+			}
+
+			const response = handlerResult as Response;
 			const responseContentType = response.headers.get("content-type") ?? "";
 			// SSE responses are long-lived pub/sub streams — caching the buffered
 			// bytes would serve a stale finite snapshot to future subscribers and
@@ -423,6 +432,17 @@ async function resolve(event: RequestEvent): Promise<Response> {
 
 			return response;
 		} catch (err) {
+			// `throw redirect(303, "/")` from a +server.ts handler — turn it into
+			// a real 303 instead of a 500. Mirrors the page-action handler below.
+			if (err instanceof Redirect) {
+				return new Response(null, {
+					status: err.status,
+					headers: { Location: err.location },
+				});
+			}
+			if (err instanceof HttpError) {
+				return Response.json({ error: err.message }, { status: err.status });
+			}
 			if (isDev) console.error("API route error:", err);
 			else console.error("API route error:", (err as Error).message ?? err);
 			if (isDev) reportDevErrorFromCatch(err);

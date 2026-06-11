@@ -15,6 +15,7 @@
 		"ui/badge",
 		"ui/card",
 		"ui/avatar",
+		"ui/breadcrumb",
 		"ui/separator",
 		"ui/typography"
 	],

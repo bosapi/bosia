@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @source "../src";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
  * ─── shadcn-inspired Design Tokens ──────────────────────
  * CSS custom properties for light & dark themes.

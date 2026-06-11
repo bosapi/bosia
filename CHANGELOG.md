@@ -14,6 +14,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `bosia-bun-runtime` gains a Postgres section with the `FailedToOpenSocket` URL-string gotcha and object-form fix.
 - `bosia-drizzle-feature` adds R11: registry files count relative imports from their `meta.json` target, not the source.
 
+### Fixed
+
+- Shop admin sidebar header now shows the Bosia logo SVG (theme-aware) and a working collapse trigger instead of a Unicode hex glyph and dead button.
+- Shop admin sidebar user-menu dropdown is full-width, anchors from the chevron, rotates on open, and Sign out posts to `/logout` cleanly.
+- Sidebar leaf items render as plain links again — `SidebarMenuItem` no longer mistakes whitespace around the icon snippet for nested children.
+- Shop admin sidebar groups the Orders sub-pages (All / Pending / Refunds) under one collapsible parent for cleaner navigation.
+- Theme toggle now actually switches all four templates (default/shop/todo/demo) — `dark:` utilities were silently OS-bound; templates now declare the class-based `dark` variant.
+- Shop admin sidebar header logo renders at 20px instead of overflowing the rail at its native 200×200.
+- `+server.ts` handlers can now `throw redirect(303, "/")` (and `throw error(...)`) — Bosia returns a real 303 / typed error response instead of swallowing it as a 500. The `/logout` POST now signs the user out and redirects to `/` as designed.
+
+### Added
+
+- New `bosia-shop-template` skill so agents extending a `bosia create … --template shop` scaffold don't re-install features or replace the wired sidebar/navbar.
+- Shop dashboard pages now render a path-derived breadcrumb above the main content; `ui/breadcrumb` is wired into the `shop` feature.
+- Home, login, and register pages set a `<title>` and `<meta name="description">` so the shop has basic SEO out of the box.
+
 ### Removed
 
 - Dropped unused `postgres` runtime dep from `shop` template `package.json` (scaffold uses `Bun.SQL`).

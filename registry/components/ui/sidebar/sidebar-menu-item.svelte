@@ -29,7 +29,7 @@
 	const sidebar = getSidebarContext();
 
 	let open = $state(false);
-	const hasChildren = $derived(!!children);
+	const hasChildren = $derived(!!children && !href);
 
 	// --- Fixed-position popover for collapsed parents ---
 	let triggerEl: HTMLButtonElement | undefined = $state();

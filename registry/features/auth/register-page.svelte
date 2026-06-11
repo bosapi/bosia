@@ -11,6 +11,7 @@
 
 <svelte:head>
 	<title>Create account</title>
+	<meta name="description" content="Create your account. The first account becomes the admin." />
 </svelte:head>
 
 <main class="mx-auto flex min-h-[80vh] w-full max-w-sm flex-col justify-center gap-6 px-4 py-12">

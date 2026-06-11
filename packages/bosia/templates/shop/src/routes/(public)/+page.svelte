@@ -1,3 +1,11 @@
+<svelte:head>
+	<title>Welcome to your shop</title>
+	<meta
+		name="description"
+		content="A Bosia shop starter — auth, RBAC, S3 uploads, products & cart."
+	/>
+</svelte:head>
+
 <main class="flex min-h-[80vh] flex-col items-center justify-center gap-6 p-8">
 	<div class="flex flex-col items-center gap-3 text-center">
 		<img src="/favicon.svg" alt="" class="size-16" />
