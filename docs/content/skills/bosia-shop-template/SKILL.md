@@ -140,7 +140,7 @@ It exists. Sign-out from the sidebar is wired to it as a real `<form method="POS
 3. **Add the route, not the feature.** New admin page = new `(private)/dashboard/<segment>/+page.svelte` (+ `.server.ts` if it needs `load` / `actions`). The breadcrumb and sidebar will follow if you also add an `items` row in `AdminSidebar.svelte`.
 4. **Gate with `locals.can(...)`.** In the page's `+page.server.ts`, call `locals.can(locals.user.id, "products", "write")` early and `throw error(403, …)` if false. The first-user-admin grant covers `*,*` so the admin sees everything; non-admin users need explicit permission rows (typically inserted by a new seed or an `/admin/users` form).
 5. **For new uploads, reuse `files/image-dialog`.** Import the block, bind to a `string[]` of URLs. Do not call `Bun.s3` directly from a page.
-6. **For new DB tables, append to `schemas.ts` via Drizzle.** Then `bun run db:generate && bun run db:migrate`. New seed → `003_*.ts`.
+6. **For new DB tables, append to `schemas.ts` via Drizzle, then ALWAYS generate + apply the migration in the same turn.** Editing the schema file does NOT create the table — run `bun run db:generate` then `bun run db:migrate` (in the Titoko editor these are the `db_generate` / `db_migrate` tools; the `shell` tool does NOT run db commands). Skipping the migrate step ships a page whose service reads a table that doesn't exist → runtime "relation does not exist". New seed → `003_*.ts`, then apply with `bun run db:seed` (`db_seed` tool).
 7. **Run `bun run check && bun run build` before declaring done.** The shop scaffold's `tsconfig` is strict; missing types in a new service will fail check.
 
 ## Bosia conventions
@@ -165,6 +165,7 @@ P0:
 - [ ] Any DB read goes through a `*.service.ts` (and a repository), not `db.select` in a route.
 - [ ] Any new permission resource appended to `src/lib/rbac/resources.ts`; the page gates with `locals.can(...)`.
 - [ ] New seed file is `003_*.ts` or later, never `001` or `002`.
+- [ ] Every new/changed `*.table.ts` / `schemas.ts` was migrated this turn: `db_generate` → review SQL → `db_migrate` (then `db_seed` if a seed was added). No table left un-migrated.
 - [ ] `bun run check` passes; `bun run build` passes.
 
 P1:
