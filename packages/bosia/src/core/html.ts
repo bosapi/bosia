@@ -19,6 +19,12 @@ export const distManifest: { js: string[]; css: string[]; entry: string } = (() 
 export const isDev = process.env.NODE_ENV !== "production";
 const cacheBust = isDev ? `?v=${Date.now()}` : "";
 
+/** Inline theme bootstrap — runs before paint to avoid FOUC. theme ∈ light|dark|system (missing = system). */
+const THEME_INIT_JS =
+	"try{var t=localStorage.getItem('theme');" +
+	"document.documentElement.classList.toggle('dark'," +
+	"t==='dark'||((t===null||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches))}catch(_){}";
+
 // ─── Safe JSON Serialization ──────────────────────────────
 
 /** Escapes JSON for safe embedding inside <script> tags. Prevents XSS via </script> injection. */
@@ -156,7 +162,7 @@ export function buildHtml(
 			headOpenInterpolated +
 			`\n  ${faviconLine}${cssLinks}\n` +
 			`  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
-			`  <script${n}>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>\n` +
+			`  <script${n}>${THEME_INIT_JS}</script>\n` +
 			`  ${fallbackTitle}${head}` +
 			headCloseInterpolated +
 			(body ? "" : `\n${SPINNER}`) +
@@ -175,7 +181,7 @@ export function buildHtml(
   ${head}
   ${cssLinks}
   <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">
-  <script${n}>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>
+  <script${n}>${THEME_INIT_JS}</script>
 </head>
 <body>
   <div id="app">${body}</div>${scripts}${bodyEnd}
@@ -208,7 +214,7 @@ export function buildHtmlShellOpen(
 			headOpenInterpolated +
 			`\n  ${faviconLine}${cssLinks}\n` +
 			`  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
-			`  <script${n}>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>\n` +
+			`  <script${n}>${THEME_INIT_JS}</script>\n` +
 			`  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`
 		);
 	}
@@ -220,7 +226,7 @@ export function buildHtmlShellOpen(
 		`  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n` +
 		`  ${cssLinks}\n` +
 		`  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
-		`  <script${n}>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(_){}</script>\n` +
+		`  <script${n}>${THEME_INIT_JS}</script>\n` +
 		`  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`
 	);
 }

@@ -8,7 +8,7 @@ demo: NavbarDemo
 bun x bosia@latest add navbar
 ```
 
-A responsive navigation bar with desktop link row, mobile hamburger menu, dark mode toggle, and optional user avatar dropdown. Automatically installs dependencies: `button`, `avatar`, `dropdown-menu`, and the npm package [`@lucide/svelte`](/components/ui/icon/).
+A responsive navigation bar with desktop link row, mobile hamburger menu, a theme toggle that cycles Light / Dark / System (persists your choice and follows the OS while in System mode), and optional user avatar dropdown. Automatically installs dependencies: `button`, `avatar`, `dropdown-menu`, and the npm package [`@lucide/svelte`](/components/ui/icon/).
 
 ## Preview
 

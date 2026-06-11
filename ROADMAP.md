@@ -1,7 +1,19 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.23**
+> Current version: **0.6.24**
+
+---
+
+## 0.6.24 — Three-state theme switcher (Light / Dark / System)
+
+> Theme switching was binary (light/dark) and the logic was duplicated across four places, each slightly different — the registry navbar never even persisted or synced with the FOUC result. This unifies the semantics (`theme` ∈ `light|dark|system`, missing = system, default System) and ships a single cycle toggle.
+
+- [x] 🟠 `packages/bosia/src/core/html.ts` — extracted the inline FOUC bootstrap (duplicated 4×) into one `THEME_INIT_JS` constant; now resolves an explicit `system` value live against `prefers-color-scheme`, backwards-compatible with stored `dark`/`light`.
+- [x] 🟠 `registry/components/ui/navbar/navbar.svelte` — replaced the buggy `isDark` boolean (never persisted, started out of sync with FOUC) with a 3-state `light/dark/system` cycle that persists to `localStorage`, syncs the DOM, and follows live OS changes while in System mode. Button shows Sun / Moon / Monitor.
+- [x] 🟠 `docs/src/lib/components/ThemeToggle.svelte` + `docs/src/routes/+layout.svelte` — mirror the same 3-state logic and system-aware FOUC script (Monitor inline SVG added).
+- [x] ⚪ `docs/content/docs/guides/styling.md` + `docs/content/docs/components/ui/navbar.md` — document the three modes, storage values, and cycle pattern.
+- [x] ⚪ Bumped `svelte` to `^5.56.3` in the 5 stale `package.json` files (docs, 4 templates); root, `packages/bosia`, and `apps/demo` were already current.
 
 ---
 

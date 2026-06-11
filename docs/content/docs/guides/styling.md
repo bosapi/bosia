@@ -50,7 +50,7 @@ Use them with Tailwind classes:
 
 ## Dark Mode
 
-Dark mode is activated by adding the `.dark` class to a parent element. All design tokens have dark-mode variants defined in `app.css`:
+Dark mode is activated by adding the `.dark` class to `<html>`. All design tokens have dark-mode variants defined in `app.css`:
 
 ```css
 .dark {
@@ -60,18 +60,67 @@ Dark mode is activated by adding the `.dark` class to a parent element. All desi
 }
 ```
 
-Toggle it in your layout:
+### Three modes: Light, Dark, System
+
+The theme is stored in `localStorage` under the `theme` key with one of three values:
+
+| Value      | Behavior                                      |
+| ---------- | --------------------------------------------- |
+| `"light"`  | Always light                                  |
+| `"dark"`   | Always dark                                   |
+| `"system"` | Follows the OS `prefers-color-scheme` setting |
+
+A **missing key is treated as `system`**, so apps follow the OS preference by default. Bosia injects a small inline bootstrap script before paint that reads this value and sets `.dark` accordingly, so there is no flash of the wrong theme (FOUC).
+
+The effective theme is dark when:
+
+```js
+mode === "dark" ||
+	((mode === "system" || mode == null) && matchMedia("(prefers-color-scheme: dark)").matches);
+```
+
+### Cycle toggle
+
+A toggle button cycles through the three modes (Light → Dark → System) and persists the choice. While in `system` mode it also reacts to live OS theme changes:
 
 ```svelte
-<script>
-	let dark = $state(false);
+<script lang="ts">
+	type ThemeMode = "light" | "dark" | "system";
+	const ORDER: ThemeMode[] = ["light", "dark", "system"];
+	let mode = $state<ThemeMode>("system");
+
+	function applyTheme(m: ThemeMode) {
+		const dark =
+			m === "dark" || (m === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+		document.documentElement.classList.toggle("dark", dark);
+	}
+
+	// restore the saved choice once
+	$effect(() => {
+		const stored = localStorage.getItem("theme") as ThemeMode | null;
+		if (stored) mode = stored;
+	});
+
+	// follow live OS changes while in system mode
+	$effect(() => {
+		if (mode !== "system") return;
+		const mq = matchMedia("(prefers-color-scheme: dark)");
+		const handler = () => applyTheme("system");
+		mq.addEventListener("change", handler);
+		return () => mq.removeEventListener("change", handler);
+	});
+
+	function cycleTheme() {
+		mode = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
+		localStorage.setItem("theme", mode);
+		applyTheme(mode);
+	}
 </script>
 
-<div class={dark ? "dark" : ""}>
-	<button onclick={() => (dark = !dark)}>Toggle theme</button>
-	<slot />
-</div>
+<button onclick={cycleTheme}>Theme: {mode}</button>
 ```
+
+The bundled `navbar` component ships this toggle ready to use.
 
 ## cn() Utility
 

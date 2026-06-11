@@ -10,11 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Theme toggle now offers Light, Dark, and System (follows your OS) — System is the default.
 - Dev server `POST /__bosia/hold` + `/__bosia/resume` control — a host orchestrator can hold the live-reload broadcast during a batch of edits and flush a single reload on resume. `hold` doubles as a heartbeat that re-arms a safety timer, so the hold survives arbitrarily long tasks and only auto-resumes if the heartbeats stop (orchestrator died) — never mid-task. Off by default, so plain `bosia dev` reloads exactly as before.
 
 ### Fixed
 
 - The "App server is starting…" page shown during a rebuild now reloads itself once the app is back, so the preview no longer gets stuck on it after a restart race.
+
+### Changed
+
+- Pinned Svelte to ^5.56.3 across docs, demo, and all templates so everyone gets the latest fixes.
 
 ## [0.6.23] - 2026-06-11
 
