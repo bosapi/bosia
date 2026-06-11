@@ -1,0 +1,127 @@
+/*
+ * Bosia theme: paper
+ * Warm cardstock neutrals with an ink-blue brand. Clean editorial feel.
+ * Light + dark via :root / .dark. HSL custom properties for opacity modifiers.
+ */
+
+@theme {
+	--color-background: hsl(var(--background));
+	--color-foreground: hsl(var(--foreground));
+
+	--color-card: hsl(var(--card));
+	--color-card-foreground: hsl(var(--card-foreground));
+
+	--color-popover: hsl(var(--popover));
+	--color-popover-foreground: hsl(var(--popover-foreground));
+
+	--color-primary: hsl(var(--primary));
+	--color-primary-foreground: hsl(var(--primary-foreground));
+
+	--color-secondary: hsl(var(--secondary));
+	--color-secondary-foreground: hsl(var(--secondary-foreground));
+
+	--color-muted: hsl(var(--muted));
+	--color-muted-foreground: hsl(var(--muted-foreground));
+
+	--color-accent: hsl(var(--accent));
+	--color-accent-foreground: hsl(var(--accent-foreground));
+
+	--color-destructive: hsl(var(--destructive));
+	--color-destructive-foreground: hsl(var(--destructive-foreground));
+
+	--color-border: hsl(var(--border));
+	--color-input: hsl(var(--input));
+	--color-ring: hsl(var(--ring));
+
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+
+	--font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+	--shadow-xs: var(--elevation-xs);
+	--shadow-sm: var(--elevation-sm);
+	--shadow-md: var(--elevation-md);
+	--shadow-lg: var(--elevation-lg);
+
+	--font-display: "Bricolage Grotesque", "Plus Jakarta Sans", system-ui, sans-serif;
+	--font-body: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+:root {
+	--background: 41.5 37.1% 93.1%;
+	--foreground: 34.3 11.9% 11.6%;
+
+	--card: 0 0% 100%;
+	--card-foreground: 34.3 11.9% 11.6%;
+
+	--popover: 0 0% 100%;
+	--popover-foreground: 34.3 11.9% 11.6%;
+
+	--primary: 227.6 74.3% 52.7%;
+	--primary-foreground: 0 0% 100%;
+
+	--secondary: 42.9 41.2% 96.7%;
+	--secondary-foreground: 34.3 11.9% 11.6%;
+
+	--muted: 41.5 37.1% 93.1%;
+	--muted-foreground: 36.5 12.2% 37.1%;
+
+	--accent: 42.9 41.2% 96.7%;
+	--accent-foreground: 34.3 11.9% 11.6%;
+
+	--destructive: 2.8 59.8% 50.2%;
+	--destructive-foreground: 0 0% 100%;
+
+	--border: 42 30.3% 87.1%;
+	--input: 42.9 25.9% 78.8%;
+	--ring: 227.6 74.3% 52.7%;
+
+	--radius: 0.75rem;
+
+	/* Theme-scoped elevation — matches this theme's character. */
+	--elevation-xs: 0 1px 2px 0 hsl(var(--foreground) / 0.05);
+	--elevation-sm:
+		0 1px 3px 0 hsl(var(--foreground) / 0.08), 0 1px 2px -1px hsl(var(--foreground) / 0.08);
+	--elevation-md:
+		0 4px 6px -1px hsl(var(--foreground) / 0.09), 0 2px 4px -2px hsl(var(--foreground) / 0.08);
+	--elevation-lg:
+		0 10px 15px -3px hsl(var(--foreground) / 0.1), 0 4px 6px -4px hsl(var(--foreground) / 0.1);
+}
+
+.dark {
+	--background: 40 14% 9%;
+	--foreground: 42 30% 92%;
+
+	--card: 40 13% 12%;
+	--card-foreground: 42 30% 92%;
+
+	--popover: 40 13% 12%;
+	--popover-foreground: 42 30% 92%;
+
+	--primary: 227 80% 67%;
+	--primary-foreground: 227 50% 12%;
+
+	--secondary: 40 10% 18%;
+	--secondary-foreground: 42 30% 92%;
+
+	--muted: 40 10% 18%;
+	--muted-foreground: 42 14% 66%;
+
+	--accent: 40 10% 18%;
+	--accent-foreground: 42 30% 92%;
+
+	--destructive: 2 60% 55%;
+	--destructive-foreground: 0 0% 100%;
+
+	--border: 40 10% 20%;
+	--input: 40 10% 26%;
+	--ring: 227 80% 67%;
+
+	/* Dark elevation. */
+	--elevation-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.4);
+	--elevation-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.5), 0 1px 2px -1px hsl(0 0% 0% / 0.5);
+	--elevation-md: 0 4px 6px -1px hsl(0 0% 0% / 0.5), 0 2px 4px -2px hsl(0 0% 0% / 0.5);
+	--elevation-lg: 0 12px 28px -6px hsl(0 0% 0% / 0.6), 0 4px 8px -4px hsl(0 0% 0% / 0.55);
+}

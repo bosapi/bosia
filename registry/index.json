@@ -80,6 +80,12 @@
 		"sunset",
 		"midnight",
 		"mono",
-		"amber"
+		"amber",
+		"paper",
+		"carbon",
+		"bloom",
+		"terminal",
+		"sage",
+		"grape"
 	]
 }

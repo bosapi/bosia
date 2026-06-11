@@ -171,6 +171,12 @@ export const sidebar: NavGroup[] = [
 			{ label: "Midnight", slug: "themes/midnight" },
 			{ label: "Mono", slug: "themes/mono" },
 			{ label: "Amber", slug: "themes/amber" },
+			{ label: "Paper", slug: "themes/paper" },
+			{ label: "Carbon", slug: "themes/carbon" },
+			{ label: "Bloom", slug: "themes/bloom" },
+			{ label: "Terminal", slug: "themes/terminal" },
+			{ label: "Sage", slug: "themes/sage" },
+			{ label: "Grape", slug: "themes/grape" },
 			{
 				label: "Creating Themes",
 				labelId: "Membuat Tema",

@@ -1,0 +1,10 @@
+{
+	"name": "terminal",
+	"description": "Dark technical green phosphor, mono display, faint accent glow.",
+	"files": ["tokens.css"],
+	"fonts": {
+		"Plus Jakarta Sans": "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..700;1,400..600&display=swap",
+		"JetBrains Mono": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap"
+	},
+	"npmDeps": {}
+}

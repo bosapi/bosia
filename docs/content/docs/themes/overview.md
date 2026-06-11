@@ -29,6 +29,12 @@ The CLI copies tokens to `src/lib/themes/<name>.css` and rewrites the active imp
 - [midnight](/docs/themes/midnight/) — indigo, dark-first dashboard and analytics aesthetic
 - [mono](/docs/themes/mono/) — brutalist monochrome, sharp corners + monospace stack
 - [amber](/docs/themes/amber/) — amber + yellow, cozy hospitality and food aesthetic
+- [paper](/docs/themes/paper/) — warm cardstock neutrals + ink-blue brand, clean editorial feel
+- [carbon](/docs/themes/carbon/) — brutalist mono, hard offset shadows + orange brand
+- [bloom](/docs/themes/bloom/) — soft pastel pink, big radius + diffuse tinted shadows
+- [terminal](/docs/themes/terminal/) — dark green phosphor, mono display + accent glow
+- [sage](/docs/themes/sage/) — calm muted green, small radius + quiet shadows
+- [grape](/docs/themes/grape/) — dark lilac/purple with a soft accent glow
 
 ## Authoring a theme
 

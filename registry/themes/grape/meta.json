@@ -1,0 +1,11 @@
+{
+	"name": "grape",
+	"description": "Dark lilac/purple with a soft accent glow.",
+	"files": ["tokens.css"],
+	"fonts": {
+		"Bricolage Grotesque": "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap",
+		"Plus Jakarta Sans": "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..700;1,400..600&display=swap",
+		"JetBrains Mono": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap"
+	},
+	"npmDeps": {}
+}
