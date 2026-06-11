@@ -50,9 +50,13 @@ const BACKOFF_SCHEDULE_MS = [500, 1_000, 2_000, 4_000, 5_000];
 let reloadHeld = false;
 let reloadQueuedWhileHeld = false;
 let holdSafetyTimer: ReturnType<typeof setTimeout> | null = null;
-// A missed resume (titoko crash, network blip) must never freeze the preview
-// permanently — auto-resume after this window restores normal reloads.
-const HOLD_SAFETY_MS = 120_000;
+// Safety net for a *dead* orchestrator only — NOT a task duration cap. While an
+// agent run is healthy the orchestrator heartbeats `/__bosia/hold` (re-arming
+// this timer), so it never fires mid-task no matter how long the task runs. It
+// fires only if the heartbeats stop (titoko crash, network partition), so a
+// missed resume can't freeze the preview forever. Must comfortably exceed the
+// heartbeat interval so one dropped ping doesn't trip it.
+const HOLD_SAFETY_MS = 90_000;
 
 function broadcastReload() {
 	if (reloadHeld) {
@@ -254,9 +258,17 @@ const devServer = Bun.serve({
 		// Reload-hold control — host orchestrator (titoko) brackets an AI agent run
 		// so the preview reloads once when the agent finishes, not once per file
 		// edit. Both routes are idempotent and return small JSON.
+		//
+		// POST /__bosia/hold doubles as the heartbeat: the FIRST hold opens a fresh
+		// window (clears any stale queued reload); subsequent holds only re-arm the
+		// safety timer and MUST preserve `reloadQueuedWhileHeld`, or a heartbeat
+		// landing after a suppressed rebuild would drop the pending reload and
+		// resume would flush nothing.
 		if (url.pathname === "/__bosia/hold" && req.method === "POST") {
-			reloadHeld = true;
-			reloadQueuedWhileHeld = false;
+			if (!reloadHeld) {
+				reloadHeld = true;
+				reloadQueuedWhileHeld = false;
+			}
 			if (holdSafetyTimer) clearTimeout(holdSafetyTimer);
 			holdSafetyTimer = setTimeout(() => {
 				holdSafetyTimer = null;
