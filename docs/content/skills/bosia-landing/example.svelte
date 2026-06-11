@@ -2,7 +2,7 @@
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
 	import { Separator } from "$lib/components/ui/separator";
-	import FeatureEditorial from "$lib/components/blocks/cards/feature-editorial.svelte";
+	import Feature from "$lib/blocks/cards/feature/block.svelte";
 </script>
 
 <main class="min-h-screen bg-background text-foreground">
@@ -30,15 +30,12 @@
 	<section class="mx-auto max-w-6xl px-6 py-24">
 		<h2 class="mb-12 text-3xl font-semibold tracking-tight">What you get</h2>
 		<div class="grid gap-6 md:grid-cols-3">
-			<FeatureEditorial
+			<Feature
 				title="Registry-first"
 				body="62 components, 1 block, 2 themes — installed with one command."
 			/>
-			<FeatureEditorial
-				title="Semantic tokens"
-				body="Theme swap is a CSS-vars change, not a refactor."
-			/>
-			<FeatureEditorial
+			<Feature title="Semantic tokens" body="Theme swap is a CSS-vars change, not a refactor." />
+			<Feature
 				title="Runes everywhere"
 				body="Svelte 5 reactivity, no legacy stores or $: statements."
 			/>

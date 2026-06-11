@@ -11,7 +11,7 @@ od:
 bosia:
   design: true
   requires:
-    blocks: [cards/feature-editorial]
+    blocks: [cards/feature]
     themes: [editorial]
     components: [ui/button, ui/badge, ui/typography, ui/separator]
     feats: []
@@ -27,7 +27,7 @@ bosia:
 A single-page marketing landing at `src/routes/(public)/+page.svelte` with:
 
 1. **Hero** — headline (h1), subhead, primary + secondary CTA.
-2. **Features** — 3-card grid built from `blocks/cards/feature-editorial`.
+2. **Features** — 3-card grid built from `blocks/cards/feature`.
 3. **Social proof** — short logo row or testimonial quote.
 4. **CTA band** — restated value prop + primary action.
 5. **Footer** — minimal: brand, links, copyright.
@@ -43,8 +43,8 @@ Anti-trigger: SaaS-style pricing or feature matrix → `bosia-saas-landing`.
 ## Workflow
 
 1. **Read `BRIEF.md § Aesthetic`.** Apply the locked `Direction` to hero composition (e.g. editorial → asymmetric grid + pull quote, brutalist → visible grid lines + hairline borders, brutally-minimal → oversized type + single accent). Place the named `Memorable detail` on the hero or in the footer — landing is the highest-leverage surface for it. Do NOT re-pick the stance here; that's `bosia-frontend-design` at intake.
-2. `list_registry()` → confirm `blocks/cards/feature-editorial`, `theme/editorial`, `ui/button`, `ui/badge`, `ui/typography`, `ui/separator`.
-3. `bosia add theme editorial` then `bosia add ui/button ui/badge ui/typography ui/separator` then `bosia add block cards/feature-editorial`.
+2. `list_registry()` → confirm `blocks/cards/feature`, `theme/editorial`, `ui/button`, `ui/badge`, `ui/typography`, `ui/separator`.
+3. `bosia add theme editorial` then `bosia add ui/button ui/badge ui/typography ui/separator` then `bosia add block cards/feature`.
 4. Create `src/routes/(public)/+page.svelte` (route group keeps it outside any auth shell).
 5. Compose hero → features → social proof → CTA → footer.
 6. Run `bosia-design-review` and `bosia-accessibility-review` (both verify stance compliance).

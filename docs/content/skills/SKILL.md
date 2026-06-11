@@ -41,15 +41,15 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 ## Page scaffolds — design ✦ — pick one as starting point for a new route
 
-| Name                  | Triggers                                             | Registry deps                                                                |
-| --------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `bosia-landing`       | "landing page", "marketing page"                     | `blocks/cards/feature-editorial`, `theme/editorial`, `ui/button`, `ui/badge` |
-| `bosia-saas-landing`  | "saas landing", "marketing site", "saas homepage"    | + `ui/card`, `ui/separator`                                                  |
-| `bosia-dashboard`     | "admin dashboard", "app dashboard", "sidebar layout" | `ui/sidebar`, `ui/data-table`, `ui/card`, `ui/chart`, `theme/neutral`        |
-| `bosia-docs-site`     | "docs site", "documentation", "3-column docs"        | `ui/sidebar`, `ui/typography`, `ui/separator`                                |
-| `bosia-blog`          | "blog", "editorial site", "article pages"            | `ui/typography`, `ui/card`, `theme/editorial`                                |
-| `bosia-pricing`       | "pricing page", "pricing tiers", "compare plans"     | `ui/card`, `ui/table`, `ui/badge`, `ui/accordion`                            |
-| `bosia-mobile-screen` | "mobile screen", "375px", "mobile-first"             | `ui/button`, `ui/input`, `ui/dialog`                                         |
+| Name                  | Triggers                                             | Registry deps                                                         |
+| --------------------- | ---------------------------------------------------- | --------------------------------------------------------------------- |
+| `bosia-landing`       | "landing page", "marketing page"                     | `blocks/cards/feature`, `theme/editorial`, `ui/button`, `ui/badge`    |
+| `bosia-saas-landing`  | "saas landing", "marketing site", "saas homepage"    | + `ui/card`, `ui/separator`                                           |
+| `bosia-dashboard`     | "admin dashboard", "app dashboard", "sidebar layout" | `ui/sidebar`, `ui/data-table`, `ui/card`, `ui/chart`, `theme/neutral` |
+| `bosia-docs-site`     | "docs site", "documentation", "3-column docs"        | `ui/sidebar`, `ui/typography`, `ui/separator`                         |
+| `bosia-blog`          | "blog", "editorial site", "article pages"            | `ui/typography`, `ui/card`, `theme/editorial`                         |
+| `bosia-pricing`       | "pricing page", "pricing tiers", "compare plans"     | `ui/card`, `ui/table`, `ui/badge`, `ui/accordion`                     |
+| `bosia-mobile-screen` | "mobile screen", "375px", "mobile-first"             | `ui/button`, `ui/input`, `ui/dialog`                                  |
 
 ## Flows — design ✦ — UX-heavy multi-route patterns
 
@@ -115,6 +115,7 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 | Name                      | Track | Purpose                                                                                                                                       |
 | ------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bosia-cards`             | ✦     | Catalog of the 29 `cards/*` blocks. Install with `bosia add block cards/<name>`; brand = `primary`, status = emerald/amber/blue/destructive.  |
 | `bosia-empty-states`      | ✦     | `ui/empty`, `ui/skeleton`, `ui/spinner`, error boundary. Never blank screen on async failure.                                                 |
 | `bosia-chat-form`         | ✦     | Chat composer — `ui/textarea` + `ui/button`, Enter/Shift+Enter IME-safe, disable-submit-on-stream.                                            |
 | `bosia-chat-message-list` | ✦     | Chat feed — role markers, `parts[]` + inline markdown (bold/italic/link), respectful auto-scroll.                                             |

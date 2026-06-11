@@ -4,7 +4,7 @@
 	import { Badge } from "$lib/components/ui/badge";
 	import { Separator } from "$lib/components/ui/separator";
 	import { Avatar, AvatarFallback } from "$lib/components/ui/avatar";
-	import FeatureEditorial from "$lib/components/blocks/cards/feature-editorial.svelte";
+	import Feature from "$lib/blocks/cards/feature/block.svelte";
 
 	const features = [
 		{
@@ -70,7 +70,7 @@
 		<h2 class="mb-12 text-3xl font-semibold tracking-tight">What you get</h2>
 		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#each features as f}
-				<FeatureEditorial title={f.title} body={f.body} />
+				<Feature title={f.title} body={f.body} />
 			{/each}
 		</div>
 	</section>

@@ -41,7 +41,7 @@ Bosia ships a registry of blocks (composed sections), components (primitives), t
 ```ts
 // Pseudocode of what the LLM-side tool does
 const reg = await list_registry();
-// reg.blocks  → e.g. ['cards/feature-editorial']
+// reg.blocks  → e.g. ['cards/feature']
 // reg.components → ['ui/button', 'ui/card', …]
 // reg.themes  → ['neutral', 'editorial']
 // reg.feats   → ['drizzle', 'auth', 'shop']
@@ -49,10 +49,10 @@ const reg = await list_registry();
 
 ### R2 — Prefer blocks over primitives
 
-If a **block** (e.g. `blocks/cards/feature-editorial`) matches the section you're building → install it:
+If a **block** (e.g. `blocks/cards/feature`) matches the section you're building → install it:
 
 ```bash
-bosia add block cards/feature-editorial
+bosia add block cards/feature
 ```
 
 Then compose. Don't reinvent.

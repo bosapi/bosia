@@ -11,7 +11,7 @@ od:
 bosia:
   design: true
   requires:
-    blocks: [cards/feature-editorial]
+    blocks: [cards/feature]
     themes: [editorial]
     components: [ui/button, ui/card, ui/badge, ui/separator, ui/avatar, ui/typography]
     feats: []
@@ -43,7 +43,7 @@ User asks for a "SaaS landing", a homepage for a paid product, or anything with 
 ## Workflow
 
 1. **Read `BRIEF.md § Aesthetic`.** Apply the locked `Direction` to hero, feature grid rhythm, and testimonial card style (e.g. luxury → hairline gold rule + restrained palette, maximalist → overlapping rotated cards, industrial → square corners + tabular numerics in pricing tease). Place the named `Memorable detail` on the hero. This skill does not re-pick the stance.
-2. `bosia add theme editorial` then `bosia add ui/button ui/card ui/badge ui/separator ui/avatar ui/typography` then `bosia add block cards/feature-editorial`.
+2. `bosia add theme editorial` then `bosia add ui/button ui/card ui/badge ui/separator ui/avatar ui/typography` then `bosia add block cards/feature`.
 3. Optionally also add `ui/accordion` for FAQ if including.
 4. Compose section by section. Don't shortcut on testimonials — fake-feeling ones hurt conversion.
 
@@ -60,7 +60,7 @@ User asks for a "SaaS landing", a homepage for a paid product, or anything with 
 
 - 4–6 features. Six is the cap; more dilutes.
 - Each: icon, verb-led title, one-sentence body.
-- Use `blocks/cards/feature-editorial`.
+- Use `blocks/cards/feature`.
 
 ### Testimonials
 
