@@ -7,7 +7,7 @@ description: Warm cream palette with Instrument Serif display. Magazine feel for
 bun x bosia@latest add theme editorial
 ```
 
-Cream background, ink foreground, terracotta accent. Display in **Instrument Serif** (loaded from Google Fonts), body in **Inter**. Pairs especially well with [`cards/feature-editorial`](/docs/blocks/cards/feature-editorial/).
+Cream background, ink foreground, terracotta accent. Display in **Instrument Serif** (loaded from Google Fonts), body in **Inter**. Pairs especially well with the [card blocks](/docs/blocks/cards/auth/).
 
 ## Tokens
 

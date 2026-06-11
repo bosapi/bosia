@@ -19,7 +19,7 @@ Primitives  →  Blocks  →  Pages
 ## Install
 
 ```bash
-bun x bosia@latest add block cards/feature-editorial
+bun x bosia@latest add block cards/feature
 ```
 
 Files land in `src/lib/blocks/<category>/<name>/`. Primitive dependencies (Card, Button, etc.) install automatically.
