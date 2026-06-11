@@ -11,7 +11,7 @@
 	"dependencies": {
 		"@lucide/svelte": "^1.17.0",
 		"bosia": "workspace:*",
-		"svelte": "^5.20.0",
+		"svelte": "^5.56.3",
 		"tailwind-merge": "^3.5.0"
 	},
 	"devDependencies": {

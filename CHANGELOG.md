@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Dev server `POST /__bosia/hold` + `/__bosia/resume` control — a host orchestrator can hold the live-reload broadcast during a batch of edits and flush a single reload on resume (auto-resumes after 2 min as a safety net). Off by default, so plain `bosia dev` reloads exactly as before.
 - New `bosia-shop-template` skill so agents extending a `bosia create … --template shop` scaffold don't re-install features or replace the wired sidebar/navbar.
 - Shop dashboard pages now render a path-derived breadcrumb above the main content; `ui/breadcrumb` is wired into the `shop` feature.
 - Home, login, and register pages set a `<title>` and `<meta name="description">` so the shop has basic SEO out of the box.

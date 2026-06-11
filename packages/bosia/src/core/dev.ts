@@ -42,7 +42,23 @@ const BACKOFF_SCHEDULE_MS = [500, 1_000, 2_000, 4_000, 5_000];
 
 // ─── SSE Broadcast ────────────────────────────────────────
 
+// Reload-hold control (driven by titoko via /__bosia/hold + /__bosia/resume).
+// While held, rebuilds keep happening (latest code stays ready) but the reload
+// broadcast is suppressed; on resume a single reload is flushed if any rebuild
+// fired meanwhile. Defaults to off, so a plain `bosia dev` developer never sees
+// any behaviour change.
+let reloadHeld = false;
+let reloadQueuedWhileHeld = false;
+let holdSafetyTimer: ReturnType<typeof setTimeout> | null = null;
+// A missed resume (titoko crash, network blip) must never freeze the preview
+// permanently — auto-resume after this window restores normal reloads.
+const HOLD_SAFETY_MS = 120_000;
+
 function broadcastReload() {
+	if (reloadHeld) {
+		reloadQueuedWhileHeld = true;
+		return;
+	}
 	const msg = new TextEncoder().encode("event: reload\ndata: ok\n\n");
 	for (const ctrl of sseClients) {
 		try {
@@ -233,6 +249,39 @@ const devServer = Bun.serve({
 					},
 				},
 			);
+		}
+
+		// Reload-hold control — host orchestrator (titoko) brackets an AI agent run
+		// so the preview reloads once when the agent finishes, not once per file
+		// edit. Both routes are idempotent and return small JSON.
+		if (url.pathname === "/__bosia/hold" && req.method === "POST") {
+			reloadHeld = true;
+			reloadQueuedWhileHeld = false;
+			if (holdSafetyTimer) clearTimeout(holdSafetyTimer);
+			holdSafetyTimer = setTimeout(() => {
+				holdSafetyTimer = null;
+				if (!reloadHeld) return;
+				console.warn("⏱️  Reload hold safety timeout — auto-resuming");
+				reloadHeld = false;
+				if (reloadQueuedWhileHeld) {
+					reloadQueuedWhileHeld = false;
+					broadcastReload();
+				}
+			}, HOLD_SAFETY_MS);
+			holdSafetyTimer.unref?.();
+			return Response.json({ ok: true, held: true });
+		}
+
+		if (url.pathname === "/__bosia/resume" && req.method === "POST") {
+			if (holdSafetyTimer) {
+				clearTimeout(holdSafetyTimer);
+				holdSafetyTimer = null;
+			}
+			reloadHeld = false;
+			const flushed = reloadQueuedWhileHeld;
+			reloadQueuedWhileHeld = false;
+			if (flushed) broadcastReload();
+			return Response.json({ ok: true, held: false, flushed });
 		}
 
 		// Proxy everything else to the app server. Inject X-Forwarded-Host/Proto so
