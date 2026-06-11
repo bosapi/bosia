@@ -5,6 +5,17 @@
 
 ---
 
+## 0.6.24 — Remove the Todo template + feature ahead of rebuilding card blocks
+
+> The `todo` starter template (and its `todo` feature/components) was the original CRUD demo. We're rebuilding the card blocks from scratch, so the todo scaffold is being pulled to clear the way. The `editorial` card block stays for now — it can't be removed until the replacement card blocks exist.
+
+- [x] 🟠 Deleted `packages/bosia/templates/todo/`, `registry/features/todo/`, `registry/components/todo/`, and `docs/content/docs/components/todo/`.
+- [x] 🟠 `registry/index.json` — dropped `todo` from `features` and the four `todo*` `components` entries.
+- [x] 🟠 `packages/bosia/src/cli/{create,index,add,feat}.ts` — removed the `todo` template description/example and re-pointed the stale `todo` doc-comment examples at still-present features.
+- [x] ⚪ Docs — removed the Todo template rows and component pages from `getting-started.md`, `components/overview.md`, `reference/cli.md`, `guides/inspector.md`, the docs `nav.ts` Todo group, and the `bosia-block-compose` skill's example registry listing.
+
+---
+
 ## 0.6.24 — Three-state theme switcher (Light / Dark / System)
 
 > Theme switching was binary (light/dark) and the logic was duplicated across four places, each slightly different — the registry navbar never even persisted or synced with the FOUC result. This unifies the semantics (`theme` ∈ `light|dark|system`, missing = system, default System) and ships a single cycle toggle.

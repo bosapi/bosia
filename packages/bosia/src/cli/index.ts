@@ -126,7 +126,7 @@ Commands:
 
 Examples:
   bun x bosia@latest create my-app
-  bun x bosia@latest create my-app --template todo
+  bun x bosia@latest create my-app --template shop
   bun x bosia dev
   bun x bosia build
   bun x bosia start

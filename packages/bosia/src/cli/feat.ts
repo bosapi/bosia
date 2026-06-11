@@ -16,7 +16,7 @@ import { recordFeature, readManifest } from "./manifest.ts";
 // ─── bun x bosia@latest feat <feature> [--local] ─────────
 // Fetches a feature scaffold from the GitHub registry (or local
 // registry with --local) and copies route/lib files, installs npm deps.
-// Supports nested feature dependencies (e.g. todo → drizzle).
+// Supports nested feature dependencies (e.g. shop → auth).
 
 type FileStrategy =
 	| "write" // overwrite (prompt if interactive)

@@ -44,7 +44,7 @@ const reg = await list_registry();
 // reg.blocks  → e.g. ['cards/feature-editorial']
 // reg.components → ['ui/button', 'ui/card', …]
 // reg.themes  → ['neutral', 'editorial']
-// reg.feats   → ['drizzle', 'todo']
+// reg.feats   → ['drizzle', 'auth', 'shop']
 ```
 
 ### R2 — Prefer blocks over primitives

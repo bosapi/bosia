@@ -1,7 +1,0 @@
-{
-	"name": "todo-form",
-	"description": "A form component for creating new todo items with validation feedback.",
-	"dependencies": [],
-	"files": ["todo-form.svelte", "index.ts"],
-	"npmDeps": {}
-}

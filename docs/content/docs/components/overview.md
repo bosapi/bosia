@@ -82,14 +82,6 @@ Import from the component's barrel export:
 | [Separator](/components/ui/separator/)         | Horizontal or vertical divider                      |
 | [Sidebar](/components/ui/sidebar/)             | Composable sidebar with collapsible icon mode       |
 
-### Todo
-
-| Component                                | Description                               |
-| ---------------------------------------- | ----------------------------------------- |
-| [Todo Form](/components/todo/todo-form/) | Form for creating new todo items          |
-| [Todo Item](/components/todo/todo-item/) | Single todo with toggle, edit, and delete |
-| [Todo List](/components/todo/todo-list/) | List of todos with completion stats       |
-
 ## Customization
 
 All components use `cn()` for class merging, so you can pass a `class` prop to override or extend styles:

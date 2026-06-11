@@ -14,13 +14,13 @@ bosia create <name> [--template <template>]
 | Option       | Description                                   |
 | ------------ | --------------------------------------------- |
 | `<name>`     | Project directory name                        |
-| `--template` | Skip the picker: `default`, `demo`, or `todo` |
+| `--template` | Skip the picker: `default`, `demo`, or `shop` |
 
 **Templates:**
 
 - **default** — Minimal starter with home page, about page, and one server loader
 - **demo** — Full-featured example with blog, API routes, form actions, hooks, and catch-all routes
-- **todo** — Todo app with PostgreSQL + Drizzle ORM (auto-installs `drizzle` and `todo` features)
+- **shop** — Online store starter (auto-installs `auth`, `rbac`, `file-upload`, and `shop` features)
 
 After scaffolding, `bun install` runs automatically.
 
@@ -168,12 +168,12 @@ Every `bosia feat`, `bosia add`, and `bosia add block` run writes an entry to **
 {
 	"version": 1,
 	"features": {
-		"todo": {
+		"shop": {
 			"installedAt": "2026-06-02T10:00:00.000Z",
-			"options": { "drizzle.dialect": "sqlite" },
-			"files": [{ "target": "src/routes/todos/+page.svelte", "strategy": "write" }],
-			"npmDeps": ["drizzle-orm"],
-			"deps": { "features": ["drizzle"], "components": ["button"] }
+			"options": {},
+			"files": [{ "target": "src/routes/(public)/products/+page.svelte", "strategy": "write" }],
+			"npmDeps": [],
+			"deps": { "features": ["auth", "rbac", "file-upload"], "components": ["button"] }
 		}
 	},
 	"components": {

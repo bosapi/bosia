@@ -128,14 +128,6 @@ export const sidebar: NavGroup[] = [
 					{ label: "Typography", slug: "components/ui/typography" },
 				],
 			},
-			{
-				label: "Todo",
-				children: [
-					{ label: "Todo Form", slug: "components/todo/todo-form" },
-					{ label: "Todo Item", slug: "components/todo/todo-item" },
-					{ label: "Todo List", slug: "components/todo/todo-list" },
-				],
-			},
 		],
 	},
 	{

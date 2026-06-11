@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.6.24] - 2026-06-12
 
+### Removed
+
+- Removed the Todo starter template and its todo feature/components ahead of rebuilding the card blocks.
+
 ### Added
 
 - Theme toggle now offers Light, Dark, and System (follows your OS) — System is the default.

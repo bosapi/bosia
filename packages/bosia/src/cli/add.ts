@@ -75,7 +75,7 @@ export async function runAdd(names: string[], flags: string[] = []) {
 
 /**
  * Resolve the full registry path for a component using the index.
- * - "todo"       → "todo"          (exact match in index)
+ * - "<name>"     → "<name>"        (exact match in index)
  * - "button"     → "ui/button"     (suffix match in index)
  * - "shop/cart"  → "shop/cart"     (explicit path used as-is)
  */
@@ -83,7 +83,7 @@ function resolveDestPath(name: string): string {
 	if (name.includes("/")) return name;
 
 	if (registryIndex) {
-		// Exact match (e.g. "todo" → "todo")
+		// Exact match (bare name present in index)
 		if (registryIndex.components.includes(name)) return name;
 		// Suffix match (e.g. "button" → "ui/button")
 		const match = registryIndex.components.find((c) => c.endsWith(`/${name}`));

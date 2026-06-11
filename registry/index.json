@@ -1,9 +1,5 @@
 {
 	"components": [
-		"todo",
-		"todo/todo-form",
-		"todo/todo-item",
-		"todo/todo-list",
 		"ui/aspect-ratio",
 		"ui/accordion",
 		"ui/alert",
@@ -65,7 +61,7 @@
 		"ui/sidebar",
 		"ui/slider"
 	],
-	"features": ["drizzle", "todo", "file-upload"],
+	"features": ["drizzle", "file-upload"],
 	"blocks": [
 		"cards/feature-editorial",
 		"files/crop-image",
