@@ -8,8 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.6.23] - 2026-06-11
 
+### Fixed
+
+- Block installer now skips blocks already installed this session, so shared block deps no longer rewrite files twice.
+
 ### Changed
 
+- Shop feature drops unused component declarations (`typography`) and auth-overlap (`form`/`input`/`button`) for cleaner installs.
 - Skills warn against installing the `postgres` or `pg` npm packages — Bun's built-in `Bun.SQL` covers Postgres.
 - `bosia-bun-runtime` gains a Postgres section with the `FailedToOpenSocket` URL-string gotcha and object-form fix.
 - `bosia-drizzle-feature` adds R11: registry files count relative imports from their `meta.json` target, not the source.

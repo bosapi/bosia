@@ -5,19 +5,15 @@
 	"components": [
 		"ui/navbar",
 		"ui/sidebar",
-		"ui/form",
 		"ui/data-table",
 		"ui/dialog",
 		"ui/dropdown-menu",
 		"ui/alert-dialog",
-		"ui/input",
-		"ui/button",
 		"ui/badge",
 		"ui/card",
 		"ui/avatar",
 		"ui/breadcrumb",
-		"ui/separator",
-		"ui/typography"
+		"ui/separator"
 	],
 	"blocks": ["files/image-dialog"],
 	"options": [

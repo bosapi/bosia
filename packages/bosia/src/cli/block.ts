@@ -30,6 +30,10 @@ interface BlockMeta {
 	npmDeps: Record<string, string>;
 }
 
+// Track already-installed blocks within a session to avoid redundant work
+// when multiple features/blocks declare the same block dependency.
+const installed = new Set<string>();
+
 export async function runAddBlock(
 	name: string | undefined,
 	flags: string[] = [],
@@ -57,6 +61,9 @@ export async function runAddBlock(
 
 	await initAddRegistry(registryRoot);
 	ensureUtils(resolvedOptions.cwd);
+
+	if (installed.has(name)) return;
+	installed.add(name);
 
 	console.log(`⬡ Installing block: ${name}\n`);
 

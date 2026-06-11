@@ -24,6 +24,8 @@
 - [x] 🟠 `packages/bosia/templates/shop/src/routes/(public)/+page.svelte` — add a `<svelte:head>` with `<title>Welcome to your shop</title>` + `<meta name="description">` so the home page has basic SEO instead of an empty `<head>`.
 - [x] 🟠 `registry/features/auth/login-page.svelte` + `register-page.svelte` — sibling `<meta name="description">` inside the existing `<svelte:head>` (login: "Sign in to your account."; register: "Create your account. The first account becomes the admin.").
 - [ ] ⚪ CLI-internal bugs (block-deps 404 routing, `--local` flag drop, dialect default under `skipPrompts:true`) deliberately omitted — code-only fixes, no public API to document.
+- [x] 🟠 `packages/bosia/src/cli/block.ts` — session-level `installed` Set mirrors `add.ts:40`; `runAddBlock` early-returns when a block is already installed in this session. Without it, `files/upload-area` was re-written during shop scaffold because both `file-upload` and `files/image-dialog` pull it.
+- [x] ⚪ `registry/features/shop/meta.json` — drop `ui/typography` (unused) and `ui/form` / `ui/input` / `ui/button` (already declared by `auth`; component installer dedupes via `add.ts:116` so removal is safe).
 
 ---
 
