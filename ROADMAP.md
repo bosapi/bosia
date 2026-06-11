@@ -5,6 +5,15 @@
 
 ---
 
+## 0.6.24 — Port the Hero Stock hero system (17 blocks)
+
+> Ports the standalone Hero Stock React design system (17 full-bleed hero sections across 6 verticals) into a new `heros/` block category alongside `cards/` and `files/`. Per-vertical hardcoded accents (flare/cobalt/grape/gold/blush) collapse to **`primary`**; dark photo heroes invert to `bg-foreground text-background`. Theme-agnostic semantic tokens only, so each hero restyles across all 18 themes — no new theme added.
+
+- [x] 🟠 Ported 17 hero blocks under `registry/blocks/heros/*` (commerce ×7, education ×2, food ×2, fashion ×2, services ×2, saas ×2); inline Tailwind on semantic tokens, inlined nav/badges/ratings/specs, interactive pickers as local `$state`, kept the original Unsplash images. Registered in `registry/index.json`.
+- [x] ⚪ Docs — 6 per-vertical hero pages with stacked full-width live demo galleries + per-hero install lines; new `bosia-heros` skill cataloguing all 17; nav `Heros` group; row added to the skills index.
+
+---
+
 ## 0.6.24 — Port the Cardstock card system (29 blocks + 6 themes)
 
 > Replaces the single `cards/feature-editorial` block (now removed — it painted its numeral with `accent`, a subtle hover background, so it never followed the brand). The new cards map the brand colour to **`primary`** and reference semantic tokens only, so they restyle across every theme.

@@ -1,0 +1,12 @@
+{
+	"name": "hero-app",
+	"description": "SaaS app hero with a feature list and a phone mockup.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

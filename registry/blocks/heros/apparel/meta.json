@@ -1,0 +1,12 @@
+{
+	"name": "hero-apparel",
+	"description": "Apparel hero with color swatches and a size picker beside a model.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

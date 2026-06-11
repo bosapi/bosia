@@ -1,0 +1,12 @@
+{
+	"name": "hero-sale",
+	"description": "Full-bleed sale hero with a countdown timer over a darkened photo.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

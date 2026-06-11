@@ -1,0 +1,12 @@
+{
+	"name": "hero-shop-split",
+	"description": "Split product hero with copy, price, rating, and a floating shipping badge.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

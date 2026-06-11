@@ -1,0 +1,12 @@
+{
+	"name": "hero-bookstore",
+	"description": "Bookstore hero with fanned covers and a floating staff-pick card.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "hero-agency",
+	"description": "Bold dark agency hero with a glow accent and client logos.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "hero-product",
+	"description": "Centered SaaS product-launch hero with email capture and a browser mock.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

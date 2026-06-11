@@ -1,0 +1,12 @@
+{
+	"name": "hero-home-goods",
+	"description": "Full-bleed lifestyle hero with a floating featured-product card.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- 17 ready-to-use hero sections for shops, schools, food, fashion, services, and apps.
 - 29 ready-to-use card blocks: dashboards, profiles, products, media, notifications, and more.
 - Six new themes: Paper, Carbon, Bloom, Terminal, Sage, and Grape.
 - Every theme now ships matching shadows and a monospace font for numbers and code.

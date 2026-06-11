@@ -71,6 +71,12 @@
 	import CardsMediaDemo from "$lib/components/demos/CardsMediaDemo.svelte";
 	import CardsUtilityDemo from "$lib/components/demos/CardsUtilityDemo.svelte";
 	import CardsAuthDemo from "$lib/components/demos/CardsAuthDemo.svelte";
+	import HerosCommerceDemo from "$lib/components/demos/HerosCommerceDemo.svelte";
+	import HerosEducationDemo from "$lib/components/demos/HerosEducationDemo.svelte";
+	import HerosFoodDemo from "$lib/components/demos/HerosFoodDemo.svelte";
+	import HerosFashionDemo from "$lib/components/demos/HerosFashionDemo.svelte";
+	import HerosServicesDemo from "$lib/components/demos/HerosServicesDemo.svelte";
+	import HerosSaasDemo from "$lib/components/demos/HerosSaasDemo.svelte";
 
 	const demos: Record<string, any> = {
 		AspectRatioDemo,
@@ -141,6 +147,12 @@
 		CardsMediaDemo,
 		CardsUtilityDemo,
 		CardsAuthDemo,
+		HerosCommerceDemo,
+		HerosEducationDemo,
+		HerosFoodDemo,
+		HerosFashionDemo,
+		HerosServicesDemo,
+		HerosSaasDemo,
 	};
 
 	let { data }: { data: any } = $props();

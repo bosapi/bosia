@@ -1,0 +1,12 @@
+{
+	"name": "hero-delivery",
+	"description": "Food-delivery hero with an address search bar and floating dishes.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

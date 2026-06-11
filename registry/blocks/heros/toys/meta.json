@@ -1,0 +1,12 @@
+{
+	"name": "hero-toys",
+	"description": "Playful kids-toys hero with an age filter and a category tile grid.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

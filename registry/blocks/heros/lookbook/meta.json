@@ -1,0 +1,12 @@
+{
+	"name": "hero-lookbook",
+	"description": "Editorial fashion lookbook hero over a full-bleed photo.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

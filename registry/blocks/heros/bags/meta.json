@@ -1,0 +1,12 @@
+{
+	"name": "hero-bags",
+	"description": "Dark premium product hero with spec callouts and an edition badge.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

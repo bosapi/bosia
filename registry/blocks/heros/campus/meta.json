@@ -1,0 +1,12 @@
+{
+	"name": "hero-campus",
+	"description": "Centered full-bleed campus hero with admissions stats.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

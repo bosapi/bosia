@@ -1,0 +1,12 @@
+{
+	"name": "hero-course",
+	"description": "Course-landing hero with enrollment stats and a live-lesson card.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

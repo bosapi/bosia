@@ -1,0 +1,12 @@
+{
+	"name": "hero-restaurant",
+	"description": "Full-bleed restaurant hero with a reservation CTA and venue meta.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

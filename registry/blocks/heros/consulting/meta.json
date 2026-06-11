@@ -1,0 +1,12 @@
+{
+	"name": "hero-consulting",
+	"description": "B2B consulting split hero with bullet points and result stats.",
+	"category": "heros",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}
