@@ -28,9 +28,9 @@ describe("substituteParams() — API rest-segment cases", () => {
 		);
 		expect(
 			substituteParams("/api/blocks/[...path]", {
-				path: "cards/feature-editorial",
+				path: "cards/feature",
 			}),
-		).toBe("/api/blocks/cards/feature-editorial");
+		).toBe("/api/blocks/cards/feature");
 	});
 
 	test("[name] expands to single-segment skill value", () => {

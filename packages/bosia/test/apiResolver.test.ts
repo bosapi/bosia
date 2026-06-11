@@ -104,8 +104,8 @@ describe("resolveApiMatch — .json alias preference", () => {
 
 	test("dynamic-param catch-all .json across deeper segments", async () => {
 		const routes = makeRoutes([{ pattern: "/api/blocks/[...path]", prerender: true }]);
-		const m = await resolveApiMatch(routes, "/api/blocks/cards/feature-editorial.json");
+		const m = await resolveApiMatch(routes, "/api/blocks/cards/feature.json");
 		expect(m?.route.pattern).toBe("/api/blocks/[...path]");
-		expect(m?.params).toEqual({ path: "cards/feature-editorial" });
+		expect(m?.params).toEqual({ path: "cards/feature" });
 	});
 });

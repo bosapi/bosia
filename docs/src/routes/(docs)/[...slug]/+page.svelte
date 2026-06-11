@@ -63,7 +63,6 @@
 	import TooltipDemo from "$lib/components/demos/TooltipDemo.svelte";
 	import HoverCardDemo from "$lib/components/demos/HoverCardDemo.svelte";
 	import TypographyDemo from "$lib/components/demos/TypographyDemo.svelte";
-	import CardFeatureEditorialDemo from "$lib/components/demos/CardFeatureEditorialDemo.svelte";
 	import FilesUploadCropDemo from "$lib/components/demos/FilesUploadCropDemo.svelte";
 	import FilesImageDialogDemo from "$lib/components/demos/FilesImageDialogDemo.svelte";
 
@@ -128,7 +127,6 @@
 		TooltipDemo,
 		HoverCardDemo,
 		TypographyDemo,
-		CardFeatureEditorialDemo,
 		FilesUploadCropDemo,
 		FilesImageDialogDemo,
 	};

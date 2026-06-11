@@ -137,8 +137,8 @@ Examples:
   bun x bosia@latest add button card input   → install multiple at once
   bun x bosia@latest add -y button card      → auto-confirm overwrites (CI / scripts)
   bun x bosia@latest add shop/cart           → src/lib/components/shop/cart/
-  bun x bosia@latest add block cards/feature-editorial
-  bun x bosia@latest add blocks/cards/feature-editorial   (alias for: add block cards/feature-editorial)
+  bun x bosia@latest add block cards/feature
+  bun x bosia@latest add blocks/cards/feature   (alias for: add block cards/feature)
   bun x bosia@latest add theme editorial
   bun x bosia@latest add font "Fredoka" "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap"
   bun x bosia@latest feat login

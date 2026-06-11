@@ -104,17 +104,17 @@ describe("resolveLocalRegistry()", () => {
 describe("readRegistryJSON() — local path construction", () => {
 	test("blocks category resolves to <root>/blocks/<cat>/<name>/<file>", async () => {
 		const root = join(tmpDir, "registry");
-		const blockDir = join(root, "blocks", "cards", "feature-editorial");
+		const blockDir = join(root, "blocks", "cards", "feature");
 		mkdirSync(blockDir, { recursive: true });
-		writeFileSync(join(blockDir, "meta.json"), JSON.stringify({ name: "cards/feature-editorial" }));
+		writeFileSync(join(blockDir, "meta.json"), JSON.stringify({ name: "cards/feature" }));
 
 		const meta = await readRegistryJSON<{ name: string }>(
 			root,
 			"blocks",
-			"cards/feature-editorial",
+			"cards/feature",
 			"meta.json",
 		);
-		expect(meta.name).toBe("cards/feature-editorial");
+		expect(meta.name).toBe("cards/feature");
 	});
 });
 
@@ -157,16 +157,16 @@ describe("routeAdd() — dispatch", () => {
 		return { runners, calls };
 	}
 
-	test("`add block cards/feature-editorial` → runAddBlock", async () => {
+	test("`add block cards/feature` → runAddBlock", async () => {
 		const { runners, calls } = makeRunners();
-		await routeAdd(["block", "cards/feature-editorial"], runners);
-		expect(calls).toEqual([{ name: "runAddBlock", args: ["cards/feature-editorial", []] }]);
+		await routeAdd(["block", "cards/feature"], runners);
+		expect(calls).toEqual([{ name: "runAddBlock", args: ["cards/feature", []] }]);
 	});
 
-	test("`add blocks/cards/feature-editorial` alias → runAddBlock", async () => {
+	test("`add blocks/cards/feature` alias → runAddBlock", async () => {
 		const { runners, calls } = makeRunners();
-		await routeAdd(["blocks/cards/feature-editorial"], runners);
-		expect(calls).toEqual([{ name: "runAddBlock", args: ["cards/feature-editorial", []] }]);
+		await routeAdd(["blocks/cards/feature"], runners);
+		expect(calls).toEqual([{ name: "runAddBlock", args: ["cards/feature", []] }]);
 	});
 
 	test("mixed batch splits into runAdd + per-block runAddBlock", async () => {
