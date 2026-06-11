@@ -1,0 +1,12 @@
+{
+	"name": "card-review",
+	"description": "Product review card with rating stars, verified badge, and helpful actions.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "card-article",
+	"description": "Blog/article card with cover image, tag, title, excerpt, and author.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

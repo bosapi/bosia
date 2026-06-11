@@ -1,0 +1,12 @@
+{
+	"name": "card-music",
+	"description": "Music player card with artwork, scrubber, and transport controls.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

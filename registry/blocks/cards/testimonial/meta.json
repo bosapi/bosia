@@ -1,0 +1,12 @@
+{
+	"name": "card-testimonial",
+	"description": "Testimonial card with a serif quote, author, and star rating.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -138,10 +138,12 @@ export const sidebar: NavGroup[] = [
 			{
 				label: "Cards",
 				children: [
-					{
-						label: "Feature (Editorial)",
-						slug: "blocks/cards/feature-editorial",
-					},
+					{ label: "Data & Dashboard", slug: "blocks/cards/data" },
+					{ label: "People", slug: "blocks/cards/people" },
+					{ label: "Commerce", slug: "blocks/cards/commerce" },
+					{ label: "Media", slug: "blocks/cards/media" },
+					{ label: "Utility & System", slug: "blocks/cards/utility" },
+					{ label: "Auth & Marketing", slug: "blocks/cards/auth" },
 				],
 			},
 			{

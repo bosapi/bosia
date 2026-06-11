@@ -1,0 +1,12 @@
+{
+	"name": "card-stat",
+	"description": "Stat card with icon, value, trend chip, and a sparkline.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

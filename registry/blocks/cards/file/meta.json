@@ -1,0 +1,12 @@
+{
+	"name": "card-file",
+	"description": "File card with type icon, metadata, and a download progress bar.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

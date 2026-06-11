@@ -1,0 +1,12 @@
+{
+	"name": "card-chart",
+	"description": "Analytics card with a metric, range toggle, and mini bar chart.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

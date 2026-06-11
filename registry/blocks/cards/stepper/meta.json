@@ -1,0 +1,12 @@
+{
+	"name": "card-stepper",
+	"description": "Vertical onboarding stepper card with done/active/todo states.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

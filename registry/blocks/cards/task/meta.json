@@ -1,0 +1,12 @@
+{
+	"name": "card-task",
+	"description": "Task checklist card with toggleable items and a progress bar.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

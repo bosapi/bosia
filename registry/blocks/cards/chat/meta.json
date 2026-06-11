@@ -1,0 +1,12 @@
+{
+	"name": "card-chat",
+	"description": "Chat conversation card with header, message bubbles, and composer.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

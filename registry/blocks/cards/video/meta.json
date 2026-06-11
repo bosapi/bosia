@@ -1,0 +1,12 @@
+{
+	"name": "card-video",
+	"description": "Video card with thumbnail, play overlay, duration, and channel.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

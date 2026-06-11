@@ -1,0 +1,12 @@
+{
+	"name": "card-integration",
+	"description": "Integration card with logo, connection status, and an enable toggle.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

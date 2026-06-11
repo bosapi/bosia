@@ -1,0 +1,12 @@
+{
+	"name": "card-profile",
+	"description": "Social profile card with cover, avatar, stats, and a follow toggle.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

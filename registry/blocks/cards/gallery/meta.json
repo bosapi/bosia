@@ -1,0 +1,12 @@
+{
+	"name": "card-gallery",
+	"description": "Photo gallery card with a 2x2 grid and a +N overflow tile.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

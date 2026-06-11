@@ -1,0 +1,12 @@
+{
+	"name": "card-login",
+	"description": "Login card with email/password fields and a GitHub sign-in option.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

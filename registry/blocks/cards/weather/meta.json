@@ -1,0 +1,12 @@
+{
+	"name": "card-weather",
+	"description": "Weather card with current temperature and a 4-day forecast.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

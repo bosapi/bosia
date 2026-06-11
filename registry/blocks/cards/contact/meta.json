@@ -1,0 +1,12 @@
+{
+	"name": "card-contact",
+	"description": "Contact card with avatar, presence dot, details, and quick actions.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

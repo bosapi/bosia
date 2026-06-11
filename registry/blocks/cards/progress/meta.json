@@ -1,0 +1,12 @@
+{
+	"name": "card-progress",
+	"description": "Project progress card with a completion ring and labelled progress bars.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

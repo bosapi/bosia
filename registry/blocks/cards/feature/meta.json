@@ -1,0 +1,12 @@
+{
+	"name": "card-feature",
+	"description": "Marketing feature card with icon, heading, body, and a learn-more link.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

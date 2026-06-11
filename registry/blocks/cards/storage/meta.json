@@ -1,0 +1,12 @@
+{
+	"name": "card-storage",
+	"description": "Storage usage card with a ring, segmented bar, and breakdown.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

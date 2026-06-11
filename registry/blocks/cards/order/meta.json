@@ -1,0 +1,12 @@
+{
+	"name": "card-order",
+	"description": "Order tracking card with a horizontal delivery progress stepper.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "card-notification",
+	"description": "Notification card with status icon, message, and inline actions.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

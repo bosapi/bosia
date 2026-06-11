@@ -1,0 +1,12 @@
+{
+	"name": "card-event",
+	"description": "Event card with a date block, details, and attending avatars.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

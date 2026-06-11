@@ -1,0 +1,12 @@
+{
+	"name": "card-pricing",
+	"description": "Pricing plan card with featured highlight, feature list, and CTA.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}
