@@ -5,6 +5,18 @@
 
 ---
 
+## 0.6.24 — Port the Cardstock card system (29 blocks + 6 themes)
+
+> Replaces the single `cards/feature-editorial` block (now removed — it painted its numeral with `accent`, a subtle hover background, so it never followed the brand). The new cards map the brand colour to **`primary`** and reference semantic tokens only, so they restyle across every theme.
+
+- [x] 🟠 Extended the theme contract on all 12 existing themes — added `--font-mono` and theme-scoped elevation (`--shadow-xs/sm/md/lg` wired through `--elevation-*` per `:root`/`.dark`; midnight gets a faint primary glow).
+- [x] 🟠 Added 6 Cardstock themes — `paper`, `carbon` (brutalist hard-offset shadows), `bloom` (diffuse tint), `terminal` + `grape` (dark glow), `sage`; each with light + dark, registered in `registry/index.json` (18 themes) + docs pages + nav.
+- [x] 🟠 Ported 29 card blocks under `registry/blocks/cards/*` (data, people, commerce, media, utility, auth); inline Tailwind on semantic tokens, status colours shadcn-style (emerald/amber/blue/destructive), sparkline/ring/mini-bars as inline SVG. Registered in `registry/index.json`.
+- [x] 🟠 Removed `registry/blocks/cards/feature-editorial/`; re-pointed tests, CLI help, docs demo/page, and the `bosia-landing`/`bosia-saas-landing`/`bosia-block-compose` skills to `cards/feature` (now takes `title`/`body`/`icon`/`cta` props).
+- [x] ⚪ Docs — 6 per-category card pages with live demo galleries + per-card install lines; new `bosia-cards` skill cataloguing all 29.
+
+---
+
 ## 0.6.24 — Remove the Todo template + feature ahead of rebuilding card blocks
 
 > The `todo` starter template (and its `todo` feature/components) was the original CRUD demo. We're rebuilding the card blocks from scratch, so the todo scaffold is being pulled to clear the way. The `editorial` card block stays for now — it can't be removed until the replacement card blocks exist.

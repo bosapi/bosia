@@ -11,9 +11,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed the Todo starter template and its todo feature/components ahead of rebuilding the card blocks.
+- Replaced the single "feature (editorial)" card block with a full set of 29 cards.
 
 ### Added
 
+- 29 ready-to-use card blocks: dashboards, profiles, products, media, notifications, and more.
+- Six new themes: Paper, Carbon, Bloom, Terminal, Sage, and Grape.
+- Every theme now ships matching shadows and a monospace font for numbers and code.
 - Theme toggle now offers Light, Dark, and System (follows your OS) — System is the default.
 - Dev server `POST /__bosia/hold` + `/__bosia/resume` control — a host orchestrator can hold the live-reload broadcast during a batch of edits and flush a single reload on resume. `hold` doubles as a heartbeat that re-arms a safety timer, so the hold survives arbitrarily long tasks and only auto-resumes if the heartbeats stop (orchestrator died) — never mid-task. Off by default, so plain `bosia dev` reloads exactly as before.
 
@@ -23,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Card blocks use your theme's brand colour, so they restyle when you switch themes.
 - Pinned Svelte to ^5.56.3 across docs, demo, and all templates so everyone gets the latest fixes.
 
 ## [0.6.23] - 2026-06-11

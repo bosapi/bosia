@@ -4,9 +4,8 @@ description: Login and feature cards for auth screens and marketing pages.
 demo: CardsAuthDemo
 ---
 
-Auth and marketing cards. The feature card replaces the old `cards/feature-editorial` block — it
-uses `--primary` for the icon and link accent (the editorial block painted them with `accent`, a
-subtle hover background, so it never followed the brand).
+Auth and marketing cards. The feature card uses `--primary` for its icon and link accent, so it
+follows the active theme's brand colour.
 
 ## Preview
 

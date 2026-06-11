@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { Image, ArrowUpRight } from "@lucide/svelte";
+	import { ArrowUpRight } from "@lucide/svelte";
 </script>
 
 <div
 	class="flex w-full max-w-[300px] flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-md transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg"
 >
-	<div
-		class="relative flex h-[150px] items-center justify-center overflow-hidden bg-gradient-to-br from-primary/10 to-muted"
-	>
-		<div class="absolute -right-5 -top-5 h-28 w-28 rounded-full bg-primary opacity-10"></div>
-		<Image size={30} class="relative text-primary opacity-60" />
-	</div>
+	<img
+		src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=200&q=60&auto=format&fit=crop"
+		alt="Mountains in fog"
+		loading="lazy"
+		class="h-[150px] w-full object-cover"
+	/>
 	<div class="p-[18px]">
 		<div class="mb-2.5 flex items-center gap-2">
 			<span

@@ -1,16 +1,17 @@
 <script lang="ts">
-	import { Video, Play } from "@lucide/svelte";
+	import { Play } from "@lucide/svelte";
 </script>
 
 <div
 	class="flex w-full max-w-[290px] flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-md transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg"
 >
 	<div class="relative">
-		<div
-			class="flex h-[164px] items-center justify-center overflow-hidden bg-gradient-to-br from-primary/10 to-muted"
-		>
-			<Video size={30} class="text-primary opacity-60" />
-		</div>
+		<img
+			src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=220&q=60&auto=format&fit=crop"
+			alt="Desk workspace"
+			loading="lazy"
+			class="h-[164px] w-full object-cover"
+		/>
 		<div class="absolute inset-0 flex items-center justify-center">
 			<span
 				class="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-white/90 text-neutral-900 shadow-lg"

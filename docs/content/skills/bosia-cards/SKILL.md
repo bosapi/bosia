@@ -43,8 +43,7 @@ action colour is **`primary`**. When you build or edit a card:
 - Brand fills / CTAs / numerals / rings → `bg-primary`, `text-primary`,
   `text-primary-foreground`, `ring-primary`.
 - Soft brand tint → `bg-primary/10` with `text-primary`.
-- Never paint a brand element with `accent` — it won't follow the theme. (This is exactly
-  why the old `cards/feature-editorial` block was replaced by `cards/feature`.)
+- Never paint a brand element with `accent` — it won't follow the theme.
 
 ## Token rules (reference semantic tokens only — never hex)
 
@@ -83,8 +82,8 @@ variants so they read in both modes:
 `poll` (animated bars), `stepper`, `chat`.
 **Auth & marketing** — `login`, `feature` (props: `title`, `body`, `icon`, `cta`).
 
-Full galleries: [/docs/blocks/cards/data](/docs/blocks/cards/data/) and the other five
-category pages.
+Sample galleries: [Cards — Commerce](/docs/blocks/cards/commerce/) and
+[Cards — Auth & Marketing](/docs/blocks/cards/auth/); the four other category pages cover the rest.
 
 ## Usage
 

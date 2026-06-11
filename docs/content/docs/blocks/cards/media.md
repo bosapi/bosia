@@ -4,9 +4,8 @@ description: Article, music, video, and gallery cards for media-rich UIs.
 demo: CardsMediaDemo
 ---
 
-Media cards for articles, audio, video, and photo galleries. Image areas are theme-aware
-placeholder gradients (`from-primary/10 to-muted`) with a Lucide glyph — swap in a real `<img>`
-when you wire up content.
+Media cards for articles, audio, video, and photo galleries. Images are small Unsplash photos,
+lazy-loaded and sized down to keep bandwidth low — swap each `src` for your own content.
 
 ## Preview
 

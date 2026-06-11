@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Music, Heart, SkipBack, SkipForward, Play, Pause } from "@lucide/svelte";
+	import { Heart, SkipBack, SkipForward, Play, Pause } from "@lucide/svelte";
 
 	let playing = $state(true);
 </script>
@@ -8,11 +8,12 @@
 	class="flex w-full max-w-[290px] flex-col rounded-xl border border-border bg-card p-[18px] text-card-foreground shadow-md transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg"
 >
 	<div class="flex items-center gap-3.5">
-		<div
-			class="flex h-16 w-16 flex-none items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary/20 to-muted shadow-md"
-		>
-			<Music size={24} class="text-primary opacity-70" />
-		</div>
+		<img
+			src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=128&h=128&q=60&auto=format&fit=crop"
+			alt="Album artwork"
+			loading="lazy"
+			class="h-16 w-16 flex-none rounded-lg object-cover shadow-md"
+		/>
 		<div class="min-w-0 flex-1">
 			<div class="truncate font-display text-base font-bold">Paper Planes</div>
 			<div class="text-[13px] text-muted-foreground">The Offcuts</div>

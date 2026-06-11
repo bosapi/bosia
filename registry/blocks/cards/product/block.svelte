@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Package, Heart, Star, ShoppingBag, Check } from "@lucide/svelte";
+	import { Heart, Star, ShoppingBag, Check } from "@lucide/svelte";
 
 	let liked = $state(false);
 	let added = $state(false);
@@ -9,12 +9,12 @@
 	class="flex w-full max-w-[250px] flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-md transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg"
 >
 	<div class="relative">
-		<div
-			class="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-primary/10 to-muted"
-		>
-			<div class="absolute -right-5 -top-5 h-28 w-28 rounded-full bg-primary opacity-10"></div>
-			<Package size={30} class="relative text-primary opacity-60" />
-		</div>
+		<img
+			src="https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=320&h=240&q=60&auto=format&fit=crop"
+			alt="Stoneware mug"
+			loading="lazy"
+			class="h-40 w-full object-cover"
+		/>
 		<span
 			class="absolute left-3 top-3 inline-flex items-center rounded-full bg-destructive/10 px-2 py-1 text-[11px] font-bold uppercase leading-none tracking-wide text-destructive"
 		>

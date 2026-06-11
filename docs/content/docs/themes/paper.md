@@ -7,7 +7,7 @@ description: Warm cardstock neutrals with an ink-blue brand. Clean editorial fee
 bun x bosia@latest add theme paper
 ```
 
-Warm off-white "cardstock" neutrals with a confident ink-blue brand. Display in **Bricolage Grotesque**, body in **Plus Jakarta Sans** (both from Google Fonts), numerics in **JetBrains Mono**. Ported from the Cardstock design system — the default surface for the [card blocks](/docs/blocks/cards/).
+Warm off-white "cardstock" neutrals with a confident ink-blue brand. Display in **Bricolage Grotesque**, body in **Plus Jakarta Sans** (both from Google Fonts), numerics in **JetBrains Mono**. Ported from the Cardstock design system — the default surface for the [Commerce](/docs/blocks/cards/commerce/) and [Auth & Marketing](/docs/blocks/cards/auth/) cards.
 
 ## Tokens
 
