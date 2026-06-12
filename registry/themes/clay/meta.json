@@ -1,0 +1,11 @@
+{
+	"name": "clay",
+	"description": "Warm paper neutrals with a terracotta brand and soft, warm-tinted shadows. The Mercato storefront's home base.",
+	"files": ["tokens.css"],
+	"fonts": {
+		"Newsreader": "https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap",
+		"Hanken Grotesk": "https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap",
+		"Geist Mono": "https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap"
+	},
+	"npmDeps": {}
+}

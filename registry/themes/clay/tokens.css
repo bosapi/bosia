@@ -1,0 +1,130 @@
+/*
+ * Bosia theme: clay
+ * Warm paper neutrals with a terracotta brand and soft, warm-tinted shadows.
+ * The Mercato storefront's home base. Light + dark via :root / .dark.
+ * HSL custom properties so opacity modifiers (bg-primary/10) work.
+ */
+
+@theme {
+	--color-background: hsl(var(--background));
+	--color-foreground: hsl(var(--foreground));
+
+	--color-card: hsl(var(--card));
+	--color-card-foreground: hsl(var(--card-foreground));
+
+	--color-popover: hsl(var(--popover));
+	--color-popover-foreground: hsl(var(--popover-foreground));
+
+	--color-primary: hsl(var(--primary));
+	--color-primary-foreground: hsl(var(--primary-foreground));
+
+	--color-secondary: hsl(var(--secondary));
+	--color-secondary-foreground: hsl(var(--secondary-foreground));
+
+	--color-muted: hsl(var(--muted));
+	--color-muted-foreground: hsl(var(--muted-foreground));
+
+	--color-accent: hsl(var(--accent));
+	--color-accent-foreground: hsl(var(--accent-foreground));
+
+	--color-destructive: hsl(var(--destructive));
+	--color-destructive-foreground: hsl(var(--destructive-foreground));
+
+	--color-border: hsl(var(--border));
+	--color-input: hsl(var(--input));
+	--color-ring: hsl(var(--ring));
+
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+
+	--shadow-xs: var(--elevation-xs);
+	--shadow-sm: var(--elevation-sm);
+	--shadow-md: var(--elevation-md);
+	--shadow-lg: var(--elevation-lg);
+	--shadow-xl: var(--elevation-xl);
+
+	--font-display: "Newsreader", Georgia, "Times New Roman", serif;
+	--font-body: "Hanken Grotesk", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+	--font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+:root {
+	--background: 43 33% 96%;
+	--foreground: 37 32% 8%;
+
+	--card: 0 0% 100%;
+	--card-foreground: 37 32% 8%;
+
+	--popover: 0 0% 100%;
+	--popover-foreground: 37 32% 8%;
+
+	--primary: 15 50% 47%;
+	--primary-foreground: 0 0% 100%;
+
+	--secondary: 40 30% 92%;
+	--secondary-foreground: 37 32% 8%;
+
+	--muted: 40 30% 92%;
+	--muted-foreground: 33 12% 38%;
+
+	--accent: 22 42% 90%;
+	--accent-foreground: 15 50% 32%;
+
+	--destructive: 6 63% 46%;
+	--destructive-foreground: 0 0% 100%;
+
+	--border: 39 25% 86%;
+	--input: 38 26% 78%;
+	--ring: 15 50% 47%;
+
+	--radius: 0.625rem;
+
+	/* Warm-tinted, soft elevation — shadows pick up the brown foreground. */
+	--elevation-xs: 0 1px 2px 0 hsl(var(--foreground) / 0.05);
+	--elevation-sm:
+		0 1px 3px 0 hsl(var(--foreground) / 0.06), 0 1px 2px -1px hsl(var(--foreground) / 0.04);
+	--elevation-md:
+		0 4px 12px -1px hsl(var(--foreground) / 0.08), 0 2px 4px -2px hsl(var(--foreground) / 0.04);
+	--elevation-lg:
+		0 12px 32px -3px hsl(var(--foreground) / 0.1), 0 4px 8px -4px hsl(var(--foreground) / 0.05);
+	--elevation-xl: 0 24px 60px -8px hsl(var(--foreground) / 0.14);
+}
+
+.dark {
+	--background: 37 18% 9%;
+	--foreground: 43 30% 92%;
+
+	--card: 36 16% 12%;
+	--card-foreground: 43 30% 92%;
+
+	--popover: 36 16% 12%;
+	--popover-foreground: 43 30% 92%;
+
+	--primary: 15 58% 58%;
+	--primary-foreground: 15 40% 12%;
+
+	--secondary: 36 12% 18%;
+	--secondary-foreground: 43 30% 92%;
+
+	--muted: 36 12% 18%;
+	--muted-foreground: 40 14% 66%;
+
+	--accent: 36 14% 22%;
+	--accent-foreground: 43 30% 92%;
+
+	--destructive: 6 60% 55%;
+	--destructive-foreground: 0 0% 100%;
+
+	--border: 36 12% 20%;
+	--input: 36 12% 26%;
+	--ring: 15 58% 58%;
+
+	/* Dark elevation. */
+	--elevation-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.4);
+	--elevation-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.5), 0 1px 2px -1px hsl(0 0% 0% / 0.5);
+	--elevation-md: 0 4px 6px -1px hsl(0 0% 0% / 0.5), 0 2px 4px -2px hsl(0 0% 0% / 0.5);
+	--elevation-lg: 0 12px 28px -6px hsl(0 0% 0% / 0.6), 0 4px 8px -4px hsl(0 0% 0% / 0.55);
+	--elevation-xl: 0 24px 60px -8px hsl(0 0% 0% / 0.7);
+}
