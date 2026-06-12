@@ -1,0 +1,16 @@
+{
+	"name": "storefront-checkout",
+	"description": "Checkout page: header, four-step checkout form, sticky order summary and an order-confirmed success state after placing the order.",
+	"category": "storefront",
+	"dependencies": [
+		"blocks/storefront/store",
+		"blocks/storefront/header",
+		"blocks/storefront/checkout-form",
+		"blocks/storefront/order-summary",
+		"blocks/storefront/order-confirmed",
+		"blocks/storefront/footer"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

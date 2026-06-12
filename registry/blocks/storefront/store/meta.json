@@ -1,10 +1,10 @@
 {
 	"name": "storefront-store",
-	"description": "Shared runes store for the storefront: cart, favourites and a drawer flag, with localStorage persistence and a sample product catalogue.",
+	"description": "Shared runes store for the storefront: cart, favourites and a drawer flag, with localStorage persistence, a sample product catalogue and per-purpose seed content.",
 	"category": "storefront",
 	"themes": [],
 	"dependencies": [],
-	"files": ["store.svelte.ts"],
+	"files": ["store.svelte.ts", "purposes.ts"],
 	"fonts": {},
 	"npmDeps": {}
 }

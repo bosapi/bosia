@@ -1,0 +1,23 @@
+{
+	"name": "storefront-home",
+	"description": "Multi-purpose storefront homepage: header, hero, category tiles, featured collection, value row, promo, editorial, testimonials, newsletter, footer and a shared cart drawer.",
+	"category": "storefront",
+	"dependencies": [
+		"blocks/storefront/store",
+		"blocks/storefront/header",
+		"blocks/storefront/category-tiles",
+		"blocks/storefront/featured-collection",
+		"blocks/storefront/value-row",
+		"blocks/storefront/promo-banner",
+		"blocks/storefront/editorial",
+		"blocks/storefront/testimonials",
+		"blocks/storefront/newsletter",
+		"blocks/storefront/footer",
+		"blocks/storefront/cart-drawer"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}
