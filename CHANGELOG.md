@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.25] - 2026-06-12
+
+### Added
+
+- New "pages" you can add in one command — a whole screen made of ready-made sections.
+- A full storefront: home, product list, product, and checkout pages, ready to drop in.
+- 24 storefront sections: header, footer, product cards, cart drawer, checkout, and more.
+- New "Clay" theme — warm paper tones with a terracotta accent and elegant serif headings.
+- One store, six looks — switch between fashion, grocery, tech, beauty, garden, or general.
+
 ## [0.6.24] - 2026-06-12
 
 ### Removed

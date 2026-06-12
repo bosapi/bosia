@@ -1,7 +1,19 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.24**
+> Current version: **0.6.25**
+
+---
+
+## 0.6.25 — Port the Mercato storefront (new `page` tier + 24 blocks + clay theme)
+
+> Ports the standalone Mercato React storefront (one template, six store "purposes", four full page templates) into Bosia. Adds a brand-new **`page` registry tier** (a page = a group of blocks, no backend) installed via `bosia add page <name>` to `src/lib/pages/<name>/`. Sections harvested into 24 `storefront/*` blocks (semantic tokens only, brand → `primary`, sale → `destructive`), pages composed from them via `$lib/blocks/storefront/*` sharing one runes cart. Five purposes map to existing themes (fashion→editorial · grocery→forest · tech→paper · beauty→bloom · garden→sage); the sixth ships a new `clay` theme.
+
+- [x] 🟠 New `page` registry tier + CLI — `packages/bosia/src/cli/page.ts` (`runAddPage`, models `block.ts`), routed in `addRouter.ts` (+ `pages/...` alias) and `index.ts`; `pages` added to the `Manifest` (`recordPage`) and `RegistryIndex`; `bosia add list` shows installed pages; dispatch tests in `registry.test.ts`.
+- [x] 🟠 Harvested 24 sections under `registry/blocks/storefront/*` — `store` (runes cart/favs/drawer `.svelte.ts` + sample catalogue + per-purpose seed), `header`/`footer`, home sections, `product-card`/`grid`/`featured-collection`/`cart-drawer`, listing `filter-sidebar`/`sort-bar`, PDP `product-gallery`/`product-options`/`trust-row`/`pdp-accordions`, checkout `checkout-form`/`promo-field`/`order-summary`/`order-confirmed`. Registered in `registry/index.json`.
+- [x] 🟠 Added the `clay` theme (`registry/themes/clay/`) — warm paper neutrals, terracotta primary, soft warm shadows, Newsreader/Hanken Grotesk/Geist Mono fonts; registered in `registry/index.json` (19 themes).
+- [x] 🟠 Four pages under `registry/pages/storefront/{home,listing,product,checkout}/` — composition only, one shared `createCart()` wired through header/grids/drawer; each `meta.json` lists its block/ui deps so the installer recurses.
+- [x] ⚪ Docs — new **Pages** section (`pages/overview` with the purpose→theme table + 4 page pages), 6 grouped `blocks/storefront/*` pages, `themes/clay`; 10 demos registered; nav Pages group + Storefront block group + Clay theme; new `bosia-storefront` skill + skills-index row; docs `$lib/blocks`/`$pages` aliases + `registry/pages` Tailwind `@source`.
 
 ---
 
