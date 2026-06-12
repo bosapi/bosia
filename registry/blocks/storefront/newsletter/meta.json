@@ -1,0 +1,12 @@
+{
+	"name": "storefront-newsletter",
+	"description": "Centered newsletter sign-up with email input and an inline confirmation state after submitting.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

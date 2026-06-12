@@ -1,0 +1,12 @@
+{
+	"name": "storefront-editorial",
+	"description": "Editorial / brand-story section pairing a tall image with copy and a call to action; supports a flipped layout.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

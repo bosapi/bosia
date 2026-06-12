@@ -1,0 +1,12 @@
+{
+	"name": "storefront-order-confirmed",
+	"description": "Order confirmation state with a success mark, order number, thank-you copy and a continue-shopping action.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

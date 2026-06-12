@@ -1,0 +1,12 @@
+{
+	"name": "storefront-order-summary",
+	"description": "Sticky checkout order summary with line items, promo field, subtotal/shipping/tax/total and a place-order button.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": ["blocks/storefront/store", "blocks/storefront/promo-field"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

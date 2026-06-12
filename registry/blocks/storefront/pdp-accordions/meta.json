@@ -1,0 +1,12 @@
+{
+	"name": "storefront-pdp-accordions",
+	"description": "Native disclosure accordions for product details, shipping and making, with a rotating chevron.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

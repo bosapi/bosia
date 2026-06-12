@@ -1,0 +1,12 @@
+{
+	"name": "storefront-promo-banner",
+	"description": "Large two-column promotional banner in the accent colour, with copy, call to action and image.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

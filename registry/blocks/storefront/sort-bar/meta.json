@@ -1,0 +1,12 @@
+{
+	"name": "storefront-sort-bar",
+	"description": "Listing header with breadcrumb, page title, result count and a bindable sort select.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

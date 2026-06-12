@@ -1,0 +1,10 @@
+{
+	"name": "storefront-product-gallery",
+	"description": "Sticky product-detail gallery with a thumbnail rail and a large active image.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

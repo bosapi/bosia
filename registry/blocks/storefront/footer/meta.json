@@ -1,0 +1,12 @@
+{
+	"name": "storefront-footer",
+	"description": "Multi-column storefront footer with brand mark, link columns, social buttons and a legal bottom row.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "storefront-product-options",
+	"description": "Product-detail buy box: title, rating, price, colour swatches, size grid, quantity stepper and add-to-bag.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": ["blocks/storefront/store"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

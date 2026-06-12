@@ -1,0 +1,12 @@
+{
+	"name": "storefront-promo-strip",
+	"description": "Slim full-width promo strip on the ink background with an icon, message and optional call to action.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "storefront-testimonials",
+	"description": "Customer testimonial cards with star rating, quote and author, in a responsive grid.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,10 @@
+{
+	"name": "storefront-checkout-form",
+	"description": "Four-step checkout form — contact, shipping address, delivery method and payment — with a bindable delivery choice.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": ["blocks/storefront/store"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

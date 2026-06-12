@@ -1,0 +1,12 @@
+{
+	"name": "storefront-cart-drawer",
+	"description": "Slide-in cart drawer with line items, quantity steppers, subtotal, shipping and a free-delivery nudge, driven by the shared cart store.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": ["blocks/storefront/store"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

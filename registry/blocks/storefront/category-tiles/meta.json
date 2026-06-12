@@ -1,0 +1,10 @@
+{
+	"name": "storefront-category-tiles",
+	"description": "Shop-by-category grid of tall image tiles with a gradient label overlay and hover lift.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

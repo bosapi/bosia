@@ -1,0 +1,10 @@
+{
+	"name": "storefront-product-grid",
+	"description": "Responsive grid of storefront product cards, wired to a shared cart for add-to-bag and favourites.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": ["blocks/storefront/store", "blocks/storefront/product-card"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

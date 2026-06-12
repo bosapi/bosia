@@ -1,0 +1,10 @@
+{
+	"name": "storefront-filter-sidebar",
+	"description": "Product listing filter sidebar with category list, price chips, colour dots and an in-stock toggle.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

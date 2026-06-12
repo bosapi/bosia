@@ -1,0 +1,12 @@
+{
+	"name": "storefront-featured-collection",
+	"description": "Featured products section with eyebrow, heading, view-all action and a responsive product grid.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": ["blocks/storefront/store", "blocks/storefront/product-grid"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "storefront-trust-row",
+	"description": "Compact row of trust signals (delivery, returns, guarantee) for product pages.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

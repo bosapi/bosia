@@ -1,0 +1,12 @@
+{
+	"name": "storefront-promo-field",
+	"description": "Promo-code input with an apply button and inline valid/invalid feedback.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "storefront-value-row",
+	"description": "Row of trust/value propositions with icon, title and short body — delivery, guarantee, sourcing, support.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}
