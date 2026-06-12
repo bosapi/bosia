@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- `bosia add theme` now removes the template's default `:root`/`.dark` token block, so app.css no longer keeps two competing `:root` rules where the template's overrides the theme's.
 - The "App server is starting…" page shown during a rebuild now reloads itself once the app is back, so the preview no longer gets stuck on it after a restart race.
 
 ### Changed

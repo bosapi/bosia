@@ -18,6 +18,9 @@ interface ThemeMeta {
 
 const THEME_IMPORT_RE = /^@import\s+["']\.\/lib\/themes\/[^"']+["'];?\s*$/m;
 const THEME_MARKER = "/* bosia-theme */";
+// Sentinel-bounded :root/.dark block the templates ship (see templates/*/src/app.css).
+// Removing it targets exactly the template defaults and never user-authored :root rules.
+const THEME_VARS_RE = /\/\* bosia-theme-vars[\s\S]*?\/\* \/bosia-theme-vars \*\//;
 
 export async function runAddTheme(name: string | undefined, flags: string[] = []) {
 	if (!name) {
@@ -52,6 +55,11 @@ export async function runAddTheme(name: string | undefined, flags: string[] = []
 	if (existsSync(appCssPath)) {
 		patchAppCssThemeImport(appCssPath, name);
 		console.log(`   🎨 app.css → @import "./lib/themes/${name}.css"`);
+		// The installed theme css owns :root/.dark now — drop the template's default
+		// block so two same-specificity :root rules don't fight (template wins by order).
+		if (stripTemplateThemeVars(appCssPath)) {
+			console.log(`   🧹 app.css → removed template :root/.dark vars (theme owns them)`);
+		}
 	} else {
 		console.warn(`   ⚠️  src/app.css not found — theme import not wired automatically.`);
 	}
@@ -85,4 +93,16 @@ function patchAppCssThemeImport(appCssPath: string, themeName: string) {
 		}
 	}
 	writeFileSync(appCssPath, next, "utf-8");
+}
+
+// Strip the sentinel-bounded template :root/.dark block. Idempotent: once removed
+// (or on an app that never had it), the marker is gone and this is a no-op. Only
+// the raw token blocks go — `@theme {}` (Tailwind mapping) lives above the markers
+// and is untouched.
+function stripTemplateThemeVars(appCssPath: string): boolean {
+	const src = readFileSync(appCssPath, "utf-8");
+	if (!THEME_VARS_RE.test(src)) return false;
+	const next = src.replace(THEME_VARS_RE, "").replace(/\n{3,}/g, "\n\n");
+	writeFileSync(appCssPath, next, "utf-8");
+	return true;
 }

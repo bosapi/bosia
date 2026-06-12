@@ -44,6 +44,10 @@
 	--radius-xl: calc(var(--radius) + 4px);
 }
 
+/* bosia-theme-vars: template default tokens. `bosia add theme` strips everything
+   between these markers (the installed theme owns these tokens). Do NOT add your
+   own :root rules inside the markers — put custom overrides after the close tag. */
+
 /* ─── Light Theme (Default) ─────────────────────────────── */
 
 :root {
@@ -109,6 +113,8 @@
 	--input: 217.2 32.6% 17.5%;
 	--ring: 212.7 26.8% 83.9%;
 }
+
+/* /bosia-theme-vars */
 
 /* ─── Base Styles ────────────────────────────────────────── */
 

@@ -49,6 +49,15 @@
 
 ---
 
+## 0.6.24 — `add theme` strips the template's default `:root`/`.dark` block
+
+> A theme's `tokens.css` defines its own `:root`/`.dark`, but the template's `app.css` already ships a default `:root`/`.dark` block earlier in the file. After `add theme` both coexisted at the same specificity and the template's (earlier) won — so the installed theme's colours never fully applied until someone hand-deleted the template block (observed in a titoko build transcript).
+
+- [x] 🟠 `packages/bosia/templates/{default,shop,demo}/src/app.css` — wrapped the default `:root`/`.dark` token block in `/* bosia-theme-vars */ … /* /bosia-theme-vars */` sentinels so removal targets exactly the template defaults, never user-authored `:root` rules. `@theme {}` (Tailwind token mapping) stays above the markers, untouched.
+- [x] 🟠 `packages/bosia/src/cli/theme.ts` — `runAddTheme` now calls `stripTemplateThemeVars(appCssPath)` after wiring the `@import`, removing the sentinel-bounded block (idempotent: a no-op once removed or on apps that never had it). The installed theme's `:root` becomes the only one, so its tokens win.
+
+---
+
 ## 0.6.23 (2026-06-11) — Surface yesterday's shop-template bugs in skills + ban the `postgres` npm pkg
 
 > Yesterday's 0.6.22 shipped the `shop` template and patched 5 install-blocking bugs in code. Three of them reflect cross-cutting gotchas future registry/framework authors WILL hit again, and the shop `package.json` still carried a stale `postgres` dep that the `Bun.SQL` scaffold doesn't need. This is a doc/clarity follow-up: surface the gotchas in the skills layer (where future AI runs will read them) and remove the stale dep so the lock file doesn't keep installing it.
