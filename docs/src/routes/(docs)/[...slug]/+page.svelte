@@ -88,6 +88,16 @@
 	import HeroConsultingDemo from "$lib/components/demos/HeroConsultingDemo.svelte";
 	import HeroAppDemo from "$lib/components/demos/HeroAppDemo.svelte";
 	import HeroProductDemo from "$lib/components/demos/HeroProductDemo.svelte";
+	import StorefrontLayoutDemo from "$lib/components/demos/StorefrontLayoutDemo.svelte";
+	import StorefrontHomeDemo from "$lib/components/demos/StorefrontHomeDemo.svelte";
+	import StorefrontCatalogDemo from "$lib/components/demos/StorefrontCatalogDemo.svelte";
+	import StorefrontListingDemo from "$lib/components/demos/StorefrontListingDemo.svelte";
+	import StorefrontProductDemo from "$lib/components/demos/StorefrontProductDemo.svelte";
+	import StorefrontCheckoutDemo from "$lib/components/demos/StorefrontCheckoutDemo.svelte";
+	import PagesHomeDemo from "$lib/components/demos/PagesHomeDemo.svelte";
+	import PagesListingDemo from "$lib/components/demos/PagesListingDemo.svelte";
+	import PagesProductDemo from "$lib/components/demos/PagesProductDemo.svelte";
+	import PagesCheckoutDemo from "$lib/components/demos/PagesCheckoutDemo.svelte";
 
 	const demos: Record<string, any> = {
 		AspectRatioDemo,
@@ -175,6 +185,16 @@
 		HeroConsultingDemo,
 		HeroAppDemo,
 		HeroProductDemo,
+		StorefrontLayoutDemo,
+		StorefrontHomeDemo,
+		StorefrontCatalogDemo,
+		StorefrontListingDemo,
+		StorefrontProductDemo,
+		StorefrontCheckoutDemo,
+		PagesHomeDemo,
+		PagesListingDemo,
+		PagesProductDemo,
+		PagesCheckoutDemo,
 	};
 
 	let { data }: { data: any } = $props();

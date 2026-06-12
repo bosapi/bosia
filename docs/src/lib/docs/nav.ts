@@ -201,6 +201,33 @@ export const sidebar: NavGroup[] = [
 					{ label: "Upload Area", slug: "blocks/files/upload-area" },
 				],
 			},
+			{
+				label: "Storefront",
+				children: [
+					{ label: "Layout", slug: "blocks/storefront/layout" },
+					{ label: "Home Sections", slug: "blocks/storefront/home" },
+					{ label: "Catalog & Cart", slug: "blocks/storefront/catalog" },
+					{ label: "Listing", slug: "blocks/storefront/listing" },
+					{ label: "Product Page", slug: "blocks/storefront/product" },
+					{ label: "Checkout", slug: "blocks/storefront/checkout" },
+				],
+			},
+		],
+	},
+	{
+		label: "Pages",
+		labelId: "Halaman",
+		items: [
+			{ label: "Overview", labelId: "Ringkasan", slug: "pages/overview" },
+			{
+				label: "Storefront",
+				children: [
+					{ label: "Home", slug: "pages/storefront/home" },
+					{ label: "Listing", slug: "pages/storefront/listing" },
+					{ label: "Product", slug: "pages/storefront/product" },
+					{ label: "Checkout", slug: "pages/storefront/checkout" },
+				],
+			},
 		],
 	},
 	{
@@ -226,6 +253,7 @@ export const sidebar: NavGroup[] = [
 			{ label: "Terminal", slug: "themes/terminal" },
 			{ label: "Sage", slug: "themes/sage" },
 			{ label: "Grape", slug: "themes/grape" },
+			{ label: "Clay", slug: "themes/clay" },
 			{
 				label: "Creating Themes",
 				labelId: "Membuat Tema",

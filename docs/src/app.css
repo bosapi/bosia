@@ -2,6 +2,7 @@
 @source "../src";
 @source "../../registry/components/ui";
 @source "../../registry/blocks/**/*.{svelte,ts,js}";
+@source "../../registry/pages/**/*.{svelte,ts,js}";
 
 @custom-variant dark (&:where(.dark, .dark *));
 

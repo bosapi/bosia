@@ -15,10 +15,12 @@
 		"paths": {
 			"$lib": ["./src/lib"],
 			"$lib/components/ui/*": ["../registry/components/ui/*"],
+			"$lib/blocks/*": ["../registry/blocks/*"],
 			"$lib/*": ["./src/lib/*"],
 			"$registry": ["../registry/components/ui"],
 			"$registry/*": ["../registry/components/ui/*"],
-			"$blocks/*": ["../registry/blocks/*"]
+			"$blocks/*": ["../registry/blocks/*"],
+			"$pages/*": ["../registry/pages/*"]
 		}
 	},
 	"include": ["src/**/*"],
