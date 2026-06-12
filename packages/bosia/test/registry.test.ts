@@ -144,6 +144,9 @@ describe("routeAdd() — dispatch", () => {
 			runAddBlock: (name, flags) => {
 				calls.push({ name: "runAddBlock", args: [name, flags] });
 			},
+			runAddPage: (name, flags) => {
+				calls.push({ name: "runAddPage", args: [name, flags] });
+			},
 			runAddTheme: (name, flags) => {
 				calls.push({ name: "runAddTheme", args: [name, flags] });
 			},
@@ -191,5 +194,27 @@ describe("routeAdd() — dispatch", () => {
 		const { runners, calls } = makeRunners();
 		await routeAdd(["ui/button", "ui/card", "-y"], runners);
 		expect(calls).toEqual([{ name: "runAdd", args: [["ui/button", "ui/card"], ["-y"]] }]);
+	});
+
+	test("`add page storefront/home` → runAddPage", async () => {
+		const { runners, calls } = makeRunners();
+		await routeAdd(["page", "storefront/home"], runners);
+		expect(calls).toEqual([{ name: "runAddPage", args: ["storefront/home", []] }]);
+	});
+
+	test("`add pages/storefront/home` alias → runAddPage", async () => {
+		const { runners, calls } = makeRunners();
+		await routeAdd(["pages/storefront/home"], runners);
+		expect(calls).toEqual([{ name: "runAddPage", args: ["storefront/home", []] }]);
+	});
+
+	test("mixed batch splits blocks, pages, and components", async () => {
+		const { runners, calls } = makeRunners();
+		await routeAdd(["ui/button", "blocks/cards/x", "pages/storefront/home"], runners);
+		expect(calls).toEqual([
+			{ name: "runAdd", args: [["ui/button"], []] },
+			{ name: "runAddBlock", args: ["cards/x", []] },
+			{ name: "runAddPage", args: ["storefront/home", []] },
+		]);
 	});
 });

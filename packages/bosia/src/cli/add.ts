@@ -33,6 +33,7 @@ export interface RegistryIndex {
 	components: string[];
 	features: string[];
 	blocks?: string[];
+	pages?: string[];
 	themes?: string[];
 }
 
@@ -181,9 +182,10 @@ export function runAddList(): void {
 	const manifest = readManifest();
 	const components = Object.entries(manifest.components);
 	const blocks = Object.entries(manifest.blocks);
+	const pages = Object.entries(manifest.pages);
 
-	if (components.length === 0 && blocks.length === 0) {
-		console.log("No components or blocks installed.");
+	if (components.length === 0 && blocks.length === 0 && pages.length === 0) {
+		console.log("No components, blocks, or pages installed.");
 		console.log("Install one with: bun x bosia@latest add <component>");
 		return;
 	}
@@ -201,6 +203,15 @@ export function runAddList(): void {
 		console.log(`⬡ Installed blocks (${blocks.length}):\n`);
 		const w = Math.max(...blocks.map(([n]) => n.length));
 		for (const [name, entry] of blocks) {
+			console.log(`  ${name.padEnd(w)}  ${entry.installedAt.slice(0, 10)}`);
+		}
+	}
+
+	if (pages.length > 0) {
+		if (components.length > 0 || blocks.length > 0) console.log("");
+		console.log(`⬡ Installed pages (${pages.length}):\n`);
+		const w = Math.max(...pages.map(([n]) => n.length));
+		for (const [name, entry] of pages) {
 			console.log(`  ${name.padEnd(w)}  ${entry.installedAt.slice(0, 10)}`);
 		}
 	}

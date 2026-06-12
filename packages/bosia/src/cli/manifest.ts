@@ -38,15 +38,19 @@ export interface BlockManifestEntry {
 	fonts?: string[];
 }
 
+// A page is a group of blocks (no backend); reuse the block entry shape.
+export type PageManifestEntry = BlockManifestEntry;
+
 export interface Manifest {
 	version: number;
 	features: Record<string, FeatureManifestEntry>;
 	components: Record<string, ComponentManifestEntry>;
 	blocks: Record<string, BlockManifestEntry>;
+	pages: Record<string, PageManifestEntry>;
 }
 
 function emptyManifest(): Manifest {
-	return { version: MANIFEST_VERSION, features: {}, components: {}, blocks: {} };
+	return { version: MANIFEST_VERSION, features: {}, components: {}, blocks: {}, pages: {} };
 }
 
 export function readManifest(cwd: string = process.cwd()): Manifest {
@@ -59,6 +63,7 @@ export function readManifest(cwd: string = process.cwd()): Manifest {
 			features: parsed.features ?? {},
 			components: parsed.components ?? {},
 			blocks: parsed.blocks ?? {},
+			pages: parsed.pages ?? {},
 		};
 	} catch {
 		return emptyManifest();
@@ -97,5 +102,15 @@ export function recordBlock(
 ): void {
 	const manifest = readManifest(cwd);
 	manifest.blocks[name] = { installedAt: new Date().toISOString(), ...entry };
+	writeManifest(manifest, cwd);
+}
+
+export function recordPage(
+	cwd: string,
+	name: string,
+	entry: Omit<PageManifestEntry, "installedAt">,
+): void {
+	const manifest = readManifest(cwd);
+	manifest.pages[name] = { installedAt: new Date().toISOString(), ...entry };
 	writeManifest(manifest, cwd);
 }

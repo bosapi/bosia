@@ -113,6 +113,7 @@
 		"heros/app",
 		"heros/product"
 	],
+	"pages": ["storefront/home", "storefront/listing", "storefront/product", "storefront/checkout"],
 	"themes": [
 		"neutral",
 		"editorial",

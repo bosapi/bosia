@@ -5,6 +5,7 @@
 export interface AddRunners {
 	runAdd: (names: string[], flags: string[]) => Promise<void> | void;
 	runAddBlock: (name: string | undefined, flags: string[]) => Promise<void> | void;
+	runAddPage: (name: string | undefined, flags: string[]) => Promise<void> | void;
 	runAddTheme: (name: string | undefined, flags: string[]) => Promise<void> | void;
 	runAddFont: (family: string | undefined, url: string | undefined) => Promise<void> | void;
 	runAddList: () => Promise<void> | void;
@@ -17,6 +18,10 @@ export async function routeAdd(args: string[], runners: AddRunners): Promise<voi
 
 	if (sub === "block") {
 		await runners.runAddBlock(positional[1], flags);
+		return;
+	}
+	if (sub === "page") {
+		await runners.runAddPage(positional[1], flags);
 		return;
 	}
 	if (sub === "theme") {
@@ -33,18 +38,24 @@ export async function routeAdd(args: string[], runners: AddRunners): Promise<voi
 		return;
 	}
 
-	// Alias: `blocks/<cat>/<name>` tokens dispatch to runAddBlock.
-	// Skills/AI agents frequently emit the plural `blocks/...` form alongside
-	// `ui/*` components; route those to the block installer transparently
-	// and let any remaining plain component names fall through to runAdd.
+	// Alias: `blocks/<cat>/<name>` / `pages/<cat>/<name>` tokens dispatch to the
+	// matching installer. Skills/AI agents frequently emit these plural forms
+	// alongside `ui/*` components; route those transparently and let any
+	// remaining plain component names fall through to runAdd.
 	const blockTokens = positional.filter((p) => p.startsWith("blocks/"));
-	const componentTokens = positional.filter((p) => !p.startsWith("blocks/"));
-	if (blockTokens.length > 0) {
+	const pageTokens = positional.filter((p) => p.startsWith("pages/"));
+	const componentTokens = positional.filter(
+		(p) => !p.startsWith("blocks/") && !p.startsWith("pages/"),
+	);
+	if (blockTokens.length > 0 || pageTokens.length > 0) {
 		if (componentTokens.length > 0) {
 			await runners.runAdd(componentTokens, flags);
 		}
 		for (const token of blockTokens) {
 			await runners.runAddBlock(token.slice("blocks/".length), flags);
+		}
+		for (const token of pageTokens) {
+			await runners.runAddPage(token.slice("pages/".length), flags);
 		}
 		return;
 	}

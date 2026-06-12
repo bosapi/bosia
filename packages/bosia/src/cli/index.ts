@@ -69,6 +69,10 @@ async function main() {
 					const { runAddBlock } = await import("./block.ts");
 					await runAddBlock(name, flags);
 				},
+				runAddPage: async (name, flags) => {
+					const { runAddPage } = await import("./page.ts");
+					await runAddPage(name, flags);
+				},
 				runAddTheme: async (name, flags) => {
 					const { runAddTheme } = await import("./theme.ts");
 					await runAddTheme(name, flags);
@@ -116,6 +120,7 @@ Commands:
   test [args]         Run tests with bun test (auto-loads .env.test, sets BOSIA_ENV=test)
   add <component...> [-y]   Add one or more UI components from the registry
   add block <cat>/<name>    Add a composed block from the registry
+  add page <cat>/<name>     Add a full page (a group of blocks) from the registry
   add theme <name>          Add a theme (tokens.css) from the registry
   add font <family> <url>   Prepend an @import url(...) for a font family to src/app.css
   add list                  List installed components and blocks (reads bosia.json)
@@ -139,6 +144,8 @@ Examples:
   bun x bosia@latest add shop/cart           → src/lib/components/shop/cart/
   bun x bosia@latest add block cards/feature
   bun x bosia@latest add blocks/cards/feature   (alias for: add block cards/feature)
+  bun x bosia@latest add page storefront/home
+  bun x bosia@latest add pages/storefront/home  (alias for: add page storefront/home)
   bun x bosia@latest add theme editorial
   bun x bosia@latest add font "Fredoka" "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap"
   bun x bosia@latest feat login
