@@ -1,7 +1,17 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.7.0**
+> Current version: **0.7.1**
+
+---
+
+## 0.7.1 — Inspector: structured AI payload (labeled fields)
+
+> The alt+click → "Send to AI" flow no longer buries context in a flat call-site string. The `comment` now carries labeled fields — `url` (which record is rendered), `pageFile` (nearest `+page`/`+layout`, where data originates and flows down as props), `component` (leaf), leaf-only capped `text`, and a framework-stripped `tree` — so the AI traces props back to the page instead of editing the leaf component.
+
+- [x] 🟠 `packages/bosia/src/core/plugins/inspector/overlay.ts` — `isFrameworkFrame`/`fileOf`/`userFrames`/`findPageFile`/`ownText`/`buildContext` helpers; `submit()` sends `buildContext(el) + "---" + comment`; form header shows framework-stripped chain. Runtime-error path untouched.
+- [x] ⚪ Docs — `guides/inspector.md` `aiEndpoint` section rewritten with the labeled format + why `pageFile` matters.
+- [x] ⚪ Skill — `bosia-inspector-edit/SKILL.md` rewritten to the new `[Inspector]` contract (split on `---`, default to `pageFile` over the `component` leaf, use `url`/`text` to disambiguate).
 
 ---
 

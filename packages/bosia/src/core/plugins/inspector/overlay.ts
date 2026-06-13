@@ -75,6 +75,50 @@ function chainString(el){
   return stack.concat(leaf).join(" → ");
 }
 
+// ─── Structured AI payload helpers (alt+click flow) ──────────────
+function isFrameworkFrame(f){return f.indexOf("node_modules/bosia")>=0}
+function fileOf(frame){var m=/^(.+):\\d+:\\d+$/.exec(frame);return m?m[1]:frame}
+function endsWith(s,suf){return s.length>=suf.length&&s.lastIndexOf(suf)===s.length-suf.length}
+// Outer→leaf chain with framework (node_modules/bosia) frames removed.
+function userFrames(el){
+  var leaf=el.getAttribute("data-bosia-loc")||"";
+  var all=collectStack(el).concat(leaf?[leaf]:[]);
+  var uf=[];
+  for(var i=0;i<all.length;i++)if(!isFrameworkFrame(all[i]))uf.push(all[i]);
+  return uf;
+}
+// Nearest-to-leaf +page.svelte (preferred) or +layout.svelte frame.
+function findPageFile(frames){
+  var layoutHit=null;
+  for(var i=frames.length-1;i>=0;i--){
+    var f=fileOf(frames[i]);
+    if(endsWith(f,"+page.svelte"))return frames[i];
+    if(!layoutHit&&endsWith(f,"+layout.svelte"))layoutHit=frames[i];
+  }
+  return layoutHit;
+}
+// The clicked element's own direct text (not descendants), collapsed + capped.
+function ownText(el){
+  var t="";
+  for(var i=0;i<el.childNodes.length;i++){var n=el.childNodes[i];if(n.nodeType===3)t+=n.nodeValue||""}
+  t=t.replace(/\\s+/g," ").trim();
+  if(t.length>80)t=t.slice(0,80)+"…";
+  return t;
+}
+function buildContext(el){
+  var leaf=el.getAttribute("data-bosia-loc")||"";
+  var frames=userFrames(el);
+  var pageFile=findPageFile(frames);
+  var lines=["[Inspector]"];
+  lines.push("url:       "+location.href);
+  if(pageFile)lines.push("pageFile:  "+pageFile);
+  if(leaf&&leaf!==pageFile)lines.push("component: "+leaf);
+  var text=ownText(el);
+  if(text)lines.push('text:      "'+text+'"');
+  if(frames.length>1)lines.push("tree:      "+frames.join(" → "));
+  return lines.join("\\n");
+}
+
 function toast(msg,err){
   var t=document.createElement("div");
   t.textContent=msg;
@@ -94,7 +138,7 @@ function send(payload,onOk,onErr){
 function closeForm(){if(form){form.remove();form=null}}
 function openForm(loc,el){
   closeForm();
-  var chain=chainString(el);
+  var chain=userFrames(el).join(" → ");
   var r=el.getBoundingClientRect();
   form=document.createElement("div");
   form.style.cssText="position:fixed;left:"+r.left+"px;top:"+(r.bottom+6)+"px;background:#fff;color:#111;border:1px solid #d4d4d8;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:10px;width:340px;z-index:2147483647;font:13px ui-sans-serif,system-ui,sans-serif";
@@ -112,8 +156,7 @@ function openForm(loc,el){
     var userComment=ta.value.trim();
     var payload={file:loc.file,line:loc.line,col:loc.col};
     if(userComment){
-      var tree=chain.indexOf(" → ")>=0?("Component tree (outer → leaf): "+chain+"\\n\\n"):"";
-      payload.comment=tree+userComment;
+      payload.comment=buildContext(el)+"\\n---\\n"+userComment;
     }
     send(payload,function(j){toast(j.mode==="ai"?"sent to AI":"opened "+loc.file+":"+loc.line)});
     closeForm();

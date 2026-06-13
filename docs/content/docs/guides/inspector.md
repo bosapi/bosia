@@ -48,18 +48,24 @@ For VS Code: install the "Shell Command: Install 'code' command in PATH" command
 
 ### `aiEndpoint`
 
-When set, Option+click opens an anchored form (textarea + Send/Cancel) instead of jumping to the editor. The form header pre-fills with the full component call-site chain so you can see exactly which page/layout context the AI will receive. On submit, the overlay POSTs to your AI endpoint:
+When set, Option+click opens an anchored form (textarea + Send/Cancel) instead of jumping to the editor. The form header pre-fills with the (framework-stripped) component call-site chain so you can see exactly which page/component context the AI will receive. On submit, the overlay POSTs to your AI endpoint:
 
 ```json
 {
-	"file": "registry/components/ui/button/Button.svelte",
-	"line": 5,
-	"col": 1,
-	"comment": "Component tree (outer → leaf): src/routes/+page.svelte:42:5 → registry/components/ui/button/Button.svelte:5:1\n\nthis button should be disabled when loading"
+	"file": "src/lib/blocks/storefront/product-options/block.svelte",
+	"line": 37,
+	"col": 2,
+	"comment": "[Inspector]\nurl:       http://localhost:5173/katalog/kemeja-batik\npageFile:  src/routes/(public)/katalog/[slug]/+page.svelte:69:6\ncomponent: src/lib/blocks/storefront/product-options/block.svelte:37:2\ntext:      \"Kemeja Batik Premium\"\ntree:      src/routes/(public)/katalog/[slug]/+page.svelte:69:6 → src/lib/blocks/storefront/product-options/block.svelte:37:2\n---\nchange the product name"
 }
 ```
 
-The `file` / `line` / `col` still point at the leaf (where the actual `<button>` lives) so the editor-open fallback path is unchanged. The chain is prepended to `comment` so an AI agent receives the full render context and can edit the page rather than the shared component definition.
+The `file` / `line` / `col` still point at the leaf (where the clicked element lives) so the editor-open fallback path is unchanged. The `comment` carries a labeled context block above the `---` separator:
+
+- **`url`** — the page the element was clicked on (`location.href`), so the AI knows _which_ record is rendered (e.g. which product slug).
+- **`pageFile`** — the nearest `+page.svelte` / `+layout.svelte` in the render chain. This matters because data usually originates in the page (or its `+page.server.ts`) and flows _down_ into components as props. When you ask to "change the product name", the value lives in the page, not the leaf component — surfacing `pageFile` lets the AI trace the prop back to its source instead of editing the leaf.
+- **`component`** — the leaf `data-bosia-loc` (omitted when the element lives directly in the page).
+- **`text`** — the element's own direct text, whitespace-collapsed and capped (omitted when it has none).
+- **`tree`** — the full user-code call-site chain (framework frames stripped), omitted when only one frame remains.
 
 If the user submits an empty comment, the request falls back to opening the editor — handy for "I just want to jump there" without changing modes.
 

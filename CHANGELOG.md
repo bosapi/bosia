@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.1] - 2026-06-13
+
+### Changed
+
+- Inspector now sends the AI clear url/page/component fields so it edits the right file.
+
 ## [0.7.0] - 2026-06-13
 
 ### Added

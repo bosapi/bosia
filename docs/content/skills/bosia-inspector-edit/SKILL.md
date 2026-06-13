@@ -1,12 +1,13 @@
 ---
 name: bosia-inspector-edit
-description: Surgical edits driven by Bosia Inspector payloads. Parse the `Component tree (outer → leaf)` chain when present and default to the outermost call-site (page/layout) rather than the shared component definition. Use `fs_edit`, never full rewrite.
+description: Surgical edits driven by Bosia Inspector payloads. Read the labeled `[Inspector]` context block (url / pageFile / component / text / tree) and default to the `pageFile` (page/layout) rather than the shared `component` leaf. Use `fs_edit`, never full rewrite.
 triggers:
   - inspector
   - overlay comment
   - file:line edit
   - point edit
-  - component tree
+  - inspector context
+  - pageFile
   - call-site chain
 od:
   mode: composition
@@ -35,38 +36,43 @@ Bosia's dev overlay (`bosia/packages/bosia/src/core/plugins/inspector/index.ts`)
 
 ```json
 {
-	"file": "registry/components/ui/button/Button.svelte",
-	"line": 5,
-	"col": 1,
-	"comment": "Component tree (outer → leaf): src/routes/(public)/+page.svelte:42:5 → registry/components/ui/button/Button.svelte:5:1\n\nmake this button red"
+	"file": "src/lib/blocks/storefront/product-options/block.svelte",
+	"line": 37,
+	"col": 2,
+	"comment": "[Inspector]\nurl:       http://localhost:5173/katalog/kemeja-batik\npageFile:  src/routes/(public)/katalog/[slug]/+page.svelte:69:6\ncomponent: src/lib/blocks/storefront/product-options/block.svelte:37:2\ntext:      \"Kemeja Batik Premium\"\ntree:      src/routes/(public)/katalog/[slug]/+page.svelte:69:6 → src/lib/blocks/storefront/product-options/block.svelte:37:2\n---\nchange the product name"
 }
 ```
 
 - **`file` / `line` / `col`** — workspace-relative path to the **leaf element** (the actual `<button>` / `<div>` / etc.). 1-indexed line, points at the opening tag.
-- **`comment`** — when the clicked element was rendered inside one or more `<Component>` invocations, the comment is **prefixed** with a `Component tree (outer → leaf): A:line:col → B:line:col → … → leaf:line:col\n\n` line. The user's natural-language request follows. If the element was not nested inside any component, the prefix is omitted.
+- **`comment`** — a labeled `[Inspector]` context block, then a `---` separator line, then the user's natural-language request. Parse it by splitting on the first `\n---\n`: everything above is context, everything below is the request. The context block carries these labeled fields (each may be omitted — never assume a field is present):
+  - **`url`** — the page URL clicked (`location.href`). Tells you _which record_ is rendered (e.g. the `kemeja-batik` slug), so "change the product name" maps to a specific entity, not a guess.
+  - **`pageFile`** — the nearest `+page.svelte` / `+layout.svelte` in the render chain, with `:line:col`. This is where the data usually originates (the page or its `+page.server.ts`) and flows _down_ into components as props. **This is the default edit target.**
+  - **`component`** — the leaf `data-bosia-loc` (the shared component the element lives in). Omitted when the element sits directly in the page (then `pageFile` == leaf).
+  - **`text`** — the clicked element's own direct text, collapsed and capped (omitted when it has none). Use it to disambiguate which element on the page.
+  - **`tree`** — the full user-code call-site chain, outer→leaf, framework frames stripped. Omitted when only one frame remains.
 
 ### Choosing the right target file
 
-The chain matters because the leaf is usually a **shared component definition** (e.g. `Button.svelte`), and editing it ripples to every caller. The page where `<Button>` was invoked is almost always what the user meant.
+`pageFile` and `component` matter because the leaf `component` is usually a **shared definition** (e.g. `product-options/block.svelte`, `Button.svelte`), and editing it ripples to every caller. The page that rendered it — and where the bound data lives — is almost always what the user meant.
 
-**Default target = outermost entry in the chain** (the page or layout). Edit `Button.svelte` only when the request is clearly about the shared component itself.
+**Default target = `pageFile`** (the page or layout). Because data originates in the page and flows down as props, "change the product name" almost always means edit the page (or its loader), not the leaf component that merely renders the prop. Edit the leaf `component` only when the request is clearly about the shared component itself.
 
-| Signal in the comment                                                       | Target                                                                         |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| "this button", "this card", "this here"                                     | **Outermost call-site** (page/layout) — pass a prop or wrap locally            |
-| "make all buttons …", "globally", "the component"                           | **Leaf** (shared component definition)                                         |
-| Style-only one-off ("make it red", "bigger")                                | **Outermost call-site** — add a Tailwind class on the `<Component>` invocation |
-| Behavioral change applied to one instance                                   | **Outermost call-site** — bind a prop / wrap the call                          |
-| Behavioral change to the component itself ("default size should be larger") | **Leaf**                                                                       |
-| No chain present (no `Component tree` prefix)                               | Edit the file in the JSON `file` field — there is no ambiguity                 |
+| Signal in the request                                                       | Target                                                                |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| "this button", "this card", "this here", "change the product name"          | **`pageFile`** — pass a prop, edit the bound data, or wrap locally    |
+| "make all buttons …", "globally", "the component"                           | **`component`** (shared leaf definition)                              |
+| Style-only one-off ("make it red", "bigger")                                | **`pageFile`** — add a Tailwind class on the `<Component>` invocation |
+| Behavioral change applied to one instance                                   | **`pageFile`** — bind a prop / wrap the call                          |
+| Behavioral change to the component itself ("default size should be larger") | **`component`**                                                       |
+| No `pageFile` / no context block present                                    | Edit the file in the JSON `file` field — there is no ambiguity        |
 
 If neither signal is present and the request is ambiguous, **reply with two concrete options** before editing (see R3, R6).
 
 ## Workflow
 
-1. **Parse the payload.** Extract `file`, `line`, `col`, `comment`. If the comment starts with `Component tree (outer → leaf): `, split off the prefix line and parse the chain into `[outer, …, leaf]`.
-2. **Pick the target.** If a chain is present, default to the **outermost entry** (page/layout). Re-route to a different chain entry only when the request explicitly demands it (see the table above). When no chain is present, target is the JSON `file:line:col`.
-3. **Read the target file at the target line.** Window — `line - 5` … `line + 30` — enough to see the element and immediate context. If the target came from the chain, the line refers to the `<Component>` invocation in the parent file, not the JSON `file`.
+1. **Parse the payload.** Extract `file`, `line`, `col`, `comment`. If the comment starts with `[Inspector]`, split on the first `\n---\n`: parse the labeled fields above (`url`, `pageFile`, `component`, `text`, `tree`) and take the user's request from below.
+2. **Pick the target.** If `pageFile` is present, default to it (page/layout) — that's where the bound data lives. Re-route to the `component` leaf only when the request explicitly demands it (see the table above). When no context block is present, target is the JSON `file:line:col`.
+3. **Read the target file at the target line.** Window — `line - 5` … `line + 30` — enough to see the element and immediate context. If the target is `pageFile`, use its `:line:col` (the `<Component>` invocation or element in the page), not the JSON `file`. For data-bound text changes, also check the page's `+page.server.ts` / loader where the value originates.
 4. **Identify the node.** Match opening tag at `line`. Walk to its closing tag (or self-close).
 5. **Scope the edit.** Compute the smallest substring that contains the change.
 6. **Apply via `fs_edit`** — never full rewrite. The user's surrounding code stays byte-identical.
@@ -99,7 +105,7 @@ Never reformat the file, never reorder unrelated lines, never "fix while you're 
 
 ### R3 — When the line is wrong
 
-If the element at the **target line** doesn't match the comment ("make this button red" but the line points at a `<div>`), scan ±5 lines for the nearest matching element. If still no match, fall back to the **next entry in the chain** (one step toward the leaf) and try again. If neither resolves, ask the user to re-click.
+If the element at the **target line** doesn't match the request ("make this button red" but the line points at a `<div>`), scan ±5 lines for the nearest matching element — the `text` field helps confirm you're on the right node. If still no match, fall back to the **next entry in `tree`** (one step toward the leaf, e.g. the `component`) and try again. If neither resolves, ask the user to re-click.
 
 ### R4 — Multiple inspector messages in one turn
 
@@ -111,21 +117,21 @@ Tailwind classes on the element. Don't introduce scoped `<style>` blocks for one
 
 ### R6 — Don't edit shared components by default
 
-When the chain is present, the **leaf** is almost always a shared component (`Button.svelte`, `Card.svelte`, a registry primitive). Editing it changes every caller across the app.
+The **`component`** leaf is almost always a shared component (`Button.svelte`, `Card.svelte`, a registry primitive). Editing it changes every caller across the app.
 
-- Prefer the **outermost call-site** (top of chain) — pass a Tailwind class, set a prop, wrap the invocation. The change stays local to the page the user was looking at.
-- Edit the leaf only when the request is unambiguously about the component itself ("make all buttons rounder", "the default size should be larger", "fix the component's hover state").
+- Prefer **`pageFile`** — pass a Tailwind class, set a prop, edit the bound data, wrap the invocation. The change stays local to the page the user was looking at.
+- Edit the `component` leaf only when the request is unambiguously about the component itself ("make all buttons rounder", "the default size should be larger", "fix the component's hover state").
 - If the component doesn't accept a `class` / `className` prop and the request would require adding one, do the local edit first via a wrapping element with the Tailwind class; flag the prop-plumbing as a follow-up rather than silently changing the component's public API.
 
 ### R7 — Confirm before changing the leaf
 
-If you decide to edit the leaf (shared component) instead of the call-site, **state that decision in one sentence** at the top of your response before the patch ("Editing `Button.svelte` because the request says 'all buttons'"). The user can interrupt if they meant a one-off.
+If you decide to edit the `component` leaf (shared component) instead of `pageFile`, **state that decision in one sentence** at the top of your response before the patch ("Editing `Button.svelte` because the request says 'all buttons'"). The user can interrupt if they meant a one-off.
 
 ## Checklist gate
 
 P0:
 
-- [ ] Parsed the `Component tree` prefix when present; picked the call-site (not the leaf) for one-off requests.
+- [ ] Parsed the `[Inspector]` context block (split on `---`) when present; picked `pageFile` (not the `component` leaf) for one-off requests.
 - [ ] Edit scoped to the named element (no nearby code touched).
 - [ ] Used `fs_edit`, not full file rewrite.
 - [ ] Translated raw colors → semantic tokens.
