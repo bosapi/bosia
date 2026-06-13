@@ -20,6 +20,13 @@ function buildClient() {
 		user: u.username ? decodeURIComponent(u.username) : undefined,
 		password: u.password ? decodeURIComponent(u.password) : undefined,
 		database: u.pathname.slice(1) || undefined,
+		// Close idle sockets before the server reaps them, so a query after the
+		// dev server sat idle never hits a dead pooled connection ("Connection
+		// closed", surfaced as a misleading Drizzle "Failed query"). See the
+		// pg template for the full explanation.
+		idleTimeout: 20,
+		maxLifetime: 60 * 30,
+		connectionTimeout: 30,
 	};
 	return new (Bun as unknown as { SQL: new (o: unknown) => unknown }).SQL(opts);
 }

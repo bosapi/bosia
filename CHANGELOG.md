@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Restored `page.params` as a deprecated fallback; new code should read params from props.
 
+### Fixed
+
+- Login/register no longer fail after the app sits idle — database connections now refresh automatically.
+
 ---
 
 ## [0.6.25] - 2026-06-12

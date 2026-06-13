@@ -23,6 +23,18 @@ function buildClient() {
 		user: u.username ? decodeURIComponent(u.username) : undefined,
 		password: u.password ? decodeURIComponent(u.password) : undefined,
 		database: u.pathname.slice(1) || undefined,
+		// The dev server holds this client for its whole lifetime. With the
+		// default idleTimeout (0 = never), Bun keeps a pooled socket open
+		// forever — but Postgres / the lima port-forward reaps idle sockets
+		// after ~60s. Bun then still believes the dead socket is live, so the
+		// next query (e.g. login/register after the server sat idle) fails with
+		// `PostgresError: Connection closed`, surfaced as a misleading Drizzle
+		// "Failed query: select ...". Closing idle sockets *before* the server
+		// does means Bun always opens a fresh one on demand. maxLifetime recycles
+		// long-lived sockets that never go fully idle.
+		idleTimeout: 20,
+		maxLifetime: 60 * 30,
+		connectionTimeout: 30,
 	};
 	return new (Bun as unknown as { SQL: new (o: unknown) => unknown }).SQL(opts);
 }
