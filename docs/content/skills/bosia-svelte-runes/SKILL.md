@@ -34,197 +34,80 @@ bosia:
 
 # bosia-svelte-runes
 
-## What it builds
-
-Svelte 5 components that use Runes exclusively. No legacy reactivity, no stores when local state suffices.
-
-## When to use
-
-Any `.svelte` or `.svelte.ts` file. No exceptions.
+Runes-only Svelte 5. No legacy reactivity, no stores when local state suffices. Applies to every `.svelte` / `.svelte.ts` file, no exceptions.
 
 ## Rules
 
-### R1 — State: `$state`
+R1 — State: `$state`. `let count = $state(0)`, `let user = $state<User | null>(null)`. Never `let count = 0` for reactive values; never `writable`/`readable` for component-local state.
+
+R2 — Props: `$props()`, typed inline on the destructure. Never `export let`.
 
 ```svelte
-<script lang="ts">
-	let count = $state(0);
-	let user = $state<User | null>(null);
-</script>
+let { title, items = [], onSelect }:
+	{ title: string; items?: Item[]; onSelect?: (i: Item) => void } = $props();
 ```
 
-Never `let count = 0` for reactive values. Never stores (`writable`, `readable`) for component-local state.
-
-### R2 — Props: `$props()`
+R3 — Derived: `$derived` / `$derived.by`. Never `$: count = items.length`.
 
 ```svelte
-<script lang="ts">
-	let {
-		title,
-		items = [],
-		onSelect,
-	}: { title: string; items?: Item[]; onSelect?: (i: Item) => void } = $props();
-</script>
+let count = $derived(items.length); let total = $derived.by(() => items.reduce((s, i) => s +
+i.price, 0));
 ```
 
-Never `export let title`. Type the destructured object inline.
-
-### R3 — Derived: `$derived`
+R3.5 — Anything computed from `data`/props MUST be `$derived`. The component instance is REUSED across client navigations to the same route file (`[slug]/+page.svelte` → another slug) — the router updates `data`/`$props()` in place without remounting. A plain `const` runs once at mount and never recomputes → stale content after the URL changes.
 
 ```svelte
-<script lang="ts">
-	let items = $state<Item[]>([]);
-	let count = $derived(items.length);
-	let total = $derived.by(() => items.reduce((s, i) => s + i.price, 0));
-</script>
+let {data}: PageProps = $props(); const product = getProductBySlug(data.slug); // ❌ frozen at first
+mount let product = $derived(getProductBySlug(data.slug)); // ✅ recomputes on slug change
 ```
 
-Never `$: count = items.length`.
+This passes SSR, fresh-mount navigation, and `svelte-check`, so it only fails navigating between two URLs of the same dynamic route — easy to miss. Rule: any value reading `data.*`/a prop/a `$state`/`$derived` whose source can change while mounted MUST be `$derived` — including chained derivations (e.g. `related` from `product`).
 
-### R3.5 — Anything computed from `data` / props MUST be `$derived`
-
-The component instance is **reused** across client-side navigations that hit the same route file (e.g. `[slug]/+page.svelte` → another slug). The router does NOT remount — it updates the `data` / `$props()` values in place. A plain `const` runs **once at mount** and never recomputes, so the page shows stale content even though the URL changed.
+R4 — Effect: `$effect` sparingly, side effects only (subscriptions, DOM, fetch); return a cleanup fn. Never use it for value derivation — that's `$derived`.
 
 ```svelte
-<script lang="ts">
-	let { data }: PageProps = $props();
-
-	const product = getProductBySlug(data.slug); // ❌ frozen at first mount
-	const product = $derived(getProductBySlug(data.slug)); // ✅ recomputes when slug changes
-</script>
+$effect(() => {
+	const c = new AbortController();
+	fetch(`/api/x/${id}`, { signal: c.signal });
+	return () => c.abort();
+});
 ```
 
-This passes SSR (first render is correct), passes a fresh-mount navigation (homepage → detail mounts a new instance), and passes `svelte-check` — so it only fails when navigating **between two URLs of the same dynamic route** (detail → related detail). Easy to miss in casual testing.
+R5 — Bindable: `let { value = $bindable("") }: { value?: string } = $props();` — required when a parent uses `bind:value` on a custom component.
 
-Rule: if a value reads `data.*`, a prop, or any `$state`/`$derived`, and that source can change while the component stays mounted, it MUST be `$derived` (or `$derived.by`). Values derived from a derived value (e.g. `related` from `product`) inherit this — make the whole chain reactive.
-
-### R4 — Effect: `$effect` (sparingly)
-
-```svelte
-<script lang="ts">
-	let id = $state(0);
-	$effect(() => {
-		const c = new AbortController();
-		fetch(`/api/x/${id}`, { signal: c.signal });
-		return () => c.abort();
-	});
-</script>
-```
-
-Use only for side effects (subscriptions, DOM, fetch). For value derivation, use `$derived`. Never call `$effect` for things that should be `$derived`.
-
-### R5 — Bindable props: `$bindable`
-
-```svelte
-<script lang="ts">
-	let { value = $bindable("") }: { value?: string } = $props();
-</script>
-```
-
-Required when a parent uses `bind:value` on a custom component.
-
-### R6 — Shared state lives in `.svelte.ts` modules
-
-For cross-component state, create `lib/stores/foo.svelte.ts` and export `$state`-backed values. Do **not** use legacy `svelte/store`.
+R6 — Shared/cross-component state lives in `lib/stores/foo.svelte.ts` as `$state`-backed exports. Never legacy `svelte/store`.
 
 ```ts
 // lib/stores/session.svelte.ts
 export const session = $state<{ user: User | null }>({ user: null });
 ```
 
-### R6.5 — Template identifiers must match script scope
+R6.5 — Template identifiers must match script scope. The compiler does NOT error on undeclared identifiers (treats them as possibly-global); the failure surfaces only at SSR runtime as `ReferenceError: X is not defined`. Two shapes:
 
-Every identifier the template uses (including shorthand attributes `{foo}`) **must** exist in the component's script scope. The Svelte compiler does NOT error on undeclared identifiers — it treats them as possibly-global. The failure surfaces only at SSR runtime as `ReferenceError: X is not defined`.
+- Shorthand name ≠ local variable: `<Navbar {links} />` when the script has `navLinks` → ReferenceError. `{x}` shorthand is legal ONLY when a script-scope `x` exists; when names differ use `prop={local}` (`links={navLinks}`).
+- Refactor removed an import/local but the template still uses it: `<button class={cn(...)}>` after deleting `import { cn }` → ReferenceError. After renaming a local or removing an import, grep the template for identifiers no longer in scope.
 
-Two common shapes:
+`svelte-check` catches both ("No value exists in scope for the shorthand property 'X'") — it runs in `bun run check`; don't ship without it passing (see [[bosia-engineering-discipline]] R6).
 
-**a) Shorthand attribute name does not match the local variable:**
-
-```svelte
-<script lang="ts">
-	const navLinks = [
-		/* ... */
-	];
-</script>
-
-<Navbar {links} /> {/* ❌ ReferenceError: links is not defined */}
-<Navbar links={navLinks} /> {/* ✅ explicit when names differ */}
-<Navbar {navLinks} /> {/* ✅ shorthand only when names match */}
-```
-
-Rule: `{x}` shorthand is legal **only** when a script-scope `const/let x` exists with the same name. When names differ, use `prop={local}`.
-
-**b) Refactor removed an import but template still uses it:**
-
-```svelte
-<script>
-	let label = $state("Submit");
-	// removed: import { cn } from "$lib/utils";
-</script>
-
-<button class={cn("btn", extra)}>{label}</button> {/* ❌ ReferenceError: cn is not defined */}
-<button class="btn">{label}</button> {/* ✅ template synced with script scope */}
-```
-
-After renaming a local or removing an import, grep the template for any identifier that no longer exists in script scope.
-
-**Static detection:** `svelte-check` catches both cases (`"No value exists in scope for the shorthand property 'X'"`). It runs as part of `bun run check`. Do not ship without `check` passing — see [[bosia-engineering-discipline]] R6.
-
-❌ Wrong (template doesn't match state setup):
-
-```svelte
-<script>
-	let label = $state("Submit");
-	// removed: import { cn } from "$lib/utils";
-</script>
-
-<button class={cn("btn", extra)}>{label}</button> {/* ERROR: cn undefined */}
-```
-
-✅ Right (template synced with script scope):
-
-```svelte
-<script>
-	let label = $state("Submit");
-</script>
-
-<button class="btn">{label}</button>
-```
-
-After refactoring imports or state setup, search the template for any references that no longer exist and update them to use the new variable.
-
-### R7 — Snippets replace slots
-
-```svelte
-{#snippet item(i: Item)}<li>{i.label}</li>{/snippet}
-{@render item(thing)}
-```
-
-Children: `let { children }: { children: Snippet } = $props();` then `{@render children()}`.
+R7 — Snippets replace slots. `{#snippet item(i: Item)}<li>{i.label}</li>{/snippet}` then `{@render item(thing)}`. Children: `let { children }: { children: Snippet } = $props();` then `{@render children()}`.
 
 ## Anti-patterns
 
-- `export let x` (use `$props()`)
-- `let x = 0` for reactive (use `$state`)
-- `$: y = x * 2` (use `$derived`)
-- `import { writable } from 'svelte/store'` for local state (use `$state` in `.svelte.ts`)
-- `$effect` for value derivation (use `$derived`)
-- `<slot />` (use snippets + `{@render children()}`)
+`export let x` · `let x = 0` for reactive · `$: y = x * 2` · `import { writable }` for local state · `$effect` for derivation · `<slot />`.
 
 ## Checklist gate
 
 P0:
 
-- [ ] No `export let` anywhere.
-- [ ] No `$:` reactive statements.
+- [ ] No `export let`; no `$:` reactive statements.
 - [ ] Props destructured from `$props()` with inline type.
-- [ ] Derivations use `$derived` / `$derived.by`, not `$effect`.
-- [ ] No plain `const x = fn(data.*)` / `const x = fn(prop)` — anything read from `data`/props that can change is `$derived` (R3.5).
+- [ ] Derivations use `$derived`/`$derived.by`, not `$effect`.
+- [ ] No plain `const x = fn(data.*)` / `fn(prop)` — anything read from `data`/props that can change is `$derived` (R3.5).
 - [ ] `bind:` targets declare `$bindable`.
 - [ ] Every `{shorthand}` and template identifier exists in script scope.
 
 P1:
 
-- [ ] `$effect` returns a cleanup function when subscribing.
-- [ ] Shared state in `.svelte.ts` module, not legacy stores.
+- [ ] `$effect` returns cleanup when subscribing.
+- [ ] Shared state in `.svelte.ts`, not legacy stores.
 - [ ] Snippets used instead of slots.

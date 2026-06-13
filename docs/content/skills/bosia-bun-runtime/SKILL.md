@@ -27,106 +27,60 @@ bosia:
 
 # bosia-bun-runtime
 
-## What it is
+Bosia runs on Bun, not Node. Several popular Node packages ship NAPI native bindings that crash at import under Bun. Use Bun-native APIs instead. (The AI repeatedly generates apps that import `@node-rs/argon2`, which crashes at server startup before any handler runs — use `Bun.password` from the start.)
 
-Bosia runs on Bun, not Node. Several popular Node packages ship NAPI native bindings that **crash at import** under Bun. Use Bun-native APIs instead.
-
-## Password hashing — use `Bun.password`
+## Password hashing — `Bun.password` (built in, no install)
 
 ```ts
 // src/features/auth/password.ts
-export async function hashPassword(pw: string): Promise<string> {
-	return await Bun.password.hash(pw, {
-		algorithm: "argon2id",
-		memoryCost: 19456, // ~19 MiB
-		timeCost: 2,
-	});
-}
-
-export async function verifyPassword(pw: string, hash: string): Promise<boolean> {
-	return await Bun.password.verify(pw, hash);
-}
+export const hashPassword = (pw: string) =>
+	Bun.password.hash(pw, { algorithm: "argon2id", memoryCost: 19456, timeCost: 2 }); // ~19 MiB
+export const verifyPassword = (pw: string, hash: string) => Bun.password.verify(pw, hash);
 ```
 
-`Bun.password` is built in — no install, no native modules, no NAPI breakage. Algorithm defaults to `argon2id`.
+## Banned packages (never import or install)
 
-## Banned packages (do not import or install)
+- `@node-rs/argon2`, `argon2`, `bcrypt` → `Bun.password` (argon2id)
+- `better-sqlite3` → `bun:sqlite`
+- `postgres` (postgres.js), `pg` → `Bun.SQL` + `drizzle-orm/bun-sql`
+- `@aws-sdk/client-s3`, `aws4fetch` → `Bun.s3`
 
-| Package           | Why banned                                             | Bun-native replacement            |
-| ----------------- | ------------------------------------------------------ | --------------------------------- |
-| `@node-rs/argon2` | NAPI binding incompatible with Bun                     | `Bun.password`                    |
-| `argon2`          | NAPI binding incompatible with Bun                     | `Bun.password`                    |
-| `bcrypt`          | NAPI binding incompatible with Bun                     | `Bun.password` (argon2id)         |
-| `better-sqlite3`  | NAPI binding incompatible with Bun                     | `bun:sqlite`                      |
-| `postgres`        | Userland Postgres driver — `Bun.SQL` already covers it | `Bun.SQL` + `drizzle-orm/bun-sql` |
-| `pg`              | node-postgres NAPI bindings; redundant with `Bun.SQL`  | `Bun.SQL` + `drizzle-orm/bun-sql` |
+Any of these in a Bosia app's `package.json` is a bug — replace with the Bun-native API.
 
-If you see any of these in `package.json` of a Bosia user app, that's a bug — replace with the Bun-native API.
+## File reads — `Bun.file`
 
-## File reads — prefer `Bun.file`
+`await Bun.file(p).text()` / `.json()` / `.bytes()`. Faster than `node:fs/promises`, avoids buffering.
 
-```ts
-const text = await Bun.file("./path.txt").text();
-const json = await Bun.file("./data.json").json();
-const bytes = await Bun.file("./blob.bin").bytes();
-```
+## Image processing — `Bun.Image` (constructor, not a factory)
 
-Faster than `node:fs/promises` and avoids unnecessary buffering.
-
-## Image processing — `Bun.Image`
-
-`Bun.Image` is a **constructor**, not a static factory. There is no `Bun.Image.open()` or `Bun.Image.decode()` — calling them throws. Construct with `new`, read dimensions from `metadata()` (not `.width` / `.height` — those return `-1`), resize positionally, encode via per-format methods, finalize with `.bytes()`.
+No `Bun.Image.open()`/`.decode()` (they throw). Construct with `new`; read dims from `metadata()` (NOT `.width`/`.height` → `-1`); resize positionally; encode per-format; finalize with `.bytes()`.
 
 ```ts
-const bytes = await Bun.file("./input.png").bytes();
-const img = new Bun.Image(bytes);
-
+const img = new Bun.Image(await Bun.file("./input.png").bytes());
 const { width, height } = await img.metadata();
-
-const out = await img
-	.resize(1920, 1080, { fit: "inside" }) // positional (w, h, opts)
-	.webp({ quality: 85 }) // quality is 0–100 integer, NOT 0–1
-	.bytes();
-
+const out = await img.resize(1920, 1080, { fit: "inside" }).webp({ quality: 85 }).bytes(); // quality 0–100 int
 await Bun.write("./out.webp", out);
 ```
 
-Per-format encoders: `.webp({ quality })`, `.jpeg({ quality })`, `.png()`, `.avif({ quality })`, `.heic({ quality })`. Other instance methods: `rotate`, `flip`, `flop`, `modulate`, `blob`, `buffer`, `toBase64`, `dataurl`, `write`.
+Encoders: `.webp/.jpeg/.avif/.heic({ quality })`, `.png()`. Also `rotate/flip/flop/modulate/blob/buffer/toBase64/dataurl/write`.
+❌ `Bun.Image.open/decode`, `img.width`, `img.resize({ width })`, `quality: 0.85`.
 
-❌ Wrong: `Bun.Image.open(bytes)`, `Bun.Image.decode(bytes)`, `img.width`, `img.resize({ width, height })`, `img.encode({ format: "webp", quality: 0.85 })`.
-
-## S3 — `Bun.s3`
-
-Bun ships a built-in S3 client. **Do not install `@aws-sdk/client-s3` or `aws4fetch`** — `Bun.s3` covers upload, download, delete, and presign with zero deps. It speaks the S3 protocol, so any S3-compatible backend works: AWS S3, **MinIO**, Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Wasabi.
+## S3 — `Bun.s3` (built in, S3-compatible: AWS/MinIO/R2/B2/Spaces/Wasabi)
 
 ```ts
-// upload
 await Bun.s3.file("avatars/u-42.webp", { bucket: "uploads", type: "image/webp" }).write(bytes);
-
-// download
 const bytes = await Bun.s3.file("avatars/u-42.webp", { bucket: "uploads" }).bytes();
-
-// delete
 await Bun.s3.file("avatars/u-42.webp", { bucket: "uploads" }).delete();
-
-// presigned URL (15 min default)
 const url = Bun.s3.presign("avatars/u-42.webp", { bucket: "uploads", expiresIn: 900 });
 ```
 
-Credentials and endpoint come from env: `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION`, `S3_BUCKET`, `S3_ENDPOINT`. Override per call by passing `accessKeyId`/`secretAccessKey`/`endpoint`/`region` in the options object, or construct a scoped client with `new Bun.S3Client({...})` and reuse it.
+Env: `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION`, `S3_BUCKET`, `S3_ENDPOINT` (override per call, or `new Bun.S3Client({...})`). Do NOT invent an `S3_URL` DSN — not a standard; use the discrete vars. See `registry/features/file-upload/storage-s3.ts`, [[bosia-file-upload]] R3, https://bun.com/docs/runtime/s3.
 
-**Do not invent a `S3_URL` DSN.** It is not a standard (AWS SDK, Bun, rclone, mc all use discrete vars); a fake one will mislead future AI agents. Stick to the names above.
-
-Bosia's `file-upload` feature uses `Bun.s3` directly — see `registry/features/file-upload/storage-s3.ts` and [[bosia-file-upload]] R3 for MinIO/R2/AWS endpoint examples. Full API: https://bun.com/docs/runtime/s3.
-
-## Postgres — `Bun.SQL`
-
-Bun ships a built-in Postgres client. **Do not install `postgres` (postgres.js) or `pg` (node-postgres).** Drizzle adapts directly to it via `drizzle-orm/bun-sql`.
+## Postgres — `Bun.SQL` + `drizzle-orm/bun-sql`
 
 ```ts
 import { drizzle } from "drizzle-orm/bun-sql";
 import * as schema from "./schemas";
-
 const u = new URL(process.env.DATABASE_URL!);
 const client = new Bun.SQL({
 	hostname: u.hostname,
@@ -138,26 +92,17 @@ const client = new Bun.SQL({
 	maxLifetime: 60 * 30,
 	connectionTimeout: 30,
 });
-
 export const db = drizzle(client, { schema });
 ```
 
-**Gotcha (Bun 1.3.x):** `new Bun.SQL("postgres://...")` (URL-string form) throws `FailedToOpenSocket` even on a valid URL. Use the **object form** above. The framework's `registry/features/drizzle/drizzle-index.pg.ts` parses `DATABASE_URL` for exactly this reason. Track upstream — when Bun ships the URL-string fix, the parse step can be dropped.
+Gotcha (Bun 1.3.x): the URL-string form `new Bun.SQL("postgres://...")` throws `FailedToOpenSocket` even on a valid URL — use the object form above (`registry/features/drizzle/drizzle-index.pg.ts` parses `DATABASE_URL` for this reason).
 
-**Gotcha — `Failed query` that works in a fresh process but fails in the dev server:** If a query (login, register, any read) intermittently throws `Failed query: select ...` while the same SQL runs fine via `db_query` / a one-off `bun run` script, the cause is **not** the query. `Failed query: <sql>\nparams: <...>` is Drizzle's generic `DrizzleQueryError` wrapper — the real error lives in `err.cause`, almost always `PostgresError: Connection closed`. The single long-lived `Bun.SQL` client kept a pooled socket open with the default `idleTimeout: 0` (never close); Postgres or the lima port-forward reaped that idle socket, but Bun still treated it as live, so the next query ran on a dead socket. Every debugging tool that spawns a fresh process gets a brand-new connection and therefore **cannot reproduce it** — do not conclude "the DB is fine." Fix: set `idleTimeout` (and `maxLifetime`) on the client as shown above so Bun closes idle sockets first and reconnects on demand. When you see `Failed query`, always read `err.cause` before investigating the SQL.
+Gotcha — intermittent `Failed query` in the dev server that a fresh `bun run`/`db_query` can't reproduce: `Failed query: <sql>` is Drizzle's generic wrapper; the real error is in `err.cause`, almost always `PostgresError: Connection closed`. The long-lived client kept a pooled socket open with default `idleTimeout: 0` (never close); Postgres / the lima port-forward reaped the idle socket but Bun ran the next query on the dead one. Fresh-process tools get a new connection → can't repro (don't conclude "the DB is fine"). Fix: set `idleTimeout`/`maxLifetime` as above. Always read `err.cause` before investigating the SQL.
 
-**Credentials env:** `DATABASE_URL=postgres://user:pass@host:5432/db`. No `postgres` package needed.
+Env: `DATABASE_URL=postgres://user:pass@host:5432/db`.
 
-## Spawning processes — `Bun.spawn`
+## Spawning — `Bun.spawn`
 
-`Bun.spawn` is preferred over `child_process.spawn` for ergonomics and speed. `child_process` still works for compatibility with libraries that depend on it.
+Preferred over `child_process.spawn`; `child_process` still works for libs that need it.
 
-## Why this matters
-
-The AI repeatedly generates Bosia user apps that import `@node-rs/argon2`, which **crashes at server startup** under Bun before any route handler runs. Use `Bun.password` from the start.
-
-## Cross-references
-
-- [[bosia-auth-flow]] — uses `Bun.password` for password hashing.
-- [[bosia-hooks]] — `event.cookies` for session storage.
-- [[bosia-file-upload]] — uses `Bun.Image` for image compression and `Bun.s3` for the S3 storage adapter.
+Related: [[bosia-auth-flow]] (Bun.password), [[bosia-hooks]] (`event.cookies`), [[bosia-file-upload]] (Bun.Image, Bun.s3).

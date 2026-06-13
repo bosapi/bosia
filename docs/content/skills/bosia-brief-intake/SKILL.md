@@ -23,68 +23,39 @@ bosia:
     files:
       - "BRIEF.md"
       - "src/app.css"
-  stack: []
 ---
 
 # bosia-brief-intake
 
-## What it captures
-
-A single `BRIEF.md` at app root that downstream skills (`bosia-theme-tokens`, `bosia-design-review`, every page-scaffold skill) read before emitting code. Without it, the agent has to invent identity, palette, and voice every turn — guaranteed to drift.
+Capture a single `BRIEF.md` at app root that downstream skills (bosia-theme-tokens, bosia-design-review, every page-scaffold skill) read before emitting code. Without it the agent reinvents identity, palette, and voice every turn — guaranteed drift.
 
 ## When to run
 
-Run **before** any of these:
-
-- First `fs_write` to `src/**`
-- `bosia_add_theme`, `bosia_add_block`, `bosia_add`
-- Any answer longer than one sentence to "what should I build?"
-
-Skip only if `fs_read("BRIEF.md")` succeeds AND `## Status` line is `complete`.
+Run BEFORE any first `fs_write` to `src/**`, any `bosia_add_theme`/`bosia_add_block`/`bosia_add`, or any multi-sentence answer to "what should I build?". Skip only if `fs_read("BRIEF.md")` succeeds AND `## Status` is `complete`.
 
 ## Workflow
 
 1. `fs_read("BRIEF.md")` → if missing or `## Status: pending`, enter intake.
-2. Greet in user's apparent language. One sentence. No emoji.
-3. Walk the four groups **in order**. For each group, read the matching skill body first, then ask its questions.
-   1. `read_skill({ name: "bosia-brief-identity" })` — name, tagline, audience, language, formality.
-   2. `read_skill({ name: "bosia-brief-voice" })` — tone, emoji/exclamation policy, microcopy spine.
-   3. `read_skill({ name: "bosia-brief-visual" })` — palette intent, theme pick, shape, density, type, icons. Runs `bosia_add_theme` at the end.
-   4. `read_skill({ name: "bosia-brief-platform" })` — form factors, ID/number/date formats, imagery, first screens. Runs batched `bosia_add_block` at the end.
-4. **Lock the aesthetic stance.** `read_skill({ name: "bosia-frontend-design" })` and ask the four stance questions:
-   1. **Direction** — pick one extreme from the catalog (or invent one). Show the user `references/aesthetic-directions.md` summary inline. Direction MUST be compatible with the audience locked in step 3.1 and the palette intent locked in step 3.3 — flag and resolve any contradiction.
-   2. **Display + body fonts** — distinctive pair, NOT Inter / Roboto / Space Grotesk. Wire later via `app.css` `@theme`.
-   3. **Memorable detail** — one named element (staggered headline reveal, custom cursor, grain overlay, oversized footer wordmark, etc.). If user can't name one, the stance isn't locked.
-   4. **What we are NOT** — one sentence rejecting the default (e.g. "not a soft purple gradient SaaS landing").
-5. **Approval gate (tool call, not text question).** Build the consolidated draft in memory and call `brief_request_approval({ summary })` where `summary` is the recap (identity + aesthetic stance + memorable detail). The host UI renders a **Setuju** button. DO NOT call `fs_write("BRIEF.md", ...)` yet. If the user types corrections instead of clicking, update the draft and call `brief_request_approval` again with the revised summary.
-6. After the user confirms (next turn carries "Setuju, tulis BRIEF.md." or `briefApproval: true`), `fs_write("BRIEF.md", ...)` with the consolidated answers, including the `## Aesthetic` section. The `## Todo` section MUST be seeded with the "Redesign login & register pages" item — these pages ship from the template and need reworking to match the brief.
-7. `read_skill({ name: "bosia-brief-review" })` and walk its checklist (B18 covers the aesthetic stance).
-8. Set `## Status: complete` in BRIEF.md.
-9. Only now: greet user with a recap and the suggested first build step. The recap MUST name the direction + the memorable detail so the user can confirm.
+2. Greet in the user's apparent language. One sentence, no emoji.
+3. Walk the four groups IN ORDER, reading each skill body first, then asking its questions:
+   1. `read_skill bosia-brief-identity` — name, tagline, audience, language, formality.
+   2. `read_skill bosia-brief-voice` — tone, emoji/exclamation policy, microcopy spine.
+   3. `read_skill bosia-brief-visual` — palette intent, theme pick, shape, density, type, icons. Runs `bosia_add_theme` at the end.
+   4. `read_skill bosia-brief-platform` — form factors, ID/number/date formats, imagery, first screens. Runs batched `bosia_add_block` at the end.
+4. Lock the aesthetic stance — `read_skill bosia-frontend-design`, then ask four: (a) Direction (one catalog extreme or invent; show `references/aesthetic-directions.md` inline; MUST be compatible with the audience [3.1] and palette intent [3.3] — resolve contradictions); (b) Display + body fonts (distinctive pair, NOT Inter/Roboto/Space Grotesk); (c) Memorable detail (one named element — if the user can't name one, stance isn't locked); (d) What we are NOT (one sentence rejecting the default).
+5. Approval gate (tool call, NOT a text question): build the consolidated draft in memory and call `brief_request_approval({ summary })` (recap = identity + aesthetic stance + memorable detail). Host renders a Setuju button. Do NOT `fs_write("BRIEF.md")` yet. On typed corrections, revise and call `brief_request_approval` again.
+6. After confirmation (next turn carries "Setuju, tulis BRIEF.md." or `briefApproval: true`), `fs_write("BRIEF.md", ...)` with all sections incl. `## Aesthetic`. Seed `## Todo` with "Redesign login & register pages" (they ship from the template, need reworking).
+7. `read_skill bosia-brief-review` and walk its checklist (B18 covers the aesthetic stance).
+8. Set `## Status: complete`.
+9. Only now: recap to the user + suggested first build step. The recap MUST name the direction + the memorable detail.
 
-> Database engine is NOT collected here. Scaffolded apps default to **sqlite-file** via Bun's `bun:sqlite`. If the user later asks for postgres / mysql / schema work, load `bosia-database-setup`.
+> DB engine is NOT collected here — apps default to sqlite-file (`bun:sqlite`). For postgres/mysql/schema work later, load bosia-database-setup.
 
 ## Modes
 
-### Quick start (default for users in a hurry)
+Quick start (default): ask FIVE in one turn, infer the rest with named defaults: (1) name + one-sentence promise; (2) audience; (3) UI language (id/en/other); (4) vibe in 2–4 words; (5) palette intent (warm-earthy/cool-tech/minimal-mono/playful-bright/dark-luxury) AND aesthetic direction (editorial/brutally-minimal/brutalist/retro-futuristic/maximalist/soft-pastel/luxury/industrial/organic/playful/art-deco/custom). Pair direction with the vibe; don't blend two. If the user gives ≥3 of 5 in their opener, INFER the rest from context (chat language → language, tone words → vibe, palette → compatible direction) — do NOT loop back; go straight to the approval gate (step 5). Propose a default memorable detail for the direction; the user can swap it.
 
-Ask **five** questions in one turn, infer the rest with named defaults the user can override:
-
-1. Product name + one-sentence promise.
-2. Target audience (one sentence).
-3. UI language (`id` / `en` / other).
-4. Vibe in 2–4 words ("disciplined, warm, agrarian" / "playful, bright, consumer" / "minimal, technical, calm").
-5. Palette intent (`warm-earthy` / `cool-tech` / `minimal-mono` / `playful-bright` / `dark-luxury`) AND aesthetic direction (`editorial` / `brutally-minimal` / `brutalist` / `retro-futuristic` / `maximalist` / `soft-pastel` / `luxury` / `industrial` / `organic` / `playful` / `art-deco` / custom). Pair direction with the vibe — don't blend two.
-
-**Inference rule.** If the user gives ≥3 of 5 in their opening message, INFER the rest from context (chat language → `language`; tone words → vibe; palette intent → compatible direction; etc.) using the named defaults below. Do NOT loop back with follow-up questions — go straight to the approval gate (workflow step 5). User corrects in the next turn or clicks **Setuju**.
-
-Database engine is NOT asked here. Default: **sqlite-file**. If the user wants a different engine or tables, load `bosia-database-setup` later.
-
-Then fill the remaining fields with sensible defaults (see each group skill + `bosia-frontend-design`) and call `brief_request_approval({ summary })` for the **Setuju** button (workflow step 5). The agent proposes a default memorable detail given the direction; user can swap it.
-
-### Deep dive
-
-Walk all four group skills question-by-question. Use when the user explicitly asks ("ajak saya lengkap" / "walk me through it").
+Deep dive: walk all four group skills question-by-question. Use when the user asks ("ajak saya lengkap" / "walk me through it").
 
 ## BRIEF.md output shape
 
@@ -175,66 +146,32 @@ complete
 
 ## Rules
 
-### R1 — Brief lives at app root, not buried
-
-`BRIEF.md` sits next to `package.json`. Not under `src/`, not in `docs/`. Agent and user both read it.
-
-### R2 — Brief is human-editable
-
-Markdown. Not JSON. User opens, edits, agent re-reads. No round-tripping through DB on every change.
-
-### R3 — Locked decisions
-
-After `## Status: complete`, do NOT silently re-decide palette/theme/formality mid-conversation. If user asks to change, say so explicitly: "Updating brief: formality `formal → semi-formal`. Theme palette unchanged." Then rewrite that section only.
-
-### R4 — Brief beats taste
-
-When agent's defaults conflict with BRIEF.md, BRIEF.md wins. Agent's "I think a blue accent would look great" loses to BRIEF.md's `palette intent: warm-earthy`.
-
-### R5 — Never skip ahead
-
-Don't run `bosia_add_block` before BRIEF.md is `complete`. The block scaffolds copy/structure that drift from brief and cost more to retrofit than to gather upfront.
-
-### R6 — Language locks UI strings
-
-`language: id` means ALL UI strings (button labels, headings, errors) are Indonesian. The agent may still reply to the user in their chat language, but emitted strings follow brief.
-
-### R7 — One BRIEF.md, one app
-
-If user wants a multi-app product, scaffold separate Bosia apps, each with its own brief.
+R1 — `BRIEF.md` sits at app root (next to `package.json`), not under `src/` or `docs/`.
+R2 — Human-editable Markdown, never JSON/YAML. User edits, agent re-reads.
+R3 — After `## Status: complete`, don't silently re-decide palette/theme/formality. On a change request, say so ("Updating brief: formality `formal → semi-formal`. Palette unchanged.") and rewrite that section only.
+R4 — Brief beats taste: when defaults conflict with BRIEF.md, BRIEF.md wins.
+R5 — Never skip ahead: no `bosia_add_block` before `## Status: complete`.
+R6 — Language locks UI strings: `language: id` → ALL emitted strings are Indonesian (agent may still reply to the user in their chat language).
+R7 — One BRIEF.md per app; multi-app product → separate Bosia apps.
 
 ## Anti-patterns
 
-- Asking 30 questions in one turn. Use Quick start.
-- Asking yes/no questions with no defaults. Always offer a sane default ("default: `warm-earthy` — type a different one or say `ok`").
-- Asking follow-up questions after the Quick Start batch. Infer from context using named defaults, then call `brief_request_approval`. Don't loop back for more questions.
-- Asking the user about the database engine during intake. The default is sqlite-file; `bosia-database-setup` handles engine swaps later, on explicit request.
-- Ending the recap with a plain-text "Setuju?" instead of calling `brief_request_approval` — the host UI needs the tool call to render the **Setuju** button.
-- Calling `fs_write("BRIEF.md", ...)` before the user has confirmed via the **Setuju** click (or typed corrections + a fresh approval).
-- Inventing answers and writing BRIEF.md without user confirmation.
-- Treating BRIEF.md as a one-time artifact. It's living — re-read at the start of each chat session.
-- Writing BRIEF.md as JSON or YAML. Markdown only.
+30 questions in one turn (use Quick start) · yes/no questions with no default (always offer one: "default `warm-earthy` — type another or say ok") · follow-ups after the Quick Start batch (infer, then `brief_request_approval`) · asking about the DB engine (sqlite-file default) · ending the recap with a plain-text "Setuju?" instead of calling `brief_request_approval` · `fs_write("BRIEF.md")` before the user confirms · inventing answers without confirmation · treating BRIEF.md as one-time (re-read each session).
 
 ## Checklist gate
 
 P0:
 
-- [ ] BRIEF.md exists at app root.
-- [ ] `## Status: complete` present.
-- [ ] Identity, Voice, Visual, **Aesthetic**, Platform sections all populated (no `TBD`). No `## Database` section — sqlite-file is the silent default.
-- [ ] Microcopy spine table has ≥4 rows filled.
-- [ ] Theme installed (verify with `fs_list("src/")` for `app.css` having theme tokens).
-- [ ] Aesthetic direction named (not "modern, clean, professional") + memorable detail named (one sentence).
-- [ ] At least one first-screen block scaffolded, OR user explicitly said "I'll start from scratch".
+- [ ] BRIEF.md exists at app root with `## Status: complete`.
+- [ ] Identity, Voice, Visual, **Aesthetic**, Platform all populated (no `TBD`); no `## Database` section.
+- [ ] Microcopy spine table ≥4 rows; theme installed (`app.css` has theme tokens).
+- [ ] Aesthetic direction named (not "modern, clean, professional") + memorable detail named.
+- [ ] ≥1 first-screen block scaffolded, OR user said "I'll start from scratch".
 
 P1:
 
-- [ ] Domain glossary has ≥3 entries (or explicitly "n/a").
-- [ ] Inspirations references captured.
-- [ ] No-go list non-empty.
+- [ ] Domain glossary ≥3 entries (or "n/a"); inspirations captured; no-go list non-empty.
 
 ## References
 
-- `references/example-brief.md` — Dombaku-style fully-filled BRIEF.md.
-- `references/quick-start-script.md` — exact 5-question opener.
-- `bosia-brief-identity`, `bosia-brief-voice`, `bosia-brief-visual`, `bosia-brief-platform`, `bosia-frontend-design`, `bosia-brief-review`, `bosia-database-setup` (load only on explicit DB request).
+`references/example-brief.md` (fully-filled), `references/quick-start-script.md` (5-question opener). Group skills: bosia-brief-identity/-voice/-visual/-platform/-review, bosia-frontend-design, bosia-database-setup (load only on explicit DB request).

@@ -26,9 +26,7 @@ bosia:
 
 # bosia-cookies
 
-## What it is
-
-Cookies live on `event.cookies` inside hooks, loaders, form actions, and `+server.ts` handlers.
+Cookies live on `event.cookies` (hooks, loaders, form actions, `+server.ts`).
 
 ```ts
 const token = event.cookies.get("session"); // string | undefined
@@ -36,78 +34,27 @@ event.cookies.set("session", token, { maxAge: 60 * 60 * 24 * 7 });
 event.cookies.delete("session", { path: "/" });
 ```
 
-## `CookieOptions` shape
+## `CookieOptions`
 
-```ts
-interface CookieOptions {
-	path?: string; // default "/"
-	domain?: string;
-	maxAge?: number; // seconds
-	expires?: Date;
-	httpOnly?: boolean; // default true
-	secure?: boolean; // framework-decided — see below
-	sameSite?: "Strict" | "Lax" | "None" | "strict" | "lax" | "none"; // default "Lax"
-}
-```
+`{ path?="/", domain?, maxAge? /*sec*/, expires?, httpOnly?=true, secure? /*framework-decided*/, sameSite?: "Strict"|"Lax"|"None" (any case, default "Lax") }`.
 
-## Defaults
-
-`HttpOnly; Secure; SameSite=Lax; Path=/` — applied automatically. You only need to pass `maxAge`/`expires` (and `domain` if you have one).
+Defaults applied automatically: `HttpOnly; Secure; SameSite=Lax; Path=/`. You normally only pass `maxAge`/`expires` (and `domain` if you have one). `sameSite` is case-insensitive (`"lax"` or `"Lax"`), normalized to the canonical header.
 
 ## `Secure` is framework-decided — DO NOT pass `secure: true` in route code
 
-Bosia inspects the current request's transport per-request:
-
-- HTTPS request → `Secure` is applied (default and honored).
-- HTTP request → `Secure` is dropped, with a one-time `console.warn`, **even if the caller passed `secure: true`**. Browsers silently drop `Secure` cookies over HTTP, which causes a login loop where the auth route "sets" a cookie that never reaches the browser.
-
-> **Do NOT write `secure: true` in route code.** The framework decides per request. Hardcoding `secure: true` triggers a downgrade + warn on HTTP and is redundant on HTTPS.
-
-## `sameSite` case-insensitive
-
-Both casings work:
+Bosia inspects the request transport per-request: HTTPS → `Secure` applied; HTTP → `Secure` dropped with a one-time `console.warn` EVEN IF the caller passed `secure: true`. Browsers silently drop `Secure` cookies over HTTP → a login loop where the auth route "sets" a cookie that never reaches the browser. Hardcoding `secure: true` is redundant on HTTPS and breaks HTTP dev/preview.
 
 ```ts
-event.cookies.set("k", "v", { sameSite: "lax" }); // ✅
-event.cookies.set("k", "v", { sameSite: "Lax" }); // ✅
+event.cookies.set("session", token, { secure: true, sameSite: "lax" }); // ❌
+event.cookies.set("session", token, { sameSite: "lax", maxAge: WEEK }); // ✅ let the framework decide
 ```
-
-Bosia normalizes to the canonical `SameSite=Lax|Strict|None` header. (`SvelteKit`/`Express` both accept lowercase; Bosia now matches.)
 
 ## Behind a TLS-terminating proxy
 
-If your app sits behind a proxy that terminates HTTPS and forwards plain HTTP to Bosia, set `TRUST_PROXY=true`. Bosia then trusts `x-forwarded-proto: https` and applies `Secure` correctly. Default is **off** (don't trust spoofable headers by default).
+If a proxy terminates HTTPS and forwards plain HTTP to Bosia, set `TRUST_PROXY=true` so Bosia trusts `x-forwarded-proto: https` and applies `Secure`. Default off (don't trust spoofable headers). So `Secure` applies for: direct `https://` (always), or `http://` behind a TLS proxy ONLY when `TRUST_PROXY=true`. Never for plain `http://` with no proxy.
 
-| Transport to Bosia          | `TRUST_PROXY` | `x-forwarded-proto` | `Secure` applied?   |
-| --------------------------- | ------------- | ------------------- | ------------------- |
-| `https://…` direct          | any           | any                 | ✅                  |
-| `http://…` no proxy         | any           | any                 | ❌                  |
-| `http://…` behind TLS proxy | `false`       | `https`             | ❌ (header ignored) |
-| `http://…` behind TLS proxy | `true`        | `https`             | ✅                  |
+## Deletion & encoding
 
-## Deletion
+`event.cookies.delete("session", { path: "/" })` — pass the same `path`/`domain` you set with, else the browser keeps the cookie (delete = `set("", maxAge: 0)`). Values are `encodeURIComponent`-encoded/decoded automatically — don't pre-encode.
 
-```ts
-event.cookies.delete("session", { path: "/" });
-```
-
-Pass the same `path` (and `domain` if you used one) you set the cookie with — otherwise the browser keeps the original. Bosia implements `delete` as `set("", maxAge: 0)`.
-
-## Encoding
-
-Values are `encodeURIComponent`-encoded automatically. Reads decode automatically. Don't pre-encode.
-
-## Wrong patterns
-
-```ts
-// ❌ Redundant + breaks dev/preview: hardcoded secure:true
-event.cookies.set("session", token, { secure: true, sameSite: "lax" });
-
-// ✅ Right: let the framework decide
-event.cookies.set("session", token, { sameSite: "lax", maxAge: WEEK });
-```
-
-## Cross-references
-
-- [[bosia-hooks]] — `event.cookies` is on the `event` arg.
-- [[bosia-auth-flow]] — session cookie usage in login/register/logout.
+Related: [[bosia-hooks]] (`event.cookies` on the `event` arg), [[bosia-auth-flow]] (session cookie in login/register/logout).

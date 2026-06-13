@@ -38,127 +38,79 @@ bosia:
 
 # bosia-auth-flow
 
-## What it builds
-
 A full auth surface wired to Drizzle + session cookies.
 
-### Files
+## Files
 
-| File                                    | Purpose                                                         |
-| --------------------------------------- | --------------------------------------------------------------- |
-| `src/features/auth/password.ts`         | Argon2id hash + verify via `Bun.password`                       |
-| `src/features/auth/tokens.ts`           | session token mint + verify                                     |
-| `src/features/auth/session-resolver.ts` | resolve session → `locals.user`, `locals.can`                   |
-| `src/features/auth/auth-handle.ts`      | hook wiring `session-resolver` into every request               |
-| `(public)/login/+page.svelte`           | login form                                                      |
-| `(public)/login/+page.server.ts`        | `actions: { default }` — validate, verify, set cookie, redirect |
-| `(public)/register/+page.svelte`        | register form                                                   |
-| `(public)/register/+page.server.ts`     | validate, hash, insert user, RBAC bootstrap, redirect           |
-| `(public)/forgot/+page.svelte`          | request-reset form                                              |
-| `(public)/forgot/+page.server.ts`       | mint reset token, email (or log in dev)                         |
-| `logout/+server.ts`                     | `POST` clears cookie, 303 to `/login`                           |
-
-`logout` is `+server.ts` (not `+page.server.ts`) because it's action-only. (`bosia-routing` R2.)
+- `features/auth/password.ts` — Argon2id hash + verify via `Bun.password`
+- `features/auth/tokens.ts` — session token mint + verify (opaque random 32 bytes, base64url)
+- `features/auth/session-resolver.ts` — resolve session → `locals.user`, `locals.can`
+- `features/auth/auth-handle.ts` — hook wiring the resolver into every request
+- `(public)/login/+page.{svelte,server.ts}` — form + `actions` (validate, verify, set cookie, redirect)
+- `(public)/register/+page.{svelte,server.ts}` — validate, hash, insert user, RBAC bootstrap, redirect
+- `(public)/forgot/+page.{svelte,server.ts}` — request reset, mint token, email (or log in dev)
+- `logout/+server.ts` — `POST` clears cookie, 303 to `/login` (action-only → `+server.ts`, see bosia-routing R2)
 
 ## Workflow
 
-1. **Drizzle features in place.** Confirm `users.table.ts` and `users` columns include `passwordHash`. If not, add a numbered seed/migration — never edit applied seeds (`bosia-drizzle-feature`).
-2. **Install UI:** `bosia add theme/neutral ui/form ui/field ui/input ui/button ui/label ui/alert`.
-3. **Implement `features/auth/password.ts`** — Argon2id via `Bun.password.hash(pw, { algorithm: "argon2id", memoryCost: 19456, timeCost: 2 })` and `Bun.password.verify(pw, hash)`. Never `@node-rs/argon2` / `argon2` / `bcrypt` — they crash under Bun. Never SHA-only. See [[bosia-bun-runtime]].
-4. **Implement `features/auth/tokens.ts`** — session tokens, opaque random 32 bytes, base64url.
-5. **Implement `auth-handle.ts`** — reads `session` cookie, loads user + materialized permissions, sets `locals.user`, `locals.can`.
-6. **Routes:** login, register, forgot, logout. Each `+page.server.ts` validates input, returns shape errors via SvelteKit-style `fail()` or a custom return.
-7. **RBAC bootstrap on register** — first user becomes super-admin via the bootstrap seed (or assign `*.*` directly if seed already ran).
-8. **Run `bosia-security-review`.**
+1. Confirm Drizzle `users` table has `passwordHash`; if not, add a numbered seed/migration — never edit applied seeds (bosia-drizzle-feature).
+2. Install UI: `bosia add theme/neutral ui/form ui/field ui/input ui/button ui/label ui/alert`.
+3. `password.ts` — see R1.
+4. `tokens.ts`, `auth-handle.ts` (reads `session` cookie, loads user + materialized permissions, sets `locals.user`/`locals.can`).
+5. Routes: login, register, forgot, logout — each `+page.server.ts` validates input and returns field errors via `fail()`.
+6. RBAC bootstrap on register (R6). Then run bosia-security-review.
 
 ## Rules
 
-### R1 — Password hashing
+R1 — Password hashing: `Bun.password.hash(pw, { algorithm: "argon2id", memoryCost: 19456, timeCost: 2 })` and `Bun.password.verify(pw, hash)`. NEVER `@node-rs/argon2`/`argon2`/`bcrypt` npm packages (NAPI bindings crash under Bun); never plain SHA / unsalted. See [[bosia-bun-runtime]].
 
-Use `Bun.password.hash(pw, { algorithm: "argon2id", memoryCost: 19456, timeCost: 2 })` and `Bun.password.verify(pw, hash)`. Never `@node-rs/argon2` or `argon2` npm packages — their NAPI bindings crash under Bun. Never plain SHA / unsalted bcrypt. See [[bosia-bun-runtime]].
+R2 — Cookie flags: `HttpOnly`, `SameSite=Lax`, `Path=/`, `Max-Age=<ttl>` (first three are defaults). OMIT `secure` in route code — Bosia adds `Secure` per-request only on HTTPS; a literal `secure: true` on HTTP transport triggers a downgrade+warn and a silent login loop. See [[bosia-cookies]].
 
-### R2 — Cookie flags
+R3 — Validate at the boundary: form actions parse `formData` and validate (zod/hand), reject with field-level errors, no silent coercion.
 
-Set `HttpOnly` (default), `SameSite=Lax` (default), `Path=/` (default), and `Max-Age=<session_ttl>`. **Omit `secure` in route code** — Bosia inspects the request transport per-request and adds `Secure` only when the request is HTTPS. Passing `secure: true` literal on an HTTP transport triggers a downgrade + warn (silent login loop avoided). See [[bosia-cookies]].
+R4 — Rate limit `/login`, `/register`, `/forgot` per-IP and per-account (dev bypass only).
 
-### R3 — Validate at the boundary
+R5 — No info leakage: login failure is a generic "Invalid credentials" (never "email exists but wrong password"). `/forgot` always responds "if the address exists, we sent a reset" regardless of existence.
 
-Form actions parse `formData` and validate (zod / hand). Reject with field-level errors, no silent coercion.
+R6 — RBAC bootstrap: first registered user (or `001_rbac_bootstrap.ts` seed) creates `super_admin` with `*.*` and self-assigns. Later users default to no role; super-admin assigns via UI.
 
-### R4 — Rate limit
+R7 — Logout is POST (GET logout is a CSRF hole): `<form method="POST" action="/logout">` + `+server.ts`.
 
-`/login`, `/register`, `/forgot` — per-IP and per-account limiters. Bypass for dev only.
+R8 — Post-auth redirect is server-side: `throw redirect(303, …)` from the form action. NEVER return `{ success: true }` then `goto()`/`window.location` inside `use:enhance` — the action's `Set-Cookie` can race the client nav, so the first request lands WITHOUT the session cookie and bounces back to `/login` (silent loop). For post-redirect UI state, encode it in the redirect URL or read `locals.user` at the destination.
 
-### R5 — No information leakage on login failure
-
-"Invalid credentials" — generic. Never "email exists but password wrong" vs. "no such email". Likewise on `/forgot` — always respond "if the address exists, we sent a reset" regardless of existence.
-
-### R6 — RBAC bootstrap
-
-First registered user (or `001_rbac_bootstrap.ts` seed) creates the `super_admin` role with `*.*` and assigns it. Subsequent users default to no role; the super-admin assigns roles via UI.
-
-### R7 — Logout is POST
-
-GET logout is a CSRF hole (link-driven). Use `<form method="POST" action="/logout">` and `+server.ts` handler.
-
-### R8 — Post-auth redirect is server-side
-
-After a successful login / register, `throw redirect(303, …)` from the form action. **Never** return `{ success: true }` from the action and then `goto(...)` (or `window.location`) inside `use:enhance` — `Set-Cookie` from the action response can race the client-side navigation, so the first request after redirect arrives **without** the session cookie and the user bounces back to `/login` (silent loop, no error). Mirror `register/+page.server.ts` — same pattern for login. If you need post-redirect UI state (toast, etc.), encode it in the redirect URL or read it from `locals.user` on the destination, not from action return data.
-
-### R9 — Bounce already-signed-in visitors off `/login` and `/register`
-
-If `locals.user` is set when a visitor hits `/login` or `/register`, redirect them to the dashboard. Otherwise they see a login form for an account they're already in — confusing, and (worse) re-submitting the form rotates the session and can race the existing cookie. Implement in `+page.server.ts` (NOT in the layout — login is in `(public)` and the public layout shouldn't gate auth):
+R9 — Bounce signed-in visitors off `/login` and `/register`. In `+page.server.ts` (NOT the layout — login is `(public)`):
 
 ```ts
 // src/routes/(public)/login/+page.server.ts
-import { redirect } from "bosia";
-import type { LoadEvent } from "bosia";
-
+import { redirect, type LoadEvent } from "bosia";
 export async function load({ locals }: LoadEvent) {
 	if (locals.user) throw redirect(303, "/dashboard");
 	return {};
 }
 ```
 
-Mirror the same `load` in `(public)/register/+page.server.ts`. The destination is whatever your post-login redirect target is — must match R8's target so the loop is symmetric (login → `/dashboard`, and visiting `/login` while signed in also goes to `/dashboard`).
+Mirror in `(public)/register/+page.server.ts`. Target must match R8's so the loop is symmetric.
 
-### R10 — A login page implies a dashboard page
-
-There is no such thing as an app with `/login` but no signed-in destination. The moment you scaffold `(public)/login/+page.svelte`, also scaffold the post-login landing page (typically `(private)/dashboard/+page.svelte`) plus `(private)/+layout.server.ts` that gates the group with `if (!locals.user) throw redirect(303, "/login")`. Don't ship login without dashboard and force the user to ask for it next turn — R8's `redirect(303, "/dashboard")` will 404 and the login flow looks broken.
-
-The dashboard can start minimal (one heading + a Log out form), but it must exist. Reuse the same pattern for any other authenticated landing page (`/app`, `/home`, `/account`) — pick one, scaffold it, redirect there.
-
-## Bosia conventions
-
-- `bosia-routing` — `(public)` group, action-only `/logout` as `+server.ts`.
-- `bosia-elysia-routes` — `+server.ts` shape rules.
-- `bosia-navigation` — post-submit nav via `redirect(303, …)` in form actions; hard logout uses `window.location.href`.
-- `bosia-rbac-permission` — bootstrap with wildcard, no role checks downstream.
-- `bosia-drizzle-feature` — additive seeds only.
-- `bosia-security-review` — mandatory before finalizing.
+R10 — A login page implies a dashboard page. When you scaffold `(public)/login/+page.svelte`, also scaffold the post-login landing (typically `(private)/dashboard/+page.svelte`) plus `(private)/+layout.server.ts` gating the group (`if (!locals.user) throw redirect(303, "/login")`). Otherwise R8's redirect 404s and login looks broken. The dashboard can start minimal (heading + Log out form) but must exist.
 
 ## Checklist gate
 
 P0:
 
 - [ ] Argon2id hashing, never SHA-only.
-- [ ] Session cookie `HttpOnly; Secure; SameSite=Lax`.
-- [ ] Login error message is generic.
-- [ ] `/forgot` response identical regardless of email existence.
+- [ ] Session cookie `HttpOnly; SameSite=Lax` (Secure added per-request, not literal).
+- [ ] Generic login error; `/forgot` response identical regardless of email existence.
 - [ ] Logout is `POST` via `+server.ts`.
-- [ ] Login / register redirect via server-side `throw redirect(303, …)` — never `use:enhance` + client `goto()`.
-- [ ] `(public)/login/+page.server.ts` and `(public)/register/+page.server.ts` redirect signed-in visitors to the dashboard (R9).
-- [ ] The post-login destination page exists (typically `(private)/dashboard/+page.svelte`) and `(private)/+layout.server.ts` gates the group (R10). Login without a destination is not shippable.
+- [ ] Login/register redirect via server-side `throw redirect(303, …)` — never `use:enhance` + client `goto()`.
+- [ ] `(public)/login` and `(public)/register` `+page.server.ts` redirect signed-in visitors to the dashboard (R9).
+- [ ] Post-login destination exists + `(private)/+layout.server.ts` gates the group (R10).
 - [ ] All form actions validate input at the boundary.
-- [ ] `bosia-security-review` pass.
+- [ ] bosia-security-review pass.
 
 P1:
 
 - [ ] Rate limit on `/login`, `/register`, `/forgot`.
-- [ ] Optional 2FA hook in place.
-- [ ] Email verification flow (or marked as deferred).
+- [ ] Optional 2FA hook; email verification (or marked deferred).
 - [ ] Password rules enforced (min length, common-password block).
 
-## References
-
-- `references/checklist.md` — full auth security checklist.
+Related: bosia-routing, bosia-elysia-routes, bosia-navigation, bosia-rbac-permission, bosia-drizzle-feature, bosia-security-review. Reference: `references/checklist.md`.

@@ -31,113 +31,54 @@ bosia:
 
 # bosia-clean-architecture
 
-## What it builds
-
-A feature folder enforcing **strict 3-layer separation**:
+Strict 3-layer separation per feature:
 
 ```
-controller (+page.server.ts / +server.ts)
-    │  imports only `*.service.ts`
-    ▼
-service  (<name>.service.ts)
-    │  parses input with valibot, runs business logic, calls repository
-    ▼
-repository  (<name>.repository.ts)
-    │  pure DB layer — drizzle calls only, no business logic
-    ▼
-table  (<name>.table.ts)  +  validator  (<name>.validator.ts)  +  dto  (<name>.dto.ts)
+controller (+page.server.ts / +server.ts)  → imports only *.service.ts
+  → service (<name>.service.ts)             → valibot-parse input, business logic, call repository (NEVER db)
+    → repository (<name>.repository.ts)      → pure DB layer, drizzle only, no business logic
+      → table (<name>.table.ts) + validator (<name>.validator.ts) + dto (<name>.dto.ts)
 ```
 
-Validators are **derived** from drizzle tables via `drizzle-valibot` — never hand-rolled. Routes import nothing from `features/drizzle` and never call `db.*` directly.
-
-Pairs with:
-
-- [`bosia-drizzle-feature`](../bosia-drizzle-feature/SKILL.md) — table authoring, seeds, migrations.
-- [`bosia-drizzle-usage`](../bosia-drizzle-usage/SKILL.md) — `db` consumer rules at the repository layer.
+Validators are DERIVED from drizzle tables via `drizzle-valibot` — never hand-rolled. Routes import nothing from `features/drizzle` and never call `db.*`.
 
 ## When to use
 
-- **Adding a new feature** (table + service + route surface). Scaffold the full folder up-front.
-- **Adding a new table.** Pick or propose the feature folder first — never drop a table into `features/drizzle/tables/`.
-- **Refactoring a route handler** that imports `db` or a `*.table` file. Extract into repository + service.
-
-For generated apps (Bosapi-built apps under `data/users/.../<appSlug>/`) this skill is mandatory on every new feature. The reference Bosapi codebase (`bosapi/src/features/`) is grandfathered — apply the rule to **new** features there going forward.
+Adding a feature (scaffold the full folder up-front), adding a table (pick its feature folder first — never `features/drizzle/tables/`), or refactoring a route handler that imports `db`/a `*.table`. Mandatory on every new feature in generated apps; the reference Bosia codebase is grandfathered (apply to new features only).
 
 ## Feature folder shape
 
 ```
 src/features/<name>/
-├── <name>.table.ts        # Drizzle pgTable + $inferSelect / $inferInsert
-├── <name>.validator.ts    # createInsertSchema / createSelectSchema via drizzle-valibot
-├── <name>.dto.ts          # Public Input/Output types inferred from validators
-├── <name>.repository.ts   # Pure DB layer. Imports singleton `db` directly. Functions take domain args only — never `db`/`tx` params. Wrap transactions inside the repo with `db.transaction(...)`.
-├── <name>.service.ts      # Business logic. Validates with valibot. Calls repository. NEVER imports `db`. No raw db.select.
-└── index.ts               # Barrel: re-exports Service, Repository (namespaced), DTOs, validators, table
+├── <name>.table.ts        # Drizzle table + $inferSelect/$inferInsert
+├── <name>.validator.ts    # createInsertSchema/createSelectSchema via drizzle-valibot
+├── <name>.dto.ts          # Input/Output types inferred from validators
+├── <name>.repository.ts   # Pure DB. Imports singleton `db`. Domain args only — never db/tx params. Transactions wrapped here.
+├── <name>.service.ts      # Business logic + valibot validation. Calls repository. NEVER imports db.
+└── index.ts               # Barrel: re-exports Service + Repository (namespaced), DTOs, validators, table
 ```
 
-When any file type reaches **2+ files** (tables, validators, dtos, repositories, or services), promote that kind into its own subfolder (`tables/`, `validators/`, `dtos/`, `repositories/`, `services/`). The threshold is per-type and independent — see [R9](#r9--promote-each-file-type-into-a-folder-when-it-grows-past-one).
-
-Cross-feature:
-
-```
-src/features/shared/
-├── types.ts          # Paginated<T>, Result<T,E>, common ID brand
-├── errors.ts         # AppError / NotFoundError / ValidationError
-├── validators.ts     # Reusable valibot primitives (uuidSchema, slugSchema, paginationSchema)
-├── repository.ts     # Database type re-export, paginate helper. (No `withTx` — transactions live inside repository functions via `db.transaction(...)`.)
-├── services/         # Cross-cutting services (mailer, audit, cache) — no entity owner
-└── index.ts
-```
-
-See [`references/feature-template.md`](./references/feature-template.md) for full copy-adapt templates of every file, and [`references/shared-folder.md`](./references/shared-folder.md) for what does (and does not) belong in `shared/`.
+Cross-feature lives in `src/features/shared/` (types `Paginated<T>`/`Result`, `errors.ts`, reusable valibot primitives, a `paginate` helper, cross-cutting services like mailer/audit/cache). See `references/feature-template.md` and `references/shared-folder.md`.
 
 ## Rules
 
-### R1 — No `db` import in `src/routes/`
-
-Route handlers (`+page.server.ts`, `+server.ts`, `+layout.server.ts`) import **services only**. Never `db`, never `*.table` files, never `features/drizzle/*`.
+R1 — No `db` import in `src/routes/`. Handlers (`+page.server.ts`, `+server.ts`, `+layout.server.ts`) import SERVICES only — never `db`, `*.table`, or `features/drizzle/*`.
 
 ```ts
-// ❌ src/routes/(public)/+page.server.ts  — VIOLATION
-import { db } from "../../features/drizzle";
-import { menuItems } from "../../features/drizzle/tables/menu.table";
-export async function load() {
-	return { menu: await db.select().from(menuItems).orderBy(menuItems.id) };
-}
-
-// ✅ src/routes/(public)/+page.server.ts
-import { MenuService } from "../../features/menu";
-export async function load() {
-	return { menu: await MenuService.list() };
-}
+// ❌ load() { return { menu: await db.select().from(menuItems) }; }  // imports db/table
+// ✅ import { MenuService } from "../../features/menu";
+//    load() { return { menu: await MenuService.list() }; }
 ```
 
-Lint hint: `rg "from .*features/drizzle" src/routes` should return zero matches.
+Lint: `rg "from .*features/drizzle" src/routes` → zero matches.
 
-### R2 — Repositories own `db` (singleton, not injected)
-
-Only `*.repository.ts` files and `src/features/drizzle/**` may import `db` or table objects. The repository imports the `db` singleton directly — **never** as a function parameter. Repository signature is `(…args) => Promise<Row | Row[]>`. No `locals`, no `cookies`, no `fetch`, no HTTP, no business decisions.
+R2 — Repositories own `db` (singleton, not injected). Only `*.repository.ts` and `features/drizzle/**` import `db`/tables. The repo imports the `db` singleton directly — NEVER as a parameter. Signature `(…domainArgs) => Promise<Row|Row[]>`; no `locals`/`cookies`/`fetch`/HTTP/business decisions. Multi-statement transactions live INSIDE one repo function via `db.transaction(...)` — never expose `tx` to the service.
 
 ```ts
 // menu.repository.ts
-import { eq } from "drizzle-orm";
 import { db } from "../drizzle";
 import { menuItems } from "./menu.table";
-
-export async function listAll() {
-	return db.select().from(menuItems).orderBy(menuItems.id);
-}
-
-export async function findById(id: string) {
-	const [row] = await db.select().from(menuItems).where(eq(menuItems.id, id)).limit(1);
-	return row ?? null;
-}
-```
-
-Multi-statement transactions live **inside** the repository — wrap with `db.transaction(...)` in a single repo function. Never expose `tx` to the service layer.
-
-```ts
-// menu.repository.ts
+export const listAll = () => db.select().from(menuItems).orderBy(menuItems.id);
 export async function createWithAudit(input: MenuInsertDto, actorId: string) {
 	return db.transaction(async (tx) => {
 		const [row] = await tx.insert(menuItems).values(input).returning();
@@ -147,9 +88,7 @@ export async function createWithAudit(input: MenuInsertDto, actorId: string) {
 }
 ```
 
-### R3 — Services own logic + validation, never touch `db`
-
-Service entry points parse input with valibot, **then** call repository functions. Auth checks, business rules, error mapping all live here. Services **never import `db`**, never pass `db`, never call `db.*` directly — every database touch goes through a repository function whose signature takes only domain args.
+R3 — Services own logic + validation, never touch `db`. Parse input with valibot, THEN call repository functions; auth checks, business rules, error mapping live here. Never import/pass/call `db`.
 
 ```ts
 // menu.service.ts
@@ -157,11 +96,7 @@ import * as v from "valibot";
 import { NotFoundError } from "../shared";
 import * as MenuRepository from "./menu.repository";
 import { MenuIdSchema } from "./menu.validator";
-
-export async function list() {
-	return MenuRepository.listAll();
-}
-
+export const list = () => MenuRepository.listAll();
 export async function getById(rawId: unknown) {
 	const id = v.parse(MenuIdSchema, rawId);
 	const row = await MenuRepository.findById(id);
@@ -170,64 +105,23 @@ export async function getById(rawId: unknown) {
 }
 ```
 
-### R4 — Validators derived, not hand-written
-
-Use `createInsertSchema(table)` / `createSelectSchema(table)` from `drizzle-valibot`. Refine with `v.pipe(...)` / `v.partial(...)` / `v.omit(...)`. Never hand-roll a schema that mirrors a drizzle table — the two will drift.
+R4 — Validators derived, not hand-written. `createInsertSchema(table)`/`createSelectSchema(table)` from `drizzle-valibot`, refine with `v.pipe/partial/omit`. Never mirror a drizzle table by hand (they drift). Forbidden: `zod` — generated apps standardize on valibot.
 
 ```ts
-// menu.validator.ts
-import { createInsertSchema, createSelectSchema } from "drizzle-valibot";
-import * as v from "valibot";
-import { uuidSchema } from "../shared";
-import { menuItems } from "./menu.table";
-
 export const MenuRow = createSelectSchema(menuItems);
 export const MenuInsert = createInsertSchema(menuItems, {
 	name: v.pipe(v.string(), v.minLength(1), v.maxLength(200)),
 });
 export const MenuUpdate = v.partial(MenuInsert);
-export const MenuIdSchema = uuidSchema;
 ```
 
-Forbidden: `zod`. Bosia generated apps standardize on valibot for bundle size and tree-shake.
+R5 — One entity per feature; cross-feature via service namespace. Cross-feature FKs reference sibling tables directly (drizzle needs the column object). Cross-feature SERVICE calls go through the barrel (`import { OrderService } from "../order"`). A service NEVER calls another feature's repository — repositories are private; service → service so the owner's rules still run. If `UserService` lacks what `AuthService` needs, ADD a method to `UserService` — don't reach into `UserRepository`. A service imports ONLY its own `*.repository.ts`.
 
-### R5 — One entity per feature; cross-feature via service namespace
+R6 — `shared/` = no business entity. Pagination types, error classes, valibot primitives, mailer → `features/shared/`. A domain entity belongs in its own feature folder, never `shared/`.
 
-Tables belonging to one aggregate live in one feature folder. Cross-feature **FKs** reference sibling tables directly (drizzle needs the column object). Cross-feature **service** calls go through the barrel: `import { OrderService } from "../order"` then `OrderService.create(...)`. Never deep-import another feature's repository or table file.
+R7 — New tables declare a home feature. "add a `xyz` table" → first pick/propose the feature folder; the `*.table.ts` colocates with its service/repository. Never write to `features/drizzle/tables/`.
 
-**A service NEVER calls another feature's repository.** Repositories are private to their own feature. Cross-feature data access goes service → service, so the owning feature's business rules (auth checks, validation, side effects) still run. Skipping the sibling service bypasses that contract and turns the caller into a second source of truth for the callee's data.
-
-```ts
-// ❌ auth.service.ts — VIOLATION: reaches into user's repository
-import * as UserRepository from "../user/user.repository";
-
-export async function login(email: string, password: string) {
-	const user = await UserRepository.findByEmail(email); // skips UserService rules
-	// ...
-}
-
-// ✅ auth.service.ts — call the sibling service
-import { UserService } from "../user";
-
-export async function login(email: string, password: string) {
-	const user = await UserService.getByEmail(email);
-	// ...
-}
-```
-
-If `UserService` doesn't expose what `AuthService` needs, **add a method to `UserService`** (or surface a narrow DTO from it). Do not reach past it into `UserRepository`. A service may only import its own `*.repository.ts`.
-
-### R6 — `shared/` = no business entity
-
-If something has no clear owner feature, it goes in `features/shared/`. Examples: pagination types, error classes, valibot primitives, mailer service. If you find yourself adding a domain entity to `shared/`, stop — give it a feature folder. Full guidance: [`references/shared-folder.md`](./references/shared-folder.md).
-
-### R7 — New tables must declare a home feature
-
-When the user asks "add a `xyz` table", the skill's first move is to pick (or propose) the feature folder. Never write to `features/drizzle/tables/`. The `*.table.ts` file is colocated with its service and repository.
-
-### R8 — Barrel exports are the public API
-
-Each feature's `index.ts` re-exports the service (as a namespace), the repository (as a namespace, for tests/composition), DTOs, validators, and the table. Consumers import from the barrel only.
+R8 — Barrel exports are the public API. Each `index.ts` re-exports the service (namespace), repository (namespace), DTOs, validators, table. Consumers import from the barrel only.
 
 ```ts
 // src/features/menu/index.ts
@@ -238,215 +132,39 @@ export * from "./menu.validator";
 export * from "./menu.dto";
 ```
 
-### R9 — Promote each file type into a folder when it grows past one
+R9 — Promote each file type into a folder when it grows past one. Start flat (one of each kind at the feature root). The moment a feature owns 2+ of a kind, promote THAT kind into its subfolder — threshold is per-type and independent (a feature can have flat `auth.table.ts` while services already live under `services/`): Table→`tables/`, Validator→`validators/`, DTO→`dtos/`, Repository→`repositories/`, Service→`services/`. Carries through promotion: the barrel is an unchanged contract (subfolder paths never leak across feature boundaries — cross-feature FKs import the table from the barrel, not `../auth/tables/sessions.table`); service↔repository scoping unchanged; no empty placeholder folders (promote on the second file); demotion allowed.
 
-Start flat: one `*.table.ts`, one `*.validator.ts`, one `*.dto.ts`, one `*.repository.ts`, one `*.service.ts` at the feature root. Promote a file type into its own subfolder the moment that feature owns **two or more** of that kind. The threshold is **per file type, independent**: a feature can have one flat `auth.table.ts` while its services already live under `services/`.
-
-| File type  | Flat (1 file)        | Promoted (2+ files)            |
-| ---------- | -------------------- | ------------------------------ |
-| Table      | `auth.table.ts`      | `tables/*.table.ts`            |
-| Validator  | `auth.validator.ts`  | `validators/*.validator.ts`    |
-| DTO        | `auth.dto.ts`        | `dtos/*.dto.ts`                |
-| Repository | `auth.repository.ts` | `repositories/*.repository.ts` |
-| Service    | `auth.service.ts`    | `services/*.service.ts`        |
-
-Fully-promoted feature:
-
-```
-src/features/auth/
-├── tables/
-│   ├── sessions.table.ts
-│   ├── tokens.table.ts
-│   └── credentials.table.ts
-├── validators/
-│   ├── login.validator.ts
-│   └── signup.validator.ts
-├── dtos/
-│   ├── login.dto.ts
-│   └── signup.dto.ts
-├── repositories/
-│   ├── session.repository.ts
-│   ├── token.repository.ts
-│   └── credential.repository.ts
-├── services/
-│   ├── login.service.ts
-│   ├── signup.service.ts
-│   └── password-reset.service.ts
-└── index.ts                 # barrel — still the only public entry point
-```
-
-Mixed example (services promoted, everything else still flat — totally fine):
-
-```
-src/features/billing/
-├── billing.table.ts
-├── billing.validator.ts
-├── billing.dto.ts
-├── billing.repository.ts
-├── services/
-│   ├── checkout.service.ts
-│   └── refund.service.ts
-└── index.ts
-```
-
-Rules that carry through promotion:
-
-- **Barrel is unchanged contract.** Consumers still write `import { LoginService, sessions } from "../auth"`. The subfolder path never leaks across feature boundaries.
-- **Cross-feature FKs** import the table object **from the barrel**, not the deep path: `import { sessions } from "../auth"` — not `"../auth/tables/sessions.table"`. The barrel must re-export every table so sibling features (and `features/drizzle/schemas.ts`) keep working.
-- **Service ↔ repository scoping is unchanged.** A service in `services/` may import any repository in its own `repositories/`. Cross-feature is still service → service (R5).
-- **No empty placeholder folders.** Promote on the second file, not "for future use."
-- **Demotion is allowed.** If a feature shrinks back to one file of a kind, collapse the folder again. The barrel absorbs the move.
-
-```ts
-// src/features/auth/index.ts — fully promoted barrel
-export * as LoginService from "./services/login.service";
-export * as SignupService from "./services/signup.service";
-export * as PasswordResetService from "./services/password-reset.service";
-
-export * as SessionRepository from "./repositories/session.repository";
-export * as TokenRepository from "./repositories/token.repository";
-export * as CredentialRepository from "./repositories/credential.repository";
-
-export { sessions } from "./tables/sessions.table";
-export { tokens } from "./tables/tokens.table";
-export { credentials } from "./tables/credentials.table";
-
-export * from "./validators/login.validator";
-export * from "./validators/signup.validator";
-export * from "./dtos/login.dto";
-export * from "./dtos/signup.dto";
-```
-
-### R10 — Sub-feature folders only when they own their own tables
-
-When a feature keeps growing, the tempting move is to group by **sub-domain** (`auth/login/`, `auth/register/`, `auth/forgot-password/`) instead of by file type. **Do not do this** when the sub-domains share tables — you'll either duplicate repositories for the same table (violates R2) or create awkward cross-sub-domain imports.
-
-Rule: a sub-feature folder is justified **only when the sub-domain owns its own tables** (and therefore its own repositories and validators). At that point it's effectively a full feature in the same shape as the 5-file root, nested one level.
-
-```
-src/features/auth/
-├── auth.table.ts                  # shared: users, sessions, credentials
-├── auth.validator.ts
-├── auth.dto.ts
-├── repositories/                  # share these across login/register/forgot-password
-│   ├── user.repository.ts
-│   └── session.repository.ts
-├── services/                      # login/register/forgot-password live here (R9)
-│   ├── login.service.ts
-│   ├── register.service.ts
-│   └── forgot-password.service.ts
-│
-├── oauth/                         # ✅ sub-feature — owns oauth_accounts table
-│   ├── oauth.table.ts
-│   ├── oauth.validator.ts
-│   ├── oauth.dto.ts
-│   ├── oauth.repository.ts
-│   ├── oauth.service.ts
-│   └── index.ts                   # sub-barrel
-│
-└── index.ts                       # parent barrel re-exports oauth sub-barrel
-```
-
-```ts
-// src/features/auth/index.ts
-export * as LoginService from "./services/login.service";
-export * as RegisterService from "./services/register.service";
-// …
-export * from "./oauth"; // re-export sub-feature so consumers stay flat: `import { OAuthService } from "../auth"`
-```
-
-Guardrails:
-
-- **No sub-feature without its own table(s).** `login/`, `register/`, `forgot-password/` are _services_, not sub-features — they share `users`/`sessions` and belong in `services/` per R9.
-- **Sub-features still obey R5.** Cross-call between `auth.OAuthService` and the root `auth.LoginService` goes through services, not repositories.
-- **One level deep, max.** If a sub-feature wants its own sub-feature, that's a signal to promote it to a top-level `features/<name>/` instead.
-- **Parent barrel still hides depth.** Consumers import from `../auth`, never `../auth/oauth`.
-- **Demotion allowed.** If the sub-feature's tables get absorbed into the parent, collapse the folder.
-
-Decision flow when a feature is getting big:
-
-1. New files of an existing type (2+ services, 2+ repos, …)? → R9, promote to `services/` / `repositories/` / etc.
-2. New cluster of behavior that introduces **its own table(s)**? → R10, create a sub-feature folder.
-3. New cluster of behavior that shares the parent's tables? → still R9 — add another service file under `services/`. Resist the sub-domain folder.
+R10 — Sub-feature folders ONLY when the sub-domain owns its own tables. Don't group by sub-domain (`auth/login/`, `auth/register/`) when they share tables — that duplicates repositories (violates R2). A sub-feature is justified only when it owns its own table(s) (and thus repositories/validators) — then it's a full feature nested one level (e.g. `auth/oauth/` owning `oauth_accounts`), with its own sub-barrel re-exported by the parent barrel. Guardrails: no sub-feature without its own table(s) (`login`/`register`/`forgot-password` are SERVICES under `services/`, R9); sub-features still obey R5 (service→service); one level deep max; parent barrel hides depth (consumers import `../auth`, never `../auth/oauth`); demotion allowed. Decision when a feature grows: 2+ of an existing type → R9 promote; new cluster with its OWN table(s) → R10 sub-feature; new cluster sharing parent tables → still R9 (another service under `services/`).
 
 ## Workflows
 
-### A. Scaffold a new feature
+A. Scaffold a feature ("add menu feature"/"scaffold X"): (1) confirm name (kebab folder, Pascal namespace); (2) ensure `valibot` + `drizzle-valibot` installed, else `shell({ cmd:"add", packages:["valibot","drizzle-valibot"] })`; (3) create the six files from `references/feature-template.md` (stub `id` uuid PK, `createdAt`, `updatedAt`); (4) `db_generate` → `db_migrate` (pre-flight `db_test_connection` if first DB touch — see bosia-drizzle-usage); (5) re-export the table from `src/features/drizzle/schemas.ts`; (6) `shell({ cmd:"check" })` then `format`.
 
-Trigger phrases: "add menu feature", "new resource", "scaffold X".
+B. Refactor a route violation (`db` import in `src/routes/**`): (1) grep `rg "from .*features/drizzle|db\.(select|insert|update|delete)" src/routes`; (2) identify the entity, pick/create `features/<name>/`; (3) move the query verbatim into `<name>.repository.ts` as a typed function (domain args only; wrap any multi-statement tx in one repo fn); (4) add `<name>.service.ts` calling it (pass-through is fine); (5) replace route code with `await <Name>Service.<fn>(...)`, importing from `../../features/<name>` only; (6) `check` → `format` → `build`. See `references/refactor-recipe.md`.
 
-1. Confirm feature name. Kebab-case → folder. PascalCase → namespace.
-2. Ensure `valibot` + `drizzle-valibot` installed. If not, run `shell({ cmd: "add", packages: ["valibot", "drizzle-valibot"] })` (the existing tool at `bosapi/src/features/ai/tools/shell.ts`).
-3. Create the six files from [`references/feature-template.md`](./references/feature-template.md). Stub `id` (uuid PK), `createdAt`, `updatedAt`.
-4. `db_generate` → `db_migrate` → `runtime_restart` (pre-flight `db_test_connection` if first DB touch this session — see `bosia-drizzle-usage`).
-5. Re-export the new table from `src/features/drizzle/schemas.ts`.
-6. `shell({ cmd: "check" })` then `shell({ cmd: "format" })`.
-
-### B. Refactor a route-handler violation
-
-Trigger: `db` import found in `src/routes/**/*.server.ts` or `+server.ts`.
-
-1. Grep: `rg "from .*features/drizzle|db\.(select|insert|update|delete)" src/routes`.
-2. For each hit, identify the entity. Pick (or create) `features/<name>/`.
-3. Move the drizzle query verbatim into `<name>.repository.ts` as a typed function. The repo imports the `db` singleton; the function signature takes **domain args only** — never `db: Database` / `tx`. If the original code had a multi-statement transaction, wrap it inside one repo function with `db.transaction(...)`.
-4. Add `<name>.service.ts` that calls the repository. Pass-through is fine for now — the layer exists so future validation/auth has a home.
-5. Replace the route code with `await <Name>Service.<fn>(...)`. Imports come from `../../features/<name>` only.
-6. `shell({ cmd: "check" })` → `shell({ cmd: "format" })` → `shell({ cmd: "build" })`.
-
-Full before/after walkthrough with the `warung-nasi` example: [`references/refactor-recipe.md`](./references/refactor-recipe.md).
-
-### C. New table / new schema decision
-
-When the user says "add a `xyz` table":
-
-1. Ask (or infer): which feature owns this?
-2. If no feature exists → propose creating `features/<name>/` and run workflow A.
-3. If a feature exists → add `<name2>.table.ts` (or extend the existing table file) inside that feature. Never write to `features/drizzle/tables/`.
-
-## Anti-patterns
-
-- Loader importing `db` directly: `import { db } from "../../features/drizzle"` inside `+page.server.ts`.
-- Loader importing a `*.table` file: `import { menuItems } from "../../features/drizzle/tables/menu.table"`.
-- Combining DB calls + business logic in one `*.service.ts` (no separate repository).
-- Importing `db` inside a `*.service.ts` file (even just to pass into a repository). Repos own `db`; services pass domain args only.
-- Repository function signatures that accept `db: Database` / `tx` as a parameter. Repos read the singleton; transactions are wrapped inside one repo function via `db.transaction(...)`.
-- Hand-writing a valibot schema that mirrors a drizzle table instead of using `createInsertSchema` / `createSelectSchema`.
-- Deep-importing another feature's repository (`import { create } from "../order/order.repository"`). Use `OrderService.create(...)` via the barrel.
-- A service calling another feature's repository at all — even via the barrel (`OrderRepository.create(...)` from inside `auth.service.ts`). Services may only import their **own** repository. Cross-feature is always service → service. Wrong: `AuthService → UserRepository`. Correct: `AuthService → UserService`.
-- Stashing tables in `features/drizzle/tables/` (the bosapi-internal location). Generated-app tables live in their owning feature folder.
-- Putting a domain entity in `features/shared/` ("UserService is used everywhere"). It still has an owner — `features/user/`.
-- Using `zod` instead of `valibot`.
-- Combining repository + service into a single file "because it's only one query" — the layer separation is the rule, even when trivial.
-- Creating sub-domain folders (`auth/login/`, `auth/register/`, `auth/forgot-password/`) that share the parent's tables. That collapses into duplicate repositories for one table (violates R2). Use `services/` (R9). Sub-feature folders are only valid when the sub-domain owns its own tables (R10).
+C. New table ("add a `xyz` table"): infer/ask which feature owns it; no feature → propose `features/<name>/` + run A; existing feature → add `<name2>.table.ts` (or extend) inside it. Never `features/drizzle/tables/`.
 
 ## Checklist gate
 
-P0 — must pass before finishing:
+P0:
 
-- [ ] `rg "from .*features/drizzle" src/routes` → zero matches.
-- [ ] `rg "db\.(select|insert|update|delete)" src/routes` → zero matches.
-- [ ] Every new table sits in a `features/<name>/<name>.table.ts`, not `features/drizzle/tables/`.
-- [ ] Every new feature folder contains all six files (`*.table`, `*.validator`, `*.dto`, `*.repository`, `*.service`, `index.ts`).
-- [ ] Validators use `createInsertSchema` / `createSelectSchema` from `drizzle-valibot`, not hand-written.
-- [ ] Services do not contain raw `db.select(...)` / `db.insert(...)` / `db.update(...)` / `db.delete(...)`.
-- [ ] Services do not import `db` at all (`rg "from .*drizzle\"|from .*\"./drizzle\"" src/features/**/*.service.ts` → zero matches outside the drizzle feature itself).
-- [ ] Repository function signatures never start with `db: Database` / `tx: Database` — repos import the singleton.
-- [ ] Service input from untrusted sources is `v.parse(...)`d before reaching the repository.
+- [ ] `rg "from .*features/drizzle" src/routes` → zero; `rg "db\.(select|insert|update|delete)" src/routes` → zero.
+- [ ] Every new table in `features/<name>/<name>.table.ts`, not `features/drizzle/tables/`.
+- [ ] Every new feature folder has all six files.
+- [ ] Validators use `createInsertSchema`/`createSelectSchema`, not hand-written; no `zod`.
+- [ ] Services contain no raw `db.*` and don't import `db` at all.
+- [ ] Repository signatures never start with `db`/`tx` params (singleton import).
+- [ ] Untrusted service input is `v.parse`d before reaching the repository.
 
-P1 — should pass:
+P1:
 
-- [ ] Cross-feature calls go through the barrel namespace (`OtherService.fn(...)`), no deep imports.
-- [ ] Services import **only their own** `*.repository.ts`. Cross-feature data access is service → service, never service → other feature's repository (e.g. `AuthService` calls `UserService`, not `UserRepository`).
-- [ ] `shared/` contains no domain entities.
-- [ ] Any file type with 2+ files in a feature is promoted into its matching subfolder (`tables/`, `validators/`, `dtos/`, `repositories/`, `services/`). The barrel still hides the deep paths, and cross-feature imports (incl. FKs to sibling tables) come from the barrel — never the deep subfolder path.
-- [ ] Sub-feature folders (`auth/oauth/`, `billing/invoices/`) exist **only** when the sub-domain owns its own tables. `login/`, `register/`, `forgot-password/`-style folders that share parent tables are forbidden — those services live in `services/` under R9.
-- [ ] Multi-statement flows are wrapped with `db.transaction(...)` inside a single repository function (services do not orchestrate transactions).
+- [ ] Cross-feature calls go through the barrel namespace; services import only their own repository (service → service, never service → other feature's repository).
+- [ ] `shared/` has no domain entities.
+- [ ] Any file type with 2+ files is promoted to its subfolder (barrel still hides deep paths; cross-feature/FK imports come from the barrel).
+- [ ] Sub-feature folders exist only when they own their own tables.
+- [ ] Multi-statement flows wrapped in `db.transaction(...)` inside one repository function.
 - [ ] `bun run check && bun run format && bun run build` pass.
 
 ## References
 
-- [`references/feature-template.md`](./references/feature-template.md) — copy-adapt template for every file in a feature folder.
-- [`references/refactor-recipe.md`](./references/refactor-recipe.md) — step-by-step grep → extract → swap-import recipe with `warung-nasi` before/after.
-- [`references/shared-folder.md`](./references/shared-folder.md) — what belongs in `features/shared/` and what does not.
-- **External skills** — pair with [`bosia-drizzle-feature`](../bosia-drizzle-feature/SKILL.md) (table authoring, seeds) and [`bosia-drizzle-usage`](../bosia-drizzle-usage/SKILL.md) (the `db` consumer rules that apply inside the repository layer).
-- **Upstream docs** — [`drizzle-valibot`](https://orm.drizzle.team/docs/zod) (same API surface as drizzle-zod), [`valibot`](https://valibot.dev/guides/introduction/).
+`references/feature-template.md` (per-file templates), `references/refactor-recipe.md` (grep → extract → swap-import, `warung-nasi` before/after), `references/shared-folder.md`. Pairs with [[bosia-drizzle-feature]] (table authoring, seeds) and [[bosia-drizzle-usage]] (`db` consumer rules at the repository layer). Upstream: drizzle-valibot, valibot.

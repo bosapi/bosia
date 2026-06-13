@@ -40,276 +40,132 @@ bosia:
 
 # bosia-page-shell
 
-> **STOP. Read before writing any `+page.svelte` or `+layout.svelte`.**
+> STOP. Read before writing any `+page.svelte` or `+layout.svelte`.
 
-## 🚫 HARD RULE — Chrome lives in `+layout.svelte`, ONLY
+Consistent app chrome: Navbar/Footer/Sidebar live in `+layout.svelte` at the right depth, never inside `+page.svelte`. Authenticated layouts show the signed-in user via `ui/navbar`'s avatar dropdown. Tabular data uses `ui/data-table`.
 
-`Navbar`, `Footer`, `Sidebar` are **forbidden** inside any `+page.svelte`.
-They render once in a layout file. Which layout depends on scope:
-
-- Whole app (same chrome for signed-in + signed-out users) → root `src/routes/+layout.svelte`, pass `user` conditionally.
-- Public-only chrome (marketing nav) → `src/routes/(public)/+layout.svelte`.
-- Authenticated-only chrome (sidebar, admin nav) → `src/routes/(private)/+layout.svelte`.
-
-If you import `Navbar` / `Footer` / `Sidebar` from a `+page.svelte`, you have a bug. Delete it and move to the layout.
-
-## ⚠ HARD RULE — `(private)` chrome MUST carry `user=`
-
-Public and private chrome are **separate components configured separately**, not one shared instance.
-
-- `(public)/+layout.svelte` → Navbar **without** `user=` (visitor sees marketing nav, no avatar dropdown). Correct.
-- `(private)/+layout.svelte` → renders its own `<Navbar>` _or_ `<Sidebar>`, **always with `user={data.user}`**, threaded from `(private)/+layout.server.ts`. Without it, signed-in users have no avatar dropdown and no way to Log out.
-
-Common bug the lint catches: agent adds a navbar to `(public)/+layout.svelte` for login/register, ships, and tells the user "the dropdown will appear later when we add a private layout." That's wrong. The moment you create `(private)/+layout.svelte`, it needs its own auth-aware chrome — do not defer it to a future turn.
-
-If you prefer one shared navbar across both groups, put it in the root `+layout.svelte` and pass `user={data.user}` conditionally — but then drop the `(public)` and `(private)` group navbars to avoid double-rendering.
-
-The shell-hygiene lint warns when `(private)/+layout.svelte` renders `<Navbar>` or `<Sidebar>` without `user=`. Fix by:
-
-1. Make `(private)/+layout.server.ts` return `{ ...await parent(), user: locals.user }`.
-2. Pass `user={data.user}` to the chrome tag.
-
----
-
-## What it builds
-
-Consistent app chrome. Navbar, footer, and sidebar live in `+layout.svelte` files at the right depth — never re-rendered inside `+page.svelte`. Authenticated layouts show the signed-in user via `ui/navbar`'s avatar dropdown. Tabular data uses `ui/data-table`.
-
-## When to use
-
-- Adding a new page under `(public)` or `(private)`.
-- Wiring login → avatar dropdown.
-- Rendering a list/grid of records.
-- Reviewing a page that re-declares navbar markup inside `+page.svelte`.
-
-Anti-trigger: standalone marketing block / non-app surface (e.g. embedded iframe widget).
+When: adding a page under `(public)`/`(private)`, wiring login → avatar dropdown, rendering a list/grid of records, or reviewing a page that re-declares navbar markup. Anti-trigger: standalone marketing block / non-app surface.
 
 ## Rules
 
-### R1 — Chrome belongs in `+layout.svelte`, not `+page.svelte`
-
-Navbar, footer, sidebar, and any persistent shell render **once** in a layout file. A page that imports `Navbar` and renders it inside `+page.svelte` is a bug — it duplicates on every route, flickers on nav, and drifts as pages diverge.
-
-❌ Anti-pattern:
+R1 — Chrome belongs in `+layout.svelte`, ONLY. `Navbar`/`Footer`/`Sidebar` are forbidden inside any `+page.svelte` (they'd duplicate on every route, flicker on nav, drift). Importing one from a `+page.svelte` is a bug — move it to the layout.
 
 ```svelte
-<!-- src/routes/(private)/dashboard/+page.svelte -->
-<script lang="ts">
-	import { Navbar } from "$lib/components/ui/navbar";
-	let { data } = $props();
-</script>
-
-<Navbar {links} user={data.user} currentPath="/dashboard" /><main>…</main>
-```
-
-✅ Correct — navbar in layout, page renders only its own content:
-
-```svelte
-<!-- src/routes/(private)/+layout.svelte -->
+<!-- ✅ (private)/+layout.svelte -->
 <script lang="ts">
 	import { Navbar } from "$lib/components/ui/navbar";
 	import { page } from "bosia/client";
 	let { children, data } = $props();
-
 	const links = [
 		{ label: "Dashboard", href: "/dashboard" },
 		{ label: "Users", href: "/users" },
 	];
 </script>
 
+<!-- ❌ (private)/dashboard/+page.svelte -->
+<Navbar {links} user={data.user} />
+<main>…</main>
 <Navbar {links} currentPath={page.url.pathname} user={data.user} />
-<main class="container mx-auto px-4 py-6">
-	{@render children()}
-</main>
-```
+<main class="container mx-auto px-4 py-6">{@render children()}</main>
 
-```svelte
-<!-- src/routes/(private)/dashboard/+page.svelte -->
-<script lang="ts">
-	let { data } = $props();
-</script>
-
+<!-- ✅ (private)/dashboard/+page.svelte — page-only content, no Navbar -->
 <h1>Dashboard</h1>
-<!-- page-only content; no Navbar here -->
 ```
 
-### R2 — Layout depth = scope
+R2 — Layout depth = scope. Pick the shallowest layout that needs the chrome: root `+layout.svelte` = app-wide chrome shared by both groups (often empty / theme provider); `(public)/+layout.svelte` = marketing navbar + footer (no avatar); `(private)/+layout.svelte` = authenticated navbar (avatar dropdown) + optional sidebar/footer; section layouts (`(private)/admin/+layout.svelte`) = sub-section chrome. Don't render the authenticated navbar in the root layout — it leaks across the public/private boundary. (If you DO want one shared navbar, put it in the root with `user={data.user}` conditional, and drop the group navbars to avoid double-render.)
 
-Pick the shallowest layout that needs the chrome:
-
-| Layout                                                  | Holds                                                                                         |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `src/routes/+layout.svelte`                             | App-wide chrome shared by both `(public)` and `(private)`. Often empty / theme provider only. |
-| `src/routes/(public)/+layout.svelte`                    | Marketing navbar + footer (no avatar — visitor is signed out).                                |
-| `src/routes/(private)/+layout.svelte`                   | Authenticated navbar (with avatar dropdown) + optional sidebar/footer.                        |
-| Section layouts (e.g. `(private)/admin/+layout.svelte`) | Sub-section sidebar, nested chrome.                                                           |
-
-Don't render the authenticated navbar in the root `+layout.svelte` — it leaks across the public/private boundary.
-
-### R3 — Authenticated layout passes `user` to `ui/navbar`
-
-When the user is signed in, the navbar **must** receive the `user` prop so the avatar dropdown appears (Profile / Settings / Log out). Without it, the user has no visible way to sign out.
+R3 — Authenticated layout MUST pass `user` to `ui/navbar`, else signed-in users have no avatar dropdown and no way to Log out. Public and private chrome are SEPARATE components configured separately — the moment `(private)/+layout.svelte` exists it needs its own auth-aware chrome; do NOT defer it to a future turn ("dropdown will appear later"). Thread `user` from `(private)/+layout.server.ts`:
 
 ```ts
 // src/routes/(private)/+layout.server.ts
-import { redirect } from "bosia";
-import type { LoadEvent } from "bosia";
-
-export async function load({ locals }: LoadEvent) {
+import { redirect, type LoadEvent } from "bosia";
+export async function load({ locals, parent }: LoadEvent) {
 	if (!locals.user) throw redirect(303, "/login");
-
 	const u = locals.user;
 	return {
+		...(await parent()), // R5.5 — preserve inherited keys
 		user: {
 			name: u.name,
 			email: u.email,
+			avatar: u.avatarUrl,
 			initials: u.name
 				.split(" ")
 				.map((p) => p[0])
 				.join("")
 				.slice(0, 2)
 				.toUpperCase(),
-			avatar: u.avatarUrl,
 		},
 	};
 }
 ```
 
-```ts
-// src/routes/(private)/+layout.ts (or the layout component reads `data.user`)
-```
-
 ```svelte
-<!-- src/routes/(private)/+layout.svelte -->
 <Navbar {links} currentPath={page.url.pathname} user={data.user} />
 ```
 
-Pair the `Log out` item with a `POST /logout` (`+server.ts`) — see `bosia-routing` R2.
+Pair the Log out item with `POST /logout` (`+server.ts`) — see bosia-routing R2.
 
-### R4 — Public layout omits the `user` prop
+R4 — Public layout omits `user`: `<Navbar {links} currentPath=… />` (the dropdown is hidden by design when `user` is undefined).
 
-On `(public)` routes (landing, login, register), call `<Navbar {links} currentPath=… />` without `user`. The dropdown is hidden by design when `user` is `undefined`.
-
-### R5 — Tables of rows use `ui/data-table`
-
-Any view that lists records (users, orders, products, audit log) renders through `ui/data-table` — not a hand-rolled `<table>`, not a `<ul>` of cards pretending to be a table. Data-table ships sorting, filtering, pagination, empty state, loading skeleton.
-
-❌ Anti-pattern:
-
-```svelte
-<table>
-	<thead><tr><th>Name</th><th>Email</th></tr></thead>
-	<tbody>
-		{#each users as u}
-			<tr><td>{u.name}</td><td>{u.email}</td></tr>
-		{/each}
-	</tbody>
-</table>
-```
-
-✅ Correct:
+R5 — Tables of rows use `ui/data-table`, never a hand-rolled `<table>` or a `<ul>` of cards pretending to be one (data-table ships sorting/filtering/pagination/empty/loading).
 
 ```svelte
 <script lang="ts">
-	import { DataTable } from "$lib/components/ui/data-table";
-	import type { ColumnDef, TableState } from "$lib/components/ui/data-table";
-
-	type User = { id: string; name: string; email: string };
+	import { DataTable, type ColumnDef, type TableState } from "$lib/components/ui/data-table";
 	let { data } = $props();
-
 	const columns: ColumnDef<User>[] = [
 		{ id: "name", accessorKey: "name", header: "Name" },
 		{ id: "email", accessorKey: "email", header: "Email" },
 	];
-
-	function onStateChange(state: TableState) {
-		const params = new URLSearchParams({
-			limit: String(state.pagination.pageSize),
-			offset: String(state.pagination.page * state.pagination.pageSize),
-		});
-		goto(`?${params}`);
+	function onStateChange(s: TableState) {
+		goto(
+			`?${new URLSearchParams({ limit: String(s.pagination.pageSize), offset: String(s.pagination.page * s.pagination.pageSize) })}`,
+		);
 	}
 </script>
 
 <DataTable {columns} data={data.rows} totalRows={data.total} pageSize={10} {onStateChange} />
 ```
 
-Drive `data.rows` + `data.total` from the loader → repository call. See `bosia-query-defaults` for the `{ limit, offset, orderBy }` contract that backs `totalRows` and `pageSize`.
+Drive `data.rows`/`data.total` from the loader → repository call. See bosia-query-defaults for the `{ limit, offset, orderBy }` contract behind `totalRows`/`pageSize`.
 
-### R5.5 — Child layout `load` must spread parent data, not replace it
-
-SvelteKit merges layout data **per depth**: each `+layout.server.ts` returns its own object, which becomes `data` at that level. Children do NOT auto-inherit parent keys — they have to ask for them via `await event.parent()` and spread them.
-
-**Bug pattern observed:** root `+layout.server.ts` returns `{ user, cartCount }`; `(private)/+layout.server.ts` returns `{ user }`; `data.cartCount` is then **undefined** on every private page and the cart badge silently disappears.
+R5.5 — Child layout `load` MUST spread parent data, not replace it. Layout data merges per depth; children don't auto-inherit parent keys — they must `await event.parent()` and spread. Bug pattern: root returns `{ user, cartCount }`, `(private)` returns `{ user }` → `data.cartCount` is undefined on every private page and the cart badge vanishes.
 
 ```ts
-// ❌ Wrong — replaces inherited keys at this depth
-// src/routes/(private)/+layout.server.ts
-export async function load({ locals }) {
-	return { user: locals.user };
-}
+// ✅ return { ...(await event.parent()), user: event.locals.user };  // spread, override only what changes
 ```
 
-```ts
-// ✅ Right — spread parent, override only what changes
-// src/routes/(private)/+layout.server.ts
-export async function load(event) {
-	const parent = await event.parent();
-	if (!event.locals.user) throw redirect(303, "/login");
-	return { ...parent, user: event.locals.user };
-}
-```
+For dynamic per-route data (cart/notification count), prefer fetching from `/api/...` via a client `$effect` over threading through layout data.
 
-Alternative for dynamic per-route data (cart count, notification count): fetch from `/api/...` via a `$effect` on the client rather than threading through layout data.
-
-### R6 — Active link state comes from the layout
-
-`ui/navbar` highlights the active link via `currentPath`. Source it from `page.url.pathname` (imported from `bosia/client`) inside the layout — never hardcode.
+R6 — Active link state comes from the layout: source `currentPath` from `page.url.pathname` (imported from `bosia/client`) inside the layout — never hardcode.
 
 ## Workflow
 
-1. **Identify scope.** Public-only? `(public)/+layout.svelte`. Authenticated? `(private)/+layout.svelte`. Both? Root layout.
-2. **Install navbar:** `bun x bosia@latest add navbar` (also pulls `button`, `avatar`, `dropdown-menu`, `icon`).
-3. **Wire `+layout.server.ts`** to produce `user` (private) or omit it (public).
-4. **Render `<Navbar …>` in `+layout.svelte`** above `{@render children()}`.
-5. **Remove any `Navbar`/`Footer` imports from `+page.svelte` files** that the layout now owns.
-6. **For list pages**, install `bun x bosia@latest add data-table` and replace any hand-rolled `<table>`.
-7. **Logout endpoint:** `src/routes/logout/+server.ts` with `POST` returning a 303 redirect (see `bosia-routing` R2).
-
-## Bosia conventions
-
-- `bosia-routing` — `(public)` / `(private)` groups + `+layout.server.ts` rules.
-- `bosia-navigation` — `page.url.pathname` import from `bosia/client`; logout uses `window.location.href` if it must tear down client state.
-- `bosia-auth-flow` — login redirects + session shape feeding the layout `user`.
-- `bosia-query-defaults` — repository pagination/order contract that powers data-table's `totalRows`.
-- `bosia-rbac-permission` — gate the layout loader, not just child pages.
+1. Identify scope → which layout.
+2. `bun x bosia@latest add navbar` (pulls button/avatar/dropdown-menu/icon).
+3. Wire `+layout.server.ts` to produce `user` (private) or omit it (public).
+4. Render `<Navbar …>` in `+layout.svelte` above `{@render children()}`.
+5. Remove `Navbar`/`Footer` imports from `+page.svelte` files the layout now owns.
+6. List pages: `bun x bosia@latest add data-table`, replace any hand-rolled `<table>`.
+7. `src/routes/logout/+server.ts` with `POST` → 303 redirect (bosia-routing R2).
 
 ## Checklist gate
 
-> **Run this BEFORE claiming "done".** Quote each box back with file:line evidence — don't self-grade from memory.
-> Projects may wire `scripts/check-shell.ts` into `bun run check` to enforce P0 automatically.
+> Run BEFORE claiming "done". Quote each box with file:line evidence. P0 can be enforced via `scripts/check-shell.ts` in `bun run check`.
 
-P0 (blockers — `bun run check` should fail if any of these are violated):
+P0 (blockers):
 
-- [ ] **No `<Navbar>` / `<Footer>` / `<Sidebar>` tag inside any `+page.svelte`** — grep the page files; if found, move them to the layout (root / `(public)` / `(private)` / section — your call based on scope).
-- [ ] **No `from ".../ui/navbar"` (or `ui/footer` / `ui/sidebar`) import inside any `+page.svelte`** — imports belong in the layout that renders them.
-- [ ] Lists of records use `<DataTable …>` — no hand-rolled `<table>` in page code.
-- [ ] `currentPath` comes from `page.url.pathname`, not a string literal.
+- [ ] No `<Navbar>`/`<Footer>`/`<Sidebar>` tag inside any `+page.svelte` — move to the layout.
+- [ ] No `from ".../ui/navbar"` (or footer/sidebar) import inside any `+page.svelte`.
+- [ ] Lists of records use `<DataTable …>` — no hand-rolled `<table>`.
+- [ ] `currentPath` from `page.url.pathname`, not a literal.
 
-P1 (lint-warned — `shell-hygiene` emits a warning when `(private)/+layout.svelte` renders `<Navbar>` or `<Sidebar>` without `user=`; exitCode stays 0 but the warning must be addressed before claiming done):
+P1 (shell-hygiene warns; address before done):
 
-- [ ] If `(private)/+layout.svelte` exists and renders `<Navbar>` or `<Sidebar>`, the tag includes `user={data.user}` — and `(private)/+layout.server.ts` returns `user` (spread parent + override) so the loader feeds it.
-- [ ] `(public)` layout's `<Navbar>` correctly omits `user=` (visitor-only).
+- [ ] If `(private)/+layout.svelte` renders `<Navbar>`/`<Sidebar>`, the tag has `user={data.user}` and `(private)/+layout.server.ts` returns `user` (spread parent + override).
+- [ ] `(public)` navbar correctly omits `user=`.
 - [ ] `logout/+server.ts` exists; the dropdown's Log out hits it.
+- [ ] Section layouts live in their own `(private)/<section>/+layout.svelte`.
+- [ ] `data-table` `onStateChange` wired to URL `limit`/`offset`; empty/loading/error via bosia-empty-states.
 
-P1:
-
-- [ ] Section layouts (e.g. admin sidebar) live in their own `(private)/<section>/+layout.svelte`.
-- [ ] `data-table`'s `onStateChange` is wired to the URL (`limit` / `offset` query params).
-- [ ] Empty + loading + error states covered via `bosia-empty-states`.
-
-## References
-
-- `docs/content/docs/components/ui/navbar.md` — full `Navbar` prop surface.
-- `docs/content/docs/components/ui/data-table.md` — `ColumnDef`, `TableState`, server-side wiring.
-- `docs/content/docs/guides/routing.md` — layout chain mechanics.
+Related: bosia-routing, bosia-navigation, bosia-auth-flow, bosia-query-defaults, bosia-rbac-permission. References: `docs/content/docs/components/ui/navbar.md`, `data-table.md`, `guides/routing.md`.
