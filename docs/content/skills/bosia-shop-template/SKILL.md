@@ -1,6 +1,6 @@
 ---
 name: bosia-shop-template
-description: Storefront starter scaffolded by `bosia create … --template shop`. Bundles `auth` + `rbac` + `file-upload` + `shop` registry features, `(public)` + `(private)` route shells, `PublicNavbar` + `AdminSidebar`, and a postgres-by-default Drizzle setup. Use when extending a shop scaffold — not when bootstrapping a generic Bosia app.
+description: Storefront starter scaffolded by `bosia create … --template shop`. Bundles `auth` + `rbac` + `file-upload` + `shop` registry features, `(public)` + `(private)` route shells, `PublicNavbar` + `AdminSidebar`, and a sqlite-file-by-default Drizzle setup. Use when extending a shop scaffold — not when bootstrapping a generic Bosia app.
 triggers:
   - shop template
   - storefront
@@ -35,7 +35,7 @@ bosia:
 
 1. **Re-running `bosia add feat auth|rbac|file-upload|shop`** because the consumer didn't realise the scaffold already wired them. The append-block markers (`resources.ts`, `auth-handle.ts`, `App.Locals`, `schemas.ts`) will double-append and break compilation.
 2. **Replacing `src/lib/components/AdminSidebar.svelte` or `PublicNavbar.svelte` with a fresh component** instead of editing the one the scaffold shipped — you lose the working `DropdownMenu floating side="top" anchor={chevronEl}` user menu, the theme-aware logo button, and the `SidebarTrigger` collapse wiring, then spend an hour rebuilding them from `[[bosia-sidebar]]`.
-3. **Adding `postgres` / `pg` / `@aws-sdk/*` to `package.json`** because the snippets you copy from the internet assume them. Bosia uses `Bun.SQL` + `drizzle-orm/bun-sql` and `Bun.s3`. The template ships with neither dep and shouldn't gain them.
+3. **Adding `postgres` / `pg` / `@aws-sdk/*` to `package.json`** because the snippets you copy from the internet assume them. The shop scaffold defaults to sqlite-file via the built-in `bun:sqlite` + `drizzle-orm/bun-sqlite` (no driver dep), and storage uses `Bun.s3`. The template ships with none of those deps and shouldn't gain them.
 4. **Building a custom "first user = admin" check** because the consumer didn't see the seed. `001_rbac_bootstrap.ts` already grants `('*','*','')` to the first registered user. Don't reimplement.
 5. **Numbering new seeds `001_*.ts` / `002_*.ts`** because the consumer didn't `ls src/features/drizzle/seeds/`. Those slots are taken (`001_rbac_bootstrap`, `002_shop`). Start at `003_*`.
 
@@ -43,7 +43,7 @@ bosia:
 
 | Layer       | Already wired                                                                                                                                                     |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Features    | `auth`, `rbac`, `file-upload`, `shop` (all postgres-default; override per-feature in `template.json#featureOptions`)                                              |
+| Features    | `auth`, `rbac`, `file-upload`, `shop` (all sqlite-file by default; override per-feature in `template.json#featureOptions`)                                        |
 | Auth routes | `(public)/login`, `(public)/register`, `POST /logout` (303 → `/`)                                                                                                 |
 | API routes  | `POST /api/files`, `GET /uploads/[...path]/+server.ts`                                                                                                            |
 | Auth gate   | `src/routes/(private)/+layout.server.ts` redirects to `/login?next=…` when `locals.user` is null                                                                  |
@@ -140,7 +140,7 @@ It exists. Sign-out from the sidebar is wired to it as a real `<form method="POS
 3. **Add the route, not the feature.** New admin page = new `(private)/dashboard/<segment>/+page.svelte` (+ `.server.ts` if it needs `load` / `actions`). The breadcrumb and sidebar will follow if you also add an `items` row in `AdminSidebar.svelte`.
 4. **Gate with `locals.can(...)`.** In the page's `+page.server.ts`, call `locals.can(locals.user.id, "products", "write")` early and `throw error(403, …)` if false. The first-user-admin grant covers `*,*` so the admin sees everything; non-admin users need explicit permission rows (typically inserted by a new seed or an `/admin/users` form).
 5. **For new uploads, reuse `files/image-dialog`.** Import the block, bind to a `string[]` of URLs. Do not call `Bun.s3` directly from a page.
-6. **For new DB tables, append to `schemas.ts` via Drizzle, then ALWAYS generate + apply the migration in the same turn.** Editing the schema file does NOT create the table — run `bun run db:generate` then `bun run db:migrate` (in the Titoko editor these are the `db_generate` / `db_migrate` tools; the `shell` tool does NOT run db commands). Skipping the migrate step ships a page whose service reads a table that doesn't exist → runtime "relation does not exist". New seed → `003_*.ts`, then apply with `bun run db:seed` (`db_seed` tool).
+6. **For new DB tables, append to `schemas.ts` via Drizzle, then ALWAYS generate + apply the migration in the same turn.** Editing the schema file does NOT create the table — run `bun run db:generate` then `bun run db:migrate` (in the Titoko editor these are the `db_generate` / `db_migrate` tools; the `shell` tool does NOT run db commands). Skipping the migrate step ships a page whose service reads a table that doesn't exist → runtime "no such table" (sqlite) / "relation does not exist" (postgres). New seed → `003_*.ts`, then apply with `bun run db:seed` (`db_seed` tool).
 7. **Run `bun run check && bun run build` before declaring done.** The shop scaffold's `tsconfig` is strict; missing types in a new service will fail check.
 
 ## Bosia conventions
@@ -152,7 +152,7 @@ It exists. Sign-out from the sidebar is wired to it as a real `<form method="POS
 - `[[bosia-file-upload]]` — when a new flow needs uploads beyond what `image-dialog` covers.
 - `[[bosia-clean-architecture]]` — repository / service layering, no `db.select` in routes.
 - `[[bosia-query-defaults]]` — `{ rows, total }` shape, default sort, pagination.
-- `[[bosia-bun-runtime]]` — `Bun.SQL`, `Bun.s3`, `Bun.password`, `Bun.Image`. The shop scaffold relies on all four.
+- `[[bosia-bun-runtime]]` — `bun:sqlite` (the sqlite-file default; `Bun.SQL` only if switched to postgres/mysql), `Bun.s3`, `Bun.password`, `Bun.Image`. The shop scaffold relies on these.
 
 ## Checklist gate
 

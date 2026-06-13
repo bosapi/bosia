@@ -1,4 +1,6 @@
 import { Database as SqliteDatabase } from "bun:sqlite";
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import { drizzle, type BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import * as schema from "./schemas";
 
@@ -17,6 +19,8 @@ function buildClient() {
 	const path = engine === "sqlite-memory" ? ":memory:" : url.replace(/^sqlite:\/\//, "");
 	if (engine === "sqlite-memory") {
 		console.warn("⚠️  Using sqlite in-memory — data is ephemeral and flushes on restart.");
+	} else {
+		mkdirSync(dirname(path), { recursive: true });
 	}
 	return new SqliteDatabase(path);
 }

@@ -12,6 +12,15 @@
 - [x] 🟠 `packages/bosia/src/core/client/page.svelte.ts` — add `get params()` returning `appState.routeParams`; `@deprecated` JSDoc + dev-only `console.warn` (warn-once, guarded by `process.env.NODE_ENV !== "production"` so it tree-shakes out of prod). Update the top-of-file comment.
 - [x] ⚪ Docs — `guides/routing.md` deprecated callout; `reference/roadmap.md` line updated; `reference/changelog.md` entry. Skills left as the correct `$props()` pattern.
 
+### Shop template defaults to sqlite-file
+
+> Flips the `shop` template from PostgreSQL to built-in SQLite (`sqlite://./data/app.db`) — zero-config, no DB server, no provisioning. Per-feature dialects already supported sqlite; this only changes the template's defaults plus an ENOENT fix for the `data/` dir.
+
+- [x] 🟠 `packages/bosia/templates/shop/template.json` — all five `featureOptions` dialects `postgres` → `sqlite`.
+- [x] 🟠 `packages/bosia/templates/shop/.env.example` — `DATABASE_URL` → `sqlite://./data/app.db`; `instructions.txt` wording → SQLite.
+- [x] 🟠 `registry/features/drizzle/drizzle-index.sqlite.ts` — `mkdirSync(dirname(path))` before opening the file (skip `:memory:`) so `db:migrate` against `./data/app.db` doesn't ENOENT.
+- [x] ⚪ `_gitignore` ignores `data/*.db*`; ship `data/.gitkeep`. Docs/skills (`bosia-shop-template`) updated postgres-default → sqlite-file.
+
 ---
 
 ## 0.6.25 — Port the Mercato storefront (new `page` tier + 24 blocks + clay theme)

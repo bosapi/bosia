@@ -1,10 +1,10 @@
 {
 	"features": ["auth", "rbac", "file-upload", "shop"],
 	"featureOptions": {
-		"drizzle.dialect": "postgres",
-		"auth.dialect": "postgres",
-		"rbac.dialect": "postgres",
-		"file-upload.dialect": "postgres",
-		"shop.dialect": "postgres"
+		"drizzle.dialect": "sqlite",
+		"auth.dialect": "sqlite",
+		"rbac.dialect": "sqlite",
+		"file-upload.dialect": "sqlite",
+		"shop.dialect": "sqlite"
 	}
 }

@@ -1,4 +1,4 @@
-Update .env with your DATABASE_URL (PostgreSQL) and S3_* credentials.
+Update .env with your DATABASE_URL (SQLite file, e.g. sqlite://./data/app.db) and S3_* credentials.
 Pick a strong SESSION_SECRET.
 
 bun run db:generate

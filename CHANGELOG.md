@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Restored `page.params` as a deprecated fallback; new code should read params from props.
 
+### Changed
+
+- Shop template now uses built-in SQLite instead of PostgreSQL — zero setup, no database server.
+
 ### Fixed
 
 - Login/register no longer fail after the app sits idle — database connections now refresh automatically.
