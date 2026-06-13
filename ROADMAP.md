@@ -1,7 +1,16 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.6.25**
+> Current version: **0.7.0**
+
+---
+
+## 0.7.0 — Deprecated `page.params` fallback
+
+> Re-adds a **deprecated, working** `params` getter on the `page` object (`bosia/client`) so legacy code (and AI agents) that reach for `page.params` keep working with an active nudge toward the prop. Returns the reactive `appState.routeParams`, emits a dev-only warn-once, carries `@deprecated` JSDoc, and is slated for removal in **1.0.0**. `$props()` remains the taught path.
+
+- [x] 🟠 `packages/bosia/src/core/client/page.svelte.ts` — add `get params()` returning `appState.routeParams`; `@deprecated` JSDoc + dev-only `console.warn` (warn-once, guarded by `process.env.NODE_ENV !== "production"` so it tree-shakes out of prod). Update the top-of-file comment.
+- [x] ⚪ Docs — `guides/routing.md` deprecated callout; `reference/roadmap.md` line updated; `reference/changelog.md` entry. Skills left as the correct `$props()` pattern.
 
 ---
 
