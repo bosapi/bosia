@@ -14,6 +14,9 @@ triggers:
   - page.url.pathname
   - ReferenceError
   - undefined variable
+  - stale content on navigation
+  - page not updating on slug change
+  - dynamic route reuse
 od:
   mode: convention
   category: framework
@@ -77,6 +80,23 @@ Never `export let title`. Type the destructured object inline.
 ```
 
 Never `$: count = items.length`.
+
+### R3.5 — Anything computed from `data` / props MUST be `$derived`
+
+The component instance is **reused** across client-side navigations that hit the same route file (e.g. `[slug]/+page.svelte` → another slug). The router does NOT remount — it updates the `data` / `$props()` values in place. A plain `const` runs **once at mount** and never recomputes, so the page shows stale content even though the URL changed.
+
+```svelte
+<script lang="ts">
+	let { data }: PageProps = $props();
+
+	const product = getProductBySlug(data.slug); // ❌ frozen at first mount
+	const product = $derived(getProductBySlug(data.slug)); // ✅ recomputes when slug changes
+</script>
+```
+
+This passes SSR (first render is correct), passes a fresh-mount navigation (homepage → detail mounts a new instance), and passes `svelte-check` — so it only fails when navigating **between two URLs of the same dynamic route** (detail → related detail). Easy to miss in casual testing.
+
+Rule: if a value reads `data.*`, a prop, or any `$state`/`$derived`, and that source can change while the component stays mounted, it MUST be `$derived` (or `$derived.by`). Values derived from a derived value (e.g. `related` from `product`) inherit this — make the whole chain reactive.
 
 ### R4 — Effect: `$effect` (sparingly)
 
@@ -199,6 +219,7 @@ P0:
 - [ ] No `$:` reactive statements.
 - [ ] Props destructured from `$props()` with inline type.
 - [ ] Derivations use `$derived` / `$derived.by`, not `$effect`.
+- [ ] No plain `const x = fn(data.*)` / `const x = fn(prop)` — anything read from `data`/props that can change is `$derived` (R3.5).
 - [ ] `bind:` targets declare `$bindable`.
 - [ ] Every `{shorthand}` and template identifier exists in script scope.
 
