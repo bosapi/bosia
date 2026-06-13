@@ -85,6 +85,10 @@ complete
 - "Submit", "OK", "Cancel" as button labels.
 - Three+ font families (only two locked: Fraunces + Inter Tight + JetBrains Mono numerics is acceptable as 2+1 mono).
 
+## Todo
+
+- [ ] Redesign login & register pages — they ship from the template and must be reworked to match this brief's identity + aesthetic.
+
 ## References
 
 - Inspirations: The New York Times Cooking (editorial calm), Pinterest Field Notes (agrarian feel), Linear (restraint on chrome — but warmer).

@@ -57,7 +57,7 @@ Skip only if `fs_read("BRIEF.md")` succeeds AND `## Status` line is `complete`.
    3. **Memorable detail** — one named element (staggered headline reveal, custom cursor, grain overlay, oversized footer wordmark, etc.). If user can't name one, the stance isn't locked.
    4. **What we are NOT** — one sentence rejecting the default (e.g. "not a soft purple gradient SaaS landing").
 5. **Approval gate (tool call, not text question).** Build the consolidated draft in memory and call `brief_request_approval({ summary })` where `summary` is the recap (identity + aesthetic stance + memorable detail). The host UI renders a **Setuju** button. DO NOT call `fs_write("BRIEF.md", ...)` yet. If the user types corrections instead of clicking, update the draft and call `brief_request_approval` again with the revised summary.
-6. After the user confirms (next turn carries "Setuju, tulis BRIEF.md." or `briefApproval: true`), `fs_write("BRIEF.md", ...)` with the consolidated answers, including the `## Aesthetic` section.
+6. After the user confirms (next turn carries "Setuju, tulis BRIEF.md." or `briefApproval: true`), `fs_write("BRIEF.md", ...)` with the consolidated answers, including the `## Aesthetic` section. The `## Todo` section MUST be seeded with the "Redesign login & register pages" item — these pages ship from the template and need reworking to match the brief.
 7. `read_skill({ name: "bosia-brief-review" })` and walk its checklist (B18 covers the aesthetic stance).
 8. Set `## Status: complete` in BRIEF.md.
 9. Only now: greet user with a recap and the suggested first build step. The recap MUST name the direction + the memorable detail so the user can confirm.
@@ -163,6 +163,10 @@ complete
 ## No-go (visual + copy)
 
 - {Anti-patterns from voice + visual groups consolidated}
+
+## Todo
+
+- [ ] Redesign login & register pages — they ship from the template and must be reworked to match this brief's identity + aesthetic.
 
 ## References
 
