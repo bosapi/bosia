@@ -12,6 +12,7 @@
 - [x] 🟠 `docs/content/skills/bosia-brief-intake/SKILL.md` — workflow steps 3.3/3.4 now "record" the theme/first-screen choices (no install); new **step 9 "Install NOW"** (theme + `app.css` overrides → first-screen blocks/primitives) runs after status complete, recap renumbered to step 10; step-5 approval gate hardened ("MUST be the first execution-class action"); R5 extended to ban `bosia_add_theme`/`bosia_add`/`shell` and the "Start the app" ask before status complete; new anti-pattern for the same.
 - [x] 🟠 `docs/content/skills/bosia-brief-visual/SKILL.md` — description + "What it captures" reworded to "records, doesn't install"; "Workflow side effects" → "Deferred install — NOT during intake" (executed by intake step 9); checklist gate splits "theme_choice recorded" (here) from the `bosia_add_theme`-ran checks (after step 9).
 - [x] 🟠 `docs/content/skills/bosia-brief-platform/SKILL.md` — same treatment: description reworded; "Workflow side effects" → "Deferred install — NOT during intake"; format-helper + block scaffolds run in intake step 9; checklist gate annotated.
+- [x] 🟠 `docs/content/skills/bosia-brief-intake/SKILL.md` (+ `references/example-brief.md`) — `## Todo` seed now carries TWO items: the existing "Redesign login & register pages" plus a new "Replace mock data with real database integration" (homepage/section pages build with placeholder/mock content first, then get wired to the shop services + sqlite-file DB). Step 6 wording + the BRIEF.md output-shape template + the example brief all updated to match.
 
 ---
 

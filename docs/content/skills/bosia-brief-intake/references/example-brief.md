@@ -88,6 +88,7 @@ complete
 ## Todo
 
 - [ ] Redesign login & register pages — they ship from the template and must be reworked to match this brief's identity + aesthetic.
+- [ ] Replace mock data with real database integration — pages built during the homepage/section flow use placeholder/mock content; wire them to the shop services (Product/Order/Cart) backed by the app's sqlite-file DB.
 
 ## References
 

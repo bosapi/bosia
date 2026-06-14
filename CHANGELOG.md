@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.7.2] - 2026-06-14
 
+### Changed
+
+- New apps now get a brief to-do to swap placeholder content for real database data.
+
 ### Fixed
 
 - Brief intake no longer installs the theme or asks you to start the app before the approval button shows.

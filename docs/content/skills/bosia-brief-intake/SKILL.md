@@ -44,7 +44,7 @@ Run BEFORE any first `fs_write` to `src/**`, any `bosia_add_theme`/`bosia_add_bl
    4. `read_skill bosia-brief-platform` — form factors, ID/number/date formats, imagery, first screens. **Records** the first-screen list; block install is deferred to step 9.
 4. Lock the aesthetic stance — `read_skill bosia-frontend-design`, then ask four: (a) Direction (one catalog extreme or invent; show `references/aesthetic-directions.md` inline; MUST be compatible with the audience [3.1] and palette intent [3.3] — resolve contradictions); (b) Display + body fonts (distinctive pair, NOT Inter/Roboto/Space Grotesk); (c) Memorable detail (one named element — if the user can't name one, stance isn't locked); (d) What we are NOT (one sentence rejecting the default).
 5. Approval gate (tool call, NOT a text question): build the consolidated draft in memory and call `brief_request_approval({ summary })` (recap = identity + aesthetic stance + memorable detail). Host renders a Setuju button. This MUST be the first execution-class action of the whole intake — if the Setuju button has not been shown, nothing has been installed and the user has NOT been asked to run/Start the app. Do NOT `fs_write("BRIEF.md")` yet. On typed corrections, revise and call `brief_request_approval` again.
-6. After confirmation (next turn carries "Setuju, tulis BRIEF.md." or `briefApproval: true`), `fs_write("BRIEF.md", ...)` with all sections incl. `## Aesthetic`. Seed `## Todo` with "Redesign login & register pages" (they ship from the template, need reworking).
+6. After confirmation (next turn carries "Setuju, tulis BRIEF.md." or `briefApproval: true`), `fs_write("BRIEF.md", ...)` with all sections incl. `## Aesthetic`. Seed `## Todo` with two items: "Redesign login & register pages" (they ship from the template, need reworking) AND "Replace mock data with real database integration" (pages get built with placeholder/mock content first, then wired to the shop services + DB).
 7. `read_skill bosia-brief-review` and walk its checklist (B18 covers the aesthetic stance).
 8. Set `## Status: complete`.
 9. Install NOW — first registry calls of the whole flow, only after BRIEF.md is written + complete: `bosia_add_theme <theme_choice>` (+ `src/app.css` `--primary`/`--accent`/`--radius` overrides per bosia-brief-visual), then the first-screen `bosia_add_block`s (one block at a time) + shared `bosia_add` primitives per bosia-brief-platform. Installs need a live runtime, so this is also the earliest point a host may need the app started — never request it during intake.
@@ -139,6 +139,7 @@ complete
 ## Todo
 
 - [ ] Redesign login & register pages — they ship from the template and must be reworked to match this brief's identity + aesthetic.
+- [ ] Replace mock data with real database integration — pages built during the homepage/section flow use placeholder/mock content; wire them to the shop services (Product/Order/Cart) backed by the app's sqlite-file DB.
 
 ## References
 
