@@ -109,7 +109,7 @@ function buildContext(el){
   var leaf=el.getAttribute("data-bosia-loc")||"";
   var frames=userFrames(el);
   var pageFile=findPageFile(frames);
-  var lines=["[Inspector]"];
+  var lines=[];
   lines.push("url:       "+location.href);
   if(pageFile)lines.push("pageFile:  "+pageFile);
   if(leaf&&leaf!==pageFile)lines.push("component: "+leaf);
