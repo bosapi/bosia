@@ -37,17 +37,18 @@ Run BEFORE any first `fs_write` to `src/**`, any `bosia_add_theme`/`bosia_add_bl
 
 1. `fs_read("BRIEF.md")` → if missing or `## Status: pending`, enter intake.
 2. Greet in the user's apparent language. One sentence, no emoji.
-3. Walk the four groups IN ORDER, reading each skill body first, then asking its questions:
+3. Walk the four groups IN ORDER, reading each skill body first, then asking its questions. Intake is **capture-only** — these groups DECIDE values; they do NOT install. No `bosia_add_theme` / `bosia_add_block` / `bosia_add` / `shell` runs during any group (see step 9).
    1. `read_skill bosia-brief-identity` — name, tagline, audience, language, formality.
    2. `read_skill bosia-brief-voice` — tone, emoji/exclamation policy, microcopy spine.
-   3. `read_skill bosia-brief-visual` — palette intent, theme pick, shape, density, type, icons. Runs `bosia_add_theme` at the end.
-   4. `read_skill bosia-brief-platform` — form factors, ID/number/date formats, imagery, first screens. Runs batched `bosia_add_block` at the end.
+   3. `read_skill bosia-brief-visual` — palette intent, theme pick, shape, density, type, icons. **Records** the theme choice; install is deferred to step 9.
+   4. `read_skill bosia-brief-platform` — form factors, ID/number/date formats, imagery, first screens. **Records** the first-screen list; block install is deferred to step 9.
 4. Lock the aesthetic stance — `read_skill bosia-frontend-design`, then ask four: (a) Direction (one catalog extreme or invent; show `references/aesthetic-directions.md` inline; MUST be compatible with the audience [3.1] and palette intent [3.3] — resolve contradictions); (b) Display + body fonts (distinctive pair, NOT Inter/Roboto/Space Grotesk); (c) Memorable detail (one named element — if the user can't name one, stance isn't locked); (d) What we are NOT (one sentence rejecting the default).
-5. Approval gate (tool call, NOT a text question): build the consolidated draft in memory and call `brief_request_approval({ summary })` (recap = identity + aesthetic stance + memorable detail). Host renders a Setuju button. Do NOT `fs_write("BRIEF.md")` yet. On typed corrections, revise and call `brief_request_approval` again.
+5. Approval gate (tool call, NOT a text question): build the consolidated draft in memory and call `brief_request_approval({ summary })` (recap = identity + aesthetic stance + memorable detail). Host renders a Setuju button. This MUST be the first execution-class action of the whole intake — if the Setuju button has not been shown, nothing has been installed and the user has NOT been asked to run/Start the app. Do NOT `fs_write("BRIEF.md")` yet. On typed corrections, revise and call `brief_request_approval` again.
 6. After confirmation (next turn carries "Setuju, tulis BRIEF.md." or `briefApproval: true`), `fs_write("BRIEF.md", ...)` with all sections incl. `## Aesthetic`. Seed `## Todo` with "Redesign login & register pages" (they ship from the template, need reworking).
 7. `read_skill bosia-brief-review` and walk its checklist (B18 covers the aesthetic stance).
 8. Set `## Status: complete`.
-9. Only now: recap to the user + suggested first build step. The recap MUST name the direction + the memorable detail.
+9. Install NOW — first registry calls of the whole flow, only after BRIEF.md is written + complete: `bosia_add_theme <theme_choice>` (+ `src/app.css` `--primary`/`--accent`/`--radius` overrides per bosia-brief-visual), then the first-screen `bosia_add_block`s (one block at a time) + shared `bosia_add` primitives per bosia-brief-platform. Installs need a live runtime, so this is also the earliest point a host may need the app started — never request it during intake.
+10. Recap to the user + suggested first build step. The recap MUST name the direction + the memorable detail.
 
 > DB engine is NOT collected here — apps default to sqlite-file (`bun:sqlite`). For postgres/mysql/schema work later, load bosia-database-setup.
 
@@ -150,13 +151,13 @@ R1 — `BRIEF.md` sits at app root (next to `package.json`), not under `src/` or
 R2 — Human-editable Markdown, never JSON/YAML. User edits, agent re-reads.
 R3 — After `## Status: complete`, don't silently re-decide palette/theme/formality. On a change request, say so ("Updating brief: formality `formal → semi-formal`. Palette unchanged.") and rewrite that section only.
 R4 — Brief beats taste: when defaults conflict with BRIEF.md, BRIEF.md wins.
-R5 — Never skip ahead: no `bosia_add_block` before `## Status: complete`.
+R5 — Never skip ahead: no `bosia_add_theme` / `bosia_add_block` / `bosia_add` (and no `shell`) before `## Status: complete` — every install is step 9, after BRIEF.md is written. Picking the sunset/editorial/etc. theme during intake means RECORDING it in the draft, not installing it. Telling the user to Start/run the app during intake is the same violation: the runtime is only needed for step 9.
 R6 — Language locks UI strings: `language: id` → ALL emitted strings are Indonesian (agent may still reply to the user in their chat language).
 R7 — One BRIEF.md per app; multi-app product → separate Bosia apps.
 
 ## Anti-patterns
 
-30 questions in one turn (use Quick start) · yes/no questions with no default (always offer one: "default `warm-earthy` — type another or say ok") · follow-ups after the Quick Start batch (infer, then `brief_request_approval`) · asking about the DB engine (sqlite-file default) · ending the recap with a plain-text "Setuju?" instead of calling `brief_request_approval` · `fs_write("BRIEF.md")` before the user confirms · inventing answers without confirmation · treating BRIEF.md as one-time (re-read each session).
+30 questions in one turn (use Quick start) · yes/no questions with no default (always offer one: "default `warm-earthy` — type another or say ok") · follow-ups after the Quick Start batch (infer, then `brief_request_approval`) · asking about the DB engine (sqlite-file default) · ending the recap with a plain-text "Setuju?" instead of calling `brief_request_approval` · `fs_write("BRIEF.md")` before the user confirms · running `bosia_add_theme`/`bosia_add_block` or telling the user to Start/run the app before the Setuju button (installs are step 9, after the brief is written) · inventing answers without confirmation · treating BRIEF.md as one-time (re-read each session).
 
 ## Checklist gate
 

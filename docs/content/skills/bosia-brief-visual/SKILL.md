@@ -1,6 +1,6 @@
 ---
 name: bosia-brief-visual
-description: Capture visual direction — palette intent → theme pick, shape (radius), density (shadows), type, icon set, custom marks. Ends by running `bosia_add_theme` so subsequent UI emits inherit the chosen tokens.
+description: Capture visual direction — palette intent → theme pick, shape (radius), density (shadows), type, icon set, custom marks. RECORDS the theme choice; the orchestrator (bosia-brief-intake step 9) installs it via `bosia_add_theme` only after BRIEF.md is written — never during intake.
 triggers:
   - palette
   - colors
@@ -29,7 +29,7 @@ bosia:
 
 ## What it captures
 
-Visual direction expressed as **intent**, not as a token table. Bosia's semantic tokens own the actual values (`bosia-theme-tokens`). This skill picks the _intent_ and the _theme_, then installs.
+Visual direction expressed as **intent**, not as a token table. Bosia's semantic tokens own the actual values (`bosia-theme-tokens`). This skill picks the _intent_ and the _theme_ and **records** them; the install (`bosia_add_theme` + `src/app.css` overrides) is deferred to bosia-brief-intake step 9, after the brief is approved and written.
 
 | Field            | Options                                                                                    | Drives                                           |
 | ---------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------ |
@@ -109,16 +109,16 @@ Gradient bgs forbidden on cards, buttons, headers in app shell. Reserved for mar
 
 `warm-earthy` intent → override neutral scale to warm-leaning (slight yellow cast). Pure-cool gray on warm primary reads as cheap. Document in the custom theme block.
 
-## Workflow side effects
+## Deferred install — NOT during intake
 
-After answers locked, this skill executes:
+This skill DECIDES; it does not install. No `bosia_add_theme`, no `fs_edit`, no `shell` here. After answers are locked, RECORD them in the draft (`## Visual`) and move on. The orchestrator (`bosia-brief-intake` step 9) runs the following — and ONLY after BRIEF.md is written with `## Status: complete`:
 
 1. `bosia_add_theme <theme_choice>` (e.g. `editorial`).
 2. If `brand_colors` given OR `palette_intent` differs from theme's defaults: `fs_read("src/app.css")` → `fs_edit` to override `--primary`/`--accent`/(optionally `--radius`).
 3. If `mono_usage` ≠ `none`: ensure JetBrains Mono import + `--font-mono` set.
 4. If `custom_marks` given: queue SVG authoring for the platform-skill pass (mark them as pending in BRIEF.md, don't author yet).
 
-Confirm each change to the user with a one-line summary before writing.
+(Installing a theme needs a live runtime — another reason it waits for step 9. During intake, never `bosia_add_theme` and never ask the user to Start the app.)
 
 ## Anti-patterns
 
@@ -153,8 +153,9 @@ P0:
 
 - [ ] `palette_intent` set.
 - [ ] `theme_choice` matches matrix or is explicitly `custom` with rationale.
-- [ ] `bosia_add_theme` ran (verify `src/app.css` has theme tokens via `fs_read`).
-- [ ] If brand colors given, `--primary`/`--accent` overridden in `src/app.css`.
+- [ ] `theme_choice` recorded in `## Visual` (install itself happens in bosia-brief-intake step 9 — do NOT `bosia_add_theme` here).
+- [ ] _(after step 9)_ `bosia_add_theme` ran (verify `src/app.css` has theme tokens via `fs_read`).
+- [ ] _(after step 9)_ If brand colors given, `--primary`/`--accent` overridden in `src/app.css`.
 - [ ] `--radius` value matches `shape`.
 - [ ] No raw color classes anywhere in `src/**/*.svelte` (run `bosia-theme-tokens` grep mentally).
 

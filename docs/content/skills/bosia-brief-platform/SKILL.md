@@ -1,6 +1,6 @@
 ---
 name: bosia-brief-platform
-description: Capture platform & data conventions — form factors, primary surface, ID format, number/date locale, imagery strategy, first screens to scaffold, must-have features. Ends by batched `bosia_add_block` for first screens.
+description: Capture platform & data conventions — form factors, primary surface, ID format, number/date locale, imagery strategy, first screens to scaffold, must-have features. RECORDS the first-screen list; the orchestrator (bosia-brief-intake step 9) scaffolds format helpers + runs `bosia_add_block` after BRIEF.md is written — never during intake.
 triggers:
   - platform
   - mobile
@@ -133,11 +133,11 @@ Scaffold ≤4 screens upfront. More = analysis paralysis + theme drift before us
 
 If user lists 15 features, ask: "Which 3–5 would you ship in a v0.1?" Reorder, mark the rest as `Later` under BRIEF.md.
 
-## Workflow side effects
+## Deferred install — NOT during intake
 
-After answers locked:
+This skill DECIDES; it does not scaffold or install. No `fs_write`, no `bosia_add`, no `bosia_add_block`, no `shell` here — only RECORD the platform fields in the draft. The orchestrator (`bosia-brief-intake` step 9) runs the following, and ONLY after BRIEF.md is written with `## Status: complete`:
 
-1. Write platform fields to BRIEF.md.
+1. Platform fields are already in BRIEF.md (`## Platform`).
 2. If `id_format` set: scaffold `src/lib/format/id.ts` with the format constants.
 3. If `number_format` set: scaffold `src/lib/format/num.ts`.
 4. If `date_format` set: scaffold `src/lib/format/date.ts`.
@@ -145,7 +145,7 @@ After answers locked:
 6. Call `bosia_add_block` **one block at a time** for each `first_screens` entry where it maps to a registered block, otherwise mark for in-skill scaffolding (e.g., `bosia-mobile-screen` is a skill not a block). Blocks pull more files than components — never batch blocks.
 7. For each first-screen skill: `read_skill({ name })` and follow its workflow.
 
-Confirm the queued additions in a single summary to the user before executing.
+These installs need a live runtime, so step 9 is also the earliest the app may need to be started — never request a Start during intake. Confirm the queued additions in a single summary to the user before executing.
 
 ## Anti-patterns
 
@@ -188,8 +188,8 @@ Write under `## Platform`:
 P0:
 
 - [ ] `form_factors` non-empty, `primary_surface` is one of them.
-- [ ] If domain uses IDs: format regex + example captured AND `src/lib/format/id.ts` scaffolded.
-- [ ] Number + date format named functions exist in `src/lib/format/`.
+- [ ] If domain uses IDs: format regex + example captured (`src/lib/format/id.ts` is scaffolded in bosia-brief-intake step 9, not here).
+- [ ] _(after step 9)_ Number + date format named functions exist in `src/lib/format/`.
 - [ ] First-screen count ≤4.
 - [ ] Each `first_screens` entry corresponds to a real catalog skill or block (verified via `list_skills` / `list_blocks`).
 

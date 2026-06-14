@@ -1,7 +1,17 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.7.1**
+> Current version: **0.7.2**
+
+---
+
+## 0.7.2 (2026-06-14) — Brief intake: defer ALL installs to after approval
+
+> Recurring bug: during Quick-start intake the AI gathered the answers, picked the theme, then ran `bosia_add_theme` (and on platform, `bosia_add_block`) and told the user to click **Start** — all _before_ `brief_request_approval`, so the Setuju approval button never appeared. Root cause was in the skill bodies, not the host: `bosia-brief-visual`'s description + "Workflow side effects" said it "ends by running `bosia_add_theme`", and `bosia-brief-platform` likewise ran `bosia_add_block`, both placed in the intake question-walk (before the step-5 approval gate). This directly contradicted intake R5 ("no `bosia_add_block` before `## Status: complete`"). Fix: intake is now capture-only; every registry install + format-helper scaffold moved into a new **step 9** that runs only after BRIEF.md is written + `## Status: complete`.
+
+- [x] 🟠 `docs/content/skills/bosia-brief-intake/SKILL.md` — workflow steps 3.3/3.4 now "record" the theme/first-screen choices (no install); new **step 9 "Install NOW"** (theme + `app.css` overrides → first-screen blocks/primitives) runs after status complete, recap renumbered to step 10; step-5 approval gate hardened ("MUST be the first execution-class action"); R5 extended to ban `bosia_add_theme`/`bosia_add`/`shell` and the "Start the app" ask before status complete; new anti-pattern for the same.
+- [x] 🟠 `docs/content/skills/bosia-brief-visual/SKILL.md` — description + "What it captures" reworded to "records, doesn't install"; "Workflow side effects" → "Deferred install — NOT during intake" (executed by intake step 9); checklist gate splits "theme_choice recorded" (here) from the `bosia_add_theme`-ran checks (after step 9).
+- [x] 🟠 `docs/content/skills/bosia-brief-platform/SKILL.md` — same treatment: description reworded; "Workflow side effects" → "Deferred install — NOT during intake"; format-helper + block scaffolds run in intake step 9; checklist gate annotated.
 
 ---
 

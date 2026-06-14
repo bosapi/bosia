@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.2] - 2026-06-14
+
+### Fixed
+
+- Brief intake no longer installs the theme or asks you to start the app before the approval button shows.
+
 ## [0.7.1] - 2026-06-13
 
 ### Changed
