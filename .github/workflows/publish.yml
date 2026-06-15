@@ -1,77 +1,111 @@
-name: Publish to npm
+name: Publish & prebuilt templates
+
+# One workflow, two outcomes — decided by whether this push changed
+# packages/bosia/package.json:
+#
+#   • package.json changed (version bump) → build templates, npm publish,
+#     create the GitHub Release and upload the prebuilt artifacts.
+#   • registry/templates changed only     → build templates and re-upload
+#     (--clobber) onto the EXISTING release. Never touches npm, so the
+#     "version already exists" error can't happen.
+#
+# build:templates runs exactly once per push either way.
 
 on:
   push:
     branches: [main]
     paths:
       - "packages/bosia/package.json"
+      - "registry/**"
+      - "packages/bosia/templates/**"
   workflow_dispatch:
 
-# Shared with refresh-prebuilt.yml: a version bump that also touches the registry
-# triggers both; this serializes them so release assets are never uploaded
-# concurrently. cancel-in-progress: false = queue, never cancel a publish.
+# Serialize runs of this workflow so two pushes landing close together never
+# create/clobber the same release assets concurrently.
+# cancel-in-progress: false = queue, never cancel a publish in progress.
 concurrency:
   group: prebuilt-release
   cancel-in-progress: false
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # need the previous commit to diff package.json
 
-      - name: Check version
-        id: version
+      - name: Decide what to do
+        id: decide
         run: |
           VERSION=$(jq -r '.version' packages/bosia/package.json)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          # Check if this version is already published
-          if npm view "bosia@$VERSION" version 2>/dev/null; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Version $VERSION already published — skipping"
+          # Publish to npm ONLY when this push changed package.json.
+          if git diff --name-only HEAD^ HEAD 2>/dev/null | grep -qx 'packages/bosia/package.json'; then
+            echo "pkg_changed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "pkg_changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # Determine tag: prerelease → next, stable → latest
+          # Guard against re-publishing a version already on npm.
+          if npm view "bosia@$VERSION" version 2>/dev/null; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          # Prerelease → next, stable → latest.
           if [[ "$VERSION" =~ -(rc|beta|alpha) ]]; then
             echo "tag=next" >> "$GITHUB_OUTPUT"
           else
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Setup Bun
-        if: steps.version.outputs.skip == 'false'
-        uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@v2
 
       - name: Build prebuilt template artifacts
-        if: steps.version.outputs.skip == 'false'
         run: bun run build:templates
         working-directory: packages/bosia
 
+      # ── Publish path: package.json changed AND not yet on npm ──
       - name: Setup npm auth
-        if: steps.version.outputs.skip == 'false'
+        if: steps.decide.outputs.pkg_changed == 'true' && steps.decide.outputs.published == 'false'
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      - name: Publish
-        if: steps.version.outputs.skip == 'false'
+      - name: Publish to npm
+        if: steps.decide.outputs.pkg_changed == 'true' && steps.decide.outputs.published == 'false'
         run: |
-          echo "Publishing bosia@${{ steps.version.outputs.version }} with tag ${{ steps.version.outputs.tag }}"
-          npm publish --tag "${{ steps.version.outputs.tag }}" --access public
+          echo "Publishing bosia@${{ steps.decide.outputs.version }} with tag ${{ steps.decide.outputs.tag }}"
+          npm publish --tag "${{ steps.decide.outputs.tag }}" --access public
         working-directory: packages/bosia
 
       - name: Create GitHub Release
-        if: steps.version.outputs.skip == 'false'
+        if: steps.decide.outputs.pkg_changed == 'true' && steps.decide.outputs.published == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="v${{ steps.version.outputs.version }}"
+          VERSION="v${{ steps.decide.outputs.version }}"
           ASSETS=(packages/bosia/dist/prebuilt/*.tar.gz)
-          if [ "${{ steps.version.outputs.tag }}" = "next" ]; then
+          if [ "${{ steps.decide.outputs.tag }}" = "next" ]; then
             gh release create "$VERSION" --title "$VERSION" --generate-notes --prerelease "${ASSETS[@]}"
           else
             gh release create "$VERSION" --title "$VERSION" --generate-notes "${ASSETS[@]}"
           fi
+
+      # ── Refresh path: registry/template-only change ──
+      - name: Refresh release assets
+        if: steps.decide.outputs.pkg_changed == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="v${{ steps.decide.outputs.version }}"
+          # The release is created by the publish path on version bump. If the
+          # current version isn't released yet, there's nothing to clobber.
+          if ! gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "Release $VERSION not published yet — nothing to refresh."
+            exit 0
+          fi
+          gh release upload "$VERSION" packages/bosia/dist/prebuilt/*.tar.gz --clobber
