@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- New login page family: ready-made sign-in, sign-up, forgot, magic-link, OTP and SSO screens.
 - Creating a `shop` project is now near-instant via a prebuilt download (falls back to the old way).
 
 ---

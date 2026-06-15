@@ -98,6 +98,13 @@
 	import PagesListingDemo from "$lib/components/demos/PagesListingDemo.svelte";
 	import PagesProductDemo from "$lib/components/demos/PagesProductDemo.svelte";
 	import PagesCheckoutDemo from "$lib/components/demos/PagesCheckoutDemo.svelte";
+	import AuthBlocksDemo from "$lib/components/demos/AuthBlocksDemo.svelte";
+	import AuthLoginDemo from "$lib/components/demos/AuthLoginDemo.svelte";
+	import AuthRegisterDemo from "$lib/components/demos/AuthRegisterDemo.svelte";
+	import AuthForgotDemo from "$lib/components/demos/AuthForgotDemo.svelte";
+	import AuthMagicLinkDemo from "$lib/components/demos/AuthMagicLinkDemo.svelte";
+	import AuthOtpDemo from "$lib/components/demos/AuthOtpDemo.svelte";
+	import AuthSsoDemo from "$lib/components/demos/AuthSsoDemo.svelte";
 
 	const demos: Record<string, any> = {
 		AspectRatioDemo,
@@ -195,6 +202,13 @@
 		PagesListingDemo,
 		PagesProductDemo,
 		PagesCheckoutDemo,
+		AuthBlocksDemo,
+		AuthLoginDemo,
+		AuthRegisterDemo,
+		AuthForgotDemo,
+		AuthMagicLinkDemo,
+		AuthOtpDemo,
+		AuthSsoDemo,
 	};
 
 	let { data }: { data: any } = $props();

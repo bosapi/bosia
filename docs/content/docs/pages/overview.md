@@ -60,3 +60,23 @@ you normally do; the storefront uses semantic tokens, so it follows along.
 
 For the customer-facing UI here plus a backend, pair with the shop template scaffold
 (`bun x bosia@latest create my-shop --template shop`).
+
+## The auth pages
+
+A second family — six login/auth screens composed from shared [auth blocks](/blocks/auth). Each
+defaults to a centered card and switches to a split brand/photo panel with one prop
+(`variant="split"`). Install one and you get the `page.svelte` plus every auth block it composes:
+
+```bash
+bun x bosia@latest add page auth/login
+```
+
+- [Login](/pages/auth/login) — social row, email + password, remember me
+- [Register](/pages/auth/register) — social grid, name/email/password, strength meter
+- [Forgot Password](/pages/auth/forgot) — email field, reset-link note
+- [Magic Link](/pages/auth/magic-link) — check-your-inbox confirmation
+- [OTP / 2FA](/pages/auth/otp) — segmented 6-digit code input
+- [SSO](/pages/auth/sso) — enterprise work email / domain
+
+These are the visual layer only — no sessions or password hashing. For real authentication, pair
+them with the `bosia-auth-flow` server wiring.

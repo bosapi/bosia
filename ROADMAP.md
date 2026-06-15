@@ -5,6 +5,24 @@
 
 ---
 
+## 0.7.3 (2026-06-15) — Login/auth page family (new `auth/*` pages + 9 blocks + `bosia-login` skill)
+
+> The registry shipped a storefront page family but no auth/login pages — only a single `cards/login`
+> block. This ports the standalone Login Design System (12 themes, centered + split layouts, the full
+> sign-in/up/forgot/magic-link/OTP/SSO screen set) into Bosia as a **visual-only** page family:
+> 9 reusable `auth/*` blocks (semantic tokens, brand → `primary`, status → emerald/amber/destructive,
+> social brand logos keep their official colours) and 6 pages composed from them. One card, two
+> layouts (centered ↔ split) via a one-line `variant` swap, mirroring the storefront `purpose` pattern.
+> Backend stays in `bosia-auth-flow` — pages note the pairing.
+
+- [x] 🟠 9 blocks under `registry/blocks/auth/*` — `auth-shell` (centered ↔ split frame), `auth-card`, `brand`, `social-row` (inlined Google/Apple/GitHub/Microsoft logos), `divider`, `auth-field` (icon + show/hide), `password-strength`, `otp-input`, `form-message`. Registered in `registry/index.json`.
+- [x] 🟠 6 pages under `registry/pages/auth/{login,register,forgot,magic-link,otp,sso}/` — composition only; each `meta.json` lists its `auth/*` block deps so the installer recurses; default `variant="centered"`, swappable to `split`.
+- [x] ⚪ Docs — new `blocks/auth` page + 6 `pages/auth/*` pages (7 demos registered), Pages overview gains an auth section, nav gains Blocks → Auth and Pages → Auth groups.
+- [x] ⚪ New `bosia-login` design skill (catalog of the 6 pages + 9 blocks, token map, voice, centered↔split swap, `[[bosia-auth-flow]]` pairing) + skills-index row (count 50 → 51).
+- [x] ⚪ `CHANGELOG.md` — appended under 0.7.3.
+
+---
+
 ## 0.7.3 (2026-06-15) — Prebuilt template artifacts for fast `bosia create`
 
 > `bosia create --template shop` was slow not from the template copy but from `installFeature` fetching 150+ files serially from `raw.githubusercontent.com` (auth/rbac/file-upload/shop features + their components/blocks). `--no-install` only skipped the final `bun install`, not those fetches. Fix: bake the finished `--no-install` scaffold in CI on every publish, ship it as a version-locked GitHub Release asset, and have `create` download + extract a single tarball. Freshness is guaranteed (regenerated from the live registry each publish, version-matched to the CLI); npm package size is unchanged (registry not shipped). Non-breaking: the registry path remains the fallback.

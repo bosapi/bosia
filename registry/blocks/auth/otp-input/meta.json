@@ -1,0 +1,10 @@
+{
+	"name": "auth-otp-input",
+	"description": "Segmented 6-digit code input (monospace) with auto-advance, backspace and paste; ui/input-otp is a primitive alternative.",
+	"category": "auth",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

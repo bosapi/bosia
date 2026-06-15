@@ -135,9 +135,29 @@
 		"storefront/checkout-form",
 		"storefront/promo-field",
 		"storefront/order-summary",
-		"storefront/order-confirmed"
+		"storefront/order-confirmed",
+		"auth/brand",
+		"auth/auth-shell",
+		"auth/auth-card",
+		"auth/social-row",
+		"auth/divider",
+		"auth/auth-field",
+		"auth/password-strength",
+		"auth/otp-input",
+		"auth/form-message"
 	],
-	"pages": ["storefront/home", "storefront/listing", "storefront/product", "storefront/checkout"],
+	"pages": [
+		"storefront/home",
+		"storefront/listing",
+		"storefront/product",
+		"storefront/checkout",
+		"auth/login",
+		"auth/register",
+		"auth/forgot",
+		"auth/magic-link",
+		"auth/otp",
+		"auth/sso"
+	],
 	"themes": [
 		"neutral",
 		"editorial",

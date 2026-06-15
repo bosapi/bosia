@@ -1,0 +1,12 @@
+{
+	"name": "auth-card",
+	"description": "Auth card container: brand, optional badge icon, eyebrow, display heading, lede, content snippet and a centered switch-line footer.",
+	"category": "auth",
+	"themes": [],
+	"dependencies": ["blocks/auth/brand"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

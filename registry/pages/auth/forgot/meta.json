@@ -1,0 +1,17 @@
+{
+	"name": "auth-forgot",
+	"description": "Forgot-password page: email field, an info message about the reset link, and a back-to-sign-in switch line.",
+	"category": "auth",
+	"dependencies": [
+		"blocks/auth/auth-shell",
+		"blocks/auth/auth-card",
+		"blocks/auth/brand",
+		"blocks/auth/auth-field",
+		"blocks/auth/form-message"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

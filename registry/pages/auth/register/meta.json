@@ -1,0 +1,19 @@
+{
+	"name": "auth-register",
+	"description": "Sign-up page: social grid, name + email + password fields, live password strength, terms note and a sign-in switch line.",
+	"category": "auth",
+	"dependencies": [
+		"blocks/auth/auth-shell",
+		"blocks/auth/auth-card",
+		"blocks/auth/brand",
+		"blocks/auth/social-row",
+		"blocks/auth/divider",
+		"blocks/auth/auth-field",
+		"blocks/auth/password-strength"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

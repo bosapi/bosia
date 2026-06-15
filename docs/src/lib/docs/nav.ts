@@ -212,6 +212,10 @@ export const sidebar: NavGroup[] = [
 					{ label: "Checkout", slug: "blocks/storefront/checkout" },
 				],
 			},
+			{
+				label: "Auth",
+				children: [{ label: "Auth Blocks", slug: "blocks/auth" }],
+			},
 		],
 	},
 	{
@@ -226,6 +230,17 @@ export const sidebar: NavGroup[] = [
 					{ label: "Listing", slug: "pages/storefront/listing" },
 					{ label: "Product", slug: "pages/storefront/product" },
 					{ label: "Checkout", slug: "pages/storefront/checkout" },
+				],
+			},
+			{
+				label: "Auth",
+				children: [
+					{ label: "Login", slug: "pages/auth/login" },
+					{ label: "Register", slug: "pages/auth/register" },
+					{ label: "Forgot Password", slug: "pages/auth/forgot" },
+					{ label: "Magic Link", slug: "pages/auth/magic-link" },
+					{ label: "OTP / 2FA", slug: "pages/auth/otp" },
+					{ label: "SSO", slug: "pages/auth/sso" },
 				],
 			},
 		],

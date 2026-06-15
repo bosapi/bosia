@@ -1,0 +1,10 @@
+{
+	"name": "auth-password-strength",
+	"description": "Three-segment password strength meter with a label; status colours (destructive/amber/emerald), never the brand.",
+	"category": "auth",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

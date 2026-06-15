@@ -1,0 +1,12 @@
+{
+	"name": "auth-form-message",
+	"description": "Inline success / error / info alert row with a matching lucide icon and status-tinted background.",
+	"category": "auth",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,10 @@
+{
+	"name": "auth-brand",
+	"description": "Inline logomark + wordmark for auth screens; tone prop adapts the mark for a primary card or a coloured split panel.",
+	"category": "auth",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

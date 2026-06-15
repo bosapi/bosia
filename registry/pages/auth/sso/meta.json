@@ -1,0 +1,16 @@
+{
+	"name": "auth-sso",
+	"description": "Enterprise SSO page: building badge, work email / domain field, continue-with-SSO button and a use-another-method switch line.",
+	"category": "auth",
+	"dependencies": [
+		"blocks/auth/auth-shell",
+		"blocks/auth/auth-card",
+		"blocks/auth/brand",
+		"blocks/auth/auth-field"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

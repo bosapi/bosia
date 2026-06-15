@@ -1,0 +1,16 @@
+{
+	"name": "auth-magic-link",
+	"description": "Confirmation page after a passwordless / reset email: mail badge, success message, resend and back-to-sign-in.",
+	"category": "auth",
+	"dependencies": [
+		"blocks/auth/auth-shell",
+		"blocks/auth/auth-card",
+		"blocks/auth/brand",
+		"blocks/auth/form-message"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

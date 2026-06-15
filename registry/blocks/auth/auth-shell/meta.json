@@ -1,0 +1,10 @@
+{
+	"name": "auth-shell",
+	"description": "Auth layout frame with a one-prop swap between a centered card and a split brand/photo panel beside the form column.",
+	"category": "auth",
+	"themes": [],
+	"dependencies": ["blocks/auth/brand"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

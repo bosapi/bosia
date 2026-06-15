@@ -1,0 +1,18 @@
+{
+	"name": "auth-login",
+	"description": "Sign-in page: social row, divider, email + password fields, remember me and a create-account switch line. Centered by default, swappable to split.",
+	"category": "auth",
+	"dependencies": [
+		"blocks/auth/auth-shell",
+		"blocks/auth/auth-card",
+		"blocks/auth/brand",
+		"blocks/auth/social-row",
+		"blocks/auth/divider",
+		"blocks/auth/auth-field"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

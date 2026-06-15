@@ -1,0 +1,10 @@
+{
+	"name": "auth-divider",
+	"description": "Hairline rule with a centered label (defaults to \"or\") separating social and email sign-in.",
+	"category": "auth",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

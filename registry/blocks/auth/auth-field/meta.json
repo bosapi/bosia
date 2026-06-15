@@ -1,0 +1,12 @@
+{
+	"name": "auth-field",
+	"description": "Labeled input with a leading lucide icon, password show/hide toggle, focus ring on --ring, and helper/error text.",
+	"category": "auth",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

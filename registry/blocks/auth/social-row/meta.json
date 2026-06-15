@@ -1,0 +1,10 @@
+{
+	"name": "auth-social-row",
+	"description": "Social sign-in buttons (Google, Apple, GitHub, Microsoft) with inlined brand logos; stacked or compact 3-up grid.",
+	"category": "auth",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

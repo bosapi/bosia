@@ -1,0 +1,17 @@
+{
+	"name": "auth-otp",
+	"description": "Two-factor / OTP page: shield badge, segmented 6-digit code input, info message, verify button and resend.",
+	"category": "auth",
+	"dependencies": [
+		"blocks/auth/auth-shell",
+		"blocks/auth/auth-card",
+		"blocks/auth/brand",
+		"blocks/auth/otp-input",
+		"blocks/auth/form-message"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}
