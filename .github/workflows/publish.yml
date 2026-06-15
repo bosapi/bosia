@@ -7,6 +7,13 @@ on:
       - "packages/bosia/package.json"
   workflow_dispatch:
 
+# Shared with refresh-prebuilt.yml: a version bump that also touches the registry
+# triggers both; this serializes them so release assets are never uploaded
+# concurrently. cancel-in-progress: false = queue, never cancel a publish.
+concurrency:
+  group: prebuilt-release
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -36,6 +43,15 @@ jobs:
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Setup Bun
+        if: steps.version.outputs.skip == 'false'
+        uses: oven-sh/setup-bun@v2
+
+      - name: Build prebuilt template artifacts
+        if: steps.version.outputs.skip == 'false'
+        run: bun run build:templates
+        working-directory: packages/bosia
+
       - name: Setup npm auth
         if: steps.version.outputs.skip == 'false'
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
@@ -53,8 +69,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="v${{ steps.version.outputs.version }}"
+          ASSETS=(packages/bosia/dist/prebuilt/*.tar.gz)
           if [ "${{ steps.version.outputs.tag }}" = "next" ]; then
-            gh release create "$VERSION" --title "$VERSION" --generate-notes --prerelease
+            gh release create "$VERSION" --title "$VERSION" --generate-notes --prerelease "${ASSETS[@]}"
           else
-            gh release create "$VERSION" --title "$VERSION" --generate-notes
+            gh release create "$VERSION" --title "$VERSION" --generate-notes "${ASSETS[@]}"
           fi

@@ -1,4 +1,5 @@
 {
+	"prebuilt": true,
 	"features": ["auth", "rbac", "file-upload", "shop"],
 	"featureOptions": {
 		"drizzle.dialect": "sqlite",

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.3] - 2026-06-15
+
+### Added
+
+- Creating a `shop` project is now near-instant via a prebuilt download (falls back to the old way).
+
+---
+
 ## [0.7.2] - 2026-06-14
 
 ### Changed

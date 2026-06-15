@@ -1,5 +1,6 @@
 import { resolve, join, basename, relative } from "path";
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync, unlinkSync } from "fs";
+import { tmpdir } from "os";
 import { spawn } from "bun";
 import * as p from "@clack/prompts";
 import { installFeature, initFeatRegistry, resolveLocalRegistry } from "./feat.ts";
@@ -63,6 +64,26 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
 
 	console.log(`\n⬡ Creating Bosia project: ${basename(targetDir)} (template: ${template})\n`);
 
+	const templateConfigPath = join(templateDir, "template.json");
+	const config = existsSync(templateConfigPath)
+		? JSON.parse(readFileSync(templateConfigPath, "utf-8"))
+		: null;
+
+	// Fast path: heavy templates marked `"prebuilt": true` ship a baked,
+	// version-locked artifact on GitHub Releases. One download + extract beats
+	// 150+ serial registry fetches. Skipped for `--local` (dev flow) and falls
+	// back to the registry path if the artifact is missing (offline / no asset yet).
+	// `BOSIA_BUILDING_PREBUILT` is set by the artifact generator so it scaffolds
+	// via the registry instead of trying to download the asset it's producing.
+	if (config?.prebuilt === true && !isLocal && !process.env.BOSIA_BUILDING_PREBUILT) {
+		const ok = await scaffoldFromPrebuilt(template, targetDir, name);
+		if (ok) {
+			await finishCreate(targetDir, name, templateDir, skipInstall);
+			return;
+		}
+		console.log("⚠️  Prebuilt artifact unavailable — installing from registry instead.\n");
+	}
+
 	copyDir(templateDir, targetDir, name, isLocal);
 
 	if (existsSync(join(targetDir, ".env.example"))) {
@@ -70,9 +91,7 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
 	}
 
 	// Install template features from registry
-	const templateConfigPath = join(templateDir, "template.json");
-	if (existsSync(templateConfigPath)) {
-		const config = JSON.parse(readFileSync(templateConfigPath, "utf-8"));
+	if (config) {
 		if (config.features?.length) {
 			let localRegistry: string | null = null;
 			try {
@@ -96,15 +115,29 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
 		}
 	}
 
-	console.log(`\n✅ Project created at ${targetDir}\n`);
+	await finishCreate(targetDir, name, templateDir, skipInstall);
+}
 
-	if (skipInstall) {
-		console.log(`Skipped \`bun install\` (--no-install).\n\ncd ${name} && bun install\n`);
+// ─── Shared finish: optional `bun install` + printed instructions ──────────
+async function finishCreate(
+	targetDir: string,
+	name: string,
+	templateDir: string,
+	skipInstall: boolean,
+) {
+	const printInstructions = () => {
 		const instPath = join(templateDir, "instructions.txt");
 		if (existsSync(instPath)) {
 			const instructions = readFileSync(instPath, "utf-8").trimEnd();
 			if (instructions) console.log(instructions);
 		}
+	};
+
+	console.log(`\n✅ Project created at ${targetDir}\n`);
+
+	if (skipInstall) {
+		console.log(`Skipped \`bun install\` (--no-install).\n\ncd ${name} && bun install\n`);
+		printInstructions();
 		return;
 	}
 
@@ -119,14 +152,76 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
 		console.warn("⚠️  bun install failed — run it manually.");
 	} else {
 		console.log(`\n🎉 Ready!\n\ncd ${name}`);
-
-		const instPath = join(templateDir, "instructions.txt");
-		if (existsSync(instPath)) {
-			const instructions = readFileSync(instPath, "utf-8").trimEnd();
-			if (instructions) console.log(instructions);
-		}
-
+		printInstructions();
 		console.log(`bun x bosia dev\n`);
+	}
+}
+
+// ─── Prebuilt artifact fast path ──────────────────────────────────────────
+// Downloads the version-locked `<template>.tar.gz` GitHub Release asset,
+// extracts it into targetDir, then substitutes the `{{PROJECT_NAME}}`
+// placeholder baked into the artifact. Returns false (caller falls back to the
+// registry path) on any failure: 404, offline, or a corrupt archive.
+async function scaffoldFromPrebuilt(
+	template: string,
+	targetDir: string,
+	name: string,
+): Promise<boolean> {
+	const url = `https://github.com/bosapi/bosia/releases/download/v${BOSIA_VERSION}/${template}.tar.gz`;
+	const tmpTar = join(tmpdir(), `bosia-${template}-${Date.now()}.tar.gz`);
+
+	try {
+		console.log(`⬇️  Downloading prebuilt template…`);
+		const res = await fetch(url);
+		if (!res.ok) return false;
+		writeFileSync(tmpTar, Buffer.from(await res.arrayBuffer()));
+	} catch {
+		return false;
+	}
+
+	try {
+		mkdirSync(targetDir, { recursive: true });
+		const tar = spawn(["tar", "-xzf", tmpTar, "-C", targetDir], {
+			stdout: "inherit",
+			stderr: "inherit",
+		});
+		if ((await tar.exited) !== 0) return false;
+	} catch {
+		return false;
+	} finally {
+		try {
+			unlinkSync(tmpTar);
+		} catch {
+			// best-effort cleanup
+		}
+	}
+
+	substitutePlaceholder(targetDir, name);
+
+	// Artifact bakes `.env` already, but restore from `.env.example` if missing.
+	const envPath = join(targetDir, ".env");
+	const envExample = join(targetDir, ".env.example");
+	if (!existsSync(envPath) && existsSync(envExample)) {
+		writeFileSync(envPath, readFileSync(envExample, "utf-8"));
+	}
+
+	return true;
+}
+
+// Replace the `{{PROJECT_NAME}}` placeholder (baked at generate-time) across
+// every extracted file. Mirrors copyDir's utf-8 assumption — templates carry
+// no binary files.
+function substitutePlaceholder(dir: string, name: string) {
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		const full = join(dir, entry.name);
+		if (entry.isDirectory()) {
+			substitutePlaceholder(full, name);
+		} else if (entry.isFile()) {
+			const content = readFileSync(full, "utf-8");
+			if (content.includes("{{PROJECT_NAME}}")) {
+				writeFileSync(full, content.replaceAll("{{PROJECT_NAME}}", name), "utf-8");
+			}
+		}
 	}
 }
 

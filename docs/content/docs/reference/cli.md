@@ -22,7 +22,14 @@ bosia create <name> [--template <template>]
 - **demo** — Full-featured example with blog, API routes, form actions, hooks, and catch-all routes
 - **shop** — Online store starter (auto-installs `auth`, `rbac`, `file-upload`, and `shop` features)
 
-After scaffolding, `bun install` runs automatically.
+After scaffolding, `bun install` runs automatically (pass `--no-install` to skip it).
+
+**Fast scaffolding (prebuilt templates).** Heavy templates like `shop` would normally fetch
+150+ files from the registry one by one. Instead, `bosia create` downloads a single prebuilt,
+version-locked archive published with each release and extracts it — no per-file fetches. The
+archive is regenerated from the live registry on every publish, so it always matches the CLI
+version you ran. If the download is unavailable (offline, or a release without the asset), it
+transparently falls back to installing from the registry. `--local` always uses the registry.
 
 ## bosia dev
 

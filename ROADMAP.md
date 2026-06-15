@@ -1,7 +1,21 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.7.2**
+> Current version: **0.7.3**
+
+---
+
+## 0.7.3 (2026-06-15) — Prebuilt template artifacts for fast `bosia create`
+
+> `bosia create --template shop` was slow not from the template copy but from `installFeature` fetching 150+ files serially from `raw.githubusercontent.com` (auth/rbac/file-upload/shop features + their components/blocks). `--no-install` only skipped the final `bun install`, not those fetches. Fix: bake the finished `--no-install` scaffold in CI on every publish, ship it as a version-locked GitHub Release asset, and have `create` download + extract a single tarball. Freshness is guaranteed (regenerated from the live registry each publish, version-matched to the CLI); npm package size is unchanged (registry not shipped). Non-breaking: the registry path remains the fallback.
+
+- [x] 🟠 `packages/bosia/templates/shop/template.json` — opt in with `"prebuilt": true` (only heavy templates need it; `default`/`demo` have no `template.json` and are already instant).
+- [x] 🟠 `packages/bosia/src/cli/create.ts` — read `template.json` once; when `prebuilt && !--local && !BOSIA_BUILDING_PREBUILT`, download `v<version>/<template>.tar.gz`, extract, substitute `{{PROJECT_NAME}}`, restore `.env`; shared `finishCreate` (install + instructions); falls back to registry on 404/offline.
+- [x] 🟠 `packages/bosia/scripts/build-prebuilt-templates.ts` (new) — iterate `templates/*`, skip unless `"prebuilt": true`; scaffold with literal `{{PROJECT_NAME}}` + `--no-install` via local registry (env guard bypasses the fast path); `tar -czf dist/prebuilt/<t>.tar.gz`.
+- [x] ⚪ `packages/bosia/package.json` — `build:templates` script; version `0.7.3`.
+- [x] ⚪ `.github/workflows/publish.yml` — Bun setup + `bun run build:templates`; attach `dist/prebuilt/*.tar.gz` to the release.
+- [x] ⚪ `.github/workflows/refresh-prebuilt.yml` (new) — registry/template changes without a version bump rebuild artifacts and `gh release upload --clobber` onto the existing release (no npm publish, no new tag; skips if the release isn't published yet). Keeps the create fast path in sync with the live registry.
+- [x] ⚪ Docs — `reference/cli.md` documents the fast prebuilt download + registry fallback + `--no-install`.
 
 ---
 
