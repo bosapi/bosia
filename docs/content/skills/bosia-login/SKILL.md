@@ -87,9 +87,10 @@ bosia add block auth/<name>      # → src/lib/blocks/auth/<name>/
 
 ## One card, two layouts — the centered ↔ split swap
 
-Every page declares `const variant = "centered"` at the top. Change that one line (or pass the prop)
-to switch to the two-panel split. The split panel takes `panelTitle`, `panelQuote`, `panelFoot` and
-an optional `image`; with no image it falls back to a solid `primary` panel.
+Every page takes a `variant` prop defaulting to `"centered"`. Render `<Login variant="split" />`
+(or change the default at the top of `page.svelte`) to switch to the two-panel split. The split
+panel takes `panelTitle`, `panelQuote`, `panelFoot` and an optional `image`; with no image it falls
+back to a solid `primary` panel.
 
 ```svelte
 <AuthShell variant="split" image="/cover.jpg">

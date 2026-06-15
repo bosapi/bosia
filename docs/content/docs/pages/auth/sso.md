@@ -27,7 +27,11 @@ Installs `page.svelte` plus every auth block it composes. Pulls
 </script>
 
 <Sso />
+<Sso variant="split" />
 ```
+
+Both layouts are shown in the preview above; pass `variant="split"` (or change its default in
+`page.svelte`) to use the two-panel split.
 
 ## Backend
 

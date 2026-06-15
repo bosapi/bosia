@@ -4,8 +4,9 @@
 	import AuthCard from "$lib/blocks/auth/auth-card/block.svelte";
 	import FormMessage from "$lib/blocks/auth/form-message/block.svelte";
 
-	// Swap to "split" for the two-panel layout — see the bosia-login skill.
-	const variant = "centered";
+	// `variant` defaults to the centered card; pass "split" for the two-panel layout.
+	// See the bosia-login skill.
+	let { variant = "centered" }: { variant?: "centered" | "split" } = $props();
 </script>
 
 <AuthShell {variant}>

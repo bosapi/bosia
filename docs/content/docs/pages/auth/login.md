@@ -27,10 +27,12 @@ Installs `page.svelte` plus every auth block it composes. Pulls
 </script>
 
 <Login />
+<Login variant="split" />
 ```
 
-Switch layouts by editing the `variant` constant at the top of `page.svelte`
-(`"centered"` → `"split"`). See the [pages overview](/pages/overview) for the auth family.
+Pass the `variant` prop (or change its default at the top of `page.svelte`) to switch between the
+centered card and the two-panel split — both are shown in the preview above. See the
+[pages overview](/pages/overview) for the auth family.
 
 ## Backend
 
