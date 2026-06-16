@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 51 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
+description: Top-level index of 52 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
   mode: catalog
   category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-51 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+52 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -117,6 +117,7 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 | ------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `bosia-cards`             | ✦     | Catalog of the 29 `cards/*` blocks. Install with `bosia add block cards/<name>`; brand = `primary`, status = emerald/amber/blue/destructive.                                                                                  |
 | `bosia-heros`             | ✦     | Catalog of the 17 `heros/*` full-bleed hero sections. Install with `bosia add block heros/<name>`; brand = `primary`, dark heroes = `bg-foreground text-background`.                                                          |
+| `bosia-navbars`           | ✦     | Catalog of the 18 `navbars/*` blocks (standard/themes/app). Install with `bosia add block navbars/<name>`; brand = `primary`, dark bars = `bg-foreground text-background`, glass = `backdrop-blur-xl`.                        |
 | `bosia-storefront`        | ✦     | Mercato storefront — 4 pages (home/PLP/PDP/checkout) + 24 `storefront/*` blocks + `clay` theme. Install pages with `bosia add page storefront/<name>`; one template, six purposes, one shared cart.                           |
 | `bosia-login`             | ✦     | Login/auth page family — 6 pages (login/register/forgot/magic-link/otp/sso) + 9 `auth/*` blocks. Install pages with `bosia add page auth/<name>`; one card, centered ↔ split swap. Design only — pair with `bosia-auth-flow`. |
 | `bosia-empty-states`      | ✦     | `ui/empty`, `ui/skeleton`, `ui/spinner`, error boundary. Never blank screen on async failure.                                                                                                                                 |

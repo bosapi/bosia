@@ -1,0 +1,10 @@
+{
+	"name": "navbar-lime",
+	"description": "Primary brand bar — a bold full-colour navbar with a contrasting solid CTA.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

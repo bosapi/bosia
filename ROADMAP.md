@@ -1,7 +1,23 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.7.3**
+> Current version: **0.7.4**
+
+---
+
+## 0.7.4 (2026-06-16) — Navbar block family (18 `navbars/*` blocks + `bosia-navbars` skill)
+
+> The registry shipped hero and auth families but no navigation bars. This ports the standalone
+> Navbar Stock design system (18 specimens across standard, themed and app/interactive layouts)
+> into a new `navbars/` block category, mirroring the heros port end-to-end. The hardcoded acid-lime
+> accent collapses to **`primary`**; dark bars invert to `bg-foreground text-background`, glass uses
+> `backdrop-blur-xl`. Theme-agnostic semantic tokens only, so each navbar restyles across all 19
+> themes — no new theme added.
+
+- [x] 🟠 18 navbar blocks under `registry/blocks/navbars/*` — standard ×6 (`classic`, `split`, `centered`, `search`, `minimal`, `two-tier`), themes ×6 (`dark`, `glass`, `brutalist`, `pill`, `gradient`, `lime`), app ×6 (`dashboard`, `ecommerce`, `docs`, `mega-menu`, `announcement`, `mobile`); self-contained `<header>` sections, inline Tailwind on semantic tokens, inlined primitives, interactive toggles as local `$state`. Registered in `registry/index.json`.
+- [x] ⚪ Docs — 3 grouped family pages (`blocks/navbars/{standard,themes,app}`) with stacked live previews (3 demos registered); nav gains a Blocks → Navbars group.
+- [x] ⚪ New `bosia-navbars` design skill (catalog of all 18, golden rule, token map, icon list, `[[bosia-navigation]]`/`[[bosia-heros]]` cross-links) + skills-index row (count 51 → 52).
+- [x] ⚪ `CHANGELOG.md` — appended under 0.7.4.
 
 ---
 

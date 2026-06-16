@@ -1,0 +1,12 @@
+{
+	"name": "navbar-ecommerce",
+	"description": "E-commerce navbar — category links, product search, wishlist, account and cart.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "navbar-gradient",
+	"description": "Gradient dark navbar with a soft primary glow and a beta pill.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

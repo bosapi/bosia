@@ -1,0 +1,12 @@
+{
+	"name": "navbar-announcement",
+	"description": "Announcement navbar — a dismissible promo strip above the main nav row.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "navbar-docs",
+	"description": "Docs navbar — version pill, search, links, a light/dark toggle and a repo link.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

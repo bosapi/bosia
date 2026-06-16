@@ -1,0 +1,10 @@
+{
+	"name": "navbar-minimal",
+	"description": "Minimal navbar — generous whitespace, one primary action and a menu toggle.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

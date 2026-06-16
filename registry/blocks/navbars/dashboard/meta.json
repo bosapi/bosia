@@ -1,0 +1,12 @@
+{
+	"name": "navbar-dashboard",
+	"description": "Dashboard app bar — breadcrumb, search, action icons with badges and an avatar.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

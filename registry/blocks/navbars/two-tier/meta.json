@@ -1,0 +1,10 @@
+{
+	"name": "navbar-two-tier",
+	"description": "Two-tier navbar — a mono utility strip above the main wordmark row.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

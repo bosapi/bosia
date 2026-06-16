@@ -1,0 +1,12 @@
+{
+	"name": "navbar-glass",
+	"description": "Glass navbar — a translucent blurred bar with a search field and primary CTA.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

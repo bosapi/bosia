@@ -1,0 +1,12 @@
+{
+	"name": "navbar-dark",
+	"description": "Dark solid navbar on the foreground colour with inverted text and links.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

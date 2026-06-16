@@ -1,0 +1,12 @@
+{
+	"name": "navbar-search",
+	"description": "Search-led app navbar — logo, links, a search field, notifications and avatar.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

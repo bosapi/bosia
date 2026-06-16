@@ -194,6 +194,14 @@ export const sidebar: NavGroup[] = [
 				],
 			},
 			{
+				label: "Navbars",
+				children: [
+					{ label: "Standard", slug: "blocks/navbars/standard" },
+					{ label: "Themes", slug: "blocks/navbars/themes" },
+					{ label: "App & Interactive", slug: "blocks/navbars/app" },
+				],
+			},
+			{
 				label: "Files",
 				children: [
 					{ label: "Crop Image", slug: "blocks/files/crop-image" },

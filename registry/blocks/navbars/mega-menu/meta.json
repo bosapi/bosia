@@ -1,0 +1,12 @@
+{
+	"name": "navbar-mega-menu",
+	"description": "Mega-menu navbar — a catalog link opens a three-column dropdown panel.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

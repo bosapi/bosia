@@ -1,0 +1,12 @@
+{
+	"name": "navbar-mobile",
+	"description": "Mobile navbar — a hamburger toggles a full overlay menu with stacked links.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

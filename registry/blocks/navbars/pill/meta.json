@@ -1,0 +1,10 @@
+{
+	"name": "navbar-pill",
+	"description": "Floating pill navbar — a centered rounded capsule that hovers over the content.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

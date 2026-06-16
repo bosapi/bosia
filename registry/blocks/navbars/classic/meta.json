@@ -1,0 +1,12 @@
+{
+	"name": "navbar-classic",
+	"description": "Classic light navbar — logo left, centered links, login plus a primary CTA right.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

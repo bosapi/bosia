@@ -88,6 +88,9 @@
 	import HeroConsultingDemo from "$lib/components/demos/HeroConsultingDemo.svelte";
 	import HeroAppDemo from "$lib/components/demos/HeroAppDemo.svelte";
 	import HeroProductDemo from "$lib/components/demos/HeroProductDemo.svelte";
+	import NavbarsStandardDemo from "$lib/components/demos/NavbarsStandardDemo.svelte";
+	import NavbarsThemesDemo from "$lib/components/demos/NavbarsThemesDemo.svelte";
+	import NavbarsAppDemo from "$lib/components/demos/NavbarsAppDemo.svelte";
 	import StorefrontLayoutDemo from "$lib/components/demos/StorefrontLayoutDemo.svelte";
 	import StorefrontHomeDemo from "$lib/components/demos/StorefrontHomeDemo.svelte";
 	import StorefrontCatalogDemo from "$lib/components/demos/StorefrontCatalogDemo.svelte";
@@ -192,6 +195,9 @@
 		HeroConsultingDemo,
 		HeroAppDemo,
 		HeroProductDemo,
+		NavbarsStandardDemo,
+		NavbarsThemesDemo,
+		NavbarsAppDemo,
 		StorefrontLayoutDemo,
 		StorefrontHomeDemo,
 		StorefrontCatalogDemo,

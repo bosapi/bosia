@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.4] - 2026-06-16
+
+### Added
+
+- New navbar block family: 18 ready-made navigation bars across standard, themed and app layouts.
+
+---
+
 ## [0.7.3] - 2026-06-15
 
 ### Added

@@ -1,0 +1,10 @@
+{
+	"name": "navbar-brutalist",
+	"description": "Brutalist navbar — a primary brand bar with thick borders, mono caps and a hard shadow.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

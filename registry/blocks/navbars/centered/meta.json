@@ -1,0 +1,10 @@
+{
+	"name": "navbar-centered",
+	"description": "Centered-logo navbar with symmetric link groups flanking the wordmark.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}
