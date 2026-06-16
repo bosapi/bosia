@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - New navbar block family: 18 ready-made navigation bars across standard, themed and app layouts.
+- New transparent overlay navbar that floats over a hero image, for full-bleed photo heroes.
 
 ### Fixed
 

@@ -1,0 +1,12 @@
+{
+	"name": "navbar-overlay",
+	"description": "Transparent navbar that floats over a hero image, with light text and an outline CTA.",
+	"category": "navbars",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

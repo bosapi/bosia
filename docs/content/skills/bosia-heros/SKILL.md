@@ -92,7 +92,10 @@ the sidebar.
 Heroes are full-width **page-level sections** — drop one at the top of a route. They contain **no
 site navbar**: the navbar/footer/sidebar belong in `+layout.svelte` (see [[bosia-page-shell]] R1),
 installed from a [[bosia-navbars]] block. Never re-add a `<header>`/`<nav>` to a hero — a navbar
-block in the layout plus a hero on the page would render two stacked navbars. Interactive bits
+block in the layout plus a hero on the page would render two stacked navbars. For the **dark photo
+heroes** (`restaurant`, `campus`, `agency`, `sale`, `home-goods`, `lookbook`, `bags`) that want a
+navbar floating over the image, use the `navbars/overlay` block ([[bosia-navbars]]) as the first
+child of the hero `<section>` — it's `position: absolute` and tuned for the scrim. Interactive bits
 (size / color / age pickers, address + email inputs) are cosmetic local `$state`; wire them to your
 own data and handlers. Each hero holds sample copy and Unsplash images; edit `block.svelte` to make
 it yours.

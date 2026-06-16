@@ -18,6 +18,7 @@
 - [x] ⚪ Docs — 3 grouped family pages (`blocks/navbars/{standard,themes,app}`) with stacked live previews (3 demos registered); nav gains a Blocks → Navbars group.
 - [x] ⚪ New `bosia-navbars` design skill (catalog of all 18, golden rule, token map, icon list, `[[bosia-navigation]]`/`[[bosia-heros]]` cross-links) + skills-index row (count 51 → 52).
 - [x] 🟠 Stripped the embedded site navbar (`<header>`+`<nav>`+CTA, plus nav-only `links`/icon imports) from all 17 `heros/*` blocks — page-level blocks must not carry navbar chrome, which clashed with a layout `navbars/*` block (two stacked navbars). Documented the rule in `bosia-heros`, `bosia-block-compose` (new R7), `bosia-page-shell` (R1) skills + `blocks/overview` docs. Kept `storefront/header` (layout header) and `storefront/sort-bar` (breadcrumb).
+- [x] 🟠 Added `navbars/overlay` (family now 19) — a transparent, `position: absolute` navbar with light text + outline CTA that floats over a full-bleed hero photo, restoring the look the stripped photo-hero navs had. Registered in `index.json`; added to the Themes docs page + `NavbarsThemesDemo` (previewed over a dark image); documented its place-inside-a-relative-hero exception in `bosia-navbars`/`bosia-heros`. Skill count stays 52 (no new skill).
 - [x] ⚪ `CHANGELOG.md` — appended under 0.7.4.
 
 ---
