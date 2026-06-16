@@ -24,6 +24,10 @@ bun x bosia@latest add block cards/feature
 
 Files land in `src/lib/blocks/<category>/<name>/`. Primitive dependencies (Card, Button, etc.) install automatically.
 
+## Page blocks don't include a navbar
+
+Page-level blocks (heros, cards, sections) don't carry their own site navbar — that's deliberate. The navbar, footer, and sidebar belong in your `+layout.svelte` so they render once across every route. Pair a page block with a [navbar block](/docs/blocks/navbars/standard/) placed in the layout; dropping a hero on a page and a navbar in the layout gives you exactly one navbar, not two.
+
 ## Theming
 
 Blocks consume **semantic tokens only** — `bg-card`, `text-foreground`, `font-display`. Swap themes without touching the block:

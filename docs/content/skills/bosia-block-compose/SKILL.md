@@ -81,6 +81,13 @@ Don't paste components inline. Install via the CLI so:
 - shared dependencies dedupe,
 - updates flow through one command.
 
+### R7 — Navbar chrome lives in the layout, not in page blocks
+
+Non-navbar blocks (heros, cards, auth, storefront sections) must **not** contain a `<header>`/`<nav>`
+site navbar. The navbar/footer/sidebar belong in `+layout.svelte` — one place, never per page (see
+[[bosia-page-shell]] R1). Install a [[bosia-navbars]] block into the layout instead. A page block that
+ships its own navbar plus a navbar block in the layout renders two stacked navbars that conflict.
+
 ## Workflow
 
 1. Read user intent. Identify sections (hero, features, pricing, data table…).

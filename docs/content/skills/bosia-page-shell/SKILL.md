@@ -72,6 +72,10 @@ R1 — Chrome belongs in `+layout.svelte`, ONLY. `Navbar`/`Footer`/`Sidebar` are
 <h1>Dashboard</h1>
 ```
 
+This rule also governs **block authoring**: a page-level block (hero, card, auth, storefront
+section) must not ship its own `<header>`/`<nav>` site navbar. Pull the navbar from a [[bosia-navbars]]
+block in the layout instead — a block-embedded navbar plus a layout navbar renders two stacked.
+
 R2 — Layout depth = scope. Pick the shallowest layout that needs the chrome: root `+layout.svelte` = app-wide chrome shared by both groups (often empty / theme provider); `(public)/+layout.svelte` = marketing navbar + footer (no avatar); `(private)/+layout.svelte` = authenticated navbar (avatar dropdown) + optional sidebar/footer; section layouts (`(private)/admin/+layout.svelte`) = sub-section chrome. Don't render the authenticated navbar in the root layout — it leaks across the public/private boundary. (If you DO want one shared navbar, put it in the root with `user={data.user}` conditional, and drop the group navbars to avoid double-render.)
 
 R3 — Authenticated layout MUST pass `user` to `ui/navbar`, else signed-in users have no avatar dropdown and no way to Log out. Public and private chrome are SEPARATE components configured separately — the moment `(private)/+layout.svelte` exists it needs its own auth-aware chrome; do NOT defer it to a future turn ("dropdown will appear later"). Thread `user` from `(private)/+layout.server.ts`:

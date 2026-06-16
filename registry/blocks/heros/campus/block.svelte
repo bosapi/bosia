@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { ArrowRight } from "@lucide/svelte";
 
-	const links = ["Programs", "Admissions", "Campus life", "Research"];
 	const stats = [
 		{ value: "120+", label: "Degree programs" },
 		{ value: "1:9", label: "Faculty ratio" },
@@ -25,33 +24,9 @@
 	></div>
 
 	<div class="relative z-10 flex min-h-[88vh] flex-col">
-		<!-- Nav -->
-		<header class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-			<div class="flex items-center gap-2.5">
-				<div
-					class="grid h-8 w-8 place-items-center rounded-lg bg-primary font-display text-lg font-extrabold text-primary-foreground"
-				>
-					B
-				</div>
-				<span class="font-display text-lg font-extrabold tracking-tight">Brand</span>
-			</div>
-			<nav class="hidden items-center gap-7 md:flex">
-				{#each links as link (link)}
-					<button type="button" class="text-sm font-medium text-background/80 hover:text-background"
-						>{link}</button
-					>
-				{/each}
-			</nav>
-			<button
-				type="button"
-				class="rounded-lg border border-background/30 px-4 py-2 text-sm font-semibold text-background hover:bg-background/10"
-				>Apply</button
-			>
-		</header>
-
 		<!-- Content -->
 		<div
-			class="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 pb-20 text-center"
+			class="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 py-20 text-center"
 		>
 			<div
 				class="mb-6 flex items-center gap-2 font-mono text-xs uppercase tracking-wide text-background/70"

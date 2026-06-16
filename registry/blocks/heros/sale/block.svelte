@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { ArrowRight } from "@lucide/svelte";
 
-	const links = ["Women", "Men", "New in", "Sale"];
 	const counts = [
 		{ n: "02", l: "Days" },
 		{ n: "14", l: "Hours" },
@@ -25,32 +24,8 @@
 	></div>
 
 	<div class="relative z-10 flex min-h-[88vh] flex-col">
-		<!-- Nav -->
-		<header class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-			<div class="flex items-center gap-2.5">
-				<div
-					class="grid h-8 w-8 place-items-center rounded-lg bg-primary font-display text-lg font-extrabold text-primary-foreground"
-				>
-					B
-				</div>
-				<span class="font-display text-lg font-extrabold tracking-tight">Brand</span>
-			</div>
-			<nav class="hidden items-center gap-7 md:flex">
-				{#each links as link (link)}
-					<button type="button" class="text-sm font-medium text-background/80 hover:text-background"
-						>{link}</button
-					>
-				{/each}
-			</nav>
-			<button
-				type="button"
-				class="rounded-lg border border-background/30 px-4 py-2 text-sm font-semibold text-background hover:bg-background/10"
-				>Shop sale</button
-			>
-		</header>
-
 		<!-- Content -->
-		<div class="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 pb-16">
+		<div class="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 py-16">
 			<div
 				class="mb-5 flex items-center gap-3 font-mono text-xs uppercase tracking-wide text-background/70"
 			>

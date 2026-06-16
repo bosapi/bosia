@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - New navbar block family: 18 ready-made navigation bars across standard, themed and app layouts.
 
+### Fixed
+
+- Hero blocks no longer include their own navbar, so it won't clash with the layout navbar.
+
 ---
 
 ## [0.7.3] - 2026-06-15

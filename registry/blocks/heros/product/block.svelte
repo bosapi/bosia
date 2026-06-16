@@ -1,40 +1,14 @@
 <script lang="ts">
 	import { ArrowRight } from "@lucide/svelte";
 
-	const links = ["Product", "Solutions", "Docs", "Pricing"];
 	const logos = ["Vercel", "Linear", "Notion", "Figma", "Stripe"];
 
 	let email = $state("");
 </script>
 
 <section class="relative w-full overflow-hidden bg-background text-foreground">
-	<!-- Nav -->
-	<header class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-		<div class="flex items-center gap-2.5">
-			<div
-				class="grid h-8 w-8 place-items-center rounded-lg bg-primary font-display text-lg font-extrabold text-primary-foreground"
-			>
-				B
-			</div>
-			<span class="font-display text-lg font-extrabold tracking-tight">Brand</span>
-		</div>
-		<nav class="hidden items-center gap-7 md:flex">
-			{#each links as link (link)}
-				<button
-					type="button"
-					class="text-sm font-medium text-muted-foreground hover:text-foreground">{link}</button
-				>
-			{/each}
-		</nav>
-		<button
-			type="button"
-			class="rounded-lg border border-border bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground"
-			>Get started</button
-		>
-	</header>
-
 	<!-- Content -->
-	<div class="mx-auto flex w-full max-w-3xl flex-col items-center px-6 pt-10 text-center">
+	<div class="mx-auto flex w-full max-w-3xl flex-col items-center px-6 pt-16 text-center">
 		<span
 			class="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
 		>

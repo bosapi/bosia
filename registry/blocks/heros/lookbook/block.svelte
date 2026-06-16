@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { ArrowRight } from "@lucide/svelte";
-
-	const links = ["New in", "Clothing", "Accessories", "Editorial"];
 </script>
 
 <section
@@ -20,32 +18,8 @@
 	></div>
 
 	<div class="relative z-10 flex min-h-[88vh] flex-col">
-		<!-- Nav -->
-		<header class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-			<div class="flex items-center gap-2.5">
-				<div
-					class="grid h-8 w-8 place-items-center rounded-lg bg-primary font-display text-lg font-extrabold text-primary-foreground"
-				>
-					B
-				</div>
-				<span class="font-display text-lg font-extrabold tracking-tight">Brand</span>
-			</div>
-			<nav class="hidden items-center gap-7 md:flex">
-				{#each links as link (link)}
-					<button type="button" class="text-sm font-medium text-background/80 hover:text-background"
-						>{link}</button
-					>
-				{/each}
-			</nav>
-			<button
-				type="button"
-				class="rounded-lg border border-background/30 px-4 py-2 text-sm font-semibold text-background hover:bg-background/10"
-				>Bag (0)</button
-			>
-		</header>
-
 		<!-- Content -->
-		<div class="mx-auto flex w-full max-w-6xl flex-1 items-end px-6 pb-16">
+		<div class="mx-auto flex w-full max-w-6xl flex-1 items-end px-6 py-16">
 			<div class="flex w-full flex-wrap items-end justify-between gap-10">
 				<div>
 					<div

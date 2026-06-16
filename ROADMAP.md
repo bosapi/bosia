@@ -17,6 +17,7 @@
 - [x] 🟠 18 navbar blocks under `registry/blocks/navbars/*` — standard ×6 (`classic`, `split`, `centered`, `search`, `minimal`, `two-tier`), themes ×6 (`dark`, `glass`, `brutalist`, `pill`, `gradient`, `lime`), app ×6 (`dashboard`, `ecommerce`, `docs`, `mega-menu`, `announcement`, `mobile`); self-contained `<header>` sections, inline Tailwind on semantic tokens, inlined primitives, interactive toggles as local `$state`. Registered in `registry/index.json`.
 - [x] ⚪ Docs — 3 grouped family pages (`blocks/navbars/{standard,themes,app}`) with stacked live previews (3 demos registered); nav gains a Blocks → Navbars group.
 - [x] ⚪ New `bosia-navbars` design skill (catalog of all 18, golden rule, token map, icon list, `[[bosia-navigation]]`/`[[bosia-heros]]` cross-links) + skills-index row (count 51 → 52).
+- [x] 🟠 Stripped the embedded site navbar (`<header>`+`<nav>`+CTA, plus nav-only `links`/icon imports) from all 17 `heros/*` blocks — page-level blocks must not carry navbar chrome, which clashed with a layout `navbars/*` block (two stacked navbars). Documented the rule in `bosia-heros`, `bosia-block-compose` (new R7), `bosia-page-shell` (R1) skills + `blocks/overview` docs. Kept `storefront/header` (layout header) and `storefront/sort-bar` (breadcrumb).
 - [x] ⚪ `CHANGELOG.md` — appended under 0.7.4.
 
 ---

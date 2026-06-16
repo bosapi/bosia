@@ -89,12 +89,16 @@ the sidebar.
 <ShopSplit />
 ```
 
-Heroes are full-width sections — drop one at the top of a route. Interactive bits (size / color /
-age pickers, address + email inputs) are cosmetic local `$state`; wire them to your own data and
-handlers. Each hero holds sample copy and Unsplash images; edit `block.svelte` to make it yours.
+Heroes are full-width **page-level sections** — drop one at the top of a route. They contain **no
+site navbar**: the navbar/footer/sidebar belong in `+layout.svelte` (see [[bosia-page-shell]] R1),
+installed from a [[bosia-navbars]] block. Never re-add a `<header>`/`<nav>` to a hero — a navbar
+block in the layout plus a hero on the page would render two stacked navbars. Interactive bits
+(size / color / age pickers, address + email inputs) are cosmetic local `$state`; wire them to your
+own data and handlers. Each hero holds sample copy and Unsplash images; edit `block.svelte` to make
+it yours.
 
 ## Icons
 
-Use `@lucide/svelte` (the scoped package, never `lucide-svelte`). Heroes use `Search`,
-`ShoppingBag`, `ArrowRight`, `ArrowUpRight`, `Play`, `Check`, `Star`, `Heart`, `Calendar`,
-`MapPin`, `Phone`, `Truck`, `Sparkles`.
+Use `@lucide/svelte` (the scoped package, never `lucide-svelte`). Heroes use `ShoppingBag`,
+`ArrowRight`, `ArrowUpRight`, `Play`, `Check`, `Star`, `Heart`, `Calendar`, `MapPin`, `Phone`,
+`Truck`, `Sparkles`.

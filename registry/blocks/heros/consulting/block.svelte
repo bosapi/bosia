@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Check, ArrowRight } from "@lucide/svelte";
 
-	const links = ["Services", "Industries", "Insights", "About"];
 	const bullets = [
 		"Fixed-scope engagements, no open-ended retainers",
 		"Senior operators, not a deck-and-dash",
@@ -11,41 +10,9 @@
 </script>
 
 <section class="relative w-full overflow-hidden bg-background text-foreground">
-	<!-- Nav -->
-	<header class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-		<div class="flex items-center gap-2.5">
-			<div
-				class="grid h-8 w-8 place-items-center rounded-lg bg-primary font-display text-lg font-extrabold text-primary-foreground"
-			>
-				B
-			</div>
-			<span class="font-display text-lg font-extrabold tracking-tight">Brand</span>
-		</div>
-		<nav class="hidden items-center gap-7 md:flex">
-			{#each links as link (link)}
-				<button
-					type="button"
-					class="text-sm font-medium text-muted-foreground hover:text-foreground">{link}</button
-				>
-			{/each}
-		</nav>
-		<div class="flex items-center gap-2">
-			<button
-				type="button"
-				class="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-				>Client login</button
-			>
-			<button
-				type="button"
-				class="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
-				>Book a call</button
-			>
-		</div>
-	</header>
-
 	<!-- Content -->
 	<div
-		class="mx-auto grid w-full max-w-6xl items-center gap-10 px-6 pb-20 pt-6 lg:grid-cols-2 lg:gap-14"
+		class="mx-auto grid w-full max-w-6xl items-center gap-10 px-6 py-20 lg:grid-cols-2 lg:gap-14"
 	>
 		<!-- Copy -->
 		<div class="max-w-xl">

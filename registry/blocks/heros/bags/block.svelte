@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { ShoppingBag, Sparkles, Heart, Check, Truck } from "@lucide/svelte";
 
-	const links = ["Totes", "Backpacks", "Travel", "Our craft"];
 	const specs = [
 		{ icon: Sparkles, label: "Full-grain leather", sub: "Tanned in Tuscany" },
 		{ icon: Heart, label: "Hand-stitched", sub: "1 of 200 made" },
@@ -11,33 +10,9 @@
 </script>
 
 <section class="relative w-full overflow-hidden bg-foreground text-background">
-	<!-- Nav -->
-	<header class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-		<div class="flex items-center gap-2.5">
-			<div
-				class="grid h-8 w-8 place-items-center rounded-lg bg-primary font-display text-lg font-extrabold text-primary-foreground"
-			>
-				B
-			</div>
-			<span class="font-display text-lg font-extrabold tracking-tight">Brand</span>
-		</div>
-		<nav class="hidden items-center gap-7 md:flex">
-			{#each links as link (link)}
-				<button type="button" class="text-sm font-medium text-background/80 hover:text-background"
-					>{link}</button
-				>
-			{/each}
-		</nav>
-		<button
-			type="button"
-			class="rounded-lg border border-background/30 px-4 py-2 text-sm font-semibold text-background hover:bg-background/10"
-			>Cart · 1</button
-		>
-	</header>
-
 	<!-- Content -->
 	<div
-		class="mx-auto grid w-full max-w-6xl items-center gap-10 px-6 pb-16 pt-6 lg:grid-cols-2 lg:gap-12"
+		class="mx-auto grid w-full max-w-6xl items-center gap-10 px-6 py-16 lg:grid-cols-2 lg:gap-12"
 	>
 		<!-- Copy -->
 		<div class="max-w-xl">
