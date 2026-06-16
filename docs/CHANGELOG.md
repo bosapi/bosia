@@ -17,3 +17,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Hero blocks no longer include their own navbar, so it won't clash with the layout navbar.
+- Hide the unusable menu button on the homepage.
+- Sidebar sections now collapse, opening to your current page.

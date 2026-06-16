@@ -20,29 +20,31 @@
 >
 	<div class="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 sm:px-6">
 		<!-- Mobile menu button -->
-		<button
-			onclick={onMenuToggle}
-			class="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground lg:hidden"
-			aria-label="Toggle menu"
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="18"
-				height="18"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line
-					x1="4"
-					x2="20"
-					y1="18"
-					y2="18"
-				/></svg
+		{#if onMenuToggle}
+			<button
+				onclick={onMenuToggle}
+				class="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground lg:hidden"
+				aria-label="Toggle menu"
 			>
-		</button>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line
+						x1="4"
+						x2="20"
+						y1="18"
+						y2="18"
+					/></svg
+				>
+			</button>
+		{/if}
 
 		<!-- Logo -->
 		<a href={locale === "id" ? "/id" : "/"} class="flex items-center gap-2 font-semibold">
