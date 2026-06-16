@@ -52,6 +52,8 @@ export async function load({ parent }) {
 }
 ```
 
+Don't use `parent()` for scope identifiers (`farmId`/`orgId`/`userId`) — read those from `locals`, populated in `hooks.server.ts`. `parent()` is fine for view-layer data, but `locals` is the source of truth for cross-loader scope and the only trustworthy source for authz: on client navigation the parent chain is reconstructed from a client-supplied cache hint, never authoritative.
+
 R4 — Groups & dynamic segments: `(group)/` invisible in URL, shares layouts (`(public)`, `(private)`); `[param]/` → `params.param`; `[...rest]/` catch-all.
 
 R5 — Layout chain: `+layout.svelte` wraps children; `+layout.server.ts` loads for the subtree; `+error.svelte` renders to its depth; `scope` (`public`/`private`) inherits from the nearest layout that sets it.

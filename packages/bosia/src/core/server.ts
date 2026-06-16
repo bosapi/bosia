@@ -237,8 +237,32 @@ async function resolve(event: RequestEvent): Promise<Response> {
 						pageMatch?.route ? ((pageMatch.route as any).layoutModules?.length ?? 0) : 0,
 					)
 				: undefined;
+			// Client forwards each skipped layout layer's cached data as
+			// parentSnapshots (depth → data) so downstream loaders see real
+			// parent() data instead of {}. Perf hint only — never authoritative;
+			// authz must read locals. Guarded: undefined for GET / malformed body.
+			let parentSnapshots: Record<number, Record<string, any>> | undefined;
+			if (method !== "GET") {
+				try {
+					const body = await request.json();
+					if (body && typeof body === "object" && body.parentSnapshots) {
+						parentSnapshots = body.parentSnapshots as Record<number, Record<string, any>>;
+					}
+				} catch {
+					parentSnapshots = undefined;
+				}
+			}
 			const runLoad = async () => {
-				const data = await loadRouteData(routeUrl, locals, request, cookies, null, pageMatch, mask);
+				const data = await loadRouteData(
+					routeUrl,
+					locals,
+					request,
+					cookies,
+					null,
+					pageMatch,
+					mask,
+					parentSnapshots,
+				);
 
 				let metadata = null;
 				if (pageMatch) {

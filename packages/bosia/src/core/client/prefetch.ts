@@ -38,6 +38,36 @@ export function buildMaskBits(path: string): string | null {
 	return (pageRun ? "1" : "0") + layoutRunFlags.map((b) => (b ? "1" : "0")).join("");
 }
 
+/**
+ * Build `parentSnapshots` (layout depth → cached data) for a target path from
+ * the current loader cache, given the mask bits from `buildMaskBits`. For each
+ * layout depth whose mask bit is '0' (skipped) and whose cached entry exists,
+ * forward that layer's data so server-side downstream loaders see real
+ * `parent()` data instead of `{}`. Returns `{}` when nothing to carry.
+ *
+ * Client-supplied perf hint only — the server never trusts it for authz.
+ */
+export function buildParentSnapshots(
+	path: string,
+	maskBits: string,
+): Record<number, Record<string, any>> {
+	const snapshots: Record<number, Record<string, any>> = {};
+	const url = new URL(path, window.location.origin);
+	const match = findMatch(clientRoutes, url.pathname);
+	if (!match) return snapshots;
+	const layoutIds = (match.route as any).layoutIds as (string | null)[];
+
+	layoutIds.forEach((id, depth) => {
+		// maskBits char 0 = page, char depth+1 = layout depth. '0' = skipped.
+		if (maskBits[depth + 1] !== "0") return;
+		if (id === null) return;
+		const entry = appState.loaderCache.layouts[id];
+		if (entry) snapshots[depth] = entry.data;
+	});
+
+	return snapshots;
+}
+
 /** Builds the `/__bosia/data/…` URL for a given client path. */
 export function dataUrl(path: string, invalidatedBits?: string): string {
 	const url = new URL(path, window.location.origin);
@@ -78,7 +108,19 @@ export async function prefetchPath(path: string): Promise<void> {
 		// loaders whose tracked inputs haven't changed. Falls back to running
 		// everything when the route can't be matched (e.g. external/unknown URL).
 		const maskBits = buildMaskBits(path) ?? undefined;
-		const res = await fetch(dataUrl(path, maskBits));
+		// Forward cached parent data for skipped layers so a prefetched response
+		// is computed with real parent() data, not {}. POST only when there's
+		// something to carry — keeps the no-skip case a cacheable/dedupable GET.
+		const snapshots = maskBits ? buildParentSnapshots(path, maskBits) : {};
+		const init: RequestInit =
+			Object.keys(snapshots).length > 0
+				? {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ parentSnapshots: snapshots }),
+					}
+				: {};
+		const res = await fetch(dataUrl(path, maskBits), init);
 		if (res.ok) {
 			if (prefetchCache.size >= MAX_PREFETCH_ENTRIES) {
 				const oldest = prefetchCache.keys().next().value;

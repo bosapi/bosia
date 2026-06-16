@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.4] - 2026-06-17
+
+### Fixed
+
+- Client-side navigation now sees correct parent layout data instead of empty values.
+
 ## [0.7.3] - 2026-06-15
 
 ### Added

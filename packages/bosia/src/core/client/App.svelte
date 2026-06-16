@@ -3,7 +3,7 @@
 	import { router, scrollToHash } from "./router.svelte.ts";
 	import { findMatch } from "../matcher.ts";
 	import { clientRoutes } from "bosia:routes";
-	import { consumePrefetch, prefetchCache, dataUrl } from "./prefetch.ts";
+	import { consumePrefetch, prefetchCache, dataUrl, buildParentSnapshots } from "./prefetch.ts";
 	import { appState, clearDirty } from "./appState.svelte.ts";
 	import { captureSnapshot, liveContext, shouldRerun, type CacheEntry } from "./loaderCache.ts";
 	import { pickErrorPage } from "../errorMatch.ts";
@@ -123,10 +123,22 @@
 		// to avoid a flash of stale/empty data before the fetch completes.
 		const cached = match.route.hasServerData ? consumePrefetch(path) : null;
 		prefetchCache.clear(); // clear remaining entries on navigation — matches SvelteKit behavior
+		// Forward cached parent data for skipped layers so downstream loaders see
+		// real parent() data, not {}. POST only when there's something to carry —
+		// keeps the no-skip case a cacheable/dedupable GET.
+		const snapshots = buildParentSnapshots(path, maskBits);
+		const dataInit: RequestInit =
+			Object.keys(snapshots).length > 0
+				? {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ parentSnapshots: snapshots }),
+					}
+				: {};
 		const dataFetch = cached
 			? Promise.resolve(cached)
 			: match.route.hasServerData
-				? fetch(dataUrl(path, maskBits))
+				? fetch(dataUrl(path, maskBits), dataInit)
 						.then((r) => r.json())
 						.catch(() => null)
 				: Promise.resolve(null);

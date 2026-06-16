@@ -296,10 +296,15 @@ function makeDepends(deps: LoaderDeps): (...keys: string[]) => void {
 //   - layouts[i] === true → run that layout; false → skip, emit null
 //   - page === true → run page; false → skip, emit null
 // When skipped, the parent() chain still receives the *combined parent
-// data* contributed by previously-cached layers, which the client
-// reconstructs and forwards in the request body. For now (initial
-// implementation), skipped loaders contribute `{}` to parent and the
-// response slot is `null`; the client merges with its cached data.
+// data* contributed by previously-cached layers. The client already holds
+// each skipped layer's data in its loader cache and forwards it as
+// `parentSnapshots` (depth → data) in the request body, so downstream
+// loaders that DO re-run see real parent() data, not `{}`. The response
+// slot stays `null` (client renders that layer from its cache).
+//
+// Trust boundary: parentSnapshots are a client-supplied perf hint, never
+// authoritative. Anything authz-related must read `event.locals` (populated
+// in hooks.server.ts), never `parent()`.
 
 export type LoaderMask = {
 	page: boolean;
@@ -314,6 +319,7 @@ export async function loadRouteData(
 	metadataData: Record<string, any> | null = null,
 	match?: RouteMatch<(typeof serverRoutes)[number]> | null,
 	mask?: LoaderMask,
+	parentSnapshots?: Record<number, Record<string, any>>,
 ) {
 	match ??= findMatch(serverRoutes, url.pathname);
 	if (!match) return null;
@@ -332,11 +338,11 @@ export async function loadRouteData(
 			if (skip) {
 				layoutData[ls.depth] = null;
 				layoutDeps[ls.depth] = null;
-				// Skipped layers contribute {} to the parent chain. The client
-				// already has their data and renders it from cache, so dependent
-				// loaders that DO re-run will see stale parent() data here. This
-				// is the same trade-off SvelteKit makes; loaders that need fresh
-				// upstream data should call `depends()` on a shared key.
+				// Skipped layers contribute their client-cached data (forwarded as
+				// parentSnapshots) to the parent chain, so downstream loaders that DO
+				// re-run see real parent() data. Falls back to {} when no snapshot was
+				// sent. Perf hint only — never authoritative for authz (use locals).
+				parentData = { ...parentData, ...(parentSnapshots?.[ls.depth] ?? {}) };
 				continue;
 			}
 			const mod = await ls.loader();
