@@ -1,0 +1,19 @@
+# Changelog
+
+All notable changes to the Bosia docs site and component registry are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+---
+
+## [0.7.4] - 2026-06-16
+
+### Added
+
+- This changelog now tracks docs site and component registry changes, separate from the framework.
+- New navbar block family: 18 ready-made navigation bars across standard, themed and app layouts.
+- New transparent overlay navbar that floats over a hero image, for full-bleed photo heroes.
+
+### Fixed
+
+- Hero blocks no longer include their own navbar, so it won't clash with the layout navbar.

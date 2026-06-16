@@ -6,27 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [0.7.4] - 2026-06-16
-
-### Added
-
-- New navbar block family: 18 ready-made navigation bars across standard, themed and app layouts.
-- New transparent overlay navbar that floats over a hero image, for full-bleed photo heroes.
-
-### Fixed
-
-- Hero blocks no longer include their own navbar, so it won't clash with the layout navbar.
-
----
-
 ## [0.7.3] - 2026-06-15
 
 ### Added
 
 - New login page family: ready-made sign-in, sign-up, forgot, magic-link, OTP and SSO screens.
 - Creating a `shop` project is now near-instant via a prebuilt download (falls back to the old way).
-
----
 
 ## [0.7.2] - 2026-06-14
 
