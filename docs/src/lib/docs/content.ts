@@ -15,6 +15,16 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 
 /**
+ * Check whether a doc page exists for a slug, without parsing it.
+ * Mirrors loadDoc's resolution: `<slug>.md` or `<slug>/index.md`.
+ */
+export function docExists(slug: string): boolean {
+	const s = slug || "index";
+	if (s.includes("..")) return false;
+	return existsSync(join(contentDir, `${s}.md`)) || existsSync(join(contentDir, `${s}/index.md`));
+}
+
+/**
  * Load a doc page by slug.
  * - "getting-started" → content/docs/getting-started.md
  * - "id/getting-started" → content/docs/id/getting-started.md

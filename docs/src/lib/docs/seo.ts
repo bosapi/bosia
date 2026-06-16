@@ -1,3 +1,4 @@
+import { docExists } from "./content";
 import type { Locale } from "./i18n";
 import { localizeUrl, switchLocaleUrl } from "./i18n";
 
@@ -23,6 +24,13 @@ export function buildSeoMeta({
 	const alt = switchLocaleUrl(locale === "id" ? `id/${slug}` : slug);
 	const altUrl = `${BASE_URL}${alt.url}`;
 
+	// Only emit hreflang annotations when both language versions actually exist,
+	// otherwise we point Google at a 404 (most EN pages have no ID translation).
+	const idSlug = slug === "" ? "id" : `id/${slug}`;
+	const enExists = locale === "en" ? true : docExists(slug);
+	const idExists = locale === "id" ? true : docExists(idSlug);
+	const hasCluster = enExists && idExists;
+
 	const meta: Array<{ name?: string; property?: string; content: string }> = [
 		{ property: "og:type", content: "website" },
 		{ property: "og:title", content: title },
@@ -37,10 +45,14 @@ export function buildSeoMeta({
 
 	const link: Array<{ rel: string; href: string; hreflang?: string }> = [
 		{ rel: "canonical", href: url },
-		{ rel: "alternate", href: url, hreflang: locale === "id" ? "id" : "en" },
-		{ rel: "alternate", href: altUrl, hreflang: alt.locale },
-		{ rel: "alternate", href: `${BASE_URL}${localizeUrl(slug, "en")}`, hreflang: "x-default" },
 	];
+	if (hasCluster) {
+		link.push(
+			{ rel: "alternate", href: url, hreflang: locale === "id" ? "id" : "en" },
+			{ rel: "alternate", href: altUrl, hreflang: alt.locale },
+			{ rel: "alternate", href: `${BASE_URL}${localizeUrl(slug, "en")}`, hreflang: "x-default" },
+		);
+	}
 
 	return { meta, link, lang: locale };
 }
