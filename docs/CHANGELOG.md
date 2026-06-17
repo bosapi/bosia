@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Indonesian translations for all 62 component pages (overview + every UI component).
 - Indonesian translations for all 37 block pages (cards, files, heros, navbars, storefront).
 - Indonesian translations for all 21 theme pages (overview, creating themes, and every theme).
+- Indonesian translations for all 11 page templates (auth and storefront), completing full parity.
 
 ### Fixed
 
