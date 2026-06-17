@@ -44,9 +44,9 @@ Phased so each batch is reviewed before the next:
 
 - [x] 🟡 `blocks/overview`, `blocks/auth`, `cards/*` ×6, `files/*` ×3, `heros/*` ×17, `navbars/*` ×3, `storefront/*` ×6
 
-### Phase 4 — Themes (21 pages)
+### Phase 4 — Themes (21 pages) ✅
 
-- [ ] 🟡 `themes/overview`, `themes/creating-themes` + 19 theme pages
+- [x] 🟡 `themes/overview`, `themes/creating-themes` + 19 theme pages
 
 ### Phase 5 — Pages (11 pages)
 
