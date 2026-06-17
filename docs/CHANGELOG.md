@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Indonesian translations for the File Upload, Inspector, Navigation, Plugins, and Server Metadata guides.
+- Indonesian translations for all 62 component pages (overview + every UI component).
 
 ### Fixed
 

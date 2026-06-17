@@ -36,9 +36,9 @@ Phased so each batch is reviewed before the next:
 - [x] 🟡 `guides/` — `file-upload`, `inspector`, `navigation`, `plugins`, `server-metadata`
 - [x] ⚪ `reference/` — `changelog` + `roadmap` excluded (auto-generated, see Out of scope above)
 
-### Phase 2 — Components (62 pages)
+### Phase 2 — Components (62 pages) ✅
 
-- [ ] 🟡 `components/overview` + 61 `components/ui/*` pages
+- [x] 🟡 `components/overview` + 61 `components/ui/*` pages
 
 ### Phase 3 — Blocks (37 pages)
 
