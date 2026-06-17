@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.7.5] - 2026-06-17
 
+### Added
+
+- Indonesian translations for the File Upload, Inspector, Navigation, Plugins, and Server Metadata guides.
+
 ### Fixed
 
 - Pages without an Indonesian translation no longer point search engines to a missing page.
