@@ -40,9 +40,9 @@ Phased so each batch is reviewed before the next:
 
 - [x] 🟡 `components/overview` + 61 `components/ui/*` pages
 
-### Phase 3 — Blocks (37 pages)
+### Phase 3 — Blocks (37 pages) ✅
 
-- [ ] 🟡 `blocks/overview`, `blocks/auth`, `cards/*` ×6, `files/*` ×3, `heros/*` ×17, `navbars/*` ×3, `storefront/*` ×6
+- [x] 🟡 `blocks/overview`, `blocks/auth`, `cards/*` ×6, `files/*` ×3, `heros/*` ×17, `navbars/*` ×3, `storefront/*` ×6
 
 ### Phase 4 — Themes (21 pages)
 
