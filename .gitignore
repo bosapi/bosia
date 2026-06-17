@@ -21,4 +21,6 @@ CLAUDE*
 bun.lock
 docs/content/docs/reference/changelog.md
 docs/content/docs/reference/roadmap.md
+docs/content/docs/id/reference/changelog.md
+docs/content/docs/id/reference/roadmap.md
 /projects

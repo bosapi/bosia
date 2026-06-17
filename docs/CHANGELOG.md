@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Pages without an Indonesian translation no longer point search engines to a missing page.
+- Indonesian Changelog and Roadmap pages now show the English content instead of being empty.
 
 ---
 
