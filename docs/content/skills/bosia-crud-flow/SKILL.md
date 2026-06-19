@@ -71,8 +71,8 @@ Optional: `(private)/<resource>/+layout.server.ts` if the section shares context
 2. **Service.** `list(db, ctx)`, `get(db, id)`, `create(db, input)`, `update(db, id, patch)`, `delete(db, id)`. Pure functions; no auth.
 3. **Schema.** Input shape for create + update. Reuse for both routes.
 4. **Permissions.** Pick `resource.read`, `resource.create`, `resource.update`, `resource.delete`. Register in `lib/rbac/resources.ts`.
-5. **List route.** `+page.server.ts` `load` → `can('resource.read', scope)` → `service.list`. `actions.create` validates → `can('resource.create')` → `service.create`. `actions.delete` validates id → `can('resource.delete', scope)` → `service.delete`.
-6. **Edit route.** `[id]/+page.server.ts` `load` → `can('resource.read')` → `service.get`. `actions.update` validates → `can('resource.update', scope)` → `service.update`.
+5. **List route.** `+page.server.ts` `load` → `depends('<resource>')` → `can('resource.read', scope)` → `service.list`. `actions.create` validates → `can('resource.create')` → `service.create` → `invalidate('<resource>')`. `actions.delete` validates id → `can('resource.delete', scope)` → `service.delete` → `invalidate('<resource>')`.
+6. **Edit route.** `[id]/+page.server.ts` `load` → `depends('<resource>')` → `can('resource.read')` → `service.get`. `actions.update` validates → `can('resource.update', scope)` → `service.update` → `invalidate('<resource>')`.
 7. **UI.** List page uses `ui/data-table` + dialog with `ui/form` for create. Row actions in `ui/dropdown-menu`. Edit page uses `ui/form` with prefilled values. Destructive actions confirm via `ui/alert-dialog`.
 8. **Empty / loading / error.** Apply `bosia-empty-states`.
 9. **Reviews.** `bosia-design-review`, `bosia-accessibility-review`, `bosia-security-review`.
@@ -98,12 +98,14 @@ export async function actions({ request, locals }) {
 ```ts
 // +page.server.ts
 import { fail } from "@sveltejs/kit";
+import { invalidate } from "bosia/server";
 export const actions = {
 	create: async ({ request, locals }) => {
 		if (!locals.can("resource.create")) return fail(403);
 		const data = parseCreate(await request.formData());
 		if (!data.ok) return fail(400, { errors: data.errors });
 		const id = await service.create(db, data.value);
+		invalidate("resource"); // R8 — default response cache is now stale
 		return { ok: true, id };
 	},
 };
@@ -136,6 +138,7 @@ export const actions = {
 		const data = parseCreate(await request.formData());
 		if (!data.ok) return fail(400, data.errors);
 		const id = await service.create(db, data.value);
+		invalidate("resource");
 		return { ok: true, id };
 	},
 };
@@ -159,9 +162,42 @@ Where safe (e.g. toggle), update local state immediately, reconcile on response.
 
 If the page needs `user` from the layout loader, declare `+page.server.ts` calling `parent()` (`bosia-routing` R3).
 
+### R8 — Invalidate the response cache after every mutation
+
+Bosia caches rendered pages and API responses **by default**. A `create` / `update` / `delete` that doesn't call `invalidate()` leaves the next cached render stale — the user mutates a row and the list still shows the old data until the entry expires.
+
+Pair every write with the matching key:
+
+```ts
+import { invalidate } from "bosia/server";
+
+export const actions = {
+	update: async ({ request, params, locals }) => {
+		if (!locals.can("resource.update")) return fail(403);
+		const patch = parseUpdate(await request.formData());
+		if (!patch.ok) return fail(400, { errors: patch.errors });
+		await service.update(db, params.id, patch.value);
+		invalidate("resource"); // evicts every page whose loader called depends("resource")
+		return { ok: true };
+	},
+	delete: async ({ request, locals }) => {
+		if (!locals.can("resource.delete")) return fail(403);
+		const id = parseId(await request.formData());
+		await service.delete(db, id);
+		invalidate("resource");
+		return { ok: true };
+	},
+};
+```
+
+For the tag to evict anything, the list/edit loaders must declare `depends("resource")` (workflow steps 5–6). For API `+server.ts` handlers there is no `depends()` yet — invalidate by URL: `invalidate("/api/resource")` or `invalidateAll("/api/")`.
+
+Full mechanics (keys, per-user isolation, opt-outs) live in **`bosia-response-cache`**.
+
 ## Bosia conventions
 
 - `bosia-routing`, `bosia-elysia-routes`, `bosia-rbac-permission`, `bosia-drizzle-feature`.
+- `bosia-response-cache` for `invalidate()` / `depends()` after mutations (R8).
 - `bosia-empty-states` for list async branches.
 - `bosia-design-review`, `bosia-accessibility-review`, `bosia-security-review`.
 
@@ -174,6 +210,7 @@ P0:
 - [ ] Service functions pure (no `locals`).
 - [ ] Delete uses `ui/alert-dialog` confirmation; copy includes resource name.
 - [ ] Logout / mutating actions are POST.
+- [ ] Every mutation calls `invalidate(<key>)`; list/edit loaders declare matching `depends(<key>)` (R8, `bosia-response-cache`).
 - [ ] Empty + loading + error states covered on the list view.
 - [ ] `bosia-security-review` pass.
 

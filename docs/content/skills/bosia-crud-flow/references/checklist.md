@@ -7,6 +7,7 @@
 - [ ] Permissions declared in `lib/rbac/resources.ts`.
 - [ ] Every action calls `locals.can(...)` at the top.
 - [ ] Every action validates input before invoking service.
+- [ ] Every mutation (create/update/delete) calls `invalidate(<key>)`; list/edit loaders declare matching `depends(<key>)` (default response cache goes stale otherwise).
 - [ ] Destructive action confirms via `ui/alert-dialog`; copy includes the resource name.
 - [ ] List view covers loading + empty + error.
 - [ ] `+page.server.ts` calls `parent()` if it uses layout-loaded data.

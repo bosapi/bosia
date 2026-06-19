@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.6] - 2026-06-19
+
+### Changed
+
+- CRUD skill now tells AI to refresh the cache after saving, so lists never show stale data.
+
+---
+
 ## [0.7.5] - 2026-06-17
 
 ### Added
