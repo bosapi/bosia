@@ -1,0 +1,239 @@
+# Bosia
+> Fullstack web framework: Bun + Svelte 5 + ElysiaJS. Skills, blocks, components and themes are served as JSON for AI agents.
+
+Each skill links to `/api/skills/<name>.json` (full SKILL.md body + references). Blocks, components and themes link to their registry JSON.
+
+## Documentation
+- [Introduction](https://bosia.dev/)
+- [Getting Started](https://bosia.dev/getting-started)
+- [Project Structure](https://bosia.dev/project-structure)
+- [Routing](https://bosia.dev/guides/routing)
+- [Navigation](https://bosia.dev/guides/navigation)
+- [Server Loaders](https://bosia.dev/guides/server-loaders)
+- [Request Deduplication](https://bosia.dev/guides/request-deduplication)
+- [Server Metadata](https://bosia.dev/guides/server-metadata)
+- [API Routes](https://bosia.dev/guides/api-routes)
+- [Form Actions](https://bosia.dev/guides/form-actions)
+- [Middleware Hooks](https://bosia.dev/guides/middleware-hooks)
+- [Environment Variables](https://bosia.dev/guides/environment-variables)
+- [Styling](https://bosia.dev/guides/styling)
+- [Security](https://bosia.dev/guides/security)
+- [Testing](https://bosia.dev/guides/testing)
+- [Plugins](https://bosia.dev/guides/plugins)
+- [File Upload](https://bosia.dev/guides/file-upload)
+- [Overview](https://bosia.dev/components/overview)
+- [Overview](https://bosia.dev/blocks/overview)
+- [Overview](https://bosia.dev/pages/overview)
+- [Overview](https://bosia.dev/themes/overview)
+- [Neutral](https://bosia.dev/themes/neutral)
+- [Editorial](https://bosia.dev/themes/editorial)
+- [Zinc](https://bosia.dev/themes/zinc)
+- [Stone](https://bosia.dev/themes/stone)
+- [Claude](https://bosia.dev/themes/claude)
+- [Ocean](https://bosia.dev/themes/ocean)
+- [Forest](https://bosia.dev/themes/forest)
+- [Rose](https://bosia.dev/themes/rose)
+- [Sunset](https://bosia.dev/themes/sunset)
+- [Midnight](https://bosia.dev/themes/midnight)
+- [Mono](https://bosia.dev/themes/mono)
+- [Amber](https://bosia.dev/themes/amber)
+- [Paper](https://bosia.dev/themes/paper)
+- [Carbon](https://bosia.dev/themes/carbon)
+- [Bloom](https://bosia.dev/themes/bloom)
+- [Terminal](https://bosia.dev/themes/terminal)
+- [Sage](https://bosia.dev/themes/sage)
+- [Grape](https://bosia.dev/themes/grape)
+- [Clay](https://bosia.dev/themes/clay)
+- [Creating Themes](https://bosia.dev/themes/creating-themes)
+- [CLI](https://bosia.dev/reference/cli)
+- [API Reference](https://bosia.dev/reference/api)
+- [Deployment](https://bosia.dev/reference/deployment)
+- [SvelteKit Differences](https://bosia.dev/reference/sveltekit-differences)
+- [Roadmap](https://bosia.dev/reference/roadmap)
+- [Changelog](https://bosia.dev/reference/changelog)
+
+## Skills
+- [bosia-accessibility-review](https://bosia.dev/api/skills/bosia-accessibility-review.json): A11y quality gate — labels, focus rings, keyboard nav, contrast ≥4.5:1, ARIA only when native HTML insufficient.
+- [bosia-app-css](https://bosia.dev/api/skills/bosia-app-css.json): Canonical `src/app.css` structure. `@import url(...)` (fonts) must come FIRST, before `@import "tailwindcss"` — Tailwind v4 + LightningCSS silently drops out-of-order imports. Fonts wire through theme tokens (`--font-display`/`--font-body`), never raw `font-family` stacks. Use `bosia add theme/<name>` for fonts; for ad-hoc fonts, prepend the `@import url(...)` (mirror `mergeFontImports()`).
+- [bosia-auth-flow](https://bosia.dev/api/skills/bosia-auth-flow.json): Login + register + logout + forgot-password — Bun.password (NOT argon2 npm package), session cookie, RBAC bootstrap, public route group. Already-signed-in visitors bounce off /login and /register to the dashboard. A login page always ships alongside its post-login destination (no orphan auth). Spans multiple files. Uses Bun.password not argon2 npm package.
+- [bosia-block-compose](https://bosia.dev/api/skills/bosia-block-compose.json): Registry-first composition — call `list_registry()`, prefer blocks over hand-rolling. If no block fits, compose from `ui/*` primitives before writing custom DOM.
+- [bosia-blog](https://bosia.dev/api/skills/bosia-blog.json): Editorial blog — `/blog` index + `/blog/[slug]` post. Typography-led, generous whitespace, editorial theme.
+- [bosia-brief-identity](https://bosia.dev/api/skills/bosia-brief-identity.json): Capture product identity — name, tagline, audience, language, formality, self-reference noun. Locks decisions every later skill depends on (UI string language, "Anda" vs "kamu", sentence case).
+- [bosia-brief-intake](https://bosia.dev/api/skills/bosia-brief-intake.json): First-conversation intake. Capture product identity, voice, visual direction, platform conventions BEFORE any UI emit. Writes BRIEF.md at app root and chains the four bosia-brief-* group skills. Mandatory when BRIEF.md is missing.
+- [bosia-brief-platform](https://bosia.dev/api/skills/bosia-brief-platform.json): Capture platform & data conventions — form factors, primary surface, ID format, number/date locale, imagery strategy, first screens to scaffold, must-have features. RECORDS the first-screen list; the orchestrator (bosia-brief-intake step 9) scaffolds format helpers + runs `bosia_add_block` after BRIEF.md is written — never during intake.
+- [bosia-brief-review](https://bosia.dev/api/skills/bosia-brief-review.json): Quality gate after intake. Verifies BRIEF.md sections complete (incl. § Aesthetic stance), theme installed matches `visual.theme_choice`, distinctive fonts wired in app.css `@theme`, accent override applied, ID/number/date formatters scaffolded, first-screen blocks present, no contradictions. Run before any non-brief UI emit.
+- [bosia-brief-visual](https://bosia.dev/api/skills/bosia-brief-visual.json): Capture visual direction — palette intent → theme pick, shape (radius), density (shadows), type, icon set, custom marks. RECORDS the theme choice; the orchestrator (bosia-brief-intake step 9) installs it via `bosia_add_theme` only after BRIEF.md is written — never during intake.
+- [bosia-brief-voice](https://bosia.dev/api/skills/bosia-brief-voice.json): Capture product voice — tone adjectives, emoji/exclamation policy, microcopy spine (empty/error/confirm/success/primary-action with ❌✅ pairs), domain glossary, copy no-go. Every string the agent ever writes will be checked against this.
+- [bosia-bun-runtime](https://bosia.dev/api/skills/bosia-bun-runtime.json): Bun-native APIs replacing Node packages that crash under Bun. Use Bun.password (NOT @node-rs/argon2, argon2, bcrypt). Bun.file for fs reads. Banned NAPI packages list. Covers password hashing, hashing config, common Node→Bun substitutions.
+- [bosia-cards](https://bosia.dev/api/skills/bosia-cards.json): Catalog of the 29 card blocks (dashboards, people, commerce, media, system, auth). Install with `bosia add block cards/<name>`; restyle for free across all 18 themes via semantic tokens.
+- [bosia-chat-form](https://bosia.dev/api/skills/bosia-chat-form.json): Chat composer — `ui/textarea` (auto-resize, Enter/Shift+Enter, IME-safe) + submit button. Disabled-during-stream gating, trim-empty guard, optimistic clear, a11y label.
+- [bosia-chat-message-list](https://bosia.dev/api/skills/bosia-chat-message-list.json): Chat feed — scrollable region, role-tagged messages, multi-part rendering (text, reasoning, tool calls), auto-scroll on append, empty/streaming/error states.
+- [bosia-checkout-flow](https://bosia.dev/api/skills/bosia-checkout-flow.json): Cart → address → payment → confirmation. Progress per step. Trust signals (lock, refund, secure-pay icons). Order summary persistent.
+- [bosia-clean-architecture](https://bosia.dev/api/skills/bosia-clean-architecture.json): Strict controller → service → repository layering per feature. Routes never import `db` or tables. Validators derived from drizzle tables via valibot. Scaffolds new features and refactors violations.
+- [bosia-cookies](https://bosia.dev/api/skills/bosia-cookies.json): cookies.set/get/delete on event.cookies. CookieOptions shape, sameSite accepts both cases, Secure auto-applies only when request is HTTPS (downgrades + warns on HTTP). Defaults HttpOnly+Secure+SameSite=Lax+Path=/. Do not pass `secure:true` literal — framework decides per-request.
+- [bosia-cors](https://bosia.dev/api/skills/bosia-cors.json): CORS recipe — when to enable, env vars (`CORS_ALLOWED_ORIGINS` + friends), preflight rules, credentials mode, and how to tell a real CORS failure apart from a CSRF rejection that looks like one.
+- [bosia-crud-flow](https://bosia.dev/api/skills/bosia-crud-flow.json): List + create + edit + delete a single resource. Table view + dialog form + RBAC + Drizzle service. Spans table, service, routes, UI.
+- [bosia-dashboard](https://bosia.dev/api/skills/bosia-dashboard.json): Admin / app dashboard — sidebar nav, top bar, KPI cards, data table, chart panel. Neutral theme. RBAC-driven nav.
+- [bosia-data-table](https://bosia.dev/api/skills/bosia-data-table.json): Lists of rows always render through `ui/data-table` — never a hand-rolled `<table>` or `<ul>` of cards. Wires column defs + server pagination/sort against the `bosia-query-defaults` repository signature `{ rows, total }`.
+- [bosia-database-setup](https://bosia.dev/api/skills/bosia-database-setup.json): On-demand database engine setup and schema work. Default scaffold ships sqlite-file (bun:sqlite); load this skill ONLY when the user explicitly asks to swap engines or create tables. Guides the AI through drizzle.config.ts, .env.local, driver install, and bun-native migrate.
+- [bosia-debug-discipline](https://bosia.dev/api/skills/bosia-debug-discipline.json): Debug by root-cause, not by patching symptoms. After two wrong guesses, stop editing — read the framework source that owns the symptom, write a minimal reproduction, state the hypothesis before the next change.
+- [bosia-design-review](https://bosia.dev/api/skills/bosia-design-review.json): Pre-emit visual checklist — semantic tokens, Runes, empty/loading/error coverage, mobile-safe, typography hierarchy. Run before finalizing any UI.
+- [bosia-docs-site](https://bosia.dev/api/skills/bosia-docs-site.json): 3-column docs — left sidebar nav, center content (prose), right TOC. Sticky columns. Code blocks with copy. Search command palette.
+- [bosia-drawer](https://bosia.dev/api/skills/bosia-drawer.json): Mobile bottom-sheet overlay — slides up from bottom, tap-to-close, focus trap, scroll lock. Use for mobile action sheets and pickers; use Dialog for desktop modals.
+- [bosia-drizzle-feature](https://bosia.dev/api/skills/bosia-drizzle-feature.json): Feature-folder layout for Drizzle — `*.table.ts` + `*.repository.ts` + `*.service.ts` + `*.validator.ts` + `*.dto.ts` + idempotent numbered seeds. Layered split is mandatory (see `bosia-clean-architecture`). Seeds are immutable once applied; add a new numbered file for changes.
+- [bosia-drizzle-usage](https://bosia.dev/api/skills/bosia-drizzle-usage.json): How to consume `db` from `src/features/drizzle` — only inside repository functions, via the singleton import. Routes/loaders call services; services call repositories; **only repositories import `db`** (services never do). Always `await db.select()...`, never reach past the export, pre-flight `db_test_connection` + `db_status` before the first read.
+- [bosia-elysia-routes](https://bosia.dev/api/skills/bosia-elysia-routes.json): `+server.ts` conventions — handler signature, body parsing, return shape, status codes. No Express idioms.
+- [bosia-empty-states](https://bosia.dev/api/skills/bosia-empty-states.json): Async UI must cover loading + empty + error. Use `ui/skeleton` for loading, `ui/empty` for no-data, error boundary for failure. Never blank screen on async.
+- [bosia-engineering-discipline](https://bosia.dev/api/skills/bosia-engineering-discipline.json): Behavioral guardrails for every code-emitting task. Think before coding, keep changes minimal and surgical, define verifiable success criteria. Biases toward caution over speed; for trivial tasks, use judgment.
+- [bosia-env](https://bosia.dev/api/skills/bosia-env.json): Env var conventions — four-tier prefix system (`PUBLIC_STATIC_` / `PUBLIC_` / `STATIC_` / none), `$env` virtual module for user vars, `process.env` for framework-reserved vars, `.env` load order.
+- [bosia-file-upload](https://bosia.dev/api/skills/bosia-file-upload.json): Image/file upload — install the file-upload feature + upload-area block, wire the UI, and persist to per-app storage (local or S3) with auto WebP resize.
+- [bosia-frontend-design](https://bosia.dev/api/skills/bosia-frontend-design.json): Commit to a BOLD aesthetic direction before emitting UI. Avoid generic AI slop — distinctive typography, dominant colors with sharp accents, intentional spatial composition, atmospheric backgrounds. Bosia-flavored (Svelte 5 + theme tokens + registry-first).
+- [bosia-heros](https://bosia.dev/api/skills/bosia-heros.json): Catalog of the 17 hero-section blocks (commerce, education, food, fashion, services, saas). Install with `bosia add block heros/<name>`; full-bleed sections that restyle across all 18 themes via semantic tokens.
+- [bosia-hooks](https://bosia.dev/api/skills/bosia-hooks.json): Bosia hooks.server.ts signature — handle({ event, resolve }) NOT SvelteKit's ({ request, cookies }). Cookies live on event.cookies, locals on event.locals. Covers sequence(), redirect/error from "bosia", typical session-resolver wiring.
+- [bosia-icon](https://bosia.dev/api/skills/bosia-icon.json): Use `@lucide/svelte` for icons. Never install `lucide-svelte` (deprecated). Import each icon as a Svelte component — tree-shakes per import.
+- [bosia-image-dialog](https://bosia.dev/api/skills/bosia-image-dialog.json): Multi-image picker dialog — Upload tab, External URL tab, and existing-images gallery. Returns string[] of URLs.
+- [bosia-image-external](https://bosia.dev/api/skills/bosia-image-external.json): Fetch real keyword-matched stock photos via the image_external_search tool, with cross-app DB cache to preserve provider quota.
+- [bosia-inspector-edit](https://bosia.dev/api/skills/bosia-inspector-edit.json): Surgical edits driven by Bosia Inspector payloads. Read the labeled `[Inspector]` context block (url / pageFile / component / text / tree) and default to the `pageFile` (page/layout) rather than the shared `component` leaf. Use `fs_edit`, never full rewrite.
+- [bosia-landing](https://bosia.dev/api/skills/bosia-landing.json): Marketing landing — hero, features, social-proof, CTA, footer. Editorial theme by default. Single +page.svelte under (public).
+- [bosia-login](https://bosia.dev/api/skills/bosia-login.json): Catalog of the Bosia login/auth page family — 6 composed pages (login, register, forgot, magic-link, otp, sso) + 9 reusable auth/* blocks. Install pages with `bosia add page auth/<name>`, blocks with `bosia add block auth/<name>`. Visual layer only — one card, two layouts (centered ↔ split) via a one-line prop swap. Pair with bosia-auth-flow for the backend.
+- [bosia-mobile-screen](https://bosia.dev/api/skills/bosia-mobile-screen.json): Mobile-first +page.svelte at 375px viewport. Touch targets ≥44px. Safe-area insets. Bottom action bar pattern.
+- [bosia-navbars](https://bosia.dev/api/skills/bosia-navbars.json): Catalog of 19 navbar blocks (standard, themed, app/interactive). Install with `bosia add block navbars/<name>`; self-contained `<header>` sections that restyle across all 19 themes via semantic tokens.
+- [bosia-navigation](https://bosia.dev/api/skills/bosia-navigation.json): Client-side navigation in Bosia — `<a href>`, `goto()`, form-action `redirect()`, and `window.location.href`. Lifecycle hooks `beforeNavigate` / `afterNavigate`. Mirrors SvelteKit's `$app/navigation` surface; import from `bosia/client`.
+- [bosia-onboarding-flow](https://bosia.dev/api/skills/bosia-onboarding-flow.json): Multi-step onboarding — welcome → value prop → sign-in/up → profile setup. Progress indicator. Skip-where-safe.
+- [bosia-page-shell](https://bosia.dev/api/skills/bosia-page-shell.json): Page shell hygiene — navbar/footer/sidebar live in `+layout.svelte` (one place), never duplicated per page. Authenticated layouts render `ui/navbar` with the avatar-dropdown `user` prop. Lists of rows always use `ui/data-table`, never a hand-rolled `<table>`.
+- [bosia-pricing](https://bosia.dev/api/skills/bosia-pricing.json): Pricing tiers + comparison table + FAQ. Recommended plan highlighted. Monthly/annual toggle.
+- [bosia-query-defaults](https://bosia.dev/api/skills/bosia-query-defaults.json): Every list query is paginated and ordered. Repository `list*` functions accept `{ limit = 10, offset = 0, orderBy }` and always return `{ rows, total }`. Default sort is `created_at desc`. No unbounded `db.select().from(...)` reaching production code.
+- [bosia-rbac-permission](https://bosia.dev/api/skills/bosia-rbac-permission.json): Permission-based RBAC — always `can('resource.action', scope?)`, never `if (role === 'admin')`. Roles are mutable DB data; the app must never branch on role names.
+- [bosia-response-cache](https://bosia.dev/api/skills/bosia-response-cache.json): Server response cache — skip-render on cache hit, keyed by URL + identity (CACHE_KEYS cookies/headers). Invalidate from server actions with `invalidate(key)` / `invalidateAll(prefix)`. Opt routes out with `export const cache = false`.
+- [bosia-routing](https://bosia.dev/api/skills/bosia-routing.json): File-based routing in Bosia — `+page.svelte` registers the route; folders with only `+page.server.ts` 404. Action-only endpoints use `+server.ts`. Page data does not auto-merge with layout data.
+- [bosia-saas-landing](https://bosia.dev/api/skills/bosia-saas-landing.json): SaaS marketing landing — hero, feature grid, pricing tease, testimonials, integrations, CTA. Heavier than `bosia-landing`.
+- [bosia-security-review](https://bosia.dev/api/skills/bosia-security-review.json): Security quality gate — RBAC on every protected handler, input validation at boundaries, no secrets in client, path-jail on FS ops, CSRF via origin guard.
+- [bosia-seo](https://bosia.dev/api/skills/bosia-seo.json): SEO baseline — title/description/canonical, Open Graph, Twitter cards, favicons, web manifest, robots.txt, sitemap.xml, JSON-LD structured data, hreflang. Share-critical meta via per-route `metadata()` in `+page.server.ts` (server-rendered into raw <head>); layout `<svelte:head>` holds only chrome + JSON-LD. Required even for auth-gated apps (share previews).
+- [bosia-shop-template](https://bosia.dev/api/skills/bosia-shop-template.json): Storefront starter scaffolded by `bosia create … --template shop`. Bundles `auth` + `rbac` + `file-upload` + `shop` registry features, `(public)` + `(private)` route shells, `PublicNavbar` + `AdminSidebar`, and a sqlite-file-by-default Drizzle setup. Use when extending a shop scaffold — not when bootstrapping a generic Bosia app.
+- [bosia-sidebar](https://bosia.dev/api/skills/bosia-sidebar.json): App-shell sidebar — composable `Sidebar`, `SidebarMenu`, `SidebarMenuItem` (auto leaf/parent), `SidebarFooter` with working user menu via `DropdownMenu` + `Avatar`. Use when building any dashboard or admin layout that needs left-rail navigation with collapse + user dropdown.
+- [bosia-storefront](https://bosia.dev/api/skills/bosia-storefront.json): Catalog of the Mercato storefront — 4 full pages (home, listing/PLP, product/PDP, checkout) + 24 storefront section blocks + the clay theme. Install pages with `bosia add page storefront/<name>`, blocks with `bosia add block storefront/<name>`. One template, six purposes, restyled by theme via semantic tokens.
+- [bosia-svelte-runes](https://bosia.dev/api/skills/bosia-svelte-runes.json): Svelte 5 Runes are the only reactive primitives in Bosia code. Never legacy `let`-reactivity, `$:`, `export let`, or stores when runes work.
+- [bosia-theme-tokens](https://bosia.dev/api/skills/bosia-theme-tokens.json): Use semantic Tailwind tokens only — `bg-card`, `text-foreground`, `border-border`. Never raw colors (`bg-white`, `text-zinc-900`). Theme swap = swap `tokens.css`, no code change.
+- [bosia-web](https://bosia.dev/api/skills/bosia-web.json): Look up live web info via web_search (Tavily/Brave/DuckDuckGo/SearXNG, keyword-cached) and pull a specific URL/domain/IP to readable markdown via web_fetch — SSRF-safe.
+
+## Blocks
+- [auth](https://bosia.dev/api/blocks/auth.json): Shared auth UI — brand, shell, card, social row, divider, field, password strength, OTP and form messages.
+- [auth](https://bosia.dev/api/blocks/cards/auth.json): Login and feature cards for auth screens and marketing pages.
+- [commerce](https://bosia.dev/api/blocks/cards/commerce.json): Product, pricing, order, and review cards for e-commerce.
+- [data](https://bosia.dev/api/blocks/cards/data.json): Stat, progress, chart, and balance cards for dashboards and analytics.
+- [media](https://bosia.dev/api/blocks/cards/media.json): Article, music, video, and gallery cards for media-rich UIs.
+- [people](https://bosia.dev/api/blocks/cards/people.json): Profile, contact, and testimonial cards for people and social UIs.
+- [utility](https://bosia.dev/api/blocks/cards/utility.json): Notification, weather, event, file, task, storage, code, map, integration, poll, stepper, and chat cards.
+- [crop-image](https://bosia.dev/api/blocks/files/crop-image.json): Interactive image cropper with aspect presets, zoom, and rect/round shapes. Returns a cropped Blob.
+- [image-dialog](https://bosia.dev/api/blocks/files/image-dialog.json): Multi-image picker dialog — Upload tab, External URL tab, and existing-images gallery. Returns string[] of URLs on confirm.
+- [upload-area](https://bosia.dev/api/blocks/files/upload-area.json): Drag-and-drop file upload area with preview, size validation, progress bar, and optional crop hook.
+- [agency](https://bosia.dev/api/blocks/heros/agency.json): Bold dark agency hero with a glow accent and client logos.
+- [app](https://bosia.dev/api/blocks/heros/app.json): SaaS app hero with a feature list and a phone mockup.
+- [apparel](https://bosia.dev/api/blocks/heros/apparel.json): Apparel hero with color swatches and a size picker beside a model.
+- [bags](https://bosia.dev/api/blocks/heros/bags.json): Dark premium product hero with spec callouts and an edition badge.
+- [bookstore](https://bosia.dev/api/blocks/heros/bookstore.json): Bookstore hero with fanned covers and a floating staff-pick card.
+- [campus](https://bosia.dev/api/blocks/heros/campus.json): Centered full-bleed campus hero with admissions stats.
+- [consulting](https://bosia.dev/api/blocks/heros/consulting.json): B2B consulting split hero with bullet points and result stats.
+- [course](https://bosia.dev/api/blocks/heros/course.json): Course-landing hero with enrollment stats and a live-lesson card.
+- [delivery](https://bosia.dev/api/blocks/heros/delivery.json): Food-delivery hero with an address search bar and floating dishes.
+- [home-goods](https://bosia.dev/api/blocks/heros/home-goods.json): Full-bleed lifestyle hero with a floating featured-product card.
+- [lookbook](https://bosia.dev/api/blocks/heros/lookbook.json): Editorial fashion lookbook hero over a full-bleed photo.
+- [new-drop](https://bosia.dev/api/blocks/heros/new-drop.json): Fashion new-drop product hero with a size selector and price.
+- [product](https://bosia.dev/api/blocks/heros/product.json): Centered SaaS product-launch hero with email capture and a browser mock.
+- [restaurant](https://bosia.dev/api/blocks/heros/restaurant.json): Full-bleed restaurant hero with a reservation CTA and venue meta.
+- [sale](https://bosia.dev/api/blocks/heros/sale.json): Full-bleed sale hero with a countdown timer over a darkened photo.
+- [shop-split](https://bosia.dev/api/blocks/heros/shop-split.json): Split product hero with copy, price, rating, and a floating shipping badge.
+- [toys](https://bosia.dev/api/blocks/heros/toys.json): Playful kids-toys hero with an age filter and a category tile grid.
+- [app](https://bosia.dev/api/blocks/navbars/app.json): App-shell and interactive navbars — dashboard, e-commerce, docs, mega-menu, announcement and mobile.
+- [standard](https://bosia.dev/api/blocks/navbars/standard.json): Classic light navbar layouts — centered, split, search-led, minimal and two-tier.
+- [themes](https://bosia.dev/api/blocks/navbars/themes.json): Styled navbar variants — dark, glass, brutalist, floating pill, gradient, brand bar and transparent overlay.
+- [catalog](https://bosia.dev/api/blocks/storefront/catalog.json): Product card and grid, featured collection, the shared cart store and the cart drawer.
+- [checkout](https://bosia.dev/api/blocks/storefront/checkout.json): Multi-step checkout form, promo field, order summary and the confirmed state.
+- [home](https://bosia.dev/api/blocks/storefront/home.json): Category tiles, value row, promo banner and strip, editorial, testimonials and newsletter.
+- [layout](https://bosia.dev/api/blocks/storefront/layout.json): Sticky header with mega menu and a multi-column footer for the Mercato storefront.
+- [listing](https://bosia.dev/api/blocks/storefront/listing.json): Filter sidebar and sort bar for a product listing page.
+- [product](https://bosia.dev/api/blocks/storefront/product.json): Sticky gallery, buy box with options, trust row and detail accordions.
+
+## Components
+- [accordion](https://bosia.dev/api/components/ui/accordion.json): A vertically stacked set of interactive headings that each reveal a section of content.
+- [alert](https://bosia.dev/api/components/ui/alert.json): Displays a callout for important messages with default and destructive variants.
+- [alert-dialog](https://bosia.dev/api/components/ui/alert-dialog.json): A modal alert dialog that interrupts the user with important content and requires an explicit response.
+- [aspect-ratio](https://bosia.dev/api/components/ui/aspect-ratio.json): Displays content within a desired ratio.
+- [avatar](https://bosia.dev/api/components/ui/avatar.json): An avatar component with image and fallback slots.
+- [badge](https://bosia.dev/api/components/ui/badge.json): A small status badge with multiple variants.
+- [breadcrumb](https://bosia.dev/api/components/ui/breadcrumb.json): Displays the path to the current resource using a hierarchy of links.
+- [button](https://bosia.dev/api/components/ui/button.json): An accessible button component with multiple variants and sizes.
+- [button-group](https://bosia.dev/api/components/ui/button-group.json): A container that visually groups multiple buttons into a single connected unit.
+- [calendar](https://bosia.dev/api/components/ui/calendar.json): A date selection calendar with month/year navigation, keyboard support, and min/max date constraints.
+- [card](https://bosia.dev/api/components/ui/card.json): A card component with header, content, and footer slots.
+- [carousel](https://bosia.dev/api/components/ui/carousel.json): A carousel component with slide navigation, keyboard support, and snap scrolling.
+- [chart](https://bosia.dev/api/components/ui/chart.json): SVG line and bar charts with tooltips — zero dependencies, pure Svelte.
+- [checkbox](https://bosia.dev/api/components/ui/checkbox.json): A checkbox control for toggling options on and off.
+- [collapsible](https://bosia.dev/api/components/ui/collapsible.json): An interactive component which expands/collapses a panel.
+- [combobox](https://bosia.dev/api/components/ui/combobox.json): A searchable select built on Popover + Command.
+- [command](https://bosia.dev/api/components/ui/command.json): A filterable command palette primitive with keyboard navigation, groups, and shortcuts.
+- [context-menu](https://bosia.dev/api/components/ui/context-menu.json): A right-click context menu with items, labels, shortcuts, separators, and nested sub-menus.
+- [data-table](https://bosia.dev/api/components/ui/data-table.json): A fully-featured data table with sorting, filtering, and pagination.
+- [date-picker](https://bosia.dev/api/components/ui/date-picker.json): A date picker built on Popover + Calendar.
+- [dialog](https://bosia.dev/api/components/ui/dialog.json): A modal dialog overlay with focus trap, scroll lock, and accessible markup.
+- [direction](https://bosia.dev/api/components/ui/direction.json): A provider component that sets text direction (LTR/RTL) via context.
+- [drawer](https://bosia.dev/api/components/ui/drawer.json): A mobile-first bottom-sheet overlay with focus trap, scroll lock, and slide-up animation.
+- [dropdown-menu](https://bosia.dev/api/components/ui/dropdown-menu.json): A context-managed dropdown menu with trigger, content, items, and separator.
+- [empty](https://bosia.dev/api/components/ui/empty.json): An empty state component with icon, title, description, and action slots.
+- [field](https://bosia.dev/api/components/ui/field.json): A form field wrapper that auto-wires accessibility attributes via context.
+- [form](https://bosia.dev/api/components/ui/form.json): A form wrapper that manages validation state and feeds errors into Field components via context.
+- [hover-card](https://bosia.dev/api/components/ui/hover-card.json): A hover-triggered floating content panel for rich previews.
+- [icon](https://bosia.dev/api/components/ui/icon.json): Use @lucide/svelte for icons — tree-shakeable Svelte components from the Lucide catalog.
+- [input](https://bosia.dev/api/components/ui/input.json): A styled text input component.
+- [input-group](https://bosia.dev/api/components/ui/input-group.json): A composite input container for combining inputs with addons, buttons, and text.
+- [input-otp](https://bosia.dev/api/components/ui/input-otp.json): Accessible one-time password input with copy-paste support.
+- [item](https://bosia.dev/api/components/ui/item.json): A versatile flex container for displaying content with media, title, description, and actions.
+- [kbd](https://bosia.dev/api/components/ui/kbd.json): Displays keyboard shortcut keys with a keycap style. Optionally binds actual keyboard shortcuts via onPress.
+- [label](https://bosia.dev/api/components/ui/label.json): An accessible label component for form controls.
+- [menubar](https://bosia.dev/api/components/ui/menubar.json): A horizontal menu bar with multiple dropdown menus, supporting hover-switch between open menus.
+- [native-select](https://bosia.dev/api/components/ui/native-select.json): A styled native HTML select component.
+- [navbar](https://bosia.dev/api/components/ui/navbar.json): A responsive navbar with desktop links, mobile dropdown menu, theme toggle, and user avatar.
+- [navigation-menu](https://bosia.dev/api/components/ui/navigation-menu.json): Horizontal top-level navigation with hover/focus-triggered popover panels.
+- [pagination](https://bosia.dev/api/components/ui/pagination.json): Pagination with page navigation, next and previous links.
+- [popover](https://bosia.dev/api/components/ui/popover.json): A floating content panel with configurable trigger, side, and alignment.
+- [progress](https://bosia.dev/api/components/ui/progress.json): Displays an indicator showing the completion progress of a task.
+- [radio-group](https://bosia.dev/api/components/ui/radio-group.json): A set of radio buttons for single-selection input.
+- [range-calendar](https://bosia.dev/api/components/ui/range-calendar.json): A date range selection calendar with start/end selection, hover preview, and keyboard navigation.
+- [resizable](https://bosia.dev/api/components/ui/resizable.json): Accessible resizable panel groups and layouts with drag support.
+- [scroll-area](https://bosia.dev/api/components/ui/scroll-area.json): A scrollable container with a custom styled scrollbar.
+- [select](https://bosia.dev/api/components/ui/select.json): A dropdown select component for single-value selection.
+- [separator](https://bosia.dev/api/components/ui/separator.json): A horizontal or vertical divider line.
+- [sidebar](https://bosia.dev/api/components/ui/sidebar.json): A composable sidebar with header, content, groups, menus, and collapsible icon mode.
+- [skeleton](https://bosia.dev/api/components/ui/skeleton.json): A placeholder used to show a loading state.
+- [slider](https://bosia.dev/api/components/ui/slider.json): A slider input for selecting numeric values, supporting single and range modes.
+- [sonner](https://bosia.dev/api/components/ui/sonner.json): An opinionated toast notification component with zero dependencies.
+- [spinner](https://bosia.dev/api/components/ui/spinner.json): An animated loading indicator.
+- [switch](https://bosia.dev/api/components/ui/switch.json): A toggle switch control for on/off states.
+- [table](https://bosia.dev/api/components/ui/table.json): A set of styled table sub-components for building data displays.
+- [tabs](https://bosia.dev/api/components/ui/tabs.json): A set of layered sections of content displayed one at a time.
+- [textarea](https://bosia.dev/api/components/ui/textarea.json): A styled multi-line text input component.
+- [toggle](https://bosia.dev/api/components/ui/toggle.json): A two-state button that can be toggled on or off.
+- [toggle-group](https://bosia.dev/api/components/ui/toggle-group.json): A group of toggle buttons where one or more can be active.
+- [tooltip](https://bosia.dev/api/components/ui/tooltip.json): A popup that displays information related to an element on hover or focus.
+- [typography](https://bosia.dev/api/components/ui/typography.json): Semantic typography components with pre-styled Tailwind classes.
+
+## Themes
+- [amber](https://bosia.dev/api/themes/amber.json): Amber primary + yellow accent. Cozy hospitality and food aesthetic.
+- [bloom](https://bosia.dev/api/themes/bloom.json): Soft pastel pink, playful big radius, diffuse tinted shadows.
+- [carbon](https://bosia.dev/api/themes/carbon.json): Brutalist mono — high contrast, hard offset shadows, orange brand.
+- [claude](https://bosia.dev/api/themes/claude.json): Violet palette. AI assistant and productivity app aesthetic.
+- [clay](https://bosia.dev/api/themes/clay.json): Warm paper neutrals with a terracotta brand and soft, warm-tinted shadows.
+- [editorial](https://bosia.dev/api/themes/editorial.json): Warm cream palette with Instrument Serif display. Magazine feel for marketing and landing pages.
+- [forest](https://bosia.dev/api/themes/forest.json): Earthy green palette with amber accents. Nature and sustainability aesthetic.
+- [grape](https://bosia.dev/api/themes/grape.json): Dark lilac/purple with a soft accent glow.
+- [midnight](https://bosia.dev/api/themes/midnight.json): Indigo primary, dark-first. Pro dashboard and analytics aesthetic.
+- [mono](https://bosia.dev/api/themes/mono.json): Brutalist monochrome. Sharp corners, monospace stack, agency / portfolio aesthetic.
+- [neutral](https://bosia.dev/api/themes/neutral.json): Default shadcn-inspired palette with light + dark modes and a system font stack. Ships with new projects.
+- [ocean](https://bosia.dev/api/themes/ocean.json): Deep navy and teal palette. SaaS dashboard and data app aesthetic.
+- [paper](https://bosia.dev/api/themes/paper.json): Warm cardstock neutrals with an ink-blue brand. Clean editorial feel.
+- [rose](https://bosia.dev/api/themes/rose.json): Rose palette. Creative, fashion, and lifestyle aesthetic.
+- [sage](https://bosia.dev/api/themes/sage.json): Calm muted green, small radius, quiet ambient shadows.
+- [stone](https://bosia.dev/api/themes/stone.json): Warm gray palette. Document and publishing aesthetic.
+- [sunset](https://bosia.dev/api/themes/sunset.json): Warm orange + pink accent. Energetic consumer and marketing aesthetic.
+- [terminal](https://bosia.dev/api/themes/terminal.json): Dark technical green phosphor, mono display, faint accent glow.
+- [zinc](https://bosia.dev/api/themes/zinc.json): Cool blue-gray palette. Minimal developer-tool feel.

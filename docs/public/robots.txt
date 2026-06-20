@@ -2,3 +2,6 @@ User-agent: *
 Allow: /
 
 Sitemap: https://bosia.dev/sitemap.xml
+
+# AI agents: skills, blocks, components and themes index
+# https://bosia.dev/llms.txt

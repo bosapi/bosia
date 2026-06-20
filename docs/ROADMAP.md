@@ -68,3 +68,4 @@ Phased so each batch is reviewed before the next:
 - [x] 🟡 Nested docs sidebar — UI and Todo as sub-groups under Components
 - [x] 🟡 Docs SEO — OG tags, Twitter cards, canonical URLs, hreflang alternates on all pages
 - [x] 🟡 `robots.txt` and `sitemap.xml` generation for docs site
+- [x] 🟡 `llms.txt` — AI-agent discovery index of skills, blocks, components and themes (linked from `robots.txt`)
