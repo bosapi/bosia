@@ -1,6 +1,6 @@
 ---
 name: bosia-seo
-description: SEO baseline — title/description/canonical, Open Graph, Twitter cards, favicons, web manifest, robots.txt, sitemap.xml, JSON-LD structured data, hreflang. Layout-wide defaults via `$page`; per-page overrides via `<svelte:head>`. Required even for auth-gated apps (share previews).
+description: SEO baseline — title/description/canonical, Open Graph, Twitter cards, favicons, web manifest, robots.txt, sitemap.xml, JSON-LD structured data, hreflang. Share-critical meta via per-route `metadata()` in `+page.server.ts` (server-rendered into raw <head>); layout `<svelte:head>` holds only chrome + JSON-LD. Required even for auth-gated apps (share previews).
 triggers:
   - seo
   - meta tags
@@ -52,14 +52,15 @@ bosia:
 
 ## What it builds
 
-Production-standard SEO and link-preview hygiene for a Bosia/SvelteKit app:
+Production-standard SEO and link-preview hygiene for a Bosia app:
 
-- Site-wide `<svelte:head>` meta block in `src/routes/+layout.svelte` — title, description, canonical, Open Graph, Twitter card.
-- Per-page `<svelte:head>` overrides on leaf routes (titles already follow `{Page} · {App}` convention).
-- Favicon ecosystem — `favicon.svg`, `apple-touch-icon.png`, `site.webmanifest`.
+- A small SEO lib — `src/lib/seo/{site,jsonld,metadata}.ts` — with a `buildPageMeta()` helper.
+- Per-route `metadata()` in `+page.server.ts` — title, description, canonical, Open Graph, Twitter card — server-rendered into the raw `<head>` (the only channel non-JS share scrapers read in Bosia). Titles follow `{Page} · {App}`.
+- A slim root `src/routes/+layout.svelte` `<svelte:head>` — browser/PWA chrome + JSON-LD only.
+- Favicon ecosystem — `favicon.svg` (shell), `apple-touch-icon.png`, `icon-512.png`, `site.webmanifest`.
 - Dynamic `robots.txt` and `sitemap.xml` via `+server.ts` (origin-aware, no hardcoded host).
 - JSON-LD structured data — `Organization` + `WebSite` at layout, page-specific schemas on content routes.
-- Environment-gated `noindex` for staging/preview.
+- Environment-gated `noindex` for staging/preview, emitted from `metadata()` so crawlers actually see it.
 
 ## When to use
 
@@ -119,103 +120,177 @@ Pull these — do not invent:
 
 ## Rules
 
-### R1 — Site-wide meta in root `+layout.svelte`, per-page overrides only when they differ
+### R1 — Share-critical meta comes from per-route `metadata()`, NOT the root layout `<svelte:head>`
 
-The root layout owns the default block. Leaf `<svelte:head>` overrides title (and description / OG image when they differ); it does NOT re-declare every tag. SvelteKit merges `<svelte:head>` content by last-write-wins for `<title>`, and accumulates other tags (which is why duplicate OG tags are dangerous — strip the layout default if a page sets its own).
+> This is the rule most people get wrong on Bosia. Read the three reasons before reaching for `<svelte:head>`.
 
-✅ Layout pattern (full template in `references/meta-template.md`):
+In Bosia there are **two different head channels with different visibility**:
+
+1. **`metadata()`** exported from `+page.server.ts` → bosia renders its return as **raw `<head>` tags during SSR** (`renderer.ts` → `buildMetadataChunk`) and re-applies title/description on client nav (`App.svelte`). This is what non-JS crawlers and share scrapers actually read.
+2. **`<svelte:head>`** in a `+layout.svelte` / `+page.svelte` → bosia ships it as a **client-side hydration script** (`html.ts`: `document.head.insertAdjacentHTML(...)`). It only materializes once JS runs. **WhatsApp, Facebook, Slack, Twitter/X, and other link-preview scrapers do NOT run JS — so any OG/Twitter tag placed in `<svelte:head>` is invisible to them.** Googlebot does render JS, so JSON-LD survives there.
+
+Therefore every **share-critical** tag — `<title>`, `description`, `canonical`, all `og:*`, all `twitter:*`, per-page `robots` — must come from `metadata()`. The root layout `<svelte:head>` keeps only browser/PWA chrome (`theme-color`, `apple-*`, manifest, favicon) and JSON-LD.
+
+Three Bosia facts that rule out the old "site-wide meta in the layout + per-page `data.seo`" pattern:
+
+- **Layouts never receive a child page's data.** `App.svelte` renders each layout with `data = layoutData[index]` — its OWN depth only. A page `load()` returning `{ seo }` never reaches the root layout. (`$page.data` doesn't exist in Bosia either — `page` exposes only `url` + deprecated `params`.)
+- **`page.url` is stubbed to `http://localhost/` during SSR** (`page.svelte.ts`). A canonical/og:url derived from `page.url` in a layout is wrong on the server pass. `metadata({ url })` gets the real URL.
+- **`<svelte:head>` is client-injected** (above) — wrong channel for scrapers.
+
+✅ The pattern: a `buildPageMeta()` helper + one `metadata()` per route.
+
+```ts
+// src/lib/seo/site.ts — single source of truth
+import { PUBLIC_STATIC_SITE_ORIGIN } from "$env";
+
+export const SITE = {
+	name: "Komba",
+	tagline: "Catatan ternak domba untuk peternakan menengah.",
+	description: "Catat kelahiran, bobot, dan kesehatan domba dalam satu aplikasi.",
+	locale: "id_ID", // og:locale
+	lang: "id", // <html lang> + JSON-LD inLanguage
+	themeColor: "#F5F1E8",
+	origin: PUBLIC_STATIC_SITE_ORIGIN, // never the request host — see R2
+	ogImage: "/og-image.png",
+} as const;
+```
+
+```ts
+// src/lib/seo/metadata.ts — builds the bosia Metadata object
+import type { Metadata } from "bosia";
+import { SITE } from "./site.ts";
+
+type PageMetaArgs = {
+	title?: string; // omit on home for the brand title
+	description?: string; // ≤160 chars; falls back to SITE.description
+	path: string; // always url.pathname — for canonical + og:url
+	ogImage?: string;
+	ogType?: "website" | "article" | "product";
+	noindex?: boolean; // auth-gated / private routes
+};
+
+export function buildPageMeta({
+	title,
+	description,
+	path,
+	ogImage,
+	ogType = "website",
+	noindex = false,
+}: PageMetaArgs): Metadata {
+	const fullTitle = title ? `${title} · ${SITE.name}` : `${SITE.name} — ${SITE.tagline}`;
+	const desc = description ?? SITE.description;
+	const url = `${SITE.origin}${path}`;
+	const image = `${SITE.origin}${ogImage ?? SITE.ogImage}`;
+
+	const meta: NonNullable<Metadata["meta"]> = [
+		{ property: "og:site_name", content: SITE.name },
+		{ property: "og:locale", content: SITE.locale },
+		{ property: "og:type", content: ogType },
+		{ property: "og:title", content: fullTitle },
+		{ property: "og:description", content: desc },
+		{ property: "og:url", content: url },
+		{ property: "og:image", content: image },
+		{ property: "og:image:width", content: "1200" },
+		{ property: "og:image:height", content: "630" },
+		{ name: "twitter:card", content: "summary_large_image" },
+		{ name: "twitter:title", content: fullTitle },
+		{ name: "twitter:description", content: desc },
+		{ name: "twitter:image", content: image },
+	];
+
+	// Server-rendered noindex — non-public routes always, every route off prod.
+	if (noindex || process.env.NODE_ENV !== "production") {
+		meta.push({ name: "robots", content: "noindex,nofollow" });
+	}
+
+	return {
+		title: fullTitle,
+		description: desc,
+		lang: SITE.lang,
+		meta,
+		link: [{ rel: "canonical", href: url }],
+	};
+}
+```
+
+```ts
+// src/routes/(public)/login/+page.server.ts — one per route, even static ones
+import type { MetadataEvent } from "bosia";
+import { buildPageMeta } from "$lib/seo/metadata.ts";
+
+export function metadata({ url }: MetadataEvent) {
+	return buildPageMeta({
+		title: "Masuk",
+		description: "Masuk ke akun Komba Anda.",
+		path: url.pathname,
+	});
+}
+```
+
+`metadata()` must live in **`+page.server.ts`** (bosia only calls `route.pageServer`'s `metadata`; a `+page.ts` export is ignored). Every leaf route needs one — including private ones (pass `noindex: true`) and dynamic ones (read `params`, e.g. `getApp(params.id)`).
+
+✅ The root `+layout.svelte` — chrome + JSON-LD only, no OG/title/canonical:
 
 ```svelte
 <!-- src/routes/+layout.svelte -->
 <script lang="ts">
 	import "../app.css";
-	import { page } from "bosia/client";
-	import { PUBLIC_SITE_ORIGIN } from "$env";
-	import type { Snippet } from "svelte";
+	import { SITE } from "$lib/seo/site.ts";
+	import { jsonLd } from "$lib/seo/jsonld.ts";
 
-	let { children, data }: { children: Snippet; data: { seo?: SeoOverride } } = $props();
+	let { children }: { children: any } = $props();
 
-	const SITE = {
-		name: "Komba",
-		tagline: "Catatan ternak domba untuk peternakan menengah.",
-		locale: "id_ID",
-		themeColor: "#F5F1E8",
-		ogImage: "/og-image.png",
-	};
-
-	const canonical = $derived(`${PUBLIC_SITE_ORIGIN}${page.url.pathname}`);
-	const isProd = process.env.NODE_ENV === "production";
-
-	type SeoOverride = { title?: string; description?: string; ogImage?: string };
-	const seo = $derived(data?.seo ?? {});
-	const description = $derived(seo.description ?? SITE.tagline);
-	const ogImage = $derived(seo.ogImage ?? SITE.ogImage);
+	const orgLd = jsonLd({
+		"@context": "https://schema.org",
+		"@type": "Organization",
+		name: SITE.name,
+		url: SITE.origin,
+		logo: `${SITE.origin}/logo-mark.svg`,
+		description: SITE.description,
+	});
+	const siteLd = jsonLd({
+		"@context": "https://schema.org",
+		"@type": "WebSite",
+		name: SITE.name,
+		url: SITE.origin,
+		inLanguage: SITE.lang,
+	});
 </script>
 
 <svelte:head>
-	<title>{seo.title ?? SITE.name}</title>
-	<meta name="description" content={description} />
-	<link rel="canonical" href={canonical} />
-
 	<meta name="application-name" content={SITE.name} />
 	<meta name="apple-mobile-web-app-title" content={SITE.name} />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="format-detection" content="telephone=no" />
 	<meta name="theme-color" content={SITE.themeColor} />
-
-	{#if !isProd}
-		<meta name="robots" content="noindex,nofollow" />
-	{/if}
-
-	<meta property="og:type" content="website" />
-	<meta property="og:site_name" content={SITE.name} />
-	<meta property="og:title" content={seo.title ?? `${SITE.name} — ${SITE.tagline}`} />
-	<meta property="og:description" content={description} />
-	<meta property="og:image" content={`${PUBLIC_SITE_ORIGIN}${ogImage}`} />
-	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="630" />
-	<meta property="og:locale" content={SITE.locale} />
-	<meta property="og:url" content={canonical} />
-
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={seo.title ?? SITE.name} />
-	<meta name="twitter:description" content={description} />
-	<meta name="twitter:image" content={`${PUBLIC_SITE_ORIGIN}${ogImage}`} />
-
-	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 	<link rel="manifest" href="/site.webmanifest" />
+
+	{@html `<script type="application/ld+json">${orgLd}</script>`}
+	{@html `<script type="application/ld+json">${siteLd}</script>`}
 </svelte:head>
+
+{@render children()}
 ```
 
-Per-page override (only when different from layout default):
+> `<html lang>` and `<link rel="icon">` are emitted by bosia's HTML shell (`app.html` + `metadata.lang`, see R10) — don't re-declare the favicon in `<svelte:head>`.
 
-```svelte
-<!-- src/routes/(public)/login/+page.svelte -->
-<svelte:head>
-	<title>Masuk · Komba</title>
-</svelte:head>
+Per-page JSON-LD (Tier 3) still goes in that page's `<svelte:head>` (Googlebot renders JS) — see R6.
+
+### R2 — Canonical URLs come from `PUBLIC_STATIC_SITE_ORIGIN`, not the request host
+
+The request host (`event.url.origin` in a loader, `page.url.origin` in a component) reflects the **incoming request host**. In production behind a reverse proxy with multiple hostnames (apex, staging, preview deploy), this leaks the wrong canonical to Google and splits your link equity. Always pin canonical + `og:url` to a build-time origin constant — `SITE.origin` from `$env` (above). `metadata()` builds the absolute URL as `${SITE.origin}${url.pathname}`: real pathname from the event, fixed host from env.
+
+Use the **`PUBLIC_STATIC_*`** tier so the value is inlined at build (it never changes at runtime) and is available on both the SSR pass and the client bundle:
+
+```bash
+# .env.production
+PUBLIC_STATIC_SITE_ORIGIN=https://app.example.com
+# .env (dev)
+PUBLIC_STATIC_SITE_ORIGIN=http://localhost:9000
 ```
 
-Loader-driven override (when the page needs a dynamic description):
-
-```ts
-// src/routes/(public)/onboarding/+page.server.ts
-export const load = () => ({
-	seo: {
-		title: "Selamat datang · Komba",
-		description: "Mulai catat ternak Anda dalam tiga langkah.",
-	},
-});
-```
-
-### R2 — Canonical URLs come from `PUBLIC_SITE_ORIGIN`, not `page.url.origin`
-
-`page.url.origin` reflects the **incoming request host**. In production behind a reverse proxy with multiple hostnames (apex, staging, preview deploy), this leaks the wrong canonical to Google and splits your link equity. Always pin canonical to `PUBLIC_SITE_ORIGIN` from `$env`.
-
-Set `PUBLIC_SITE_ORIGIN=https://app.example.com` in production env. In dev, set it to `http://localhost:5173`.
-
-`og:url` follows the same rule.
+(The plain `PUBLIC_` tier — runtime-injected via `window.__BOSIA_ENV__` — also works, but origin is build-stable, so `PUBLIC_STATIC_` is the right tier and matches `PUBLIC_STATIC_APP_NAME`.)
 
 ### R3 — Dynamic `robots.txt` and `sitemap.xml` via `+server.ts`
 
@@ -224,11 +299,12 @@ Static files in `public/` work but hardcode the origin. Prefer server routes so 
 ```ts
 // src/routes/robots.txt/+server.ts
 import type { RequestEvent } from "bosia";
-import { PUBLIC_SITE_ORIGIN } from "$env";
+import { SITE } from "$lib/seo/site.ts";
 
+// Route groups like (private) are stripped from URLs — list the REAL prefixes.
 const PRIVATE_PREFIXES = [
-	"/api/",
-	"/uploads/",
+	"/dashboard",
+	"/api",
 	// app-specific private folders go here
 ];
 
@@ -240,7 +316,7 @@ export function GET(_event: RequestEvent) {
 				...PRIVATE_PREFIXES.map((p) => `Disallow: ${p}`),
 				"Allow: /",
 				"",
-				`Sitemap: ${PUBLIC_SITE_ORIGIN}/sitemap.xml`,
+				`Sitemap: ${SITE.origin}/sitemap.xml`,
 			].join("\n")
 		: "User-agent: *\nDisallow: /\n";
 
@@ -253,9 +329,9 @@ export function GET(_event: RequestEvent) {
 ```ts
 // src/routes/sitemap.xml/+server.ts
 import type { RequestEvent } from "bosia";
-import { PUBLIC_SITE_ORIGIN } from "$env";
+import { SITE } from "$lib/seo/site.ts";
 
-const PUBLIC_PATHS = ["/", "/login", "/onboarding", "/forgot-password"] as const;
+const PUBLIC_PATHS = ["/", "/login", "/register"] as const;
 
 export function GET(_event: RequestEvent) {
 	const now = new Date().toISOString().slice(0, 10);
@@ -263,7 +339,7 @@ export function GET(_event: RequestEvent) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${PUBLIC_PATHS.map(
 	(p) =>
-		`  <url><loc>${PUBLIC_SITE_ORIGIN}${p}</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq></url>`,
+		`  <url><loc>${SITE.origin}${p}</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq></url>`,
 ).join("\n")}
 </urlset>`;
 
@@ -316,12 +392,12 @@ The 512×512 maskable icon enables Android adaptive icons; rasterize from the br
 - **Size**: ≤ 300KB. Facebook silently drops images > 5MB but slows preview render long before that.
 - **Format**: PNG for crisp text, JPG for photographic. Avoid WebP (still spotty in legacy crawlers).
 - **Content**: brand mark + tagline. Same locale as BRIEF.md `language`. Test at thumbnail size — text must read at ~300px wide.
-- **URL**: must be absolute (`https://...`), not relative. The pattern above (`${PUBLIC_SITE_ORIGIN}${path}`) is correct.
+- **URL**: must be absolute (`https://...`), not relative. The pattern above (`${SITE.origin}${path}`) is correct.
 - **Dynamic per-page OG** (Tier 3): expose `src/routes/og/[slug]/+server.ts` returning a generated PNG via Satori/Resvg or a server-side canvas lib. Out of scope for Tier 1.
 
 ### R6 — JSON-LD `Organization` + `WebSite` at layout, page-specific schemas on leaves
 
-Use `<script type="application/ld+json">` inside `<svelte:head>`. SvelteKit emits the script as written — but escape any user-controlled strings to prevent XSS.
+Use `{@html}` with `<script type="application/ld+json">` inside `<svelte:head>` — escape user-controlled strings to prevent XSS. JSON-LD is the ONE SEO payload that's fine in `<svelte:head>`: it's only consumed by Googlebot, which renders JS (unlike the share scrapers in R1).
 
 Helper:
 
@@ -332,7 +408,7 @@ export function jsonLd(data: unknown): string {
 }
 ```
 
-Layout block:
+Layout block (see the full layout in R1) reads `SITE` from `$lib/seo/site.ts`:
 
 ```svelte
 <svelte:head>
@@ -340,15 +416,15 @@ Layout block:
 		"@context": "https://schema.org",
 		"@type": "Organization",
 		name: SITE.name,
-		url: PUBLIC_SITE_ORIGIN,
-		logo: `${PUBLIC_SITE_ORIGIN}/logo-mark.svg`,
+		url: SITE.origin,
+		logo: `${SITE.origin}/logo-mark.svg`,
 	})}</script>`}
 
 	{@html `<script type="application/ld+json">${jsonLd({
 		"@context": "https://schema.org",
 		"@type": "WebSite",
 		name: SITE.name,
-		url: PUBLIC_SITE_ORIGIN,
+		url: SITE.origin,
 	})}</script>`}
 </svelte:head>
 ```
@@ -362,9 +438,9 @@ Per-page (Tier 3) examples — Article, Product, FAQPage, BreadcrumbList — liv
 When BRIEF.md `Identity → Language` lists a single locale (most Bosia apps), skip `hreflang` — adding it with a single locale confuses Google. When multi-locale:
 
 ```svelte
-<link rel="alternate" hreflang="id" href={`${PUBLIC_SITE_ORIGIN}/id${page.url.pathname}`} />
-<link rel="alternate" hreflang="en" href={`${PUBLIC_SITE_ORIGIN}/en${page.url.pathname}`} />
-<link rel="alternate" hreflang="x-default" href={`${PUBLIC_SITE_ORIGIN}${page.url.pathname}`} />
+<link rel="alternate" hreflang="id" href={`${SITE.origin}/id${page.url.pathname}`} />
+<link rel="alternate" hreflang="en" href={`${SITE.origin}/en${page.url.pathname}`} />
+<link rel="alternate" hreflang="x-default" href={`${SITE.origin}${page.url.pathname}`} />
 ```
 
 ### R8 — Auth-gated apps still need Tier 1; sitemap lists only public surface
@@ -381,16 +457,13 @@ For auth-gated apps:
 
 Use the built-in `process.env.NODE_ENV` — Bosia's bundler inlines it at build time (via `define`), so it's safe on BOTH the SSR pass and the client bundle. Do NOT introduce a separate `PUBLIC_ENV` user var; that's a duplicate of what the framework already provides and risks drifting from `NODE_ENV`.
 
-```svelte
-<script lang="ts">
-	const isProd = process.env.NODE_ENV === "production";
-</script>
+Emit the `noindex` from `metadata()`, NOT a layout `<svelte:head>` `{#if}` block — the staging gate has to reach non-JS crawlers, and (per R1) `<svelte:head>` is client-injected. The `buildPageMeta()` helper in R1 already bakes this in:
 
-<svelte:head>
-	{#if !isProd}
-		<meta name="robots" content="noindex,nofollow" />
-	{/if}
-</svelte:head>
+```ts
+// inside buildPageMeta() — runs server-side, so NODE_ENV is correct
+if (noindex || process.env.NODE_ENV !== "production") {
+	meta.push({ name: "robots", content: "noindex,nofollow" });
+}
 ```
 
 In `+server.ts` files (robots.txt, sitemap) the same `process.env.NODE_ENV === "production"` check works — server-side it's natively populated by `bosia dev` / `bosia build` / `bosia start`.
@@ -399,14 +472,14 @@ Pair with the dynamic `robots.txt` returning `Disallow: /` in non-prod (see R3).
 
 > Why not `PUBLIC_ENV`? Bosia's `.env` convention exposes `PUBLIC_*` vars via `$env` and inlines `process.env.NODE_ENV` separately. NODE_ENV is set automatically by the framework binary (`bosia dev` → `development`, `bosia build`/`start` → `production`); a hand-rolled `PUBLIC_ENV` is one more thing to keep in sync with no benefit.
 
-### R10 — `<html lang>` lives in `src/app.html` via Bosia placeholder
+### R10 — `<html lang>` is driven by `metadata().lang`, defaulting to `en`
 
-Bosia's `src/app.html` should already use `lang="%bosia.lang%"`. The placeholder resolves from BRIEF.md `language`. If it shows `%bosia.lang%` unresolved or defaults to `en` despite BRIEF saying `id`, fix at the framework level — do not hardcode in `app.html`.
+Bosia's `src/app.html` uses `lang="%bosia.lang%"`, and the HTML shell fills that placeholder from the **current route's `metadata().lang`** (`renderer.ts` passes `metadata?.lang` → `safeLang()` → `en` when unset). There is no automatic BRIEF→lang wiring at runtime: a route that doesn't return `lang` renders `<html lang="en">`.
 
-`bosia-brief-review` enforces this (its rule B-lang). When in doubt, grep:
+So set `lang` on every route. `buildPageMeta()` (R1) does this for you via `SITE.lang` — keep `SITE.lang` in sync with BRIEF.md `language` (`"id"`, `"en"`, …), and don't hardcode the attribute in `app.html`. Verify:
 
 ```bash
-grep -E 'lang="[a-z-]+"' src/app.html
+curl -s http://localhost:9000/ | grep -oE '<html lang="[a-z-]+"'
 ```
 
 ### R11 — `metadata()` fetches once; share with `load()` via the `data` field
@@ -481,40 +554,44 @@ export async function metadata({ params }) {
 
 ## Anti-patterns
 
-| ❌ Anti-pattern                                              | ✅ Correct                                                             |
-| ------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `<title>Welcome</title>` only — no description               | Title + description + canonical at minimum                             |
-| `og:image` is relative `/og.png`                             | Absolute `https://app.example.com/og.png`                              |
-| Canonical from `page.url.origin`                             | Canonical from `PUBLIC_SITE_ORIGIN` env                                |
-| Description > 160 chars                                      | ≤ 160 chars (Google truncates)                                         |
-| Title > 60 chars                                             | ≤ 60 chars (Google truncates)                                          |
-| OG image without declared width/height                       | Always include `og:image:width` / `og:image:height`                    |
-| Hardcoded host in `robots.txt` / `sitemap.xml`               | Origin from `PUBLIC_SITE_ORIGIN`                                       |
-| Staging deploys indexed by Google                            | `process.env.NODE_ENV` gate emitting `noindex` + `robots: Disallow: /` |
-| Duplicate OG tags from layout + page both setting `og:image` | Page omits tags identical to layout; only override what differs        |
-| JSON-LD with user content not escaped                        | `JSON.stringify(...).replace(/</g, "\\u003c")` helper                  |
-| Marketing-quality OG image (5MB) shipped to every share      | ≤ 300KB                                                                |
-| `og:locale=id` (wrong)                                       | `og:locale=id_ID` (BCP 47-ish; underscore, country code)               |
-| `hreflang="id"` with no `x-default`                          | Always pair with `x-default` when multilingual                         |
-| Skipping SEO because app is auth-gated                       | Tier 1 still required — share previews                                 |
+| ❌ Anti-pattern                                           | ✅ Correct                                                                                        |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| OG/Twitter tags in `+layout.svelte` `<svelte:head>`       | Emit them from per-route `metadata()` — `<svelte:head>` is client-injected, scrapers miss it (R1) |
+| `<title>Welcome</title>` only — no description            | Title + description + canonical at minimum                                                        |
+| `og:image` is relative `/og.png`                          | Absolute `https://app.example.com/og.png`                                                         |
+| Canonical / `og:url` from the request host                | From `SITE.origin` (`PUBLIC_STATIC_SITE_ORIGIN`) + `url.pathname`                                 |
+| Per-page `seo` returned from `load()` for the root layout | Layout never sees page data — use `metadata()` in `+page.server.ts`                               |
+| `metadata()` in `+page.ts`                                | Must be `+page.server.ts` — bosia ignores universal-module metadata                               |
+| Description > 160 chars                                   | ≤ 160 chars (Google truncates)                                                                    |
+| Title > 60 chars                                          | ≤ 60 chars (Google truncates)                                                                     |
+| OG image without declared width/height                    | Always include `og:image:width` / `og:image:height`                                               |
+| Hardcoded host in `robots.txt` / `sitemap.xml`            | Origin from `SITE.origin`                                                                         |
+| Staging deploys indexed by Google                         | `metadata()` emits `noindex` off-prod + `robots: Disallow: /` (R3/R9)                             |
+| JSON-LD with user content not escaped                     | `JSON.stringify(...).replace(/</g, "\\u003c")` helper                                             |
+| Marketing-quality OG image (5MB) shipped to every share   | ≤ 300KB                                                                                           |
+| `og:locale=id` (wrong)                                    | `og:locale=id_ID` (BCP 47-ish; underscore, country code)                                          |
+| `hreflang="id"` with no `x-default`                       | Always pair with `x-default` when multilingual                                                    |
+| Skipping SEO because app is auth-gated                    | Tier 1 still required — share previews                                                            |
 
 ## Workflow
 
 1. **Read BRIEF.md** — capture name, tagline, language, theme color, audience locale.
-2. **Audit current layout meta** — open `src/routes/+layout.svelte`; list what's already there.
-3. **Inject Tier 1 block** — paste from `references/meta-template.md`, fill SITE constants from BRIEF.
-4. **Add public assets** — `public/og-image.png` (1200×630, ≤300KB), `public/apple-touch-icon.png` (180×180), `public/site.webmanifest` (R4), optional `public/icon-512.png`.
-5. **Add Tier 2 routes** — `src/routes/robots.txt/+server.ts` (R3), `src/routes/sitemap.xml/+server.ts` (R3).
-6. **Set env** — add `PUBLIC_SITE_ORIGIN` to `.env`, `.env.example`. Per `bosia-env`.
-7. **Add JSON-LD** — Organization + WebSite at layout (R6); per-page schemas only on content routes.
-8. **Run checklist** — `references/checklist.md`. Cannot mark skill done until every box ticked.
-9. **Verify** — see "Verification" below.
+2. **Add the SEO lib** — `src/lib/seo/site.ts` (SITE constants), `jsonld.ts` (escape helper), `metadata.ts` (`buildPageMeta`). See R1.
+3. **Set env** — add `PUBLIC_STATIC_SITE_ORIGIN` to `.env` / `.env.example` (and `.env.production`). Per R2 / `bosia-env`.
+4. **Slim the root layout** — `src/routes/+layout.svelte` keeps only chrome + JSON-LD (R1); no title/OG/canonical.
+5. **Add `metadata()` to every leaf route** — a `+page.server.ts` per route returning `buildPageMeta(...)`. Public routes indexable; private routes `noindex: true`; dynamic routes read `params`.
+6. **Add public assets** — `public/og-image.png` (1200×630, ≤300KB), `public/apple-touch-icon.png` (180×180), `public/icon-512.png` (512×512), `public/site.webmanifest` (R4).
+7. **Add Tier 2 routes** — `src/routes/robots.txt/+server.ts` (R3), `src/routes/sitemap.xml/+server.ts` (R3).
+8. **Add JSON-LD** — Organization + WebSite at layout (R6); per-page schemas in the content page's `<svelte:head>`.
+9. **Run checklist** — `references/checklist.md`. Cannot mark skill done until every box ticked.
+10. **Verify** — see "Verification" below; confirm OG tags appear in the RAW HTML, not just the hydration script.
 
 ## Verification
 
 After applying:
 
 - **Source check** — `curl -s https://app/login | grep -E 'og:|twitter:|canonical|description'` returns ≥ 10 lines.
+- **Raw-head check (Bosia-critical)** — the OG/Twitter tags must be real `<meta …>` in the served HTML, not escaped inside the `document.head.insertAdjacentHTML(...)` hydration script. `curl -s https://app/ | grep -oE '<meta property="og:image" content="[^"\\]*"'` must return a line (real quotes). If it only shows up as `content=\"…\"`, the tags are in `<svelte:head>` and scrapers can't see them — move them to `metadata()` (R1).
 - **Open Graph validator** — paste prod URL into [opengraph.xyz](https://www.opengraph.xyz) → preview renders with image + tagline.
 - **Twitter Card validator** — [cards-dev.twitter.com/validator](https://cards-dev.twitter.com/validator) (or post to a test thread) → large-image card renders.
 - **Schema validator** — paste JSON-LD into [validator.schema.org](https://validator.schema.org) → zero errors.
@@ -524,10 +601,10 @@ After applying:
 
 ## Bosia conventions
 
-- `bosia-brief-review` — locks BRIEF.md `language` → `<html lang>` and `og:locale`.
-- `bosia-routing` — `+server.ts` shape for `robots.txt` / `sitemap.xml`.
-- `bosia-env` — `PUBLIC_SITE_ORIGIN` belongs in the `PUBLIC_` tier. For prod-vs-dev detection use the framework-managed `process.env.NODE_ENV` (inlined into the client bundle by Bosia's bundler), not a hand-rolled `PUBLIC_ENV`.
-- `bosia-page-shell` — root `+layout.svelte` is the single source of truth for site-wide meta, mirroring chrome rule R1.
+- `bosia-brief-review` — BRIEF.md `language` → `SITE.lang` (drives `<html lang>` via `metadata().lang`) and `SITE.locale` (`og:locale`).
+- `bosia-routing` — `+server.ts` shape for `robots.txt` / `sitemap.xml`; `metadata()` only runs from `+page.server.ts`.
+- `bosia-env` — `PUBLIC_STATIC_SITE_ORIGIN` belongs in the `PUBLIC_STATIC_` tier (build-inlined, available SSR + client). For prod-vs-dev detection use the framework-managed `process.env.NODE_ENV`, not a hand-rolled `PUBLIC_ENV`.
+- `bosia-page-shell` — root `+layout.svelte` owns chrome + JSON-LD; per-route `metadata()` owns share-critical meta (title/description/canonical/OG/Twitter).
 - `bosia-landing` / `bosia-saas-landing` — marketing page scaffolds depend on Tier 1 + 2 from this skill.
 - `bosia-security-review` — XSS check on JSON-LD escaping.
 

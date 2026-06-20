@@ -1,96 +1,118 @@
 # bosia-seo — Meta template
 
-Copy-paste blocks. Replace `{{NAME}}`, `{{TAGLINE}}`, `{{LOCALE}}`, `{{THEME_COLOR}}`, `{{OG_IMAGE_PATH}}` from BRIEF.md.
+Copy-paste blocks. Replace `{{NAME}}`, `{{TAGLINE}}`, `{{DESCRIPTION}}`, `{{LOCALE}}`, `{{LANG}}`, `{{THEME_COLOR}}`, `{{OG_IMAGE_PATH}}` from BRIEF.md.
 
-## 1. Root `+layout.svelte` — full Tier 1 + 2 block
+> Bosia note: share-critical meta is built per-route by `metadata()` (server-rendered raw `<head>`), NOT in the layout `<svelte:head>` (client-injected, scrapers miss it). See SKILL.md R1.
+
+## 0. SEO lib — `src/lib/seo/site.ts`
+
+```ts
+import { PUBLIC_STATIC_SITE_ORIGIN } from "$env";
+
+export const SITE = {
+	name: "{{NAME}}",
+	tagline: "{{TAGLINE}}",
+	description: "{{DESCRIPTION}}", // default meta description, ≤160 chars
+	locale: "{{LOCALE}}", // og:locale, e.g. "id_ID", "en_US"
+	lang: "{{LANG}}", // <html lang> + JSON-LD inLanguage, e.g. "id"
+	themeColor: "{{THEME_COLOR}}", // e.g. "#F5F1E8"
+	origin: PUBLIC_STATIC_SITE_ORIGIN, // never the request host — SKILL.md R2
+	ogImage: "{{OG_IMAGE_PATH}}", // e.g. "/og-image.png"
+} as const;
+```
+
+## 1. `src/lib/seo/metadata.ts` — the per-route builder
+
+```ts
+import type { Metadata } from "bosia";
+import { SITE } from "./site.ts";
+
+type PageMetaArgs = {
+	title?: string; // omit on home for the brand title
+	description?: string; // ≤160 chars; falls back to SITE.description
+	path: string; // always url.pathname
+	ogImage?: string;
+	ogType?: "website" | "article" | "product";
+	noindex?: boolean;
+};
+
+export function buildPageMeta({
+	title,
+	description,
+	path,
+	ogImage,
+	ogType = "website",
+	noindex = false,
+}: PageMetaArgs): Metadata {
+	const fullTitle = title ? `${title} · ${SITE.name}` : `${SITE.name} — ${SITE.tagline}`;
+	const desc = description ?? SITE.description;
+	const url = `${SITE.origin}${path}`;
+	const image = `${SITE.origin}${ogImage ?? SITE.ogImage}`;
+
+	const meta: NonNullable<Metadata["meta"]> = [
+		{ property: "og:site_name", content: SITE.name },
+		{ property: "og:locale", content: SITE.locale },
+		{ property: "og:type", content: ogType },
+		{ property: "og:title", content: fullTitle },
+		{ property: "og:description", content: desc },
+		{ property: "og:url", content: url },
+		{ property: "og:image", content: image },
+		{ property: "og:image:width", content: "1200" },
+		{ property: "og:image:height", content: "630" },
+		{ name: "twitter:card", content: "summary_large_image" },
+		{ name: "twitter:title", content: fullTitle },
+		{ name: "twitter:description", content: desc },
+		{ name: "twitter:image", content: image },
+	];
+
+	if (noindex || process.env.NODE_ENV !== "production") {
+		meta.push({ name: "robots", content: "noindex,nofollow" });
+	}
+
+	return {
+		title: fullTitle,
+		description: desc,
+		lang: SITE.lang,
+		meta,
+		link: [{ rel: "canonical", href: url }],
+	};
+}
+```
+
+## 1b. Root `+layout.svelte` — chrome + JSON-LD only
 
 ```svelte
 <script lang="ts">
 	import "../app.css";
-	import { page } from "bosia/client";
-	import { PUBLIC_SITE_ORIGIN } from "$env";
+	import { SITE } from "$lib/seo/site.ts";
+	import { jsonLd } from "$lib/seo/jsonld.ts";
 	import type { Snippet } from "svelte";
-	import { jsonLd } from "$lib/seo/jsonld";
 
-	type SeoOverride = {
-		title?: string;
-		description?: string;
-		ogImage?: string;
-		ogType?: "website" | "article" | "product";
-	};
-
-	let {
-		children,
-		data,
-	}: {
-		children: Snippet;
-		data: { seo?: SeoOverride };
-	} = $props();
-
-	const SITE = {
-		name: "{{NAME}}",
-		tagline: "{{TAGLINE}}",
-		locale: "{{LOCALE}}", // e.g. "id_ID", "en_US"
-		themeColor: "{{THEME_COLOR}}", // e.g. "#F5F1E8"
-		ogImage: "{{OG_IMAGE_PATH}}", // e.g. "/og-image.png"
-	} as const;
-
-	const canonical = $derived(`${PUBLIC_SITE_ORIGIN}${page.url.pathname}`);
-	const isProd = process.env.NODE_ENV === "production";
-	const seo = $derived(data?.seo ?? {});
-	const title = $derived(seo.title ?? SITE.name);
-	const description = $derived(seo.description ?? SITE.tagline);
-	const ogImageUrl = $derived(`${PUBLIC_SITE_ORIGIN}${seo.ogImage ?? SITE.ogImage}`);
-	const ogType = $derived(seo.ogType ?? "website");
+	let { children }: { children: Snippet } = $props();
 
 	const orgLd = jsonLd({
 		"@context": "https://schema.org",
 		"@type": "Organization",
 		name: SITE.name,
-		url: PUBLIC_SITE_ORIGIN,
-		logo: `${PUBLIC_SITE_ORIGIN}/logo-mark.svg`,
+		url: SITE.origin,
+		logo: `${SITE.origin}/logo-mark.svg`,
+		description: SITE.description,
 	});
-
 	const siteLd = jsonLd({
 		"@context": "https://schema.org",
 		"@type": "WebSite",
 		name: SITE.name,
-		url: PUBLIC_SITE_ORIGIN,
+		url: SITE.origin,
+		inLanguage: SITE.lang,
 	});
 </script>
 
 <svelte:head>
-	<title>{title}</title>
-	<meta name="description" content={description} />
-	<link rel="canonical" href={canonical} />
-
 	<meta name="application-name" content={SITE.name} />
 	<meta name="apple-mobile-web-app-title" content={SITE.name} />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="format-detection" content="telephone=no" />
 	<meta name="theme-color" content={SITE.themeColor} />
-	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
-	{#if !isProd}
-		<meta name="robots" content="noindex,nofollow" />
-	{/if}
-
-	<meta property="og:type" content={ogType} />
-	<meta property="og:site_name" content={SITE.name} />
-	<meta property="og:title" content={seo.title ?? `${SITE.name} — ${SITE.tagline}`} />
-	<meta property="og:description" content={description} />
-	<meta property="og:image" content={ogImageUrl} />
-	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="630" />
-	<meta property="og:locale" content={SITE.locale} />
-	<meta property="og:url" content={canonical} />
-
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={title} />
-	<meta name="twitter:description" content={description} />
-	<meta name="twitter:image" content={ogImageUrl} />
-
-	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 	<link rel="manifest" href="/site.webmanifest" />
 
@@ -110,34 +132,54 @@ export function jsonLd(data: unknown): string {
 }
 ```
 
-## 3. Per-page override patterns
+## 3. Per-page `metadata()` — one per leaf route (`+page.server.ts`)
 
-### Static title override
-
-```svelte
-<!-- src/routes/(public)/login/+page.svelte -->
-<svelte:head><title>Masuk · {{ NAME }}</title></svelte:head>
-```
-
-### Loader-driven override (dynamic description)
+### Static route
 
 ```ts
-// src/routes/blog/[slug]/+page.server.ts
-export async function load({ params }) {
-	const post = await BlogService.bySlug(params.slug);
-	return {
-		post,
-		seo: {
-			title: `${post.title} · {{NAME}}`,
-			description: post.excerpt,
-			ogImage: `/og/${post.slug}.png`,
-			ogType: "article" as const,
-		},
-	};
+// src/routes/(public)/login/+page.server.ts
+import type { MetadataEvent } from "bosia";
+import { buildPageMeta } from "$lib/seo/metadata.ts";
+
+export function metadata({ url }: MetadataEvent) {
+	return buildPageMeta({
+		title: "Masuk",
+		description: "Masuk ke akun {{NAME}}.",
+		path: url.pathname,
+	});
 }
 ```
 
-Layout reads `data.seo`; page-component renders content only.
+### Private / auth-gated route — add `noindex`
+
+```ts
+// src/routes/(private)/dashboard/+page.server.ts
+import type { MetadataEvent } from "bosia";
+import { buildPageMeta } from "$lib/seo/metadata.ts";
+
+export function metadata({ url }: MetadataEvent) {
+	return buildPageMeta({
+		title: "Dasbor",
+		description: "Ringkasan akunmu.",
+		path: url.pathname,
+		noindex: true,
+	});
+}
+```
+
+### Dynamic route — derive from `params`
+
+```ts
+// src/routes/blog/[slug]/+page.server.ts (no DB? just read params/static map)
+import type { MetadataEvent } from "bosia";
+import { buildPageMeta } from "$lib/seo/metadata.ts";
+
+export function metadata({ params, url }: MetadataEvent) {
+	return buildPageMeta({ title: params.slug, path: url.pathname, ogType: "article" });
+}
+```
+
+For a dynamic route that needs DB data for the title/description, see §3b (fetch once in `metadata()`, share with `load()`).
 
 ## 3b. Per-page override that needs DB data — share between `metadata()` and `load()`
 
@@ -206,7 +248,7 @@ export async function load({ params, metadata }: LoadEvent) {
 <script lang="ts">
 	import { page } from "bosia/client";
 	import { jsonLd } from "$lib/seo/jsonld";
-	import { PUBLIC_SITE_ORIGIN } from "$env";
+	import { SITE } from "$lib/seo/site.ts";
 
 	const crumbs = $derived(page.url.pathname.split("/").filter(Boolean));
 	const crumbLd = $derived(
@@ -217,7 +259,7 @@ export async function load({ params, metadata }: LoadEvent) {
 				"@type": "ListItem",
 				position: i + 1,
 				name: slug,
-				item: `${PUBLIC_SITE_ORIGIN}/${crumbs.slice(0, i + 1).join("/")}`,
+				item: `${SITE.origin}/${crumbs.slice(0, i + 1).join("/")}`,
 			})),
 		}),
 	);
@@ -261,11 +303,12 @@ export async function load({ params, metadata }: LoadEvent) {
 
 ```ts
 import type { RequestEvent } from "bosia";
-import { PUBLIC_SITE_ORIGIN } from "$env";
+import { SITE } from "$lib/seo/site.ts";
 
+// Route groups like (private) are stripped from URLs — list the REAL prefixes.
 const PRIVATE_PREFIXES = [
-	"/api/",
-	"/uploads/",
+	"/dashboard",
+	"/api",
 	// app-specific private prefixes
 ];
 
@@ -277,7 +320,7 @@ export function GET(_event: RequestEvent) {
 				...PRIVATE_PREFIXES.map((p) => `Disallow: ${p}`),
 				"Allow: /",
 				"",
-				`Sitemap: ${PUBLIC_SITE_ORIGIN}/sitemap.xml`,
+				`Sitemap: ${SITE.origin}/sitemap.xml`,
 			].join("\n")
 		: "User-agent: *\nDisallow: /\n";
 
@@ -291,9 +334,9 @@ export function GET(_event: RequestEvent) {
 
 ```ts
 import type { RequestEvent } from "bosia";
-import { PUBLIC_SITE_ORIGIN } from "$env";
+import { SITE } from "$lib/seo/site.ts";
 
-const PUBLIC_PATHS = ["/", "/login", "/onboarding", "/forgot-password"] as const;
+const PUBLIC_PATHS = ["/", "/login", "/register"] as const;
 
 export function GET(_event: RequestEvent) {
 	const now = new Date().toISOString().slice(0, 10);
@@ -301,7 +344,7 @@ export function GET(_event: RequestEvent) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${PUBLIC_PATHS.map(
 	(p) =>
-		`  <url><loc>${PUBLIC_SITE_ORIGIN}${p}</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq></url>`,
+		`  <url><loc>${SITE.origin}${p}</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq></url>`,
 ).join("\n")}
 </urlset>`;
 
@@ -311,13 +354,14 @@ ${PUBLIC_PATHS.map(
 }
 ```
 
-## 9. `.env.example` additions
+## 9. `.env` / `.env.example` additions
 
 ```
-PUBLIC_SITE_ORIGIN=https://app.example.com
+# Build-time inlined (PUBLIC_STATIC_*), available on SSR + client.
+PUBLIC_STATIC_SITE_ORIGIN=http://localhost:9000
 ```
 
-In prod, point `PUBLIC_SITE_ORIGIN` at the canonical hostname. Bosia sets `NODE_ENV=production` automatically when you run `bosia build` / `bosia start` — no extra env var is needed for the prod gate.
+In `.env.production`, point `PUBLIC_STATIC_SITE_ORIGIN` at the canonical hostname (`https://app.example.com`). Bosia sets `NODE_ENV=production` automatically when you run `bosia build` / `bosia start` — no extra env var is needed for the prod gate.
 
 ## 10. Multilingual block (only when BRIEF declares multiple locales)
 
@@ -326,8 +370,8 @@ In prod, point `PUBLIC_SITE_ORIGIN` at the canonical hostname. Bosia sets `NODE_
 	<link
 		rel="alternate"
 		hreflang={loc.code}
-		href={`${PUBLIC_SITE_ORIGIN}/${loc.prefix}${page.url.pathname}`}
+		href={`${SITE.origin}/${loc.prefix}${page.url.pathname}`}
 	/>
 {/each}
-<link rel="alternate" hreflang="x-default" href={`${PUBLIC_SITE_ORIGIN}${page.url.pathname}`} />
+<link rel="alternate" hreflang="x-default" href={`${SITE.origin}${page.url.pathname}`} />
 ```
