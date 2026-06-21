@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.bosia/
+.DS_Store
+*.log
+
+# Generated Tailwind output
+public/bosia-tw.css
+
+# Local env overrides — never commit secrets
+.env*.local
+.env
+
+# SQLite database artifacts
+data/*.db*

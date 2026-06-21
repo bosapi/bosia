@@ -17,10 +17,12 @@ bun x bosia@latest create my-app
 
 Anda akan diminta memilih template:
 
-| Template    | Deskripsi                                                   |
-| ----------- | ----------------------------------------------------------- |
-| **default** | Starter minimal — halaman utama, halaman about, satu loader |
-| **demo**    | Fitur lengkap — blog, API routes, form actions, hooks       |
+| Template    | Deskripsi                                                                 |
+| ----------- | ------------------------------------------------------------------------- |
+| **default** | Starter minimal — halaman utama, halaman about, satu loader               |
+| **demo**    | Fitur lengkap — blog, API routes, form actions, hooks                     |
+| **shop**    | Toko online — auth, RBAC, upload S3, produk/pesanan/keranjang             |
+| **store**   | Toko online di Postgres + MinIO/S3 — auth, RBAC, produk/pesanan/keranjang |
 
 Untuk melewati prompt:
 

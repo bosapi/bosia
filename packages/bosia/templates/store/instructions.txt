@@ -1,0 +1,8 @@
+Update .env with your DATABASE_URL (Postgres, e.g. postgres://user:pass@localhost:5432/store) and S3_* credentials (MinIO or any S3-compatible store).
+Pick a strong SESSION_SECRET.
+
+bun run db:generate
+bun run db:migrate
+bun run db:seed
+
+The first account you register becomes the admin.

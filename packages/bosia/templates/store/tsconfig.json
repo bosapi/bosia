@@ -1,0 +1,22 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"allowJs": true,
+		"skipLibCheck": true,
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
+		"verbatimModuleSyntax": true,
+		"types": ["bun-types"],
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"rootDirs": [".", ".bosia/types"],
+		"paths": {
+			"$lib": ["./src/lib"],
+			"$lib/*": ["./src/lib/*"]
+		}
+	},
+	"include": ["src/**/*", ".bosia/types/**/*.d.ts"],
+	"exclude": ["node_modules", "dist"]
+}

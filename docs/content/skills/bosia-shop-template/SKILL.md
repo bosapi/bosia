@@ -1,6 +1,6 @@
 ---
 name: bosia-shop-template
-description: Storefront starter scaffolded by `bosia create … --template shop`. Bundles `auth` + `rbac` + `file-upload` + `shop` registry features, `(public)` + `(private)` route shells, `PublicNavbar` + `AdminSidebar`, and a sqlite-file-by-default Drizzle setup. Use when extending a shop scaffold — not when bootstrapping a generic Bosia app.
+description: Storefront starter scaffolded by `bosia create … --template shop` (SQLite) or `--template store` (Postgres + MinIO/S3). Bundles `auth` + `rbac` + `file-upload` + `shop` registry features, `(public)` + `(private)` route shells, `PublicNavbar` + `AdminSidebar`, and a Drizzle setup. Use when extending a shop/store scaffold — not when bootstrapping a generic Bosia app.
 triggers:
   - shop template
   - storefront
@@ -8,6 +8,9 @@ triggers:
   - online store
   - ecommerce starter
   - bosia create --template shop
+  - bosia create --template store
+  - store template
+  - postgres store starter
   - admin dashboard for shop
   - products page
   - orders page
@@ -35,7 +38,7 @@ bosia:
 
 1. **Re-running `bosia add feat auth|rbac|file-upload|shop`** because the consumer didn't realise the scaffold already wired them. The append-block markers (`resources.ts`, `auth-handle.ts`, `App.Locals`, `schemas.ts`) will double-append and break compilation.
 2. **Replacing `src/lib/components/AdminSidebar.svelte` or `PublicNavbar.svelte` with a fresh component** instead of editing the one the scaffold shipped — you lose the working `DropdownMenu floating side="top" anchor={chevronEl}` user menu, the theme-aware logo button, and the `SidebarTrigger` collapse wiring, then spend an hour rebuilding them from `[[bosia-sidebar]]`.
-3. **Adding `postgres` / `pg` / `@aws-sdk/*` to `package.json`** because the snippets you copy from the internet assume them. The shop scaffold defaults to sqlite-file via the built-in `bun:sqlite` + `drizzle-orm/bun-sqlite` (no driver dep), and storage uses `Bun.s3`. The template ships with none of those deps and shouldn't gain them.
+3. **Adding a DB driver dep (`pg` / `postgres` / `mysql2`) or `@aws-sdk/*` to `package.json`** because the snippets you copy from the internet assume them. The `shop` scaffold defaults to sqlite-file via the built-in `bun:sqlite` + `drizzle-orm/bun-sqlite`; the `store` scaffold defaults to Postgres via native `Bun.SQL` + `drizzle-orm/bun-sql` — **neither needs a separate driver dep**. Storage uses `Bun.s3` (MinIO/S3) — no `@aws-sdk`. The templates ship with none of those deps and shouldn't gain them.
 4. **Building a custom "first user = admin" check** because the consumer didn't see the seed. `001_rbac_bootstrap.ts` already grants `('*','*','')` to the first registered user. Don't reimplement.
 5. **Numbering new seeds `001_*.ts` / `002_*.ts`** because the consumer didn't `ls src/features/drizzle/seeds/`. Those slots are taken (`001_rbac_bootstrap`, `002_shop`). Start at `003_*`.
 
@@ -43,7 +46,7 @@ bosia:
 
 | Layer       | Already wired                                                                                                                                                     |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Features    | `auth`, `rbac`, `file-upload`, `shop` (all sqlite-file by default; override per-feature in `template.json#featureOptions`)                                        |
+| Features    | `auth`, `rbac`, `file-upload`, `shop` (`shop` template → sqlite-file, `store` template → postgres; set per-feature in `template.json#featureOptions`)             |
 | Auth routes | `(public)/login`, `(public)/register`, `POST /logout` (303 → `/`)                                                                                                 |
 | API routes  | `POST /api/files`, `GET /uploads/[...path]/+server.ts`                                                                                                            |
 | Auth gate   | `src/routes/(private)/+layout.server.ts` redirects to `/login?next=…` when `locals.user` is null                                                                  |
@@ -58,11 +61,11 @@ bosia:
 
 ## When to use
 
-- Anywhere inside an app scaffolded with `bosia create … --template shop`.
+- Anywhere inside an app scaffolded with `bosia create … --template shop` (SQLite) or `--template store` (Postgres + MinIO/S3).
 - When the user asks to add product CRUD, an order list, a checkout, an admin user page, or any feature that sits on top of the existing `(private)/dashboard/` shell.
 - When asked to wire a new sidebar entry, breadcrumb, RBAC-gated page, or upload form in the shop.
 
-Anti-trigger: a generic Bosia app (`--template default` or no template). Use `[[bosia-page-shell]]` + `[[bosia-clean-architecture]]` from scratch instead.
+Anti-trigger: a generic Bosia app (`--template default` or no template). Use `[[bosia-page-shell]]` + `[[bosia-clean-architecture]]` from scratch instead. (The `store` template is **not** an anti-trigger — it's the Postgres sibling of `shop` and uses every rule below.)
 
 ## Rules
 
@@ -152,7 +155,7 @@ It exists. Sign-out from the sidebar is wired to it as a real `<form method="POS
 - `[[bosia-file-upload]]` — when a new flow needs uploads beyond what `image-dialog` covers.
 - `[[bosia-clean-architecture]]` — repository / service layering, no `db.select` in routes.
 - `[[bosia-query-defaults]]` — `{ rows, total }` shape, default sort, pagination.
-- `[[bosia-bun-runtime]]` — `bun:sqlite` (the sqlite-file default; `Bun.SQL` only if switched to postgres/mysql), `Bun.s3`, `Bun.password`, `Bun.Image`. The shop scaffold relies on these.
+- `[[bosia-bun-runtime]]` — `bun:sqlite` (`shop` default) or `Bun.SQL` (`store`/postgres default), `Bun.s3`, `Bun.password`, `Bun.Image`. The shop/store scaffolds rely on these.
 
 ## Checklist gate
 
@@ -160,7 +163,7 @@ P0:
 
 - [ ] No `bosia add feat auth|rbac|file-upload|shop` calls in this turn.
 - [ ] `AdminSidebar.svelte` and `PublicNavbar.svelte` were edited in place, not replaced.
-- [ ] No `postgres`, `pg`, or `@aws-sdk/*` added to `package.json`.
+- [ ] No DB driver dep (`pg`, `postgres`, `mysql2`) or `@aws-sdk/*` added to `package.json` — sqlite uses `bun:sqlite`, postgres uses `Bun.SQL`, storage uses `Bun.s3`.
 - [ ] New admin pages live under `(private)/dashboard/`, not loose under `(private)/`.
 - [ ] Any DB read goes through a `*.service.ts` (and a repository), not `db.select` in a route.
 - [ ] Any new permission resource appended to `src/lib/rbac/resources.ts`; the page gates with `locals.can(...)`.
@@ -176,7 +179,7 @@ P1:
 
 ## References
 
-- Template source: `packages/bosia/templates/shop/`.
-- Composition manifest: `packages/bosia/templates/shop/template.json`.
+- Template source: `packages/bosia/templates/shop/` (SQLite) or `packages/bosia/templates/store/` (Postgres + MinIO/S3).
+- Composition manifest: `packages/bosia/templates/shop/template.json` / `packages/bosia/templates/store/template.json`.
 - Feature sources: `registry/features/{auth,rbac,file-upload,shop}/`.
 - Inventory: `backup/SHOP_TEMPLATE.md` (human-facing summary of everything the scaffold ships).

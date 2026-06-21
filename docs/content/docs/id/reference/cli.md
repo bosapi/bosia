@@ -11,15 +11,17 @@ Buat kerangka proyek Bosia baru.
 bosia create <name> [--template <template>]
 ```
 
-| Opsi         | Deskripsi                                      |
-| ------------ | ---------------------------------------------- |
-| `<name>`     | Nama direktori proyek                          |
-| `--template` | Lewati pemilih template: `default` atau `demo` |
+| Opsi         | Deskripsi                                                        |
+| ------------ | ---------------------------------------------------------------- |
+| `<name>`     | Nama direktori proyek                                            |
+| `--template` | Lewati pemilih template: `default`, `demo`, `shop`, atau `store` |
 
 **Template:**
 
 - **default** — Starter minimal dengan halaman utama, halaman about, dan satu server loader
 - **demo** — Contoh lengkap dengan blog, rute API, form actions, hooks, dan catch-all routes
+- **shop** — Starter toko online di SQLite (otomatis memasang fitur `auth`, `rbac`, `file-upload`, dan `shop`)
+- **store** — Starter toko online di Postgres + MinIO/S3 (fitur sama seperti `shop`, stack siap produksi)
 
 Setelah kerangka dibuat, `bun install` akan berjalan secara otomatis.
 

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.8] - 2026-06-21
+
+### Added
+
+- Docs and shop-template skill now cover the new `store` template (Postgres + MinIO/S3).
+
 ## [0.7.7] - 2026-06-20
 
 ### Added

@@ -16,6 +16,7 @@ const TEMPLATE_DESCRIPTIONS: Record<string, string> = {
 	default: "Minimal starter with routing and Tailwind",
 	demo: "Full-featured demo with hooks, API routes, form actions, and more",
 	shop: "Online store starter with auth, RBAC, S3 uploads, products/orders/cart",
+	store: "Online store starter (Postgres + MinIO/S3) with auth, RBAC, products/orders/cart",
 };
 
 export async function runCreate(name: string | undefined, args: string[] = []) {

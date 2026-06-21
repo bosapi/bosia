@@ -11,16 +11,17 @@ Scaffold a new Bosia project.
 bosia create <name> [--template <template>]
 ```
 
-| Option       | Description                                   |
-| ------------ | --------------------------------------------- |
-| `<name>`     | Project directory name                        |
-| `--template` | Skip the picker: `default`, `demo`, or `shop` |
+| Option       | Description                                            |
+| ------------ | ------------------------------------------------------ |
+| `<name>`     | Project directory name                                 |
+| `--template` | Skip the picker: `default`, `demo`, `shop`, or `store` |
 
 **Templates:**
 
 - **default** — Minimal starter with home page, about page, and one server loader
 - **demo** — Full-featured example with blog, API routes, form actions, hooks, and catch-all routes
-- **shop** — Online store starter (auto-installs `auth`, `rbac`, `file-upload`, and `shop` features)
+- **shop** — Online store starter on SQLite (auto-installs `auth`, `rbac`, `file-upload`, and `shop` features)
+- **store** — Online store starter on Postgres + MinIO/S3 (same features as `shop`, production-shaped stack)
 
 After scaffolding, `bun install` runs automatically (pass `--no-install` to skip it).
 

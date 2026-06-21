@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.5] - 2026-06-21
+
+### Added
+
+- New `store` template — Postgres database + MinIO/S3 uploads out of the box.
+
 ## [0.7.4] - 2026-06-17
 
 ### Fixed

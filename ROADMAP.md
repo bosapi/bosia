@@ -1,9 +1,21 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.7.4**
+> Current version: **0.7.5**
 
 ---
+
+## 0.7.5 (2026-06-21) — `store` template (Postgres + MinIO/S3)
+
+> `shop` bakes SQLite + empty S3 vars. Add a sibling `store` template that defaults to Postgres
+> (native `Bun.SQL` via `drizzle-orm/bun-sql`, no driver dep) and MinIO/S3 uploads — the
+> production-shaped stack — so `create … --template store` needs no post-scaffold rewiring.
+
+- [x] 🟠 `packages/bosia/templates/store/` — copy of `shop`; `template.json` all dialects `postgres`; `.env.example` Postgres URL + MinIO defaults; `instructions.txt` + `README.md` reworded; `data/` dropped (S3 uploads, no SQLite file).
+- [x] 🟠 `packages/bosia/src/cli/create.ts` — register `store` in `TEMPLATE_DESCRIPTIONS`.
+- [x] ⚪ Docs — `getting-started` template table + `reference/cli` `--template` line & bullets (en + id).
+- [x] ⚪ `bosia-shop-template` skill — cover the `store` sibling (postgres default, no driver/`@aws-sdk` deps).
+- [x] ⚪ Version bump `0.7.5` (framework) / `0.7.8` (docs).
 
 ## 0.7.4 (2026-06-16) — Navbar block family (18 `navbars/*` blocks + `bosia-navbars` skill)
 

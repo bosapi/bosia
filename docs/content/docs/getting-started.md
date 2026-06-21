@@ -17,11 +17,12 @@ bun x bosia@latest create my-app
 
 You'll be prompted to pick a template:
 
-| Template    | Description                                                 |
-| ----------- | ----------------------------------------------------------- |
-| **default** | Minimal starter — home page, about page, one loader         |
-| **demo**    | Full-featured — blog, API routes, form actions, hooks       |
-| **shop**    | Online store — auth, RBAC, S3 uploads, products/orders/cart |
+| Template    | Description                                                            |
+| ----------- | ---------------------------------------------------------------------- |
+| **default** | Minimal starter — home page, about page, one loader                    |
+| **demo**    | Full-featured — blog, API routes, form actions, hooks                  |
+| **shop**    | Online store — auth, RBAC, S3 uploads, products/orders/cart            |
+| **store**   | Online store on Postgres + MinIO/S3 — auth, RBAC, products/orders/cart |
 
 To skip the prompt:
 
