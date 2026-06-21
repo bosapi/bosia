@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Docs and shop-template skill now cover the new `store` template (Postgres + MinIO/S3).
 
+### Changed
+
+- `file-upload` S3 driver now serves files through the app's `/uploads` route (same as local) instead of returning a direct bucket URL — keeps the per-user ownership check and works with a private/loopback `S3_ENDPOINT`.
+
 ## [0.7.7] - 2026-06-20
 
 ### Added

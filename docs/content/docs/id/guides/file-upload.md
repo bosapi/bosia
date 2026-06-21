@@ -25,15 +25,15 @@ bun run db:migrate
 
 ## Apa yang Anda dapat
 
-| Path                                              | Tujuan                                   |
-| ------------------------------------------------- | ---------------------------------------- |
-| `src/features/file-upload/schemas/files.table.ts` | Tabel Drizzle (sesuai dialect Anda)      |
-| `src/features/file-upload/file.service.ts`        | Validasi + orkestrasi kompresi           |
-| `src/features/file-upload/file.repository.ts`     | Query DB                                 |
-| `src/features/file-upload/storage/`               | Adapter `local` + `s3`                   |
-| `src/routes/api/files/+server.ts`                 | `GET` list, `POST` upload                |
-| `src/routes/api/files/[id]/+server.ts`            | `DELETE` (mengalir ke storage)           |
-| `src/routes/uploads/[...path]/+server.ts`         | Streaming file lokal (dilewati untuk S3) |
+| Path                                              | Tujuan                              |
+| ------------------------------------------------- | ----------------------------------- |
+| `src/features/file-upload/schemas/files.table.ts` | Tabel Drizzle (sesuai dialect Anda) |
+| `src/features/file-upload/file.service.ts`        | Validasi + orkestrasi kompresi      |
+| `src/features/file-upload/file.repository.ts`     | Query DB                            |
+| `src/features/file-upload/storage/`               | Adapter `local` + `s3`              |
+| `src/routes/api/files/+server.ts`                 | `GET` list, `POST` upload           |
+| `src/routes/api/files/[id]/+server.ts`            | `DELETE` (mengalir ke storage)      |
+| `src/routes/uploads/[...path]/+server.ts`         | Streaming file (lokal **dan** S3)   |
 
 ## Variabel env
 
@@ -93,9 +93,9 @@ S3_SECRET_ACCESS_KEY=...
 S3_ENDPOINT=https://nyc3.digitaloceanspaces.com   # optional, for non-AWS
 ```
 
-Restart server. Route statis `uploads/` tidak berbahaya saat tak terpakai — URL file kini mengarah ke bucket.
+Restart server. Kedua driver mengembalikan URL relatif `/uploads/<key>` dan disajikan lewat route `uploads/[...path]`, jadi beralih ke S3 tak perlu ubah klien. File tetap privat di balik cek kepemilikan per-pengguna — bucket Anda **tidak** perlu publik, dan `S3_ENDPOINT` boleh privat/loopback saja (server menjangkaunya, browser tidak pernah).
 
 ## Catatan
 
-- Route `uploads/[...path]` melakukan streaming dari `UPLOAD_DIR` dengan penjaga path-traversal. Ini cara paling sederhana untuk menyajikan file lokal; di produksi, lebih baik gunakan reverse proxy.
+- Route `uploads/[...path]` melakukan streaming dari driver aktif (FS lokal atau S3) di balik cek autentikasi + kepemilikan, dengan penjaga path-traversal. Untuk aset publik bertraffic tinggi, Anda bisa memajang bucket publik di belakang CDN dan membuat adapter S3 mengembalikan URL langsung — tapi default-nya menjaga tiap objek tetap privat.
 - Cropping dilakukan di sisi klien melalui blok [`files/crop-image`](/docs/blocks/files/crop-image) — sambungkan melalui prop `onCropRequest` milik `upload-area`.

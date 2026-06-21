@@ -33,7 +33,7 @@ bun run db:migrate
 | `src/features/file-upload/storage/`               | `local` + `s3` adapters                |
 | `src/routes/api/files/+server.ts`                 | `GET` list, `POST` upload              |
 | `src/routes/api/files/[id]/+server.ts`            | `DELETE` (cascades to storage)         |
-| `src/routes/uploads/[...path]/+server.ts`         | Streams local files (skipped for S3)   |
+| `src/routes/uploads/[...path]/+server.ts`         | Streams files (local **and** S3)       |
 
 ## Env vars
 
@@ -93,9 +93,9 @@ S3_SECRET_ACCESS_KEY=...
 S3_ENDPOINT=https://nyc3.digitaloceanspaces.com   # optional, for non-AWS
 ```
 
-Restart the server. The `uploads/` static route is harmless when unused — file URLs now point at the bucket.
+Restart the server. Both drivers return app-relative `/uploads/<key>` URLs and serve through the `uploads/[...path]` route, so switching to S3 needs no client changes. Files stay private behind the same per-user ownership check — your bucket does **not** need to be public, and `S3_ENDPOINT` may be private/loopback-only (the server reaches it, the browser never does).
 
 ## Notes
 
-- The `uploads/[...path]` route streams from `UPLOAD_DIR` with a path-traversal guard. It is the simplest way to serve local files; in production, prefer a reverse proxy.
+- The `uploads/[...path]` route streams from the active driver (local FS or S3) behind an auth + ownership check, with a path-traversal guard. For high-traffic public assets you can instead front a public bucket with a CDN and have the S3 adapter return direct URLs — but the default keeps every object private.
 - Cropping is client-side via the [`files/crop-image`](/docs/blocks/files/crop-image) block — wire it through `upload-area`'s `onCropRequest` prop.

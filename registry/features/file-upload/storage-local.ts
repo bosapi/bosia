@@ -11,6 +11,11 @@ export class LocalStorage implements IStorageAdapter {
 		return `/uploads/${key}`;
 	}
 
+	async read(key: string): Promise<Blob | null> {
+		const f = Bun.file(join(this.dir, key));
+		return (await f.exists()) ? f : null;
+	}
+
 	async delete(key: string) {
 		const f = Bun.file(join(this.dir, key));
 		if (await f.exists()) await f.delete();
