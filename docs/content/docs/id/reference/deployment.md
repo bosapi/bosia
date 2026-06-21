@@ -125,6 +125,18 @@ EXPOSE 9000
 CMD ["bun", "dist/server/index.js"]
 ```
 
+## Hosting Sandbox / Multi-Tenant
+
+Jika kamu menjalankan app Bosia di dalam sandbox yang memblokir addon native (`.node`) — misalnya host multi-tenant yang memindai `node_modules` tiap app — perlu diketahui bahwa toolchain Bosia membawa binari native yang dibutuhkan untuk **build dan menjalankan** app:
+
+| Paket                | Dipakai oleh                            |
+| -------------------- | --------------------------------------- |
+| `@tailwindcss/oxide` | Mesin CSS Tailwind v4 (build)           |
+| `lightningcss`       | Transform/minify CSS (build)            |
+| `@parcel/watcher`    | Pemantau file di `bosia dev` (mode dev) |
+
+Ini adalah perkakas build framework — murni komputasi / inotify — dan **tidak** butuh syscall pengubah-kernel yang biasanya diblokir sandbox semacam itu (unit systemd `SystemCallFilter=@system-service` mengizinkannya). Jika host-mu menolak semua file `.node`, **izinkan (allowlist) paket-paket ini** (beserta sub-paket per-platform seperti `lightningcss-linux-x64-musl`), bukan kode app itu sendiri. Cocokkan nama direktori paket dengan akhiran platform yang ter-anchor agar tiruan seperti `lightningcss-evil` tidak lolos.
+
 ## Variabel Lingkungan
 
 Lihat [Variabel Lingkungan](/id/guides/environment-variables/) untuk daftar lengkap opsi konfigurasi termasuk `PORT`, `BODY_SIZE_LIMIT`, CORS, dan pengaturan CSRF.

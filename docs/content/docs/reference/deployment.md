@@ -125,6 +125,18 @@ EXPOSE 9000
 CMD ["bun", "dist/server/index.js"]
 ```
 
+## Sandboxed / Multi-Tenant Hosting
+
+If you run Bosia apps inside a hardened sandbox that blocks native (`.node`) addons — e.g. a multi-tenant host scanning each app's `node_modules` — be aware that the Bosia toolchain ships native binaries it needs to **build and run** an app:
+
+| Package              | Used by                                 |
+| -------------------- | --------------------------------------- |
+| `@tailwindcss/oxide` | Tailwind v4 CSS engine (build)          |
+| `lightningcss`       | CSS transform/minify (build)            |
+| `@parcel/watcher`    | File watching in `bosia dev` (dev mode) |
+
+These are framework build-tooling — pure compute / inotify — and do **not** need the kernel-modifying syscalls such a sandbox usually denies (a `SystemCallFilter=@system-service` systemd unit permits them). If your host blanket-rejects `.node` files, **allowlist these packages** (and their per-platform sub-packages such as `lightningcss-linux-x64-musl`) rather than the app's own code. Match the package directory name with an anchored platform suffix so a lookalike like `lightningcss-evil` can't slip through.
+
 ## Environment Variables
 
 See [Environment Variables](/guides/environment-variables/) for the full list of configuration options including `PORT`, `BODY_SIZE_LIMIT`, CORS, and CSRF settings.

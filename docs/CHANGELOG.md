@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Docs and shop-template skill now cover the new `store` template (Postgres + MinIO/S3).
+- Deployment guide: a "Sandboxed / Multi-Tenant Hosting" note listing the native build-tool addons (`@tailwindcss/oxide`, `lightningcss`, `@parcel/watcher`) hosts must allowlist (EN + ID).
 
 ### Changed
 
