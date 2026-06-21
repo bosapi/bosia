@@ -781,6 +781,20 @@ if (_xfoDisabled) {
 }
 
 async function handleRequest(request: Request, url: URL): Promise<Response> {
+	// Behind a trusted proxy the inbound `Host`/scheme is the proxy's inner hop
+	// (e.g. `localhost:PORT` over plain HTTP), so `url` built from `request.url`
+	// misreports the public origin. Rebuild it from `X-Forwarded-Host`/`-Proto`
+	// so `event.url` — and every absolute redirect, canonical URL, and
+	// `url.origin` the app derives — points at the public-facing origin instead
+	// of localhost. Gated on TRUST_PROXY since these headers are client-spoofable
+	// when no proxy strips them.
+	if (TRUST_PROXY) {
+		const fwdHost = request.headers.get("x-forwarded-host");
+		if (fwdHost) url.host = fwdHost;
+		const fwdProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+		if (fwdProto) url.protocol = `${fwdProto}:`;
+	}
+
 	// Reject new non-health requests during shutdown
 	if (shuttingDown && url.pathname !== "/_health") {
 		return new Response("Service Unavailable", {

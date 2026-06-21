@@ -346,9 +346,17 @@ const devServer = Bun.serve({
 		target.hostname = "127.0.0.1";
 		target.port = String(APP_PORT);
 
+		// Preserve an X-Forwarded-* set by an OUTER proxy (e.g. a multi-tenant host
+		// fronting `bun run dev` behind TLS). Overwriting it with this dev proxy's
+		// own loopback host/scheme would strip the real public origin, so the app's
+		// redirects and `event.url` would point at localhost. Fall back to this
+		// proxy's request only when the outer hop didn't set them.
 		const forwardedHeaders = new Headers(req.headers);
-		forwardedHeaders.set("x-forwarded-host", reqUrl.host);
-		forwardedHeaders.set("x-forwarded-proto", reqUrl.protocol.replace(":", ""));
+		forwardedHeaders.set("x-forwarded-host", req.headers.get("x-forwarded-host") ?? reqUrl.host);
+		forwardedHeaders.set(
+			"x-forwarded-proto",
+			req.headers.get("x-forwarded-proto") ?? reqUrl.protocol.replace(":", ""),
+		);
 		// Force inner app to respond uncompressed. Bun's `fetch()` auto-decodes
 		// gzip/br bodies but leaves the original `Content-Encoding` header on
 		// the Response, so passing it through made Safari throw -1015 ("cannot

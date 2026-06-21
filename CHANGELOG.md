@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.6] - 2026-06-22
+
+### Fixed
+
+- Behind a trusted proxy (`TRUST_PROXY=true`), `event.url` now reflects the public origin from `X-Forwarded-Host`/`-Proto` instead of the proxy's inner `localhost` hop — so absolute redirects, canonical URLs, and `url.origin` no longer point at localhost (fixes preview "redirect to localhost" / redirect loops behind a host proxy).
+- The `bun run dev` proxy now preserves an `X-Forwarded-Host`/`-Proto` set by an outer proxy instead of overwriting it with its own loopback hop.
+
 ## [0.7.5] - 2026-06-21
 
 ### Added
