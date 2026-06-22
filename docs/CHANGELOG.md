@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.9] - 2026-06-22
+
+### Added
+
+- Docs now spell out that layout data is not auto-merged into a page's `data` — thread it with `parent()`.
+
 ## [0.7.8] - 2026-06-21
 
 ### Added

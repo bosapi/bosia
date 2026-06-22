@@ -30,7 +30,7 @@ Objek yang dikembalikan menjadi prop `data` di `+page.svelte`:
 
 ## Loader Layout
 
-`+layout.server.ts` bekerja dengan cara yang sama tetapi datanya tersedia untuk **semua route anak**:
+`+layout.server.ts` bekerja dengan cara yang sama. Datanya menjadi prop `data` komponen **layout** itu, dan dapat dijangkau oleh **loader anak** melalui [`parent()`](#pengaliran-data-dengan-parent):
 
 ```ts
 // src/routes/+layout.server.ts
@@ -43,6 +43,8 @@ export async function load({ locals }: LoadEvent) {
 	};
 }
 ```
+
+> **Data layout tidak otomatis digabung ke prop `data` halaman.** Tidak seperti SvelteKit, Bosia memisahkan setiap hasil load: prop `data` pada `+page.svelte` hanya berisi hasil `load()` halaman itu sendiri. Membaca `data.appName` di halaman yang loadernya tidak mengembalikan `appName` menghasilkan `undefined`. Untuk memakai data layout induk di halaman, aliri secara eksplisit dengan `parent()` (di bawah).
 
 ## Pengaliran Data dengan parent()
 
@@ -63,7 +65,7 @@ export async function load({ params, parent }: LoadEvent) {
 }
 ```
 
-Data mengalir dari atas ke bawah: layout root → layout grup → layout halaman → halaman.
+Data mengalir dari atas ke bawah melalui **loader**: layout root → layout grup → layout halaman → halaman. Setiap loader melihat hasil induknya via `parent()`, tetapi tidak ada yang otomatis digabung ke prop `data` komponen — kembalikan ulang key yang Anda perlukan (seperti `appName` di atas) agar halaman bisa membacanya. Halaman tanpa `load()` tidak bisa memanggil `parent()`; tambahkan loader minimal yang mengembalikan `await parent()` untuk meneruskan data layout.
 
 ## Metadata
 

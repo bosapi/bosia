@@ -25,21 +25,22 @@ These work the same way you'd expect:
 
 ## Different from SvelteKit
 
-| Feature                 | SvelteKit                     | Bosia                                      |
-| ----------------------- | ----------------------------- | ------------------------------------------ |
-| **Runtime**             | Node.js                       | Bun                                        |
-| **Bundler**             | Vite                          | Bun.build                                  |
-| **HTTP server**         | Configurable via adapters     | ElysiaJS (built-in)                        |
-| **Adapters**            | Required (node, vercel, etc.) | None — single Bun server                   |
-| **Universal load**      | `+page.ts` / `+layout.ts`     | Not supported — server loaders only        |
-| **Stores**              | `$app/stores`                 | Not available — use `$props()`             |
-| **Env vars**            | `$env/static/public`, etc.    | `$env` with four-tier prefix               |
-| **HMR**                 | Vite HMR (granular)           | SSE full-page reload                       |
-| **Generated dir**       | `.svelte-kit/`                | `.bosia/`                                  |
-| **Component registry**  | None                          | `bosia add` (shadcn-style)                 |
-| **Feature scaffolding** | None                          | `bosia feat`                               |
-| **Metadata**            | Via `<svelte:head>`           | `metadata()` function in `+page.server.ts` |
-| **Response caching**    | Not built-in                  | Server-side cache with LRU + brotli/gzip   |
+| Feature                 | SvelteKit                     | Bosia                                         |
+| ----------------------- | ----------------------------- | --------------------------------------------- |
+| **Runtime**             | Node.js                       | Bun                                           |
+| **Bundler**             | Vite                          | Bun.build                                     |
+| **HTTP server**         | Configurable via adapters     | ElysiaJS (built-in)                           |
+| **Adapters**            | Required (node, vercel, etc.) | None — single Bun server                      |
+| **Universal load**      | `+page.ts` / `+layout.ts`     | Not supported — server loaders only           |
+| **Stores**              | `$app/stores`                 | Not available — use `$props()`                |
+| **Env vars**            | `$env/static/public`, etc.    | `$env` with four-tier prefix                  |
+| **HMR**                 | Vite HMR (granular)           | SSE full-page reload                          |
+| **Generated dir**       | `.svelte-kit/`                | `.bosia/`                                     |
+| **Component registry**  | None                          | `bosia add` (shadcn-style)                    |
+| **Feature scaffolding** | None                          | `bosia feat`                                  |
+| **Metadata**            | Via `<svelte:head>`           | `metadata()` function in `+page.server.ts`    |
+| **Response caching**    | Not built-in                  | Server-side cache with LRU + brotli/gzip      |
+| **`data` prop**         | Layout data merged into pages | Each load is separate — thread via `parent()` |
 
 ### Key Differences Explained
 
@@ -58,6 +59,8 @@ These work the same way you'd expect:
   let { data } = $props();
 </script>
 ```
+
+**Layout data is not merged into the page `data` prop** — In SvelteKit, a `+page.svelte`'s `data` is the union of every ancestor `+layout` load plus the page's own. In Bosia each load result stays separate: a page's `data` holds **only** that page's `load()` return, and each layout component gets its own. So `data.session` (or any key a parent layout returned) is `undefined` in a page unless the page's own loader re-returned it. Thread parent data explicitly via `parent()` in the page loader — see [Server Loaders](/guides/server-loaders#data-threading-with-parent). This avoids key collisions and per-page payload bloat at the cost of one extra line per page that needs ancestor data.
 
 **`metadata()` function** — Unique to Bosia. Returns `title`, `description`, and `meta` tags. Can pass `data` to `load()` to avoid duplicate database queries.
 

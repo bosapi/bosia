@@ -25,21 +25,22 @@ Hal-hal berikut bekerja dengan cara yang sama seperti yang Anda harapkan:
 
 ## Berbeda dari SvelteKit
 
-| Fitur                  | SvelteKit                        | Bosia                                    |
-| ---------------------- | -------------------------------- | ---------------------------------------- |
-| **Runtime**            | Node.js                          | Bun                                      |
-| **Bundler**            | Vite                             | Bun.build                                |
-| **Server HTTP**        | Dapat dikonfigurasi via adapters | ElysiaJS (bawaan)                        |
-| **Adapters**           | Diperlukan (node, vercel, dll.)  | Tidak ada — satu server Bun              |
-| **Universal load**     | `+page.ts` / `+layout.ts`        | Tidak didukung — hanya server loaders    |
-| **Stores**             | `$app/stores`                    | Tidak tersedia — gunakan `$props()`      |
-| **Env vars**           | `$env/static/public`, dll.       | `$env` dengan prefix empat tingkat       |
-| **HMR**                | Vite HMR (granular)              | SSE full-page reload                     |
-| **Direktori generate** | `.svelte-kit/`                   | `.bosia/`                                |
-| **Registry komponen**  | Tidak ada                        | `bosia add` (gaya shadcn)                |
-| **Scaffolding fitur**  | Tidak ada                        | `bosia feat`                             |
-| **Metadata**           | Via `<svelte:head>`              | Fungsi `metadata()` di `+page.server.ts` |
-| **Response caching**   | Tidak bawaan                     | Cache server dengan LRU + brotli/gzip    |
+| Fitur                  | SvelteKit                        | Bosia                                     |
+| ---------------------- | -------------------------------- | ----------------------------------------- |
+| **Runtime**            | Node.js                          | Bun                                       |
+| **Bundler**            | Vite                             | Bun.build                                 |
+| **Server HTTP**        | Dapat dikonfigurasi via adapters | ElysiaJS (bawaan)                         |
+| **Adapters**           | Diperlukan (node, vercel, dll.)  | Tidak ada — satu server Bun               |
+| **Universal load**     | `+page.ts` / `+layout.ts`        | Tidak didukung — hanya server loaders     |
+| **Stores**             | `$app/stores`                    | Tidak tersedia — gunakan `$props()`       |
+| **Env vars**           | `$env/static/public`, dll.       | `$env` dengan prefix empat tingkat        |
+| **HMR**                | Vite HMR (granular)              | SSE full-page reload                      |
+| **Direktori generate** | `.svelte-kit/`                   | `.bosia/`                                 |
+| **Registry komponen**  | Tidak ada                        | `bosia add` (gaya shadcn)                 |
+| **Scaffolding fitur**  | Tidak ada                        | `bosia feat`                              |
+| **Metadata**           | Via `<svelte:head>`              | Fungsi `metadata()` di `+page.server.ts`  |
+| **Response caching**   | Tidak bawaan                     | Cache server dengan LRU + brotli/gzip     |
+| **Prop `data`**        | Data layout digabung ke halaman  | Tiap load terpisah — aliri via `parent()` |
 
 ### Penjelasan Perbedaan Utama
 
@@ -58,6 +59,8 @@ Hal-hal berikut bekerja dengan cara yang sama seperti yang Anda harapkan:
   let { data } = $props();
 </script>
 ```
+
+**Data layout tidak digabung ke prop `data` halaman** — Di SvelteKit, prop `data` pada `+page.svelte` adalah gabungan dari setiap load `+layout` leluhur ditambah load halaman itu sendiri. Di Bosia tiap hasil load tetap terpisah: `data` halaman hanya berisi hasil `load()` halaman itu, dan tiap layout mendapat datanya sendiri. Jadi `data.session` (atau key apa pun yang dikembalikan layout induk) bernilai `undefined` di halaman kecuali loader halaman itu mengembalikannya ulang. Aliri data induk secara eksplisit via `parent()` di loader halaman — lihat [Server Loaders](/guides/server-loaders#pengaliran-data-dengan-parent). Ini menghindari tabrakan key dan pembengkakan payload per halaman dengan biaya satu baris tambahan per halaman yang butuh data leluhur.
 
 **Fungsi `metadata()`** — Unik untuk Bosia. Mengembalikan `title`, `description`, dan tag `meta`. Dapat meneruskan `data` ke `load()` untuk menghindari duplikasi query database.
 
