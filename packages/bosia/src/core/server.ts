@@ -12,7 +12,7 @@ import type { RouteManifest } from "./types.ts";
 // Pre-compile route patterns into RegExp at startup (shared by renderer.ts via module reference)
 compileRoutes(apiRoutes);
 compileRoutes(serverRoutes);
-import type { Handle, RequestEvent } from "./hooks.ts";
+import { NO_FRAME_GUARD_HEADER, type Handle, type RequestEvent } from "./hooks.ts";
 import { HttpError, Redirect, ActionFailure } from "./errors.ts";
 import { CookieJar } from "./cookies.ts";
 import { safePath } from "./safePath.ts";
@@ -842,7 +842,15 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		const response = userHandle ? await userHandle({ event, resolve }) : await resolve(event);
 
 		const headers = new Headers(response.headers);
-		for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
+		// A handle can mark a response (e.g. a proxied embeddable preview) to opt
+		// out of the frame guard. Strip the internal marker so it never ships, and
+		// skip only X-Frame-Options for that response — other security headers stay.
+		const skipFrameGuard = headers.has(NO_FRAME_GUARD_HEADER);
+		headers.delete(NO_FRAME_GUARD_HEADER);
+		for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
+			if (skipFrameGuard && k === "X-Frame-Options") continue;
+			headers.set(k, v);
+		}
 		const cspHeader = buildCspHeader(nonce);
 		if (cspHeader) headers.set("Content-Security-Policy", cspHeader);
 		// Apply CORS headers for allowed origins. `Vary: Origin` is set whenever

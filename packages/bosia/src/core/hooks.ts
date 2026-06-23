@@ -113,6 +113,19 @@ export type Metadata = {
 
 type MaybePromise<T> = T | Promise<T>;
 
+// ─── Frame-Guard Opt-Out ──────────────────────────────────
+
+/**
+ * Internal response header a `handle` can set to opt a single response out of
+ * the global `X-Frame-Options: SAMEORIGIN` guard. Use when a trusted proxy hub
+ * serves another origin's content that must be embeddable (e.g. an app preview
+ * iframe): the proxy strips the upstream `X-Frame-Options`, but the framework
+ * would otherwise re-add its own. The header is stripped before the response
+ * leaves the process, so it never reaches the client. Other security headers
+ * (`X-Content-Type-Options`, `Referrer-Policy`) are unaffected.
+ */
+export const NO_FRAME_GUARD_HEADER = "x-bosia-no-frame-guard";
+
 // ─── Middleware Composition ────────────────────────────────
 
 /**

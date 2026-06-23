@@ -1,9 +1,20 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.7.5**
+> Current version: **0.7.7**
 
 ---
+
+## 0.7.7 (2026-06-23) — Per-response frame-guard opt-out
+
+> The framework re-applies `X-Frame-Options: SAMEORIGIN` to every response after the user
+> `handle` runs, so a proxy hub can't serve an embeddable preview even after stripping the
+> upstream header. Add a per-response opt-out so the guard stays on the hub's own pages.
+
+- [x] 🟠 `packages/bosia/src/core/hooks.ts` — export `NO_FRAME_GUARD_HEADER` (internal marker header).
+- [x] 🟠 `packages/bosia/src/core/server.ts` — when a response carries the marker, strip it and skip only `X-Frame-Options` (other security headers stay).
+- [x] ⚪ `packages/bosia/src/lib/index.ts` — re-export `NO_FRAME_GUARD_HEADER` from the public API.
+- [x] ⚪ Version bump `0.7.7` (framework) + `CHANGELOG.md`.
 
 ## 0.7.5 (2026-06-21) — `store` template (Postgres + MinIO/S3)
 

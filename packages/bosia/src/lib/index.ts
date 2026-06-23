@@ -6,7 +6,7 @@
 //   import type { RequestEvent, LoadEvent, Handle, Cookies } from "bosia"
 
 export { cn, getServerTime } from "./utils.ts";
-export { sequence } from "../core/hooks.ts";
+export { sequence, NO_FRAME_GUARD_HEADER } from "../core/hooks.ts";
 export { error, redirect, fail } from "../core/errors.ts";
 // `invalidate` / `invalidateAll` (server response-cache eviction) live in
 // "bosia/server" — they touch server-process state and pulling them into

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.7] - 2026-06-23
+
+### Added
+
+- A `handle` can set the `NO_FRAME_GUARD_HEADER` on a response to skip the `X-Frame-Options` guard — lets a proxy hub serve embeddable previews while keeping the guard on its own pages.
+
 ## [0.7.6] - 2026-06-22
 
 ### Fixed
