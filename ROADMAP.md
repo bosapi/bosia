@@ -1,9 +1,19 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.7.7**
+> Current version: **0.7.8**
 
 ---
+
+## 0.7.8 (2026-06-27) — Inspector: drop the breadcrumb header
+
+> The alt+click comment form showed the framework-stripped component chain (`Button.svelte → +page.svelte`)
+> as a header above the textarea. Meaningless noise for non-technical end users (e.g. rukoku's). The AI
+> still gets full file/tree context via `buildContext(el)` in the payload `comment`, so the visible header
+> is pure clutter — remove it.
+
+- [x] 🟠 `packages/bosia/src/core/plugins/inspector/overlay.ts` — `openForm()` no longer builds the `chain`/`header`; `form.innerHTML` starts at the `<textarea>`. `buildContext`/`submit` unchanged, AI payload unaffected.
+- [x] ⚪ Version bump `0.7.8` (framework) + `CHANGELOG.md`.
 
 ## 0.7.7 (2026-06-23) — Per-response frame-guard opt-out
 

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.8] - 2026-06-27
+
+### Changed
+
+- The inspect comment box no longer shows the component file path on top — cleaner for non-technical users; the AI still receives full file/tree context.
+
 ## [0.7.7] - 2026-06-23
 
 ### Added

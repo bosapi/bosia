@@ -138,12 +138,10 @@ function send(payload,onOk,onErr){
 function closeForm(){if(form){form.remove();form=null}}
 function openForm(loc,el){
   closeForm();
-  var chain=userFrames(el).join(" → ");
   var r=el.getBoundingClientRect();
   form=document.createElement("div");
   form.style.cssText="position:fixed;left:"+r.left+"px;top:"+(r.bottom+6)+"px;background:#fff;color:#111;border:1px solid #d4d4d8;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:10px;width:340px;z-index:2147483647;font:13px ui-sans-serif,system-ui,sans-serif";
-  var header='<div style="font-size:11px;color:#71717a;margin-bottom:6px;font-family:ui-monospace,monospace;word-break:break-all">'+chain+'</div>';
-  form.innerHTML=header+
+  form.innerHTML=
     '<textarea placeholder="Describe a fix (Enter to send, Esc to cancel, empty = open in editor)" style="width:100%;min-height:64px;border:1px solid #e4e4e7;border-radius:4px;padding:6px;font:13px ui-sans-serif,system-ui,sans-serif;resize:vertical;box-sizing:border-box;outline:none"></textarea>'+
     '<div style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end">'+
     '<button data-cancel style="padding:4px 10px;border:1px solid #e4e4e7;background:#fff;border-radius:4px;cursor:pointer;font-size:12px">Cancel</button>'+
