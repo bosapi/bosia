@@ -34,7 +34,7 @@
 		<p class="text-muted-foreground">Routing patterns and framework internals.</p>
 	</div>
 
-	<div class="grid gap-4" data-bosia-preload="hover">
+	<div class="grid gap-4">
 		{#each posts as post}
 			<a
 				href="/blog/{post.slug}"

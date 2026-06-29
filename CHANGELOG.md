@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.9] - 2026-06-29
+
+### Changed
+
+- New apps now prefetch links on hover by default — pages feel instant with no setup.
+
 ## [0.7.8] - 2026-06-27
 
 ### Changed
