@@ -17,6 +17,13 @@ const SHELL_ENV_SNAPSHOT: Record<string, string | undefined> = { ...process.env 
 
 loadEnv("development");
 
+// Host-managed mode: when a host (rukoku) sets BOSIA_DEV_MANAGED=1 in the unit
+// env, this dev server never self-triggers builds on file change — the host is
+// the single clock and drives one rebuild per turn via POST /__bosia/rebuild
+// (avoids the watcher compiling a half-written file mid-edit). Unset → normal
+// `bosia dev` is byte-for-byte unchanged.
+const MANAGED = process.env.BOSIA_DEV_MANAGED === "1";
+
 function reloadEnv() {
 	for (const k of Object.keys(process.env)) delete process.env[k];
 	for (const [k, v] of Object.entries(SHELL_ENV_SNAPSHOT)) {
@@ -216,25 +223,30 @@ let buildTimer: ReturnType<typeof setTimeout> | null = null;
 let building = false;
 let buildPending = false;
 
-async function buildAndRestart() {
+async function buildAndRestart(): Promise<boolean> {
 	if (building) {
 		buildPending = true;
-		return;
+		// ponytail: coalesced into the in-flight build. Managed mode fires one
+		// rebuild per turn so overlap is rare; report optimistic rather than a
+		// false build failure to the host.
+		return true;
 	}
 	building = true;
 	try {
+		let ok = true;
 		do {
 			buildPending = false;
-			const ok = await runBuild();
+			ok = await runBuild();
 			if (!ok) {
 				console.error("❌ Build failed — fix errors and save again");
-				return;
+				return false;
 			}
 			await startAppServer();
 			// Give the app server a moment to bind its port
 			await Bun.sleep(200);
 			broadcastReload();
 		} while (buildPending);
+		return ok;
 	} finally {
 		building = false;
 	}
@@ -329,6 +341,17 @@ const devServer = Bun.serve({
 			reloadQueuedWhileHeld = false;
 			if (flushed) broadcastReload();
 			return Response.json({ ok: true, held: false, flushed });
+		}
+
+		// Host-managed rebuild trigger. In managed mode the watcher is off, so the
+		// host (rukoku) POSTs here once per turn after all file writes are done.
+		// Reuses the single-flight building/buildPending guards. The POST awaits the
+		// full build; `{ ok }` is the real build result (compiler errors stream to
+		// stdout/stderr → journald, which the host tails on ok:false). Exists in
+		// both modes; simply unused when the watcher is on.
+		if (url.pathname === "/__bosia/rebuild" && req.method === "POST") {
+			const ok = await buildAndRestart();
+			return Response.json({ ok });
 		}
 
 		// Proxy everything else to the app server. Inject X-Forwarded-Host/Proto so
@@ -426,18 +449,27 @@ const SRC_DIR = join(process.cwd(), "src");
 const MTIME_POLL_MS = 5_000;
 const mtimes = new Map<string, number>();
 
-const srcWatcher = watch(join(process.cwd(), "src"), { recursive: true }, (_event, filename) => {
-	if (!filename) return;
-	const abs = join(process.cwd(), "src", filename);
-	if (isGenerated(abs)) return;
-	console.log(`[watch] changed: ${filename}`);
-	try {
-		mtimes.set(abs, statSync(abs).mtimeMs);
-	} catch {
-		mtimes.delete(abs);
-	}
-	scheduleBuild();
-});
+// Managed mode: the host is the single clock, so never self-trigger on file
+// change. Leave both watchers unstarted (null) — boot build + startAppServer
+// still run, so the server builds once and serves; it just waits for the host's
+// POST /__bosia/rebuild instead of watching.
+let srcWatcher: ReturnType<typeof watch> | null = null;
+let mtimePoll: ReturnType<typeof setInterval> | null = null;
+
+if (!MANAGED) {
+	srcWatcher = watch(join(process.cwd(), "src"), { recursive: true }, (_event, filename) => {
+		if (!filename) return;
+		const abs = join(process.cwd(), "src", filename);
+		if (isGenerated(abs)) return;
+		console.log(`[watch] changed: ${filename}`);
+		try {
+			mtimes.set(abs, statSync(abs).mtimeMs);
+		} catch {
+			mtimes.delete(abs);
+		}
+		scheduleBuild();
+	});
+}
 
 function walkSrc(out: Map<string, number>): void {
 	const stack: string[] = [SRC_DIR];
@@ -471,37 +503,39 @@ function walkSrc(out: Map<string, number>): void {
 // Seed the map without firing — first sweep just records existing mtimes.
 walkSrc(mtimes);
 
-const mtimePoll = setInterval(() => {
-	const fresh = new Map<string, number>();
-	walkSrc(fresh);
+if (!MANAGED) {
+	mtimePoll = setInterval(() => {
+		const fresh = new Map<string, number>();
+		walkSrc(fresh);
 
-	let changed: string | null = null;
+		let changed: string | null = null;
 
-	for (const [path, ts] of fresh) {
-		const prev = mtimes.get(path);
-		if (prev === undefined || prev !== ts) {
-			changed = path;
-			break;
-		}
-	}
-	if (!changed) {
-		for (const path of mtimes.keys()) {
-			if (!fresh.has(path)) {
+		for (const [path, ts] of fresh) {
+			const prev = mtimes.get(path);
+			if (prev === undefined || prev !== ts) {
 				changed = path;
 				break;
 			}
 		}
-	}
+		if (!changed) {
+			for (const path of mtimes.keys()) {
+				if (!fresh.has(path)) {
+					changed = path;
+					break;
+				}
+			}
+		}
 
-	if (changed) {
-		const rel = changed.startsWith(SRC_DIR) ? changed.slice(SRC_DIR.length + 1) : changed;
-		console.log(`[poll] changed: ${rel}`);
-		mtimes.clear();
-		for (const [p, t] of fresh) mtimes.set(p, t);
-		scheduleBuild();
-	}
-}, MTIME_POLL_MS);
-mtimePoll.unref?.();
+		if (changed) {
+			const rel = changed.startsWith(SRC_DIR) ? changed.slice(SRC_DIR.length + 1) : changed;
+			console.log(`[poll] changed: ${rel}`);
+			mtimes.clear();
+			for (const [p, t] of fresh) mtimes.set(p, t);
+			scheduleBuild();
+		}
+	}, MTIME_POLL_MS);
+	mtimePoll.unref?.();
+}
 
 // ─── .env Watcher ─────────────────────────────────────────
 // Reset to shell-env snapshot and re-run loadEnv so removed/renamed
@@ -517,7 +551,11 @@ const envWatcher = watch(process.cwd(), { recursive: false }, (_event, filename)
 	scheduleBuild();
 });
 
-console.log("👀 Watching src/ for changes...\n");
+console.log(
+	MANAGED
+		? "🛰️  Host-managed mode — builds driven by POST /__bosia/rebuild\n"
+		: "👀 Watching src/ for changes...\n",
+);
 
 // ─── Shutdown ─────────────────────────────────────────────
 // Own SIGINT/SIGTERM so we can cleanly stop the child app server.
@@ -534,8 +572,8 @@ async function shutdown() {
 	if (buildTimer) clearTimeout(buildTimer);
 	if (restartTimer) clearTimeout(restartTimer);
 	if (healthyTimer) clearTimeout(healthyTimer);
-	clearInterval(mtimePoll);
-	srcWatcher.close();
+	if (mtimePoll) clearInterval(mtimePoll);
+	srcWatcher?.close();
 	envWatcher.close();
 	devServer.stop(true); // closes SSE conns → abort listeners clear ping intervals
 
