@@ -45,6 +45,8 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 	// (re-run). One id per layout in order, plus an optional page id.
 	lines.push("  pageId: string | null;");
 	lines.push("  layoutIds: (string | null)[];");
+	lines.push("  loading: (() => Promise<any>) | null;");
+	lines.push("  layoutPaths: string[];");
 	lines.push("}> = [");
 	for (const r of pages) {
 		const layoutImports = r.layouts
@@ -75,6 +77,10 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 		lines.push(`    trailingSlash: ${JSON.stringify(r.trailingSlash)},`);
 		lines.push(`    pageId: ${pageId},`);
 		lines.push(`    layoutIds: [${layoutIds}],`);
+		lines.push(
+			`    loading: ${r.loading ? `() => import(${JSON.stringify(toImportPath(r.loading))})` : "null"},`,
+		);
+		lines.push(`    layoutPaths: ${JSON.stringify(r.layouts)},`);
 		lines.push("  },");
 	}
 	lines.push("];\n");
@@ -175,6 +181,8 @@ function generateClientRoutesFile(
 	lines.push('  trailingSlash: "never" | "always" | "ignore";');
 	lines.push("  pageId: string | null;");
 	lines.push("  layoutIds: (string | null)[];");
+	lines.push("  loading: (() => Promise<any>) | null;");
+	lines.push("  layoutPaths: string[];");
 	lines.push("}> = [");
 	for (const r of pages) {
 		const layoutImports = r.layouts
@@ -202,6 +210,10 @@ function generateClientRoutesFile(
 		lines.push(`    trailingSlash: ${JSON.stringify(r.trailingSlash)},`);
 		lines.push(`    pageId: ${pageId},`);
 		lines.push(`    layoutIds: [${layoutIds}],`);
+		lines.push(
+			`    loading: ${r.loading ? `() => import(${JSON.stringify(toImportPath(r.loading))})` : "null"},`,
+		);
+		lines.push(`    layoutPaths: ${JSON.stringify(r.layouts)},`);
 		lines.push("  },");
 	}
 	lines.push("];\n");

@@ -8,6 +8,7 @@ import type { PageRoute, ApiRoute, RouteManifest, TrailingSlash } from "./types.
 // Conventions (SvelteKit-compatible):
 //   +page.svelte         — page component
 //   +page.server.ts      — server loader for the page
+//   +loading.svelte      — client skeleton shown during navigation
 //   +layout.svelte       — layout component (wraps all children)
 //   +layout.server.ts    — server loader for the layout
 //   +server.ts           — API route (GET, POST, etc.)
@@ -93,6 +94,10 @@ export function scanRoutes(): RouteManifest {
 				? join(dir, "+page.server.ts")
 				: null;
 
+			const loadingFile = items.some((i) => i.isFile() && i.name === "+loading.svelte")
+				? join(dir, "+loading.svelte")
+				: null;
+
 			const pageTs = pageServerFile ? readTrailingSlash(join(ROUTES_DIR, pageServerFile)) : null;
 			const effectiveTs: TrailingSlash = pageTs ?? currentTrailingSlash;
 
@@ -101,6 +106,7 @@ export function scanRoutes(): RouteManifest {
 				page: join(dir, "+page.svelte"),
 				layouts: [...currentLayouts],
 				pageServer: pageServerFile,
+				loading: loadingFile,
 				layoutServers: [...currentLayoutServers],
 				errorPages: [...currentErrorPages],
 				trailingSlash: effectiveTs,

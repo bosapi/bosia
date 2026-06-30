@@ -52,6 +52,17 @@ describe("scanRoutes()", () => {
 		expect(route!.pageServer).toBe("blog/[slug]/+page.server.ts");
 	});
 
+	test("detects sibling +loading.svelte, null when absent", () => {
+		write("with-loading/+page.svelte");
+		write("with-loading/+loading.svelte");
+		write("without-loading/+page.svelte");
+		const m = scanRoutes();
+		expect(m.pages.find((p) => p.pattern === "/with-loading")!.loading).toBe(
+			"with-loading/+loading.svelte",
+		);
+		expect(m.pages.find((p) => p.pattern === "/without-loading")!.loading).toBe(null);
+	});
+
 	test("discovers +server.ts as API route", () => {
 		write("api/hello/+server.ts", "export const GET = () => new Response('hi')");
 		const m = scanRoutes();

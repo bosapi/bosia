@@ -58,6 +58,8 @@ R4 — Groups & dynamic segments: `(group)/` invisible in URL, shares layouts (`
 
 R5 — Layout chain: `+layout.svelte` wraps children; `+layout.server.ts` loads for the subtree; `+error.svelte` renders to its depth; `scope` (`public`/`private`) inherits from the nearest layout that sets it.
 
+R5b — `+loading.svelte` (optional): client skeleton shown while navigating TO that folder's page. Renders nested in the layouts SHARED with the current page (added layouts aren't mounted yet — the file draws that chrome itself). Real URL changes only, not `invalidate()`. Per-folder only — no parent inheritance yet.
+
 R6 — Authenticated UI MUST live under `(private)`. Any route reading `locals.user` / `locals.can()` (dashboard, admin/\*, settings, internal CRUD) goes under `(private)/`, never `(public)/`. Test: "Okay with a signed-out stranger loading this URL?" — No / unsure → `(private)`. If `(private)/+layout.server.ts` is missing, CREATE it to enforce session presence — don't demote routes to `(public)` to work around it.
 
 ❌ `src/routes/(public)/admin/produk/+page.svelte`
@@ -84,8 +86,9 @@ P1:
 
 - [ ] Groups used to share layouts.
 - [ ] `+error.svelte` at appropriate depth.
+- [ ] `+loading.svelte` added for slow-loading pages that need a skeleton during nav.
 - [ ] `trailingSlash` exported from a server module, not a page.
 
 Related: bosia-svelte-runes (`$props()` not `export let`), bosia-elysia-routes (`+server.ts` shape), bosia-navigation (`goto`/`beforeNavigate` from `bosia/client`), bosia-rbac-permission.
 
-Source: `bosia/packages/bosia/src/core/scanner.ts` (registration), `renderer.ts` (data separation).
+Source: `bosia/packages/bosia/src/core/scanner.ts` (registration, `+loading.svelte` detection), `renderer.ts` (data separation), `client/App.svelte` (loader rendering during nav).

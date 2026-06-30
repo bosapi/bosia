@@ -13,6 +13,8 @@ export interface PageRoute {
 	layouts: string[];
 	/** Path to +page.server.ts if exists, relative to src/routes/ */
 	pageServer: string | null;
+	/** Path to +loading.svelte if exists, relative to src/routes/ (client skeleton). */
+	loading: string | null;
 	/** Chain of +layout.server.ts files root → leaf, with their layout depth */
 	layoutServers: { path: string; depth: number }[];
 	/**

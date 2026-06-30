@@ -81,6 +81,10 @@ interface Navigation {
 - `willUnload` — `true` when the browser is about to tear down the page (closed tab, external link). For these events `cancel()` is a no-op; use `addEventListener("beforeunload", ...)` directly to prompt the user.
 - `cancel()` on a `popstate` (back/forward) navigation is also a no-op — the browser has already moved its history pointer by the time the listener runs.
 
+## Loading indicators
+
+Bosia shows a thin progress bar at the top of the page during every client navigation. For a richer transition, drop a `+loading.svelte` into a route folder and Bosia renders that skeleton automatically while the destination loads — nested inside the shared layouts, no `beforeNavigate` wiring needed. See [Loading Skeletons](/docs/guides/routing/#loading-skeletons).
+
 ## Form actions
 
 Form actions that throw `redirect(303, "/x")` navigate via the router automatically when wrapped with `use:enhance`:

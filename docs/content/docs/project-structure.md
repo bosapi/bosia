@@ -37,6 +37,7 @@ my-app/
 | `+layout.server.ts` | Layout loader — data shared with all child routes            |
 | `+server.ts`        | API endpoint — exports HTTP verb functions                   |
 | `+error.svelte`     | Error page — renders when a loader throws                    |
+| `+loading.svelte`   | Loading skeleton — shown while navigating to the page        |
 | `hooks.server.ts`   | Middleware — intercepts every request                        |
 | `app.html`          | HTML document template — customize `<html>`, `<head>`, etc.  |
 | `app.css`           | Global styles — Tailwind directives and design tokens        |

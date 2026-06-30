@@ -127,6 +127,26 @@ Buat `+error.svelte` untuk menangani error yang dilempar oleh loader:
 
 Halaman error menerima `HttpError` yang dilempar oleh `error()` di dalam loader. Tempatkan halaman error pada level route di mana Anda ingin menangkap error — halaman ini menangkap error dari semua route anak. Tipe `ErrorProps` dan `PageError` di-generate ke `./$types` — tidak perlu mendeklarasikan tipe prop secara manual.
 
+## Kerangka Loading
+
+Buat `+loading.svelte` di folder route untuk menampilkan kerangka (skeleton) saat berpindah **ke** halaman tersebut, alih-alih membiarkan halaman lama tetap tampil sampai kode dan data halaman baru selesai dimuat:
+
+```svelte
+<!-- src/routes/blog/+loading.svelte -->
+<div class="skeleton">
+	<div class="line"></div>
+	<div class="line"></div>
+</div>
+```
+
+Seperti `+error.svelte`, ini dirender **di dalam layout yang dibagi** antara halaman saat ini dan tujuan — jadi nav, header, dan tab di sekelilingnya tetap terpasang dan hanya area konten yang menampilkan kerangka. Layout yang _ditambahkan_ tujuan belum terpasang, sehingga `+loading.svelte` menggambar chrome itu sendiri (sama seperti `loading.tsx` di Next.js).
+
+Aturan:
+
+- Hanya muncul saat URL benar-benar berubah — bukan saat `invalidate()` atau rerun path yang sama.
+- Tanpa `+loading.svelte` ⇒ perilaku tidak berubah (halaman lama tetap sampai pertukaran).
+- **Per folder route saja.** `+loading.svelte` induk belum mencakup route anak; tambahkan satu per folder halaman yang membutuhkannya.
+
 ## Opsi Halaman
 
 Atur perilaku rendering per halaman dengan mengekspor flag dari `+page.server.ts`:

@@ -1,9 +1,28 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.7.8**
+> Current version: **0.8.0**
 
 ---
+
+## 0.8.0 (2026-06-30) — `+loading.svelte` route skeletons
+
+> Navigating between pages leaves stale content on screen until the router atomically swaps in the
+> new page+layouts (`App.svelte`). Move the per-app skeleton trick into the framework as a Next.js-style
+> convention: a `+loading.svelte` in a route folder renders automatically during nav, nested inside the
+> layouts shared with the current page. No app-side resolver, no `beforeNavigate` wiring.
+
+- [x] 🟠 `packages/bosia/src/core/types.ts` — `PageRoute.loading: string | null`.
+- [x] 🟠 `packages/bosia/src/core/scanner.ts` — detect sibling `+loading.svelte`; update conventions header.
+- [x] 🟠 `packages/bosia/src/core/routeFile.ts` — emit `loading` import + `layoutPaths` identity keys in both `clientRoutes` generators.
+- [x] 🟠 `packages/bosia/src/core/client/App.svelte` — load + render the skeleton on real path changes under the shared-layout prefix; reset on settle.
+- [x] 🟠 `packages/bosia/src/core/server.ts` — fallback manifest synthesis includes `loading: null`.
+- [x] ⚪ `test/scanner.test.ts` — detect-vs-null `+loading.svelte` case.
+- [x] ⚪ Docs (en+id): `guides/routing` (Loading Skeletons), `guides/navigation` (cross-ref), `project-structure` table, `reference/sveltekit-differences` row.
+- [x] ⚪ Skills: `bosia-routing` (R5b + checklist + source), `bosia-navigation` (R9 + source).
+- [x] ⚪ Version bump `0.8.0` (framework + docs) + both `CHANGELOG.md`.
+- [ ] ⚪ Follow-up: nearest-ancestor `+loading.svelte` inheritance (full Next.js segment semantics) — currently per-folder only.
+- [ ] ⚪ Follow-up: warm the loader chunk on hover via `prefetch.ts` if the import lag is noticeable in practice.
 
 ## 0.7.8 (2026-06-27) — Inspector: drop the breadcrumb header
 

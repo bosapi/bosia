@@ -25,22 +25,23 @@ Hal-hal berikut bekerja dengan cara yang sama seperti yang Anda harapkan:
 
 ## Berbeda dari SvelteKit
 
-| Fitur                  | SvelteKit                        | Bosia                                     |
-| ---------------------- | -------------------------------- | ----------------------------------------- |
-| **Runtime**            | Node.js                          | Bun                                       |
-| **Bundler**            | Vite                             | Bun.build                                 |
-| **Server HTTP**        | Dapat dikonfigurasi via adapters | ElysiaJS (bawaan)                         |
-| **Adapters**           | Diperlukan (node, vercel, dll.)  | Tidak ada — satu server Bun               |
-| **Universal load**     | `+page.ts` / `+layout.ts`        | Tidak didukung — hanya server loaders     |
-| **Stores**             | `$app/stores`                    | Tidak tersedia — gunakan `$props()`       |
-| **Env vars**           | `$env/static/public`, dll.       | `$env` dengan prefix empat tingkat        |
-| **HMR**                | Vite HMR (granular)              | SSE full-page reload                      |
-| **Direktori generate** | `.svelte-kit/`                   | `.bosia/`                                 |
-| **Registry komponen**  | Tidak ada                        | `bosia add` (gaya shadcn)                 |
-| **Scaffolding fitur**  | Tidak ada                        | `bosia feat`                              |
-| **Metadata**           | Via `<svelte:head>`              | Fungsi `metadata()` di `+page.server.ts`  |
-| **Response caching**   | Tidak bawaan                     | Cache server dengan LRU + brotli/gzip     |
-| **Prop `data`**        | Data layout digabung ke halaman  | Tiap load terpisah — aliri via `parent()` |
+| Fitur                  | SvelteKit                        | Bosia                                          |
+| ---------------------- | -------------------------------- | ---------------------------------------------- |
+| **Runtime**            | Node.js                          | Bun                                            |
+| **Bundler**            | Vite                             | Bun.build                                      |
+| **Server HTTP**        | Dapat dikonfigurasi via adapters | ElysiaJS (bawaan)                              |
+| **Adapters**           | Diperlukan (node, vercel, dll.)  | Tidak ada — satu server Bun                    |
+| **Universal load**     | `+page.ts` / `+layout.ts`        | Tidak didukung — hanya server loaders          |
+| **Stores**             | `$app/stores`                    | Tidak tersedia — gunakan `$props()`            |
+| **Env vars**           | `$env/static/public`, dll.       | `$env` dengan prefix empat tingkat             |
+| **HMR**                | Vite HMR (granular)              | SSE full-page reload                           |
+| **Direktori generate** | `.svelte-kit/`                   | `.bosia/`                                      |
+| **Registry komponen**  | Tidak ada                        | `bosia add` (gaya shadcn)                      |
+| **Scaffolding fitur**  | Tidak ada                        | `bosia feat`                                   |
+| **Metadata**           | Via `<svelte:head>`              | Fungsi `metadata()` di `+page.server.ts`       |
+| **Response caching**   | Tidak bawaan                     | Cache server dengan LRU + brotli/gzip          |
+| **Prop `data`**        | Data layout digabung ke halaman  | Tiap load terpisah — aliri via `parent()`      |
+| **Kerangka loading**   | Manual (store `navigating`)      | Konvensi file `+loading.svelte` (gaya Next.js) |
 
 ### Penjelasan Perbedaan Utama
 

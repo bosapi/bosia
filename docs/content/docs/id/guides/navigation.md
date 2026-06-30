@@ -81,6 +81,10 @@ interface Navigation {
 - `willUnload` — `true` saat browser akan membongkar halaman (tab ditutup, tautan eksternal). Untuk peristiwa ini `cancel()` tidak berefek; gunakan `addEventListener("beforeunload", ...)` langsung untuk meminta konfirmasi pengguna.
 - `cancel()` pada navigasi `popstate` (back/forward) juga tidak berefek — browser sudah memindahkan pointer history-nya saat listener berjalan.
 
+## Indikator Loading
+
+Bosia menampilkan bilah progres tipis di bagian atas halaman selama setiap navigasi klien. Untuk transisi yang lebih kaya, letakkan `+loading.svelte` di folder route dan Bosia merender kerangka itu secara otomatis saat tujuan dimuat — tertanam di dalam layout yang dibagi, tanpa perlu mengatur `beforeNavigate`. Lihat [Kerangka Loading](/docs/guides/routing/#kerangka-loading).
+
 ## Form actions
 
 Form action yang melempar `redirect(303, "/x")` bernavigasi melalui router secara otomatis saat dibungkus dengan `use:enhance`:

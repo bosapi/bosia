@@ -1003,6 +1003,7 @@ function loadBuiltManifest(): RouteManifest {
 			page: "",
 			layouts: [],
 			pageServer: r.pageServer ? "" : null,
+			loading: null,
 			layoutServers: [],
 			errorPages: [],
 			trailingSlash: r.trailingSlash,

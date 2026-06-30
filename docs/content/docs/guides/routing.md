@@ -162,6 +162,26 @@ Rules:
 - If no nested boundary matches, the root `+error.svelte` is used. If there is none, a plain-text response is returned.
 - During in-app navigation the surrounding layout stays mounted — only the broken page is swapped out, no full reload.
 
+## Loading Skeletons
+
+Create `+loading.svelte` in a route folder to show a skeleton while navigating **to** that page, instead of leaving the old page on screen until the new one's code and data finish loading:
+
+```svelte
+<!-- src/routes/blog/+loading.svelte -->
+<div class="skeleton">
+	<div class="line"></div>
+	<div class="line"></div>
+</div>
+```
+
+Like `+error.svelte`, it renders **inside the layouts shared** between the current page and the destination — so surrounding nav, header, and tabs stay mounted and only the content area shows the skeleton. Layouts the destination _adds_ aren't mounted yet, so the `+loading.svelte` draws that chrome itself (same idea as Next.js `loading.tsx`).
+
+Rules:
+
+- Shown only on real URL changes — not on `invalidate()` or same-path reruns.
+- No `+loading.svelte` ⇒ unchanged behavior (old page stays until the swap).
+- **Per route folder only.** A parent `+loading.svelte` does not yet cover child routes; add one per page directory that needs it.
+
 ## Page Options
 
 Toggle rendering behavior per page by exporting flags from `+page.server.ts`:

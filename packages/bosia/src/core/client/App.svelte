@@ -53,6 +53,12 @@
 	const errorDepth = $derived(ssrMode ? ssrErrorDepth : appState.errorDepth);
 	let navigating = $state(false);
 	let navDone = $state(false);
+	// +loading.svelte skeleton shown during navigation to a route that has one.
+	let LoadingComponent = $state<any>(null);
+	let loadingDepth = $state(0); // # of shared layouts to keep mounted under the loader
+	let showLoading = $state(false);
+	let currentLayoutPaths: string[] = [];
+	let lastSettledPath = "";
 	// Skip bar on the very first effect run (initial hydration — data already present)
 	let firstNav = true;
 	let navDoneTimer: ReturnType<typeof setTimeout> | null = null;
@@ -73,7 +79,11 @@
 
 		const isFirst = firstNav;
 		firstNav = false;
-		if (isFirst) return; // Initial hydration — data already in SSR props, no fetch needed
+		if (isFirst) {
+			currentLayoutPaths = (match.route as any).layoutPaths ?? [];
+			lastSettledPath = pathname;
+			return; // Initial hydration — data already in SSR props, no fetch needed
+		}
 
 		appState.form = null;
 		if (navDoneTimer) {
@@ -82,6 +92,28 @@
 		}
 		navDone = false;
 		navigating = true;
+
+		// ─── +loading.svelte skeleton ─────────────────────────────────────
+		// On a real path change, show the destination's loading skeleton nested
+		// inside the layouts shared with the current page. The destination's own
+		// added layouts aren't mounted yet, so the skeleton draws that chrome.
+		const destLayoutPaths = ((match.route as any).layoutPaths as string[]) ?? [];
+		const loadingImport = (match.route as any).loading as (() => Promise<any>) | null;
+		if (loadingImport && pathname !== lastSettledPath) {
+			let s = 0;
+			while (
+				s < currentLayoutPaths.length &&
+				s < destLayoutPaths.length &&
+				currentLayoutPaths[s] === destLayoutPaths[s]
+			)
+				s++;
+			loadingImport().then((m) => {
+				if (cancelled) return; // superseded nav
+				loadingDepth = s;
+				LoadingComponent = m.default;
+				showLoading = true;
+			});
+		}
 
 		// ─── Loader cache: decide which loaders need to re-run ─────────────
 		// For each layout depth + the page, compare the cached entry (if any)
@@ -163,6 +195,13 @@
 			if (cancelled) return;
 			navigating = false;
 			navDone = true;
+			// Tear down the loading skeleton and record identity for the next nav.
+			// Superseded navs have cancelled === true and never reach here, so they
+			// can't clobber a newer nav's loader.
+			showLoading = false;
+			LoadingComponent = null;
+			currentLayoutPaths = destLayoutPaths;
+			lastSettledPath = pathname;
 			navDoneTimer = setTimeout(() => {
 				navDone = false;
 			}, 400);
@@ -348,7 +387,9 @@
 	<div class="bosia-bar done"></div>
 {/if}
 
-{#if ErrorComponent}
+{#if showLoading && LoadingComponent}
+	{@render renderLoading(0)}
+{:else if ErrorComponent}
 	{@const depth = errorDepth ?? 0}
 	{#if depth > 0 && layoutComponents.length > 0}
 		{@render renderLayout(0, depth)}
@@ -362,6 +403,18 @@
 {:else}
 	<p>Loading...</p>
 {/if}
+
+{#snippet renderLoading(index: number)}
+	{#if index < loadingDepth}
+		{@const Layout = layoutComponents[index]}
+		{@const data = layoutData[index] ?? {}}
+		<Layout {data} {params}>
+			{@render renderLoading(index + 1)}
+		</Layout>
+	{:else}
+		<LoadingComponent />
+	{/if}
+{/snippet}
 
 {#snippet renderLayout(index: number, leafDepth: number)}
 	{@const Layout = layoutComponents[index]}

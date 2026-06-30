@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.0] - 2026-06-30
+
+### Added
+
+- Drop a `+loading.svelte` in a route folder to show a skeleton while that page loads during nav.
+
 ## [0.7.9] - 2026-06-29
 
 ### Changed

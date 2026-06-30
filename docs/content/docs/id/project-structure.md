@@ -37,6 +37,7 @@ my-app/
 | `+layout.server.ts` | Layout loader — data yang dibagikan ke semua rute anak          |
 | `+server.ts`        | Endpoint API — mengekspor fungsi HTTP verb                      |
 | `+error.svelte`     | Halaman error — dirender ketika loader melempar kesalahan       |
+| `+loading.svelte`   | Kerangka loading — ditampilkan saat navigasi ke halaman         |
 | `hooks.server.ts`   | Middleware — mencegat setiap request                            |
 | `app.html`          | Template dokumen HTML — kustomisasi `<html>`, `<head>`, dll.    |
 | `app.css`           | Gaya global — direktif Tailwind dan design token                |

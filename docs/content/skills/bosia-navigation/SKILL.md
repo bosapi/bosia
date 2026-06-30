@@ -172,6 +172,10 @@ Scaffold ≥3 menu items, each pointing at a route that ships with an `<Empty />
 
 Sidebars live in the layout, not the page. See [[bosia-page-shell]] for the layout vs. page split.
 
+### R9 — Loading skeletons come from `+loading.svelte`, not `beforeNavigate`
+
+During nav Bosia shows the top progress bar automatically. For a content skeleton, add a `+loading.svelte` in the destination's route folder — the router renders it nested inside the shared layouts while the page loads. Do NOT hand-roll a `beforeNavigate`/`afterNavigate` resolver that swaps in a skeleton; the file convention already knows the layout tree. Per-folder only (no parent inheritance yet). See `bosia-routing` R5b.
+
 ## Bosia conventions
 
 - `bosia-routing` — file routing rules. `redirect()` from a form action lives in `+page.server.ts`.
@@ -197,4 +201,4 @@ P1:
 
 ## References
 
-Source of truth: `bosia/packages/bosia/src/core/client/navigation.ts` (`goto`, `beforeNavigate`, `afterNavigate`), `router.svelte.ts` (click/popstate interception), `navListeners.ts` (listener registries), `bosia/docs/content/docs/guides/navigation.md` (user-facing guide).
+Source of truth: `bosia/packages/bosia/src/core/client/navigation.ts` (`goto`, `beforeNavigate`, `afterNavigate`), `router.svelte.ts` (click/popstate interception), `navListeners.ts` (listener registries), `client/App.svelte` (`+loading.svelte` rendering during nav), `scanner.ts` + `routeFile.ts` (`+loading.svelte` detection/codegen), `bosia/docs/content/docs/guides/navigation.md` (user-facing guide).
