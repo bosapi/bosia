@@ -22,7 +22,8 @@
 - [x] ⚪ Skills: `bosia-routing` (R5b + checklist + source), `bosia-navigation` (R9 + source).
 - [x] ⚪ Version bump `0.8.0` (framework + docs) + both `CHANGELOG.md`.
 - [ ] ⚪ Follow-up: nearest-ancestor `+loading.svelte` inheritance (full Next.js segment semantics) — currently per-folder only.
-- [ ] ⚪ Follow-up: warm the loader chunk on hover via `prefetch.ts` if the import lag is noticeable in practice.
+- [x] ⚪ Follow-up: warm the `+loading.svelte` chunk on hover/viewport in `prefetch.ts` so the skeleton paints instantly on click.
+- [ ] ⚪ Follow-up: cold-import lag for non-hover nav (touch/keyboard/programmatic) on the _first_ visit to a route — skeleton still shows, just after the chunk downloads; self-heals on second visit (browser-cached). Only worth fixing if noticeable in practice. Options: add `touchstart`/`focusin` warm triggers (per-link), or re-add idle warm-all (covers all paths, downloads every skeleton).
 
 ## 0.7.8 (2026-06-27) — Inspector: drop the breadcrumb header
 

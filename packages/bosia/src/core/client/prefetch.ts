@@ -97,6 +97,11 @@ export function consumePrefetch(path: string): any | null {
 
 /** Prefetches data for a path and stores in cache. No-op if already cached/in-flight. */
 export async function prefetchPath(path: string): Promise<void> {
+	// Warm the route's +loading.svelte chunk alongside its data, so the skeleton
+	// paints instantly on click instead of cold-importing after the old page lingers.
+	const warmMatch = findMatch(clientRoutes, new URL(path, window.location.origin).pathname);
+	(warmMatch?.route as { loading?: (() => Promise<unknown>) | null } | undefined)?.loading?.();
+
 	const existing = prefetchCache.get(path);
 	if (existing && Date.now() - existing.ts <= 30_000) return;
 	if (existing) prefetchCache.delete(path);
