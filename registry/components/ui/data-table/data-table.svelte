@@ -101,7 +101,8 @@
 									{:else if cellContent.type === "snippet"}
 										{@render cellContent.snippet()}
 									{:else if cellContent.type === "component"}
-										<svelte:component this={cellContent.component} {...cellContent.props} />
+										{@const CellComponent = cellContent.component}
+										<CellComponent {...cellContent.props} />
 									{/if}
 								</TableCell>
 							{/each}

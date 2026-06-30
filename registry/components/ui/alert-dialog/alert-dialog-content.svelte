@@ -20,7 +20,6 @@
 		descriptionId: string;
 	}>("alert-dialog");
 
-	let panelEl: HTMLDivElement;
 	let previouslyFocused: HTMLElement | null = null;
 
 	function focusTrap(node: HTMLDivElement) {
@@ -73,7 +72,6 @@
 		role="presentation"
 	>
 		<div
-			bind:this={panelEl}
 			use:focusTrap
 			role="alertdialog"
 			aria-modal="true"

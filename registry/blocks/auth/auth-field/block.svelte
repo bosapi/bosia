@@ -11,7 +11,7 @@
 		name?: string;
 		helper?: string;
 		error?: string;
-		autocomplete?: string;
+		autocomplete?: AutoFill;
 	}
 
 	let {
@@ -27,7 +27,7 @@
 	}: Props = $props();
 
 	const Icon = $derived(icon);
-	const isPassword = type === "password";
+	const isPassword = $derived(type === "password");
 	let show = $state(false);
 	// `type` cannot be bound two-way on an <input>, so this stays an uncontrolled field.
 	const inputType = $derived(isPassword && show ? "text" : type);

@@ -58,10 +58,10 @@
 </div>
 
 <!-- Sticky header -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <header
 	class="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md backdrop-saturate-150"
 	onmouseleave={() => (mega = false)}
-	role="banner"
 >
 	<div class="mx-auto w-full max-w-6xl px-6">
 		<div class="grid h-[76px] grid-cols-[1fr_auto_1fr] items-center gap-4">

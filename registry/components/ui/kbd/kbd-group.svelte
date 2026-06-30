@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.ts";
 	import { matchKeys } from "./shortcut.ts";
-	import { setContext } from "svelte";
+	import { setContext, untrack } from "svelte";
 	import type { Snippet } from "svelte";
 
 	let {
@@ -18,7 +18,7 @@
 		[key: string]: any;
 	} = $props();
 
-	if (onPress) setContext("kbd-group-has-shortcut", true);
+	if (untrack(() => onPress)) setContext("kbd-group-has-shortcut", true);
 
 	let el: HTMLElement;
 

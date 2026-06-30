@@ -134,6 +134,7 @@
 				<div
 					id={popoverId}
 					role="dialog"
+					tabindex={-1}
 					class="w-48 rounded-md border bg-popover p-2 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
 					style={popoverStyle}
 					onmouseenter={() => {
@@ -146,7 +147,7 @@
 					<p class="px-2 py-1 text-sm font-medium">{label}</p>
 					<ul class="flex flex-col gap-0.5">
 						<SidebarPopover>
-							{@render children()}
+							{@render children?.()}
 						</SidebarPopover>
 					</ul>
 				</div>
@@ -174,7 +175,7 @@
 			</button>
 			{#if open}
 				<ul class="ml-4 mt-0.5 flex flex-col gap-0.5 border-l pl-2">
-					{@render children()}
+					{@render children?.()}
 				</ul>
 			{/if}
 		{/if}

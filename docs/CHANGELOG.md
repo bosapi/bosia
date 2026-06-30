@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Docs and routing/navigation skills now cover `+loading.svelte` skeletons shown during navigation.
 
+### Fixed
+
+- Registry components now pass type, accessibility, and formatting checks with zero warnings.
+
 ## [0.7.9] - 2026-06-22
 
 ### Added

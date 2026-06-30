@@ -57,7 +57,8 @@
 					{:else if resolved.descriptor.type === "snippet"}
 						{@render resolved.descriptor.snippet()}
 					{:else}
-						<svelte:component this={resolved.descriptor.component} {...resolved.descriptor.props} />
+						{@const HeaderComponent = resolved.descriptor.component}
+						<HeaderComponent {...resolved.descriptor.props} />
 					{/if}
 					{#if isSortable(col)}
 						<span

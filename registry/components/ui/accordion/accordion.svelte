@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.ts";
-	import { setContext } from "svelte";
+	import { setContext, untrack } from "svelte";
 	import type { Snippet } from "svelte";
 
 	type AccordionType = "single" | "multiple";
@@ -24,7 +24,7 @@
 	} = $props();
 
 	if (value === undefined) {
-		value = type === "multiple" ? [] : "";
+		value = untrack(() => (type === "multiple" ? [] : ""));
 	}
 
 	const uid = $props.id();

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { untrack } from "svelte";
+
 	interface Props {
 		length?: number;
 		oncomplete?: (code: string) => void;
@@ -6,7 +8,7 @@
 
 	let { length = 6, oncomplete }: Props = $props();
 
-	let digits = $state<string[]>(Array(length).fill(""));
+	let digits = $state<string[]>(untrack(() => Array(length).fill("")));
 	let inputs: HTMLInputElement[] = $state([]);
 
 	function emit() {

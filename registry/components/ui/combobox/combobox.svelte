@@ -20,7 +20,7 @@
 
 	let {
 		items = [] as ComboboxItem[],
-		value = $bindable(undefined as string | undefined),
+		value = $bindable(),
 		placeholder = "Select item...",
 		searchPlaceholder = "Search...",
 		emptyText = "No results found.",
@@ -29,7 +29,7 @@
 		contentClass = "",
 	}: {
 		items?: ComboboxItem[];
-		value?: string;
+		value?: string | undefined;
 		placeholder?: string;
 		searchPlaceholder?: string;
 		emptyText?: string;

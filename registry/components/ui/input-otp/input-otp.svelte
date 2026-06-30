@@ -32,7 +32,7 @@
 		disabled?: boolean;
 		name?: string;
 		id?: string;
-		autocomplete?: string;
+		autocomplete?: AutoFill;
 		inputmode?: "none" | "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search";
 		onComplete?: (value: string) => void;
 		class?: string;

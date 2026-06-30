@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from "svelte";
 	import EasyCropper from "svelte-easy-crop";
 	import { Button } from "$lib/components/ui/button";
 	import { Label } from "$lib/components/ui/label";
@@ -56,8 +57,8 @@
 
 	let crop = $state({ x: 0, y: 0 });
 	let zoom = $state(1);
-	let aspect = $state(defaultAspect);
-	let cropShape = $state<Shape>(defaultShape);
+	let aspect = $state(untrack(() => defaultAspect));
+	let cropShape = $state<Shape>(untrack(() => defaultShape));
 	let pixelCrop = $state<PixelCrop | null>(null);
 	let isProcessing = $state(false);
 
