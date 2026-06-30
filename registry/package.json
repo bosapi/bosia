@@ -1,0 +1,8 @@
+{
+	"name": "@bosia/registry",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"check": "svelte-check --tsconfig ./tsconfig.json && tsc --noEmit && prettier --check ."
+	}
+}

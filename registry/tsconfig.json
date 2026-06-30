@@ -1,0 +1,15 @@
+{
+	"extends": "../packages/bosia/tsconfig.json",
+	"compilerOptions": {
+		"paths": {
+			"$lib/utils.ts": ["../packages/bosia/src/lib/utils.ts"],
+			"$lib/utils": ["../packages/bosia/src/lib/utils.ts"],
+			"$lib/components/*": ["./components/*"],
+			"$lib/blocks/*": ["./blocks/*"],
+			"$lib/*": ["./*"],
+			"$registry/*": ["./components/ui/*"]
+		}
+	},
+	"include": ["components/**/*", "blocks/**/*"],
+	"exclude": ["node_modules", "features", "pages", "themes"]
+}
