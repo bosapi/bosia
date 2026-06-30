@@ -32,6 +32,10 @@
 				class="text-sm text-muted-foreground hover:text-foreground transition-colors">Dedup</a
 			>
 			<a
+				href="/loading-test"
+				class="text-sm text-muted-foreground hover:text-foreground transition-colors">Loading</a
+			>
+			<a
 				href="/api/hello"
 				target="_blank"
 				class="text-sm text-muted-foreground hover:text-foreground transition-colors">API</a
