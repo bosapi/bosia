@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.3] - 2026-07-02
+
+### Added
+
+- Checks now fail if a block's `__BRAND__` placeholder is left un-renamed in an app.
+
 ## [0.8.2] - 2026-07-01
 
 ### Added

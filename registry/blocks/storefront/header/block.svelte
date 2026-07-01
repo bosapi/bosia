@@ -83,7 +83,7 @@
 			<a
 				href="##"
 				class="inline-flex items-center gap-2.5 justify-self-center text-foreground md:justify-self-center"
-				aria-label="Mercato home"
+				aria-label="__BRAND__ home"
 			>
 				<span class="block h-8 w-8 text-primary">
 					<svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
@@ -108,7 +108,7 @@
 						/>
 					</svg>
 				</span>
-				<span class="font-display text-[25px] leading-none tracking-tight">Mercato</span>
+				<span class="font-display text-[25px] leading-none tracking-tight">__BRAND__</span>
 			</a>
 
 			<!-- Actions -->

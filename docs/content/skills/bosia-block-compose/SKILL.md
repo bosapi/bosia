@@ -88,6 +88,13 @@ site navbar. The navbar/footer/sidebar belong in `+layout.svelte` — one place,
 [[bosia-page-shell]] R1). Install a [[bosia-navbars]] block into the layout instead. A page block that
 ships its own navbar plus a navbar block in the layout renders two stacked navbars that conflict.
 
+### R8 — Replace the `__BRAND__` placeholder
+
+Navbar and storefront (header/footer) blocks ship the brand name as the literal
+`__BRAND__`. After installing them into the layout, replace **every** `__BRAND__` with the
+app's name (nav wordmark, header, footer, `aria-label`, copyright line). `bosia sync` (and thus
+`bun run check`) fails while any `__BRAND__` survives — grep for it and fix before shipping.
+
 ## Workflow
 
 1. Read user intent. Identify sections (hero, features, pricing, data table…).
@@ -111,6 +118,7 @@ P0:
 - [ ] `list_registry()` was called before writing UI.
 - [ ] Every needed item is `bosia add`-installed (not pasted).
 - [ ] Custom DOM exists only where no primitive matched.
+- [ ] No `__BRAND__` placeholder survives (navbar/storefront blocks) — replaced with the app name.
 
 P1:
 

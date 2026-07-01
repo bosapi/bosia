@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.1] - 2026-07-02
+
+### Changed
+
+- Navbar & storefront blocks now show a clear `__BRAND__` placeholder to rename, not a fake name.
+
 ## [0.8.0] - 2026-06-30
 
 ### Added

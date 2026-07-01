@@ -5,6 +5,20 @@
 
 ---
 
+## 0.8.3 / docs 0.8.1 (2026-07-02) — `__BRAND__` placeholder + guard
+
+> AI agents install navbar/storefront blocks but forget to rename the hardcoded brand ("Mercato",
+> "Brand"), shipping someone else's name in the nav/header/footer. A real-looking word doesn't trip
+> the "replace me" reflex. Fix: rename the literal to an unmistakable `__BRAND__` sentinel, fail
+> `bosia sync` (→ `bun run check`) while any survive, and teach the block-compose skill to rename it.
+
+- [x] 🟠 `registry/blocks/navbars/*/block.svelte` (19) + `storefront/{header,footer}` — brand text → `__BRAND__`.
+- [x] 🟠 `packages/bosia/src/core/brandGuard.ts` + `cli/sync.ts` — scan `src/`, fail on leftover `__BRAND__`.
+- [x] ⚪ `bosia-block-compose` skill — R8 + checklist gate for the placeholder.
+- [x] ⚪ Version bump `bosia 0.8.3` + `docs 0.8.1` + both `CHANGELOG.md`.
+
+---
+
 ## 0.8.2 (2026-07-01) — Host-managed dev mode
 
 > A multi-tenant host (rukoku) edits app source then watches the dev server self-trigger a rebuild on

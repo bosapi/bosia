@@ -28,7 +28,7 @@
 		>
 			B
 		</div>
-		<span class="font-display text-xl font-extrabold tracking-tight">Brand</span>
+		<span class="font-display text-xl font-extrabold tracking-tight">__BRAND__</span>
 	</a>
 
 	<div class="hidden flex-1 items-center justify-end gap-6 md:flex">

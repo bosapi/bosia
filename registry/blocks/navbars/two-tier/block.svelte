@@ -30,7 +30,7 @@
 			>
 				B
 			</div>
-			<span class="font-display text-lg font-extrabold tracking-tight">Brand</span>
+			<span class="font-display text-lg font-extrabold tracking-tight">__BRAND__</span>
 		</a>
 		<nav class="hidden items-center gap-7 md:flex">
 			{#each links as link (link.label)}

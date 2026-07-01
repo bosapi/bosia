@@ -31,7 +31,7 @@
 				<a
 					href="##"
 					class="inline-flex items-center gap-2.5 text-background"
-					aria-label="Mercato home"
+					aria-label="__BRAND__ home"
 				>
 					<span class="block h-9 w-9">
 						<svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
@@ -56,7 +56,7 @@
 							/>
 						</svg>
 					</span>
-					<span class="font-display text-[26px] leading-none">Mercato</span>
+					<span class="font-display text-[26px] leading-none">__BRAND__</span>
 				</a>
 				<p class="mt-3.5 max-w-[34ch] text-background/60">
 					One thoughtful storefront, made to fit whatever you sell — from produce to fine knitwear.
@@ -101,7 +101,7 @@
 		<div
 			class="flex flex-wrap items-center justify-between gap-4 pt-7 text-[13px] text-background/60"
 		>
-			<span>© {year} Mercato. A multi-purpose store template.</span>
+			<span>© {year} __BRAND__. A multi-purpose store template.</span>
 			<span class="flex gap-[18px]">
 				<a href="##" class="transition-colors hover:text-background">Privacy</a>
 				<a href="##" class="transition-colors hover:text-background">Terms</a>

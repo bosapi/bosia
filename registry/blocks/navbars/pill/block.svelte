@@ -17,7 +17,7 @@
 			>
 				B
 			</div>
-			<span class="font-display text-base font-extrabold tracking-tight">Brand</span>
+			<span class="font-display text-base font-extrabold tracking-tight">__BRAND__</span>
 		</a>
 		<span class="h-5 w-px bg-border"></span>
 		<nav class="hidden items-center gap-5 sm:flex">

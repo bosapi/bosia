@@ -10,7 +10,7 @@
 		<span class="grid h-8 w-8 place-items-center bg-foreground">
 			<span class="h-2.5 w-2.5 rounded-full bg-primary"></span>
 		</span>
-		<span class="font-display text-xl font-bold uppercase tracking-tight">Brand</span>
+		<span class="font-display text-xl font-bold uppercase tracking-tight">__BRAND__</span>
 	</div>
 
 	<div class="flex items-center gap-6">

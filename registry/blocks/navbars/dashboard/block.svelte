@@ -12,7 +12,7 @@
 			>
 				B
 			</div>
-			<span class="font-display text-base font-extrabold tracking-tight">Brand</span>
+			<span class="font-display text-base font-extrabold tracking-tight">__BRAND__</span>
 		</a>
 		<span class="text-muted-foreground/50">/</span>
 		<button type="button" class="inline-flex items-center gap-1.5 text-sm font-semibold">

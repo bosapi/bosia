@@ -17,7 +17,7 @@
 				B
 			</div>
 			<span class="flex flex-col leading-none">
-				<span class="font-display text-base font-extrabold tracking-tight">Brand</span>
+				<span class="font-display text-base font-extrabold tracking-tight">__BRAND__</span>
 				<span class="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
 					>Docs</span
 				>
