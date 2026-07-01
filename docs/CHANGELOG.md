@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Navbar & storefront blocks now show a clear `__BRAND__` placeholder to rename, not a fake name.
+- Landing page redesigned with a live code preview, component showcase, and cleaner look.
 
 ## [0.8.0] - 2026-06-30
 
