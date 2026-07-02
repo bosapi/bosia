@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Navbar & storefront blocks now show a clear `__BRAND__` placeholder to rename, not a fake name.
 - Landing page redesigned with a live code preview, component showcase, and cleaner look.
+- Overview pages now list every component, block, and theme we've added, not just a handful.
+- READMEs now advertise the UI registry: 60 components, 100+ blocks, 10 pages, 19 themes.
 
 ## [0.8.0] - 2026-06-30
 

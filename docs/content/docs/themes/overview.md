@@ -35,6 +35,7 @@ The CLI copies tokens to `src/lib/themes/<name>.css` and rewrites the active imp
 - [terminal](/docs/themes/terminal/) — dark green phosphor, mono display + accent glow
 - [sage](/docs/themes/sage/) — calm muted green, small radius + quiet shadows
 - [grape](/docs/themes/grape/) — dark lilac/purple with a soft accent glow
+- [clay](/docs/themes/clay/) — warm paper neutrals + terracotta brand, general-store storefront feel
 
 ## Authoring a theme
 

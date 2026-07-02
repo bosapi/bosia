@@ -18,6 +18,20 @@ File-based routing inspired by SvelteKit, built on top of the Bun runtime and El
 - **Dev server with HMR** — file watcher + SSE browser reload, no page blink
 - **Tailwind CSS v4** — compiled at build time, shadcn-inspired design tokens out of the box
 - **CLI** — `bosia create`, `bosia dev`, `bosia build`, `bosia add`, `bosia feat`
+- **UI registry** — shadcn-style, copy-paste source you own: **60 components**, **100+ blocks**, **10 pages**, **19 themes**
+
+## UI Registry
+
+`bosia add` copies source directly into your project — no runtime package to import:
+
+```bash
+bun x bosia@latest add button card data-table   # 60 primitives
+bun x bosia@latest add block heros/product       # 100+ composed sections
+bun x bosia@latest add page storefront/home      # 10 ready-to-wire pages
+bun x bosia@latest add theme editorial           # 19 token themes
+```
+
+See the [registry docs](https://bosia.dev) for the full catalog.
 
 ## Quick Start
 
