@@ -1,0 +1,12 @@
+{
+	"name": "storefront-cart-lines",
+	"description": "Full-width cart line items: image, name, unit price, quantity stepper, line total and remove — with a built-in empty state.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": ["blocks/storefront/store", "blocks/storefront/empty-state"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

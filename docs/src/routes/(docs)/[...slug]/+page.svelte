@@ -98,10 +98,13 @@
 	import StorefrontListingDemo from "$lib/components/demos/StorefrontListingDemo.svelte";
 	import StorefrontProductDemo from "$lib/components/demos/StorefrontProductDemo.svelte";
 	import StorefrontCheckoutDemo from "$lib/components/demos/StorefrontCheckoutDemo.svelte";
+	import StorefrontCartWishlistDemo from "$lib/components/demos/StorefrontCartWishlistDemo.svelte";
 	import PagesHomeDemo from "$lib/components/demos/PagesHomeDemo.svelte";
 	import PagesListingDemo from "$lib/components/demos/PagesListingDemo.svelte";
 	import PagesProductDemo from "$lib/components/demos/PagesProductDemo.svelte";
 	import PagesCheckoutDemo from "$lib/components/demos/PagesCheckoutDemo.svelte";
+	import PagesCartDemo from "$lib/components/demos/PagesCartDemo.svelte";
+	import PagesWishlistDemo from "$lib/components/demos/PagesWishlistDemo.svelte";
 	import AuthBlocksDemo from "$lib/components/demos/AuthBlocksDemo.svelte";
 	import AuthLoginDemo from "$lib/components/demos/AuthLoginDemo.svelte";
 	import AuthRegisterDemo from "$lib/components/demos/AuthRegisterDemo.svelte";
@@ -206,10 +209,13 @@
 		StorefrontListingDemo,
 		StorefrontProductDemo,
 		StorefrontCheckoutDemo,
+		StorefrontCartWishlistDemo,
 		PagesHomeDemo,
 		PagesListingDemo,
 		PagesProductDemo,
 		PagesCheckoutDemo,
+		PagesCartDemo,
+		PagesWishlistDemo,
 		AuthBlocksDemo,
 		AuthLoginDemo,
 		AuthRegisterDemo,

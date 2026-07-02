@@ -1,0 +1,16 @@
+{
+	"name": "storefront-wishlist-grid",
+	"description": "Wishlist grid of favourited products with a move-to-bag action and an empty state — the UI for the store's favourites.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": [
+		"blocks/storefront/store",
+		"blocks/storefront/product-card",
+		"blocks/storefront/empty-state"
+	],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

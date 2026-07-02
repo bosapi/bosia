@@ -8,6 +8,8 @@
 		items?: CartItem[];
 		shipping?: number;
 		taxRate?: number;
+		/** Button label; the total is appended. */
+		cta?: string;
 		onPlaceOrder?: () => void;
 	}
 
@@ -28,7 +30,14 @@
 		},
 	];
 
-	let { cart, items, shipping = 0, taxRate = 0.08, onPlaceOrder }: Props = $props();
+	let {
+		cart,
+		items,
+		shipping = 0,
+		taxRate = 0.08,
+		cta = "Place order",
+		onPlaceOrder,
+	}: Props = $props();
 
 	const lines = $derived(cart ? cart.items : (items ?? sampleItems));
 	const subtotal = $derived(
@@ -88,7 +97,7 @@
 		onclick={onPlaceOrder}
 		class="mt-5 inline-flex w-full items-center justify-center rounded-lg bg-primary px-6 py-4 text-base font-semibold text-primary-foreground transition hover:brightness-110"
 	>
-		Place order · {money(total)}
+		{cta} · {money(total)}
 	</button>
 	<p class="mt-3.5 flex items-center justify-center gap-2 text-[13px] text-muted-foreground/70">
 		<ShieldCheck size={15} /> Encrypted & secure payment

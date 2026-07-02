@@ -1,0 +1,18 @@
+{
+	"name": "storefront-cart",
+	"description": "Cart page: header, line items with quantity steppers and remove, sticky order summary with promo code, empty state and a related collection.",
+	"category": "storefront",
+	"dependencies": [
+		"blocks/storefront/store",
+		"blocks/storefront/header",
+		"blocks/storefront/cart-lines",
+		"blocks/storefront/order-summary",
+		"blocks/storefront/featured-collection",
+		"blocks/storefront/footer"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

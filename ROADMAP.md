@@ -11,7 +11,7 @@
 > PDP reviews, cart page + wishlist (first favs-API UI), search, account area, quick-view + mega-menu.
 
 - [x] 🟠 Phase A — `blocks/storefront/reviews` (summary bars, list, working form) wired into `pages/storefront/product`; docs product family + demo.
-- [ ] 🟠 Phase B — `empty-state`, `cart-lines`, `wishlist-grid` blocks; `pages/storefront/{cart,wishlist}`.
+- [x] 🟠 Phase B — `empty-state`, `cart-lines`, `wishlist-grid` blocks; `pages/storefront/{cart,wishlist}`; `order-summary` gains a `cta` label prop; docs family + 2 page docs + 3 demos.
 - [ ] 🟠 Phase C — `search-overlay` block, header `onSearch` prop, `pages/storefront/search`.
 - [ ] 🟠 Phase D — `store/orders.ts` samples; `account-nav`, `order-list`, `order-detail`, `address-book`, `account-settings`; `pages/storefront/account`.
 - [ ] 🟡 Phase E — `quick-view` modal, `mega-menu` header dropdown.

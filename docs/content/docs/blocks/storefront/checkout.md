@@ -44,8 +44,9 @@ bun x bosia@latest add block storefront/order-confirmed
 {/if}
 ```
 
-`checkout-form` exposes a bindable `delivery`; `order-summary` takes a `cart`, `shipping`, `taxRate`
-and an `onPlaceOrder` callback. Swap to `order-confirmed` once the order is placed.
+`checkout-form` exposes a bindable `delivery`; `order-summary` takes a `cart`, `shipping`, `taxRate`,
+an optional `cta` label (default "Place order" — the cart page passes "Checkout") and an
+`onPlaceOrder` callback. Swap to `order-confirmed` once the order is placed.
 
 ## Source
 

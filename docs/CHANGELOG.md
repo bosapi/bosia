@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - New Mode Switcher component: a button that cycles the light, dark, and system themes.
 - New Reviews block: star breakdown, review list, and a write-a-review form for product pages.
+- New Cart page: edit quantities, remove items, apply a promo code, and see the order total.
+- New Wishlist page: products you've hearted, with a one-tap move to your bag.
+- New Empty State block: a friendly message with a button for empty carts, wishlists and searches.
 
 ### Fixed
 
@@ -21,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - The product page now shows customer reviews below the product details.
+- The order summary button label can now be changed (the cart page says "Checkout").
 - Navbar & storefront blocks now show a clear `__BRAND__` placeholder to rename, not a fake name.
 - Landing page redesigned with a live code preview, component showcase, and cleaner look.
 - Overview pages now list every component, block, and theme we've added, not just a handful.

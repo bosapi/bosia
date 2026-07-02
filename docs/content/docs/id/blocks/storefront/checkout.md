@@ -45,7 +45,8 @@ bun x bosia@latest add block storefront/order-confirmed
 ```
 
 `checkout-form` mengekspos `delivery` yang dapat di-bind; `order-summary` menerima `cart`, `shipping`,
-`taxRate`, dan callback `onPlaceOrder`. Ganti ke `order-confirmed` setelah pesanan ditempatkan.
+`taxRate`, label `cta` opsional (default "Place order" — halaman keranjang mengirim "Checkout"), dan
+callback `onPlaceOrder`. Ganti ke `order-confirmed` setelah pesanan ditempatkan.
 
 ## Source
 

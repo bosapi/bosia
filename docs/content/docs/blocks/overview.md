@@ -68,7 +68,7 @@ Full-bleed landing hero sections, one per vertical:
 - [Commerce](/docs/blocks/cards/commerce/) — product, pricing, order, review
 - [Utility & System](/docs/blocks/cards/utility/) — notification, weather, event, file, task, storage, code, map, integration, poll, stepper, chat
 
-### Storefront (25)
+### Storefront (28)
 
 The Mercato commerce blocks:
 [Layout](/docs/blocks/storefront/layout/) ·
@@ -76,6 +76,7 @@ The Mercato commerce blocks:
 [Catalog & Cart](/docs/blocks/storefront/catalog/) ·
 [Listing](/docs/blocks/storefront/listing/) ·
 [Product](/docs/blocks/storefront/product/) ·
+[Cart & Wishlist](/docs/blocks/storefront/cart-wishlist/) ·
 [Checkout](/docs/blocks/storefront/checkout/)
 
 ### Auth (9)

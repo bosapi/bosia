@@ -1,0 +1,18 @@
+{
+	"name": "storefront-wishlist",
+	"description": "Wishlist page: header, grid of favourited products with move-to-bag, empty state, newsletter and a shared cart drawer.",
+	"category": "storefront",
+	"dependencies": [
+		"blocks/storefront/store",
+		"blocks/storefront/header",
+		"blocks/storefront/wishlist-grid",
+		"blocks/storefront/newsletter",
+		"blocks/storefront/footer",
+		"blocks/storefront/cart-drawer"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

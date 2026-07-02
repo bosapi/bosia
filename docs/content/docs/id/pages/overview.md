@@ -28,7 +28,7 @@ Anda yang memiliki routing-nya. Letakkan halaman ke dalam sebuah rute dan render
 
 ## Storefront Mercato
 
-Empat halaman storefront adalah satu template serbaguna — **Mercato**. Block yang sama merender salah
+Enam halaman storefront adalah satu template serbaguna — **Mercato**. Block yang sama merender salah
 satu dari enam "purpose" toko; mengganti purpose menukar teks dan katalog, dan mengganti tema
 meng-skin ulangnya. Sunting satu baris di bagian atas halaman mana pun:
 
@@ -55,7 +55,9 @@ sebagaimana biasa Anda lakukan; storefront memakai token semantik, jadi ia mengi
 
 - [Home](/pages/storefront/home) — hero, kategori, koleksi unggulan, editorial, dan lainnya
 - [Listing](/pages/storefront/listing) — filter, urut, dan grid produk (PLP)
-- [Product](/pages/storefront/product) — galeri, buy box, kepercayaan, dan detail (PDP)
+- [Product](/pages/storefront/product) — galeri, buy box, kepercayaan, detail, dan ulasan (PDP)
+- [Cart](/pages/storefront/cart) — baris item, stepper kuantitas, ringkasan, dan empty state
+- [Wishlist](/pages/storefront/wishlist) — produk favorit dengan pindah-ke-tas
 - [Checkout](/pages/storefront/checkout) — form multi-langkah, ringkasan, dan konfirmasi
 
 Untuk UI yang menghadap pelanggan di sini plus backend, pasangkan dengan scaffold template shop
