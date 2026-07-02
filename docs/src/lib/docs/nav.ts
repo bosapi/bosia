@@ -238,6 +238,7 @@ export const sidebar: NavGroup[] = [
 				children: [
 					{ label: "Home", slug: "pages/storefront/home" },
 					{ label: "Listing", slug: "pages/storefront/listing" },
+					{ label: "Search", slug: "pages/storefront/search" },
 					{ label: "Product", slug: "pages/storefront/product" },
 					{ label: "Cart", slug: "pages/storefront/cart" },
 					{ label: "Wishlist", slug: "pages/storefront/wishlist" },

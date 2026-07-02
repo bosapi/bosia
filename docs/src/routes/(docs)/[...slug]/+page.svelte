@@ -105,6 +105,7 @@
 	import PagesCheckoutDemo from "$lib/components/demos/PagesCheckoutDemo.svelte";
 	import PagesCartDemo from "$lib/components/demos/PagesCartDemo.svelte";
 	import PagesWishlistDemo from "$lib/components/demos/PagesWishlistDemo.svelte";
+	import PagesSearchDemo from "$lib/components/demos/PagesSearchDemo.svelte";
 	import AuthBlocksDemo from "$lib/components/demos/AuthBlocksDemo.svelte";
 	import AuthLoginDemo from "$lib/components/demos/AuthLoginDemo.svelte";
 	import AuthRegisterDemo from "$lib/components/demos/AuthRegisterDemo.svelte";
@@ -216,6 +217,7 @@
 		PagesCheckoutDemo,
 		PagesCartDemo,
 		PagesWishlistDemo,
+		PagesSearchDemo,
 		AuthBlocksDemo,
 		AuthLoginDemo,
 		AuthRegisterDemo,

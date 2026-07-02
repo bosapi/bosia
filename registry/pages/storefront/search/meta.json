@@ -1,0 +1,20 @@
+{
+	"name": "storefront-search",
+	"description": "Search results page: header opening a command-palette search overlay, sortable result grid and a no-results empty state.",
+	"category": "storefront",
+	"dependencies": [
+		"blocks/storefront/store",
+		"blocks/storefront/header",
+		"blocks/storefront/search-overlay",
+		"blocks/storefront/sort-bar",
+		"blocks/storefront/product-grid",
+		"blocks/storefront/empty-state",
+		"blocks/storefront/footer",
+		"blocks/storefront/cart-drawer"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

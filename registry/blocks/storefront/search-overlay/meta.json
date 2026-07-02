@@ -1,0 +1,12 @@
+{
+	"name": "storefront-search-overlay",
+	"description": "Command-palette search modal: autocomplete over the catalogue with keyboard navigation, popular-search chips and a no-results row.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": ["blocks/storefront/store"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

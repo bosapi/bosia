@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - New Cart page: edit quantities, remove items, apply a promo code, and see the order total.
 - New Wishlist page: products you've hearted, with a one-tap move to your bag.
 - New Empty State block: a friendly message with a button for empty carts, wishlists and searches.
+- New Search overlay: type to find products instantly, with keyboard navigation and popular picks.
+- New Search page: results you can sort, and a friendly no-results state with a clear-search button.
 
 ### Fixed
 
