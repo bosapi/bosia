@@ -1,11 +1,11 @@
 ---
 title: Pages — Storefront Product
-description: Halaman detail produk dengan galeri, buy box, sinyal kepercayaan, dan koleksi terkait.
+description: Halaman detail produk dengan galeri, buy box, sinyal kepercayaan, ulasan, dan koleksi terkait.
 demo: PagesProductDemo
 ---
 
 Halaman detail produk Mercato (PDP): header, breadcrumb, galeri lengket, buy box dengan opsi, baris
-kepercayaan, accordion detail, koleksi terkait, dan drawer keranjang bersama.
+kepercayaan, accordion detail, bagian ulasan, koleksi terkait, dan drawer keranjang bersama.
 
 ## Preview
 

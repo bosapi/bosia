@@ -5,6 +5,7 @@
 	import ProductOptions from "$lib/blocks/storefront/product-options/block.svelte";
 	import TrustRow from "$lib/blocks/storefront/trust-row/block.svelte";
 	import PdpAccordions from "$lib/blocks/storefront/pdp-accordions/block.svelte";
+	import Reviews from "$lib/blocks/storefront/reviews/block.svelte";
 	import FeaturedCollection from "$lib/blocks/storefront/featured-collection/block.svelte";
 	import Footer from "$lib/blocks/storefront/footer/block.svelte";
 	import CartDrawer from "$lib/blocks/storefront/cart-drawer/block.svelte";
@@ -40,6 +41,10 @@
 				<TrustRow />
 				<PdpAccordions />
 			</div>
+		</div>
+
+		<div class="mt-14 border-t border-border pt-10 sm:mt-16">
+			<Reviews rating={product.rating} count={product.reviews} />
 		</div>
 	</main>
 

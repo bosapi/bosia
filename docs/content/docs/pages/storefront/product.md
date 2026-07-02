@@ -1,11 +1,11 @@
 ---
 title: Pages — Storefront Product
-description: Product detail page with gallery, buy box, trust signals and a related collection.
+description: Product detail page with gallery, buy box, trust signals, reviews and a related collection.
 demo: PagesProductDemo
 ---
 
 The Mercato product detail page (PDP): header, breadcrumb, sticky gallery, buy box with options,
-trust row, detail accordions, a related collection, and the shared cart drawer.
+trust row, detail accordions, a reviews section, a related collection, and the shared cart drawer.
 
 ## Preview
 

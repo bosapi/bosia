@@ -5,6 +5,19 @@
 
 ---
 
+## docs 0.8.1 (2026-07-02) — Storefront e-commerce expansion (reviews, cart, wishlist, search, account)
+
+> The storefront covered browse/buy but nothing around it. Five phases add the real-world pieces:
+> PDP reviews, cart page + wishlist (first favs-API UI), search, account area, quick-view + mega-menu.
+
+- [x] 🟠 Phase A — `blocks/storefront/reviews` (summary bars, list, working form) wired into `pages/storefront/product`; docs product family + demo.
+- [ ] 🟠 Phase B — `empty-state`, `cart-lines`, `wishlist-grid` blocks; `pages/storefront/{cart,wishlist}`.
+- [ ] 🟠 Phase C — `search-overlay` block, header `onSearch` prop, `pages/storefront/search`.
+- [ ] 🟠 Phase D — `store/orders.ts` samples; `account-nav`, `order-list`, `order-detail`, `address-book`, `account-settings`; `pages/storefront/account`.
+- [ ] 🟡 Phase E — `quick-view` modal, `mega-menu` header dropdown.
+
+---
+
 ## docs 0.8.1 (2026-07-02) — Extract Mode Switcher component
 
 > The dark/light/system toggle lived inline in the navbar and couldn't be reused. Extract it as a

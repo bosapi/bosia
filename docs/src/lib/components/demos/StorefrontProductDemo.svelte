@@ -3,6 +3,7 @@
 	import ProductOptions from "$blocks/storefront/product-options/block.svelte";
 	import TrustRow from "$blocks/storefront/trust-row/block.svelte";
 	import PdpAccordions from "$blocks/storefront/pdp-accordions/block.svelte";
+	import Reviews from "$blocks/storefront/reviews/block.svelte";
 	import { createCart } from "$blocks/storefront/store/store.svelte.ts";
 
 	const cart = createCart();
@@ -16,5 +17,9 @@
 			<TrustRow />
 			<PdpAccordions />
 		</div>
+	</div>
+
+	<div class="mt-12 border-t border-border pt-8">
+		<Reviews />
 	</div>
 </div>

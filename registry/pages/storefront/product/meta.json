@@ -9,6 +9,7 @@
 		"blocks/storefront/product-options",
 		"blocks/storefront/trust-row",
 		"blocks/storefront/pdp-accordions",
+		"blocks/storefront/reviews",
 		"blocks/storefront/featured-collection",
 		"blocks/storefront/footer",
 		"blocks/storefront/cart-drawer"

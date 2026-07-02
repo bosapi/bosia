@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - New Mode Switcher component: a button that cycles the light, dark, and system themes.
+- New Reviews block: star breakdown, review list, and a write-a-review form for product pages.
 
 ### Fixed
 
@@ -19,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- The product page now shows customer reviews below the product details.
 - Navbar & storefront blocks now show a clear `__BRAND__` placeholder to rename, not a fake name.
 - Landing page redesigned with a live code preview, component showcase, and cleaner look.
 - Overview pages now list every component, block, and theme we've added, not just a handful.
