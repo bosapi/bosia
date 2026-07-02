@@ -5,6 +5,19 @@
 
 ---
 
+## docs 0.8.1 (2026-07-02) — Extract Mode Switcher component
+
+> The dark/light/system toggle lived inline in the navbar and couldn't be reused. Extract it as a
+> standalone `mode-switcher` component. Also fixes a bug: a stored theme was read into state on load
+> but never applied, so the theme visually reset on refresh.
+
+- [x] ⚪ `registry/components/ui/mode-switcher/` — new component (cycle button), apply theme on init.
+- [x] ⚪ Navbar consumes `<ModeSwitcher />`; theme logic + Button import removed; dep → `ui/mode-switcher`.
+- [x] ⚪ Register in `registry/index.json`; docs page + demo + overview + nav entries.
+- [x] ⚪ `bosia-theme-tokens` skill — "Runtime light/dark switch" note so agents reach for `ui/mode-switcher`.
+
+---
+
 ## 0.8.3 / docs 0.8.1 (2026-07-02) — `__BRAND__` placeholder + guard
 
 > AI agents install navbar/storefront blocks but forget to rename the hardcoded brand ("Mercato",

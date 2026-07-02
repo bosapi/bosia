@@ -8,9 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.8.1] - 2026-07-02
 
+### Added
+
+- New Mode Switcher component: a button that cycles the light, dark, and system themes.
+
 ### Fixed
 
 - Chart tooltips no longer leave ghost boxes behind when moving between points.
+- Theme choice now sticks after a page refresh instead of resetting to system.
 
 ### Changed
 

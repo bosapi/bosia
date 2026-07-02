@@ -1,0 +1,7 @@
+{
+	"name": "mode-switcher",
+	"description": "A single button that cycles the theme through light, dark, and system, persisted in localStorage.",
+	"dependencies": ["ui/button"],
+	"files": ["mode-switcher.svelte", "index.ts"],
+	"npmDeps": { "@lucide/svelte": "^1.17.0" }
+}

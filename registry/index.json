@@ -35,6 +35,7 @@
 		"ui/kbd",
 		"ui/label",
 		"ui/menubar",
+		"ui/mode-switcher",
 		"ui/navbar",
 		"ui/native-select",
 		"ui/navigation-menu",

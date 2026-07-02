@@ -1,7 +1,7 @@
 {
 	"name": "navbar",
 	"description": "A responsive navbar with desktop links, mobile dropdown menu, theme toggle, and user avatar.",
-	"dependencies": ["ui/button", "ui/avatar", "ui/dropdown-menu"],
+	"dependencies": ["ui/mode-switcher", "ui/avatar", "ui/dropdown-menu"],
 	"files": ["navbar.svelte", "navbar-link.svelte", "navbar-mobile-menu.svelte", "index.ts"],
 	"npmDeps": { "@lucide/svelte": "^1.17.0" }
 }

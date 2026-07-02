@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.ts";
 	import type { Snippet } from "svelte";
-	import { Button } from "$lib/components/ui/button";
 	import { Avatar, AvatarFallback } from "$lib/components/ui/avatar";
 	import {
 		DropdownMenu,
@@ -10,7 +9,7 @@
 		DropdownMenuItem,
 		DropdownMenuSeparator,
 	} from "$lib/components/ui/dropdown-menu";
-	import { Sun, Moon, Monitor } from "@lucide/svelte";
+	import { ModeSwitcher } from "$lib/components/ui/mode-switcher";
 	import NavbarLink from "./navbar-link.svelte";
 	import NavbarMobileMenu from "./navbar-mobile-menu.svelte";
 
@@ -35,38 +34,6 @@
 		children?: Snippet;
 		[key: string]: any;
 	} = $props();
-
-	type ThemeMode = "light" | "dark" | "system";
-	const ORDER: ThemeMode[] = ["light", "dark", "system"];
-	let mode = $state<ThemeMode>("system");
-
-	function applyTheme(m: ThemeMode) {
-		if (typeof document === "undefined") return;
-		const dark =
-			m === "dark" || (m === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-		document.documentElement.classList.toggle("dark", dark);
-	}
-
-	// init from storage once (writes mode, reads nothing reactive → runs once, no read+write-same-state)
-	$effect(() => {
-		const stored = localStorage.getItem("theme") as ThemeMode | null;
-		if (stored) mode = stored;
-	});
-
-	// keep DOM in sync with live OS changes while in system mode
-	$effect(() => {
-		if (mode !== "system" || typeof window === "undefined") return;
-		const mq = window.matchMedia("(prefers-color-scheme: dark)");
-		const handler = () => applyTheme("system");
-		mq.addEventListener("change", handler);
-		return () => mq.removeEventListener("change", handler);
-	});
-
-	function cycleTheme() {
-		mode = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
-		localStorage.setItem("theme", mode);
-		applyTheme(mode);
-	}
 </script>
 
 <nav
@@ -106,15 +73,7 @@
 	<div class="flex items-center gap-2">
 		{@render children?.()}
 
-		<Button variant="ghost" size="icon" onclick={cycleTheme} aria-label={`Theme: ${mode}`}>
-			{#if mode === "light"}
-				<Sun size={18} />
-			{:else if mode === "dark"}
-				<Moon size={18} />
-			{:else}
-				<Monitor size={18} />
-			{/if}
-		</Button>
+		<ModeSwitcher />
 
 		{#if user}
 			<DropdownMenu>

@@ -3,6 +3,7 @@ dist/
 docs/.astro/
 .bosia/
 **/public/bosia-tw.css
+**/public/llms.txt
 .DS_Store
 *.log
 .env*.local

@@ -101,6 +101,7 @@ export const sidebar: NavGroup[] = [
 					{ label: "Kbd", slug: "components/ui/kbd" },
 					{ label: "Label", slug: "components/ui/label" },
 					{ label: "Menubar", slug: "components/ui/menubar" },
+					{ label: "Mode Switcher", slug: "components/ui/mode-switcher" },
 					{ label: "Navbar", slug: "components/ui/navbar" },
 					{ label: "Native Select", slug: "components/ui/native-select" },
 					{ label: "Navigation Menu", slug: "components/ui/navigation-menu" },

@@ -16,7 +16,7 @@ bosia:
     blocks: []
     themes:
       [neutral, editorial, zinc, stone, claude, ocean, forest, rose, sunset, midnight, mono, amber]
-    components: []
+    components: [ui/mode-switcher]
     feats: []
   targets:
     routes: []
@@ -80,6 +80,22 @@ bosia add theme/editorial   # writes src/app.css with new --foreground, --primar
 ```
 
 Nothing in components changes.
+
+## Runtime light/dark switch
+
+Tokens define light + dark; a runtime control toggles which applies. Don't hand-roll it — `ui/navbar` already includes one, and for a standalone control (settings page, footer, bare layout) add `ui/mode-switcher`: a button that cycles light → dark → system, persisted in `localStorage`, applied on load.
+
+```bash
+bosia add mode-switcher
+```
+
+```svelte
+<script lang="ts">
+	import { ModeSwitcher } from "$lib/components/ui/mode-switcher";
+</script>
+
+<ModeSwitcher />
+```
 
 ## Workflow
 

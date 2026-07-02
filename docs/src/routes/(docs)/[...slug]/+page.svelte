@@ -31,6 +31,7 @@
 	import DataTableDemo from "$lib/components/demos/DataTableDemo.svelte";
 	import DirectionDemo from "$lib/components/demos/DirectionDemo.svelte";
 	import EmptyDemo from "$lib/components/demos/EmptyDemo.svelte";
+	import ModeSwitcherDemo from "$lib/components/demos/ModeSwitcherDemo.svelte";
 	import NavbarDemo from "$lib/components/demos/NavbarDemo.svelte";
 	import NativeSelectDemo from "$lib/components/demos/NativeSelectDemo.svelte";
 	import NavigationMenuDemo from "$lib/components/demos/NavigationMenuDemo.svelte";
@@ -145,6 +146,7 @@
 		FormDemo,
 		NativeSelectDemo,
 		NavbarDemo,
+		ModeSwitcherDemo,
 		NavigationMenuDemo,
 		PaginationDemo,
 		SidebarDemo,

@@ -102,6 +102,7 @@ Sixty primitives, all installed the same way. Higher-level [blocks](/docs/blocks
 | [Kbd](/components/ui/kbd/)                         | Displays keyboard shortcut keys; optionally binds real shortcuts.                       |
 | [Label](/components/ui/label/)                     | An accessible label for form controls.                                                  |
 | [Menubar](/components/ui/menubar/)                 | A horizontal menu bar with multiple dropdown menus.                                     |
+| [Mode Switcher](/components/ui/mode-switcher/)     | A button that cycles the theme through light, dark, and system.                         |
 | [Native Select](/components/ui/native-select/)     | A styled native HTML select.                                                            |
 | [Navbar](/components/ui/navbar/)                   | A responsive navbar with mobile menu, theme toggle, and user avatar.                    |
 | [Navigation Menu](/components/ui/navigation-menu/) | Top-level navigation with hover/focus popover panels.                                   |
