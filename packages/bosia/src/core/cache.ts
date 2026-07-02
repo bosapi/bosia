@@ -28,6 +28,14 @@ function parseMaxEntries(raw: string | undefined): number {
 	return n;
 }
 
+function parseMaxBodyBytes(raw: string | undefined): number {
+	const DEFAULT = 2_097_152; // 2MB; 0 = unlimited
+	if (!raw) return DEFAULT;
+	const n = parseInt(raw, 10);
+	if (!Number.isFinite(n) || n < 0) return DEFAULT;
+	return n;
+}
+
 // `invalidate` / `invalidateAll` are re-exported from the public `bosia`
 // barrel, so this module also evaluates in the browser bundle. Guard every
 // `process.env` read — otherwise hydration throws `ReferenceError: Can't
@@ -38,12 +46,13 @@ const isServer = typeof process !== "undefined";
 
 export const CACHE_KEYS: readonly string[] = parseCacheKeys(env.CACHE_KEYS);
 export const CACHE_MAX_ENTRIES = parseMaxEntries(env.CACHE_MAX_ENTRIES);
+export const CACHE_MAX_BODY_BYTES = parseMaxBodyBytes(env.CACHE_MAX_BODY_BYTES);
 export const CACHE_ENABLED = CACHE_MAX_ENTRIES > 0;
 
 if (isServer) {
 	if (CACHE_ENABLED) {
 		console.log(
-			`💾 Response cache: max ${CACHE_MAX_ENTRIES} entries, identity keys [${CACHE_KEYS.join(", ")}]`,
+			`💾 Response cache: max ${CACHE_MAX_ENTRIES} entries, max body ${CACHE_MAX_BODY_BYTES === 0 ? "unlimited" : `${CACHE_MAX_BODY_BYTES} bytes`}, identity keys [${CACHE_KEYS.join(", ")}]`,
 		);
 	} else {
 		console.log("💾 Response cache: disabled (CACHE_MAX_ENTRIES=0)");
@@ -111,14 +120,9 @@ const pathIndex = new Map<string, Set<string>>(); // pathname → cacheKeys
 
 // ─── Key building ────────────────────────────────────────
 
-/** FNV-1a 32-bit hash. Compact, no dep, collision-tolerant for an identity bucket. */
-function fnv1a(s: string): string {
-	let h = 0x811c9dc5;
-	for (let i = 0; i < s.length; i++) {
-		h ^= s.charCodeAt(i);
-		h = Math.imul(h, 0x01000193);
-	}
-	return (h >>> 0).toString(36);
+/** SHA-256 truncated to 64 bits — identity buckets must not collide across users. */
+function identityDigest(s: string): string {
+	return new Bun.CryptoHasher("sha256").update(s).digest("hex").slice(0, 16);
 }
 
 export function computeIdentityHash(req: Request, cookies: Cookies): string {
@@ -132,7 +136,7 @@ export function computeIdentityHash(req: Request, cookies: Cookies): string {
 	}
 	if (parts.length === 0) return "0";
 	parts.sort();
-	return fnv1a(parts.join("&"));
+	return identityDigest(parts.join("&"));
 }
 
 export function computeCacheKey(url: URL, req: Request, cookies: Cookies): string {
@@ -177,6 +181,7 @@ export function cacheGet(key: string): CacheEntry | undefined {
 
 export function cacheSet(key: string, entry: CacheEntry): void {
 	if (!CACHE_ENABLED) return;
+	if (CACHE_MAX_BODY_BYTES > 0 && entry.raw.length > CACHE_MAX_BODY_BYTES) return;
 	// Drop any existing entry's index pointers first
 	cacheDeleteKey(key);
 	const evicted = htmlCache.set(key, entry);

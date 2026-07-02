@@ -1,7 +1,21 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.2**
+> Current version: **0.8.4**
+
+---
+
+## 0.8.4 (2026-07-03) — Cache security fixes (framework review S-findings)
+
+> Review of the response-cache layer found identity-hash collision + memory-DoS risks.
+> Perf items (P1–P3) held pending review; discovered `Bun.brotliCompressSync` doesn't exist — brotli variants never built (fix rides with P1).
+
+- [x] 🔴 S1 — identity hash FNV-1a-32 → SHA-256 (64-bit hex); collision could serve user A's page to user B.
+- [~] S2 — anonymous-identity write gate — CANCELED during planning.
+- [x] 🟠 S3 — `CACHE_MAX_BODY_BYTES` per-entry cap (default 2MB, `0` unlimited); guard in `cacheSet` + early-skip before compression.
+- [ ] 🟡 P1 — brotli via `node:zlib` quality 5 (also un-breaks brotli entirely).
+- [ ] 🟡 P2 — prerendered pages: boot-time manifest instead of per-request `exists()` probes.
+- [ ] 🟡 P3 — percent-encoded static paths 404 (`decodeURIComponent` in lookup).
 
 ---
 

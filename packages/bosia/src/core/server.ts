@@ -28,6 +28,7 @@ import { buildStaticManifest, lookupStatic } from "./staticManifest.ts";
 import { dedup, dedupKey } from "./dedup.ts";
 import {
 	CACHE_ENABLED,
+	CACHE_MAX_BODY_BYTES,
 	buildCompressedVariants,
 	cacheGet,
 	cacheSet,
@@ -436,6 +437,9 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				queueMicrotask(async () => {
 					try {
 						const buf = new Uint8Array(await cloned.arrayBuffer());
+						// Oversized bodies skip early so they never pay compression;
+						// cacheSet re-checks as the authoritative guard.
+						if (CACHE_MAX_BODY_BYTES > 0 && buf.length > CACHE_MAX_BODY_BYTES) return;
 						const { gzip, brotli } = buildCompressedVariants(buf);
 						// API endpoints have no LoaderDeps in v0.6 — invalidation is
 						// URL/prefix only. See ROADMAP for deferred tag support.

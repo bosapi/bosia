@@ -7,6 +7,7 @@ import type { Cookies, LoaderDeps } from "./hooks.ts";
 import { CSP_ENABLED } from "./csp.ts";
 import {
 	CACHE_ENABLED,
+	CACHE_MAX_BODY_BYTES,
 	buildCompressedVariants,
 	cacheGet,
 	cacheSet,
@@ -733,20 +734,24 @@ export async function renderSSRStream(
 	// the response goes out first.
 	if (cacheable && cacheKey && (cookies as any).outgoing?.length === 0) {
 		const fullBody = concatChunks(chunks);
-		const tags = collectTags(data.layoutDeps ?? null, data.pageDeps ?? null);
-		const keyForWrite = cacheKey;
-		queueMicrotask(() => {
-			const { gzip, brotli } = buildCompressedVariants(fullBody);
-			cacheSet(keyForWrite, {
-				raw: fullBody,
-				gzip,
-				brotli,
-				contentType: "text/html; charset=utf-8",
-				status: 200,
-				extraHeaders: {},
-				tags,
+		// Oversized bodies skip early so they never pay compression; cacheSet
+		// re-checks as the authoritative guard.
+		if (CACHE_MAX_BODY_BYTES === 0 || fullBody.length <= CACHE_MAX_BODY_BYTES) {
+			const tags = collectTags(data.layoutDeps ?? null, data.pageDeps ?? null);
+			const keyForWrite = cacheKey;
+			queueMicrotask(() => {
+				const { gzip, brotli } = buildCompressedVariants(fullBody);
+				cacheSet(keyForWrite, {
+					raw: fullBody,
+					gzip,
+					brotli,
+					contentType: "text/html; charset=utf-8",
+					status: 200,
+					extraHeaders: {},
+					tags,
+				});
 			});
-		});
+		}
 	}
 
 	let i = 0;

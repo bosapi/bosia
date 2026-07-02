@@ -172,6 +172,21 @@ describe("cacheGet / cacheSet", () => {
 		expect(cacheGet("/missing|i=0")).toBeUndefined();
 	});
 
+	test("body larger than CACHE_MAX_BODY_BYTES is not stored", async () => {
+		const { CACHE_MAX_BODY_BYTES } = await import("../src/core/cache.ts");
+		const oversized = new Uint8Array(
+			new ArrayBuffer(CACHE_MAX_BODY_BYTES + 1),
+		) as Uint8Array<ArrayBuffer>;
+		cacheSet("/huge|i=0", mkEntry({ raw: oversized }));
+		expect(cacheGet("/huge|i=0")).toBeUndefined();
+		// exactly at the limit still stores
+		const atLimit = new Uint8Array(
+			new ArrayBuffer(CACHE_MAX_BODY_BYTES),
+		) as Uint8Array<ArrayBuffer>;
+		cacheSet("/fit|i=0", mkEntry({ raw: atLimit }));
+		expect(cacheGet("/fit|i=0")).toBeDefined();
+	});
+
 	test("overwriting same key replaces the entry and updates index", () => {
 		const first = mkEntry({ tags: ["k:a"] });
 		const second = mkEntry({ tags: ["k:b"] });

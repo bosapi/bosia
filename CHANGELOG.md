@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.4] - 2026-07-03
+
+### Added
+
+- New `CACHE_MAX_BODY_BYTES` setting stops very large responses from filling up server memory.
+
+### Fixed
+
+- Cached pages for logged-in users now use a stronger hash, so one user can never see another's page.
+
 ## [0.8.3] - 2026-07-02
 
 ### Added

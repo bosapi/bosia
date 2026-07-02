@@ -127,12 +127,13 @@ Tag-based invalidation for API endpoints is on the roadmap.
 
 ## Env vars
 
-| Variable            | Default                                    | Purpose                                                   |
-| ------------------- | ------------------------------------------ | --------------------------------------------------------- |
-| `CACHE_KEYS`        | `session,sid,auth,token,jwt,Authorization` | Cookie/header names that contribute to the identity hash. |
-| `CACHE_MAX_ENTRIES` | `500`                                      | LRU capacity. `0` disables the cache entirely.            |
+| Variable               | Default                                    | Purpose                                                                    |
+| ---------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
+| `CACHE_KEYS`           | `session,sid,auth,token,jwt,Authorization` | Cookie/header names that contribute to the identity hash.                  |
+| `CACHE_MAX_ENTRIES`    | `500`                                      | LRU capacity. `0` disables the cache entirely.                             |
+| `CACHE_MAX_BODY_BYTES` | `2097152` (2MB)                            | Per-entry body size cap. Larger responses skip the cache. `0` = unlimited. |
 
-Both are read once at startup. Each entry holds the raw bytes plus gzip + brotli copies — typically a few KB.
+All are read once at startup. Each entry holds the raw bytes plus gzip + brotli copies — typically a few KB.
 
 ## Verification
 
