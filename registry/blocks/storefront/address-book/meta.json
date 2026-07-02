@@ -1,0 +1,12 @@
+{
+	"name": "storefront-address-book",
+	"description": "Address cards with a default badge, edit and remove actions, and a dashed add-new card.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": ["blocks/storefront/store"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

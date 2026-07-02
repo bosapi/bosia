@@ -13,7 +13,7 @@
 - [x] 🟠 Phase A — `blocks/storefront/reviews` (summary bars, list, working form) wired into `pages/storefront/product`; docs product family + demo.
 - [x] 🟠 Phase B — `empty-state`, `cart-lines`, `wishlist-grid` blocks; `pages/storefront/{cart,wishlist}`; `order-summary` gains a `cta` label prop; docs family + 2 page docs + 3 demos.
 - [x] 🟠 Phase C — `search-overlay` block + `pages/storefront/search` (header already had `onSearch`); layout family docs + search page docs + demo wiring.
-- [ ] 🟠 Phase D — `store/orders.ts` samples; `account-nav`, `order-list`, `order-detail`, `address-book`, `account-settings`; `pages/storefront/account`.
+- [x] 🟠 Phase D — `store/orders.ts` samples; `account-nav`, `order-list`, `order-detail`, `address-book`, `account-settings`; `pages/storefront/account` (client-side section switching); account family docs + page docs + 2 demos.
 - [ ] 🟡 Phase E — `quick-view` modal, `mega-menu` header dropdown.
 
 ---

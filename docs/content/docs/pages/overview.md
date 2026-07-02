@@ -28,7 +28,7 @@ You own the routing. Drop the page into a route and render it:
 
 ## The Mercato storefront
 
-The seven storefront pages are one multi-purpose template — **Mercato**. The same blocks render any
+The eight storefront pages are one multi-purpose template — **Mercato**. The same blocks render any
 of six store "purposes"; switching the purpose swaps the copy and catalogue, and switching the
 theme re-skins it. Edit one line at the top of any page:
 
@@ -60,6 +60,7 @@ you normally do; the storefront uses semantic tokens, so it follows along.
 - [Cart](/pages/storefront/cart) — line items, quantity steppers, summary and empty state
 - [Wishlist](/pages/storefront/wishlist) — favourited products with move-to-bag
 - [Checkout](/pages/storefront/checkout) — multi-step form, summary and confirmation
+- [Account](/pages/storefront/account) — order history, tracking, addresses and settings
 
 For the customer-facing UI here plus a backend, pair with the shop template scaffold
 (`bun x bosia@latest create my-shop --template shop`).

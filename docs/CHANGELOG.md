@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - New Empty State block: a friendly message with a button for empty carts, wishlists and searches.
 - New Search overlay: type to find products instantly, with keyboard navigation and popular picks.
 - New Search page: results you can sort, and a friendly no-results state with a clear-search button.
+- New Account page: your orders with live tracking, saved addresses, and profile settings.
+- Five account blocks: sidebar nav, order history, order tracking detail, address book, settings.
 
 ### Fixed
 

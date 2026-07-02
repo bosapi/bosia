@@ -1,0 +1,21 @@
+{
+	"name": "storefront-account",
+	"description": "Account page: sidebar navigation switching between order history with a drill-in order detail, the address book and account settings.",
+	"category": "storefront",
+	"dependencies": [
+		"blocks/storefront/store",
+		"blocks/storefront/header",
+		"blocks/storefront/account-nav",
+		"blocks/storefront/order-list",
+		"blocks/storefront/order-detail",
+		"blocks/storefront/address-book",
+		"blocks/storefront/account-settings",
+		"blocks/storefront/footer",
+		"blocks/storefront/cart-drawer"
+	],
+	"files": ["page.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

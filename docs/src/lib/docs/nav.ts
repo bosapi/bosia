@@ -220,6 +220,7 @@ export const sidebar: NavGroup[] = [
 					{ label: "Product Page", slug: "blocks/storefront/product" },
 					{ label: "Cart & Wishlist", slug: "blocks/storefront/cart-wishlist" },
 					{ label: "Checkout", slug: "blocks/storefront/checkout" },
+					{ label: "Account", slug: "blocks/storefront/account" },
 				],
 			},
 			{
@@ -243,6 +244,7 @@ export const sidebar: NavGroup[] = [
 					{ label: "Cart", slug: "pages/storefront/cart" },
 					{ label: "Wishlist", slug: "pages/storefront/wishlist" },
 					{ label: "Checkout", slug: "pages/storefront/checkout" },
+					{ label: "Account", slug: "pages/storefront/account" },
 				],
 			},
 			{
