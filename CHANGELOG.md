@@ -12,9 +12,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - New `CACHE_MAX_BODY_BYTES` setting stops very large responses from filling up server memory.
 
+### Changed
+
+- Prerendered pages are now found instantly at startup instead of checking disk on every visit.
+
 ### Fixed
 
 - Cached pages for logged-in users now use a stronger hash, so one user can never see another's page.
+- Brotli compression now actually works for cached pages — it was silently never applied before.
+- Files with spaces or special characters in their names now load instead of returning 404.
 
 ## [0.8.3] - 2026-07-02
 

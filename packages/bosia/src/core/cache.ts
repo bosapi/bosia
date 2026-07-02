@@ -5,6 +5,7 @@
 //
 // See docs/guides/response-cache.md.
 
+import { brotliCompressSync, constants as zlibConstants } from "node:zlib";
 import type { Cookies, LoaderDeps } from "./hooks.ts";
 import { dedupKey } from "./dedup.ts";
 
@@ -36,10 +37,10 @@ function parseMaxBodyBytes(raw: string | undefined): number {
 	return n;
 }
 
-// `invalidate` / `invalidateAll` are re-exported from the public `bosia`
-// barrel, so this module also evaluates in the browser bundle. Guard every
-// `process.env` read — otherwise hydration throws `ReferenceError: Can't
-// find variable: process` (Safari) the moment the barrel is imported.
+// Server-only module (imported by core/renderer.ts, core/server.ts,
+// lib/server.ts — never the client barrel; client `invalidate` lives in
+// core/client/navigation.ts). The `process` guards below are kept as
+// defense in case a future refactor pulls this into a browser bundle.
 const env: Record<string, string | undefined> =
 	typeof process !== "undefined" && process.env ? process.env : {};
 const isServer = typeof process !== "undefined";
@@ -252,16 +253,16 @@ export function buildCompressedVariants(body: Bytes): {
 	} catch {
 		gzip = null;
 	}
-	// brotliCompressSync exists in Bun >= 1.1.5 but is missing from older
-	// @types/bun shipments — cast through any so the call stays loose.
-	const brotliFn = (Bun as unknown as { brotliCompressSync?: (b: Bytes) => Uint8Array })
-		.brotliCompressSync;
-	if (brotliFn) {
-		try {
-			brotli = brotliFn(body) as Bytes;
-		} catch {
-			brotli = null;
-		}
+	try {
+		// Quality 5: ~20x faster than the default 11, still beats gzip on size.
+		// This runs sync in a microtask — 11 would block the event loop ~17ms/500KB.
+		brotli = new Uint8Array(
+			brotliCompressSync(body, {
+				params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 },
+			}),
+		) as Bytes;
+	} catch {
+		brotli = null;
 	}
 	return { gzip, brotli };
 }

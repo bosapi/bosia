@@ -24,7 +24,7 @@ import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } f
 import { isDev, compress, isStaticPath } from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
-import { buildStaticManifest, lookupStatic } from "./staticManifest.ts";
+import { buildPrerenderManifest, buildStaticManifest, lookupStatic } from "./staticManifest.ts";
 import { dedup, dedupKey } from "./dedup.ts";
 import {
 	CACHE_ENABLED,
@@ -188,6 +188,7 @@ function parseActionName(url: URL): string {
 // Dev keeps the per-request fallthrough so files dropped into `public/` mid-session
 // are served without a restart (dev's watcher doesn't fire on `public/`).
 const staticManifest = isDev ? null : buildStaticManifest(OUT_DIR);
+const prerenderManifest = isDev ? null : buildPrerenderManifest(OUT_DIR);
 
 async function resolve(event: RequestEvent): Promise<Response> {
 	const { request, url, locals, cookies } = event;
@@ -501,11 +502,18 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			return new Response("Not Found", { status: 404 });
 		}
 		// Dev: keep the per-request fallthrough so files dropped into `public/`
-		// mid-session are served without a restart.
-		if (path.startsWith("/dist/client/")) {
+		// mid-session are served without a restart. Decode once — filenames on
+		// disk are raw; safePath still runs after so traversal stays blocked.
+		let decodedPath: string;
+		try {
+			decodedPath = decodeURIComponent(path);
+		} catch {
+			return new Response("Not Found", { status: 404 });
+		}
+		if (decodedPath.startsWith("/dist/client/")) {
 			const resolved = safePath(
 				`${OUT_DIR}/client`,
-				path.split("?")[0].slice("/dist/client".length),
+				decodedPath.split("?")[0].slice("/dist/client".length),
 			);
 			if (resolved) {
 				const file = Bun.file(resolved);
@@ -515,17 +523,17 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			}
 			return new Response("Not Found", { status: 404 });
 		}
-		const pubPath = safePath("./public", path);
+		const pubPath = safePath("./public", decodedPath);
 		if (pubPath) {
 			const pub = Bun.file(pubPath);
 			if (await pub.exists()) return new Response(pub);
 		}
-		const distPath = safePath(OUT_DIR, path);
+		const distPath = safePath(OUT_DIR, decodedPath);
 		if (distPath) {
 			const dist = Bun.file(distPath);
 			if (await dist.exists()) return new Response(dist);
 		}
-		const staticPath = safePath(`${OUT_DIR}/static`, path);
+		const staticPath = safePath(`${OUT_DIR}/static`, decodedPath);
 		if (staticPath) {
 			const staticFile = Bun.file(staticPath);
 			if (await staticFile.exists()) return new Response(staticFile);
@@ -539,22 +547,18 @@ async function resolve(event: RequestEvent): Promise<Response> {
 	// in dev would mask errors (the badge stays empty, the SSE reload script
 	// isn't injected, and the page can't auto-recover when the source is fixed).
 	// Live SSR every request in dev so /about behaves like every other route.
-	if (!isDev) {
-		// Try both `<path>/index.html` (always/ignore mode) and `<path>.html` (never mode)
-		const prerenderCandidates =
-			path === "/" ? ["index.html"] : [`${path}/index.html`, `${path.replace(/\/$/, "")}.html`];
-		for (const candidate of prerenderCandidates) {
-			const prerenderPath = safePath(`${OUT_DIR}/prerendered`, candidate);
-			if (!prerenderPath) continue;
-			const prerenderFile = Bun.file(prerenderPath);
-			if (await prerenderFile.exists()) {
-				return new Response(prerenderFile, {
-					headers: {
-						"Content-Type": "text/html; charset=utf-8",
-						"Cache-Control": "public, max-age=3600",
-					},
-				});
-			}
+	if (prerenderManifest) {
+		// Keys come from a boot-time walk of `dist/prerendered/`, not from the
+		// URL, so no safePath needed — a non-matching path is just a miss.
+		const key = path === "/" ? "/" : path.replace(/\/$/, "");
+		const abs = prerenderManifest.get(key);
+		if (abs) {
+			return new Response(Bun.file(abs), {
+				headers: {
+					"Content-Type": "text/html; charset=utf-8",
+					"Cache-Control": "public, max-age=3600",
+				},
+			});
 		}
 	}
 

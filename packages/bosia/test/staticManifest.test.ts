@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { buildStaticManifest, lookupStatic } from "../src/core/staticManifest.ts";
+import {
+	buildPrerenderManifest,
+	buildStaticManifest,
+	lookupStatic,
+} from "../src/core/staticManifest.ts";
 
 let workdir: string;
 let outDir: string;
@@ -141,5 +145,46 @@ describe("lookupStatic", () => {
 	test("unknown key returns null", () => {
 		const m = buildStaticManifest(outDir);
 		expect(lookupStatic(m, "/nope.txt")).toBeNull();
+	});
+
+	test("percent-encoded path resolves to the raw filename", () => {
+		touch(join(workdir, "public", "my file.png"), "img");
+		const m = buildStaticManifest(outDir);
+		const hit = lookupStatic(m, "/my%20file.png");
+		expect(hit?.absPath).toBe(join(workdir, "public", "my file.png"));
+	});
+
+	test("malformed percent-encoding returns null instead of throwing", () => {
+		const m = buildStaticManifest(outDir);
+		expect(lookupStatic(m, "/bad%zz.png")).toBeNull();
+	});
+});
+
+describe("buildPrerenderManifest", () => {
+	test("maps index.html, nested index.html, and flat .html to URL paths", () => {
+		touch(join(outDir, "prerendered", "index.html"), "root");
+		touch(join(outDir, "prerendered", "about", "index.html"), "about-dir");
+		touch(join(outDir, "prerendered", "contact.html"), "contact-flat");
+
+		const m = buildPrerenderManifest(outDir);
+
+		expect(m.get("/")).toBe(join(outDir, "prerendered", "index.html"));
+		expect(m.get("/about")).toBe(join(outDir, "prerendered", "about", "index.html"));
+		expect(m.get("/contact")).toBe(join(outDir, "prerendered", "contact.html"));
+	});
+
+	test("on collision the index.html variant wins regardless of walk order", () => {
+		touch(join(outDir, "prerendered", "about.html"), "flat");
+		touch(join(outDir, "prerendered", "about", "index.html"), "dir");
+
+		const m = buildPrerenderManifest(outDir);
+
+		expect(m.get("/about")).toBe(join(outDir, "prerendered", "about", "index.html"));
+	});
+
+	test("missing prerendered dir yields empty map; non-html files ignored", () => {
+		expect(buildPrerenderManifest(outDir).size).toBe(0);
+		touch(join(outDir, "prerendered", "notes.txt"), "txt");
+		expect(buildPrerenderManifest(outDir).size).toBe(0);
 	});
 });

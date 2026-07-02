@@ -283,18 +283,28 @@ describe("buildCompressedVariants", () => {
 		expect(buildCompressedVariants(small)).toEqual({ gzip: null, brotli: null });
 	});
 
-	test("returns gzip (and brotli when Bun supports it) for large body", () => {
+	test("returns gzip and brotli for large body", () => {
 		const buf = new ArrayBuffer(8192);
 		const big = new Uint8Array(buf) as Uint8Array<ArrayBuffer>;
 		for (let i = 0; i < big.length; i++) big[i] = i % 251;
 		const { gzip, brotli } = buildCompressedVariants(big);
 		expect(gzip).toBeInstanceOf(Uint8Array);
 		expect(gzip!.length).toBeGreaterThan(0);
-		// brotliCompressSync is optional in older Bun; assert only when present.
-		if (typeof (Bun as any).brotliCompressSync === "function") {
-			expect(brotli).toBeInstanceOf(Uint8Array);
-			expect(brotli!.length).toBeGreaterThan(0);
-		}
+		expect(brotli).toBeInstanceOf(Uint8Array);
+		expect(brotli!.length).toBeGreaterThan(0);
+	});
+
+	test("brotli variant round-trips through serveCached with Accept-Encoding: br", async () => {
+		const buf = new ArrayBuffer(8192);
+		const big = new Uint8Array(buf) as Uint8Array<ArrayBuffer>;
+		for (let i = 0; i < big.length; i++) big[i] = i % 251;
+		const { gzip, brotli } = buildCompressedVariants(big);
+		const entry = mkEntry({ raw: big, gzip, brotli });
+		const res = serveCached(entry, mkRequest("http://x/", { "Accept-Encoding": "br" }));
+		expect(res.headers.get("Content-Encoding")).toBe("br");
+		const { brotliDecompressSync } = await import("node:zlib");
+		const body = new Uint8Array(brotliDecompressSync(await res.arrayBuffer()));
+		expect(body).toEqual(big);
 	});
 });
 

@@ -100,8 +100,42 @@ export function buildStaticManifest(outDir: string): StaticManifest {
 }
 
 export function lookupStatic(manifest: StaticManifest, urlPath: string): StaticEntry | null {
-	const key = urlPath.split("?")[0];
+	const raw = urlPath.split("?")[0];
+	// Manifest keys are raw filenames; URLs arrive percent-encoded.
+	let key: string;
+	try {
+		key = decodeURIComponent(raw);
+	} catch {
+		return null; // malformed encoding → 404
+	}
 	return manifest.get(key) ?? null;
+}
+
+/**
+ * Boot-time map of URL path → absolute file path for `dist/prerendered/`.
+ * `index.html` → `/`, `foo/index.html` → `/foo`, `foo.html` → `/foo`.
+ * On collision the `…/index.html` variant wins (mirrors the old runtime
+ * candidate order). Replaces per-request `Bun.file().exists()` probes.
+ */
+export function buildPrerenderManifest(outDir: string): Map<string, string> {
+	const manifest = new Map<string, string>();
+	const root = join(resolvePath(outDir), "prerendered");
+	for (const { abs, rel } of walk(root)) {
+		if (!rel.endsWith(".html")) continue;
+		let key: string;
+		let isIndex = false;
+		if (rel === "index.html") {
+			key = "/";
+			isIndex = true;
+		} else if (rel.endsWith("/index.html")) {
+			key = `/${rel.slice(0, -"/index.html".length)}`;
+			isIndex = true;
+		} else {
+			key = `/${rel.slice(0, -".html".length)}`;
+		}
+		if (isIndex || !manifest.has(key)) manifest.set(key, abs);
+	}
+	return manifest;
 }
 
 // Re-export for tests that want to confirm a file-on-disk exists at the entry.
