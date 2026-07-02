@@ -17,6 +17,7 @@
 - [x] ⚪ `bosia-block-compose` skill — R8 + checklist gate for the placeholder.
 - [x] ⚪ Version bump `bosia 0.8.3` + `docs 0.8.1` + both `CHANGELOG.md`.
 - [x] ⚪ Docs landing redesign — shared `LandingPage.svelte` (EN/ID), code-forward hero, live registry showcase.
+- [x] ⚪ Chart tooltip — draw with native SVG rect/text, not `<foreignObject>`; kills Chrome's ghost-box repaint bug.
 
 ---
 

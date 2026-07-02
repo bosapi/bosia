@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.8.1] - 2026-07-02
 
+### Fixed
+
+- Chart tooltips no longer leave ghost boxes behind when moving between points.
+
 ### Changed
 
 - Navbar & storefront blocks now show a clear `__BRAND__` placeholder to rename, not a fake name.
