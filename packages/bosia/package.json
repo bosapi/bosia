@@ -1,6 +1,6 @@
 {
 	"name": "bosia",
-	"version": "0.8.2",
+	"version": "0.8.3",
 	"type": "module",
 	"description": "A fast, batteries-included fullstack framework — SSR · Svelte 5 Runes · Bun · ElysiaJS. File-based routing No Node.js, no Vite, no adapters.",
 	"keywords": [

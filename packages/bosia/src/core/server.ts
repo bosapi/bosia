@@ -978,6 +978,7 @@ if (Number.isFinite(MAX_INFLIGHT)) {
 // ─── Graceful Shutdown State ──────────────────────────────
 
 let shuttingDown = false;
+let firstSignalAt = 0;
 let inFlight = 0;
 let drainResolve: (() => void) | null = null;
 
@@ -1097,8 +1098,16 @@ app.listen(PORT, () => {
 });
 
 async function shutdown() {
-	if (shuttingDown) return;
+	if (shuttingDown) {
+		// One ^C arrives multiple times (process group + `bun run` forwarding
+		// to its child) — only a genuinely later signal is a second ^C.
+		if (Date.now() - firstSignalAt > 200) process.exit(130); // second ^C = force quit
+		return;
+	}
 	shuttingDown = true;
+	firstSignalAt = Date.now();
+	// Dev: nothing worth draining — exit instantly so ^C feels immediate.
+	if (isDev) process.exit(0);
 	console.log("⏳ Shutting down — draining in-flight requests...");
 
 	if (inFlight > 0) {

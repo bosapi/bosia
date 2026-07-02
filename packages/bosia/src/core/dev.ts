@@ -564,9 +564,16 @@ console.log(
 // a second ^C.
 
 let shuttingDown = false;
+let firstSignalAt = 0;
 async function shutdown() {
-	if (shuttingDown) return; // re-entry from process-group signals or impatient ^C — drain is already running
+	if (shuttingDown) {
+		// One ^C arrives multiple times (process group + `bun run` forwarding
+		// to its child) — only a genuinely later signal is a second ^C.
+		if (Date.now() - firstSignalAt > 200) process.exit(130); // second ^C = force quit
+		return;
+	}
 	shuttingDown = true;
+	firstSignalAt = Date.now();
 	intentionalKill = true;
 
 	if (buildTimer) clearTimeout(buildTimer);
@@ -582,9 +589,8 @@ async function shutdown() {
 		await Promise.race([appProcess.exited, Bun.sleep(2_500)]);
 	}
 
-	// Safety net: if any stray handle still holds the loop, force clean exit.
-	// .unref() so the timer itself doesn't keep the loop alive when drain succeeds.
-	setTimeout(() => process.exit(0), 1_500).unref();
+	// Everything is stopped — exit now rather than waiting for the loop to drain.
+	process.exit(0);
 }
 
 process.on("SIGINT", shutdown);

@@ -569,6 +569,7 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 - [x] 🟠 Graceful shutdown drain — drain in-flight requests before stopping; return 503 from health check during shutdown
 - [x] 🟡 Concurrent build guard in dev — prevent overlapping builds when rapid file changes trigger `buildAndRestart()` while a build is already running
 - [x] 🟡 Clean dev server shutdown — release `Bun.serve`, file watchers, and timers on SIGINT so the event loop drains naturally; outer `bun run` reports exit 0 instead of 130
+- [x] 🟡 Single-^C stop — CLI wrappers survive SIGINT and wait for the child (no more orphaned server); dev skips the drain for instant exit; second ^C force-quits (130)
 - [x] 🟠 Dev watcher safety net — 5s mtime poll of `src/` complements `fs.watch` so atomic-write edits (temp + rename) that macOS drops still trigger rebuilds
 - [x] 🟠 Dev crash backoff — replace the "stop after 3 crashes" silent-stop with exponential backoff (500ms → 5s) that never gives up, so a transient error or fixed source change brings the app back without manual restart
 

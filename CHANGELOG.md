@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Checks now fail if a block's `__BRAND__` placeholder is left un-renamed in an app.
 
+### Fixed
+
+- One Ctrl+C now stops the dev and prod servers cleanly; pressing it twice force-quits.
+- Stopping the dev server no longer pauses for a couple of seconds before exiting.
+
 ## [0.8.2] - 2026-07-01
 
 ### Added

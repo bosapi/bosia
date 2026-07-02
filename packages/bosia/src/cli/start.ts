@@ -22,5 +22,9 @@ export async function runStart() {
 		},
 	});
 
+	// Survive ^C so we keep waiting for the child instead of orphaning it
+	// mid-drain. The terminal delivers SIGINT to the whole process group,
+	// so the child already gets the signal — no forwarding needed.
+	for (const sig of ["SIGINT", "SIGTERM"] as const) process.on(sig, () => {});
 	await proc.exited;
 }
