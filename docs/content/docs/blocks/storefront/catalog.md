@@ -41,6 +41,9 @@ Pass the same `cart` to the header, every grid, and the drawer to keep them in s
 `cart`, each block falls back to local state so it still renders standalone. The drawer is
 `position: fixed` and opens when an item is added (or via `cart.open = true`).
 
+`product-card` also takes an optional `onQuickView` — when set, an eye button appears next to the
+heart; pair it with the `storefront/quick-view` modal.
+
 ## Source
 
 `src/lib/blocks/storefront/{store,product-card,product-grid,featured-collection,cart-drawer}/`

@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - New Search page: results you can sort, and a friendly no-results state with a clear-search button.
 - New Account page: your orders with live tracking, saved addresses, and profile settings.
 - Five account blocks: sidebar nav, order history, order tracking detail, address book, settings.
+- New Quick View: peek at a product and add it to your bag without leaving the grid.
+- New Mega Menu block: a configurable full-width menu with a featured product spotlight.
 
 ### Fixed
 

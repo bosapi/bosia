@@ -1,0 +1,12 @@
+{
+	"name": "storefront-quick-view",
+	"description": "Quick-view modal: product image beside the full buy box (options, quantity, add-to-bag) with a link to the full page.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": ["blocks/storefront/store", "blocks/storefront/product-options"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

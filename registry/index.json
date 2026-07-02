@@ -147,6 +147,8 @@
 		"storefront/order-detail",
 		"storefront/address-book",
 		"storefront/account-settings",
+		"storefront/quick-view",
+		"storefront/mega-menu",
 		"auth/brand",
 		"auth/auth-shell",
 		"auth/auth-card",

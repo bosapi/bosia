@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Heart, ShoppingBag, Star } from "@lucide/svelte";
+	import { Eye, Heart, ShoppingBag, Star } from "@lucide/svelte";
 	import { money, type Product } from "$lib/blocks/storefront/store/store.svelte.ts";
 
 	interface Props {
@@ -7,6 +7,8 @@
 		faved?: boolean;
 		onAdd?: (product: Product) => void;
 		onFav?: (product: Product) => void;
+		/** When set, shows an eye button next to the heart (open a quick-view). */
+		onQuickView?: (product: Product) => void;
 	}
 
 	const fallback: Product = {
@@ -21,7 +23,7 @@
 		swatches: ["#C9B6A3", "#7C8A77", "#2A2419"],
 	};
 
-	let { product = fallback, faved, onAdd, onFav }: Props = $props();
+	let { product = fallback, faved, onAdd, onFav, onQuickView }: Props = $props();
 
 	// Standalone fallback when no shared state is wired in.
 	let localFav = $state(false);
@@ -85,6 +87,21 @@
 		>
 			<Heart size={18} class={isFav ? "fill-destructive" : ""} />
 		</button>
+
+		{#if onQuickView}
+			<button
+				type="button"
+				onclick={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					onQuickView(product);
+				}}
+				aria-label="Quick view"
+				class="absolute right-2.5 top-[52px] z-[3] flex h-[38px] w-[38px] items-center justify-center rounded-full bg-card/85 text-foreground shadow-sm backdrop-blur transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 sm:translate-y-[-4px] sm:opacity-0"
+			>
+				<Eye size={18} />
+			</button>
+		{/if}
 
 		<!-- Quick add -->
 		<div

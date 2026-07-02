@@ -17,6 +17,7 @@ bun x bosia@latest add block storefront/product-options
 bun x bosia@latest add block storefront/trust-row
 bun x bosia@latest add block storefront/pdp-accordions
 bun x bosia@latest add block storefront/reviews
+bun x bosia@latest add block storefront/quick-view
 ```
 
 `product-options` menarik `storefront/store`; semuanya menarik [`@lucide/svelte`](/components/ui/icon/).
@@ -41,6 +42,9 @@ bun x bosia@latest add block storefront/reviews
 `product-options` menerima `product`, `sizes` opsional, dan `cart` bersama (tambah-ke-tas
 menjumlahkan kuantitas yang dipilih). `pdp-accordions` memakai `<details>` native untuk bagian detail.
 
+`quick-view` adalah PDP-dalam-modal: bind `open`, kirim `product` dan `cart` bersama, lalu buka
+dari grid lewat `onQuickView` milik `product-card` (yang menampilkan tombol mata di samping hati).
+
 `reviews` tampil mandiri dengan ulasan contoh, atau kirim milikmu: `rating`, `count`,
 `distribution` (persen per bintang, 5→1) dan `reviews` (`{ author, rating, date, title?, body,
 verified? }`). Form tulis-ulasannya menambah ke daftar yang tampil dan memanggil
@@ -48,4 +52,4 @@ verified? }`). Form tulis-ulasannya menambah ke daftar yang tampil dan memanggil
 
 ## Source
 
-`src/lib/blocks/storefront/{product-gallery,product-options,trust-row,pdp-accordions,reviews}/block.svelte`
+`src/lib/blocks/storefront/{product-gallery,product-options,trust-row,pdp-accordions,reviews,quick-view}/block.svelte`

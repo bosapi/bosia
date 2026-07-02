@@ -1,0 +1,10 @@
+{
+	"name": "storefront-mega-menu",
+	"description": "Configurable full-width mega-menu panel: link sections plus a featured product spotlight, for use under any header.",
+	"category": "storefront",
+	"themes": [],
+	"dependencies": ["blocks/storefront/store"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

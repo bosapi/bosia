@@ -17,6 +17,7 @@ bun x bosia@latest add block storefront/product-options
 bun x bosia@latest add block storefront/trust-row
 bun x bosia@latest add block storefront/pdp-accordions
 bun x bosia@latest add block storefront/reviews
+bun x bosia@latest add block storefront/quick-view
 ```
 
 `product-options` pulls `storefront/store`; all pull [`@lucide/svelte`](/components/ui/icon/).
@@ -41,6 +42,9 @@ bun x bosia@latest add block storefront/reviews
 `product-options` takes a `product`, optional `sizes`, and a shared `cart` (add-to-bag totals the
 selected quantity). `pdp-accordions` uses native `<details>` for the detail sections.
 
+`quick-view` is the PDP-in-a-modal: bind `open`, pass a `product` and the shared `cart`, and open
+it from a grid via `product-card`'s `onQuickView` (which shows an eye button next to the heart).
+
 `reviews` renders standalone with sample reviews, or pass your own: `rating`, `count`,
 `distribution` (percent per star, 5→1) and `reviews` (`{ author, rating, date, title?, body,
 verified? }`). Its write-a-review form appends to the visible list and fires `onSubmit(review)`
@@ -48,4 +52,4 @@ for real persistence.
 
 ## Source
 
-`src/lib/blocks/storefront/{product-gallery,product-options,trust-row,pdp-accordions,reviews}/block.svelte`
+`src/lib/blocks/storefront/{product-gallery,product-options,trust-row,pdp-accordions,reviews,quick-view}/block.svelte`

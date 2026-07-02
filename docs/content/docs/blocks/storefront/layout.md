@@ -16,6 +16,7 @@ are built from semantic tokens only, so they restyle across all 19 themes — pa
 bun x bosia@latest add block storefront/header
 bun x bosia@latest add block storefront/footer
 bun x bosia@latest add block storefront/search-overlay
+bun x bosia@latest add block storefront/mega-menu
 ```
 
 The header and search overlay depend on `storefront/store`. All pull
@@ -53,6 +54,10 @@ item.
 keyboard navigation, shows `popular` chips while the query is empty, and fires `onSelect(product)`
 or `onSubmit(query)` for free-text searches.
 
+The header ships a built-in hover mega menu; `mega-menu` is the standalone, configurable version
+for custom headers — pass `sections` (`{ title, links }`), a `featured` product for the spotlight
+column, and control visibility with `open` (defaults open so it renders standalone).
+
 ## Source
 
-`src/lib/blocks/storefront/{header,footer,search-overlay}/block.svelte`
+`src/lib/blocks/storefront/{header,footer,search-overlay,mega-menu}/block.svelte`

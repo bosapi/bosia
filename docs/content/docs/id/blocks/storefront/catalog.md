@@ -41,6 +41,9 @@ Teruskan `cart` yang sama ke header, setiap grid, dan drawer agar tetap sinkron.
 setiap block mundur ke state lokal sehingga tetap dirender berdiri sendiri. Drawer bersifat
 `position: fixed` dan terbuka saat item ditambahkan (atau lewat `cart.open = true`).
 
+`product-card` juga menerima `onQuickView` opsional — bila diisi, tombol mata muncul di samping
+hati; pasangkan dengan modal `storefront/quick-view`.
+
 ## Source
 
 `src/lib/blocks/storefront/{store,product-card,product-grid,featured-collection,cart-drawer}/`

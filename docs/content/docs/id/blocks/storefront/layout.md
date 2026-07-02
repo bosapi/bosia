@@ -16,6 +16,7 @@ pasangkan dengan tema `clay` untuk tampilan Mercato asli.
 bun x bosia@latest add block storefront/header
 bun x bosia@latest add block storefront/footer
 bun x bosia@latest add block storefront/search-overlay
+bun x bosia@latest add block storefront/mega-menu
 ```
 
 Header dan overlay pencarian bergantung pada `storefront/store`. Semuanya menarik
@@ -53,6 +54,10 @@ atas item nav kedua.
 dengan navigasi keyboard penuh, menampilkan chip `popular` saat kueri kosong, dan memanggil
 `onSelect(product)` atau `onSubmit(query)` untuk pencarian teks bebas.
 
+Header menyertakan mega menu hover bawaan; `mega-menu` adalah versi mandiri yang dapat diatur
+untuk header kustom — kirim `sections` (`{ title, links }`), produk `featured` untuk kolom sorotan,
+dan kendalikan tampilannya dengan `open` (default terbuka agar tampil mandiri).
+
 ## Source
 
-`src/lib/blocks/storefront/{header,footer,search-overlay}/block.svelte`
+`src/lib/blocks/storefront/{header,footer,search-overlay,mega-menu}/block.svelte`
