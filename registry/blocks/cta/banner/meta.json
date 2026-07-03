@@ -1,0 +1,12 @@
+{
+	"name": "cta-banner",
+	"description": "Full-width primary CTA band with a headline and a button pair.",
+	"category": "cta",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

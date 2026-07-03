@@ -1,0 +1,12 @@
+{
+	"name": "testimonials-grid",
+	"description": "A heading over a grid of quote cards with star ratings, avatars and name / role.",
+	"category": "testimonials",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

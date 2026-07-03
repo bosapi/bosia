@@ -1,0 +1,12 @@
+{
+	"name": "stats-cards",
+	"description": "Four stat cards, each with an icon, value, label and a primary delta chip.",
+	"category": "stats",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

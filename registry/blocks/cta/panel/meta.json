@@ -1,0 +1,9 @@
+{
+	"name": "cta-panel",
+	"description": "Rounded dark CTA panel with a primary glow, email input and submit button.",
+	"category": "cta",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

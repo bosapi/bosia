@@ -1,0 +1,12 @@
+{
+	"name": "features-bento",
+	"description": "A bento grid of one large tile and four small tiles mixing icons, a stat and a mini-visual.",
+	"category": "features",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

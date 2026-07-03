@@ -1,0 +1,9 @@
+{
+	"name": "logos-row",
+	"description": "A trusted-by microcopy line over six grayscale styled-text wordmarks.",
+	"category": "logos",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

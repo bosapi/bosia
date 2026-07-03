@@ -1,0 +1,12 @@
+{
+	"name": "features-split",
+	"description": "Alternating copy-and-visual feature rows with kicker, checklist and a mock panel.",
+	"category": "features",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "pricing-comparison",
+	"description": "Plan-comparison table with price headers and check / minus / value rows per feature.",
+	"category": "pricing",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

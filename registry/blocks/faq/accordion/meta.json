@@ -1,0 +1,12 @@
+{
+	"name": "faq-accordion",
+	"description": "Split FAQ: sticky heading and support card left, native details/summary accordion right.",
+	"category": "faq",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

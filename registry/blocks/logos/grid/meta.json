@@ -1,0 +1,9 @@
+{
+	"name": "logos-grid",
+	"description": "A bordered two-by-four cell grid of styled-text wordmarks that darken on hover.",
+	"category": "logos",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "testimonials-spotlight",
+	"description": "A single oversized pull-quote with avatar, name / company and dot indicators.",
+	"category": "testimonials",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

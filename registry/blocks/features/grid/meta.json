@@ -1,0 +1,12 @@
+{
+	"name": "features-grid",
+	"description": "A heading over a three-by-two grid of icon feature tiles.",
+	"category": "features",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -210,6 +210,18 @@ export const sidebar: NavGroup[] = [
 				],
 			},
 			{
+				label: "Sections",
+				children: [
+					{ label: "Pricing", slug: "blocks/pricing" },
+					{ label: "Testimonials", slug: "blocks/testimonials" },
+					{ label: "FAQ", slug: "blocks/faq" },
+					{ label: "CTA", slug: "blocks/cta" },
+					{ label: "Features", slug: "blocks/features" },
+					{ label: "Stats", slug: "blocks/stats" },
+					{ label: "Logos", slug: "blocks/logos" },
+				],
+			},
+			{
 				label: "Files",
 				children: [
 					{ label: "Crop Image", slug: "blocks/files/crop-image" },

@@ -94,6 +94,13 @@
 	import NavbarsAppDemo from "$lib/components/demos/NavbarsAppDemo.svelte";
 	import FootersStandardDemo from "$lib/components/demos/FootersStandardDemo.svelte";
 	import FootersThemesDemo from "$lib/components/demos/FootersThemesDemo.svelte";
+	import PricingSectionsDemo from "$lib/components/demos/PricingSectionsDemo.svelte";
+	import TestimonialsSectionsDemo from "$lib/components/demos/TestimonialsSectionsDemo.svelte";
+	import FaqSectionsDemo from "$lib/components/demos/FaqSectionsDemo.svelte";
+	import CtaSectionsDemo from "$lib/components/demos/CtaSectionsDemo.svelte";
+	import FeaturesSectionsDemo from "$lib/components/demos/FeaturesSectionsDemo.svelte";
+	import StatsSectionsDemo from "$lib/components/demos/StatsSectionsDemo.svelte";
+	import LogosSectionsDemo from "$lib/components/demos/LogosSectionsDemo.svelte";
 	import StorefrontLayoutDemo from "$lib/components/demos/StorefrontLayoutDemo.svelte";
 	import StorefrontHomeDemo from "$lib/components/demos/StorefrontHomeDemo.svelte";
 	import StorefrontCatalogDemo from "$lib/components/demos/StorefrontCatalogDemo.svelte";
@@ -210,6 +217,13 @@
 		NavbarsAppDemo,
 		FootersStandardDemo,
 		FootersThemesDemo,
+		PricingSectionsDemo,
+		TestimonialsSectionsDemo,
+		FaqSectionsDemo,
+		CtaSectionsDemo,
+		FeaturesSectionsDemo,
+		StatsSectionsDemo,
+		LogosSectionsDemo,
 		StorefrontLayoutDemo,
 		StorefrontHomeDemo,
 		StorefrontCatalogDemo,

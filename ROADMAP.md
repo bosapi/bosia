@@ -10,7 +10,7 @@
 > Registry had 19 navbars and 17 heros but zero footers and nothing for the middle of a landing page. Net-new design across four phases.
 
 - [x] Phase A — `footers/*` (12 blocks): 6 standard + 6 themes, docs, demos, nav group.
-- [ ] Phase B — 7 section families (16 blocks): pricing, testimonials, faq, cta, features, stats, logos.
+- [x] Phase B — 7 section families (16 blocks): pricing, testimonials, faq, cta, features, stats, logos.
 - [ ] Phase C — `pages/landing/*` (2 pages): saas + simple.
 - [ ] Phase D — skills (`bosia-footers`, `bosia-sections`) + landing/saas/pricing skill repoints + indexes.
 

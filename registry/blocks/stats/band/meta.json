@@ -1,0 +1,9 @@
+{
+	"name": "stats-band",
+	"description": "A slim muted band of four oversized numbers with hairline separators.",
+	"category": "stats",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

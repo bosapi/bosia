@@ -1,0 +1,9 @@
+{
+	"name": "faq-grid",
+	"description": "A static two-column question-and-answer grid with hairline dividers.",
+	"category": "faq",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

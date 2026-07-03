@@ -1,0 +1,12 @@
+{
+	"name": "pricing-simple",
+	"description": "Single centred plan with a monthly / yearly toggle, two-column checklist and a wide CTA.",
+	"category": "pricing",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}
