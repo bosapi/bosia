@@ -12,7 +12,7 @@
 - [x] Phase A — `footers/*` (12 blocks): 6 standard + 6 themes, docs, demos, nav group.
 - [x] Phase B — 7 section families (16 blocks): pricing, testimonials, faq, cta, features, stats, logos.
 - [x] Phase C — `pages/landing/*` (2 pages): saas + simple.
-- [ ] Phase D — skills (`bosia-footers`, `bosia-sections`) + landing/saas/pricing skill repoints + indexes.
+- [x] Phase D — skills (`bosia-footers`, `bosia-sections`) + landing/saas/pricing skill repoints + indexes.
 
 ---
 

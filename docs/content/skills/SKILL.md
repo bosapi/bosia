@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 52 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
+description: Top-level index of 54 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
   mode: catalog
   category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-52 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+54 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -41,15 +41,15 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 
 ## Page scaffolds — design ✦ — pick one as starting point for a new route
 
-| Name                  | Triggers                                             | Registry deps                                                         |
-| --------------------- | ---------------------------------------------------- | --------------------------------------------------------------------- |
-| `bosia-landing`       | "landing page", "marketing page"                     | `blocks/cards/feature`, `theme/editorial`, `ui/button`, `ui/badge`    |
-| `bosia-saas-landing`  | "saas landing", "marketing site", "saas homepage"    | + `ui/card`, `ui/separator`                                           |
-| `bosia-dashboard`     | "admin dashboard", "app dashboard", "sidebar layout" | `ui/sidebar`, `ui/data-table`, `ui/card`, `ui/chart`, `theme/neutral` |
-| `bosia-docs-site`     | "docs site", "documentation", "3-column docs"        | `ui/sidebar`, `ui/typography`, `ui/separator`                         |
-| `bosia-blog`          | "blog", "editorial site", "article pages"            | `ui/typography`, `ui/card`, `theme/editorial`                         |
-| `bosia-pricing`       | "pricing page", "pricing tiers", "compare plans"     | `ui/card`, `ui/table`, `ui/badge`, `ui/accordion`                     |
-| `bosia-mobile-screen` | "mobile screen", "375px", "mobile-first"             | `ui/button`, `ui/input`, `ui/dialog`                                  |
+| Name                  | Triggers                                             | Registry deps                                                                            |
+| --------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `bosia-landing`       | "landing page", "marketing page"                     | `blocks/features/grid`, `blocks/cta/banner`, `blocks/footers/minimal`, `theme/editorial` |
+| `bosia-saas-landing`  | "saas landing", "marketing site", "saas homepage"    | `page landing/saas` (or the blocks it composes)                                          |
+| `bosia-dashboard`     | "admin dashboard", "app dashboard", "sidebar layout" | `ui/sidebar`, `ui/data-table`, `ui/card`, `ui/chart`, `theme/neutral`                    |
+| `bosia-docs-site`     | "docs site", "documentation", "3-column docs"        | `ui/sidebar`, `ui/typography`, `ui/separator`                                            |
+| `bosia-blog`          | "blog", "editorial site", "article pages"            | `ui/typography`, `ui/card`, `theme/editorial`                                            |
+| `bosia-pricing`       | "pricing page", "pricing tiers", "compare plans"     | `blocks/pricing/columns`, `blocks/pricing/comparison`, `blocks/faq/accordion`            |
+| `bosia-mobile-screen` | "mobile screen", "375px", "mobile-first"             | `ui/button`, `ui/input`, `ui/dialog`                                                     |
 
 ## Flows — design ✦ — UX-heavy multi-route patterns
 
@@ -117,7 +117,9 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 | ------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `bosia-cards`             | ✦     | Catalog of the 29 `cards/*` blocks. Install with `bosia add block cards/<name>`; brand = `primary`, status = emerald/amber/blue/destructive.                                                                                  |
 | `bosia-heros`             | ✦     | Catalog of the 17 `heros/*` full-bleed hero sections. Install with `bosia add block heros/<name>`; brand = `primary`, dark heroes = `bg-foreground text-background`.                                                          |
-| `bosia-navbars`           | ✦     | Catalog of the 18 `navbars/*` blocks (standard/themes/app). Install with `bosia add block navbars/<name>`; brand = `primary`, dark bars = `bg-foreground text-background`, glass = `backdrop-blur-xl`.                        |
+| `bosia-navbars`           | ✦     | Catalog of the 19 `navbars/*` blocks (standard/themes/app). Install with `bosia add block navbars/<name>`; brand = `primary`, dark bars = `bg-foreground text-background`, glass = `backdrop-blur-xl`.                        |
+| `bosia-footers`           | ✦     | Catalog of the 12 `footers/*` blocks (standard/themes). Install with `bosia add block footers/<name>`; brand = `primary`, ships `__BRAND__` placeholder (replace it — `check` fails otherwise), social glyphs inline SVG.     |
+| `bosia-sections`          | ✦     | Catalog of 16 marketing section blocks across 7 families (pricing/testimonials/faq/cta/features/stats/logos). Install with `bosia add block <family>/<name>`; brand = `primary`, no `__BRAND__` in sections.                  |
 | `bosia-storefront`        | ✦     | Mercato storefront — 4 pages (home/PLP/PDP/checkout) + 24 `storefront/*` blocks + `clay` theme. Install pages with `bosia add page storefront/<name>`; one template, six purposes, one shared cart.                           |
 | `bosia-login`             | ✦     | Login/auth page family — 6 pages (login/register/forgot/magic-link/otp/sso) + 9 `auth/*` blocks. Install pages with `bosia add page auth/<name>`; one card, centered ↔ split swap. Design only — pair with `bosia-auth-flow`. |
 | `bosia-empty-states`      | ✦     | `ui/empty`, `ui/skeleton`, `ui/spinner`, error boundary. Never blank screen on async failure.                                                                                                                                 |

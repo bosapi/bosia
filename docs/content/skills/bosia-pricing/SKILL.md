@@ -12,9 +12,9 @@ od:
 bosia:
   design: true
   requires:
-    blocks: []
+    blocks: [pricing/columns, pricing/comparison, faq/accordion]
     themes: [editorial]
-    components: [ui/card, ui/table, ui/badge, ui/accordion, ui/button, ui/separator, ui/switch]
+    components: [ui/badge, ui/button, ui/separator]
     feats: []
   targets:
     routes: ["src/routes/pricing/+page.svelte"]
@@ -25,20 +25,22 @@ bosia:
 
 ## What it builds
 
-A single `+page.svelte` at `/pricing` with three sections:
+A single `+page.svelte` at `/pricing`, composed from registry blocks (see [[bosia-sections]]):
 
-1. **Tiers** — 3 plan cards (Free / Pro / Team). Recommended plan visually marked.
-2. **Comparison table** — feature matrix across tiers.
-3. **FAQ** — accordion of common purchase questions.
+1. **Tiers** — `pricing/columns` (3 plan cards, recommended plan marked). Or `pricing/simple` for a
+   single-plan page with a built-in monthly/yearly toggle.
+2. **Comparison table** — `pricing/comparison` (feature matrix across tiers).
+3. **FAQ** — `faq/accordion` (native `<details>`, no JS) of common purchase questions.
 
-Optional billing toggle (monthly / annual with discount).
+Install with `bosia add block pricing/columns pricing/comparison faq/accordion`. Section blocks
+carry no wordmark, so there's no `__BRAND__` to replace here.
 
 ## Workflow
 
 1. **Read `BRIEF.md § Aesthetic`.** Apply the locked `Direction` to tier-card style and comparison-table density (e.g. luxury → restrained palette + hairline rule on recommended card, brutalist → square corners + bordered cells, industrial → tabular numerics + minimal chrome). The recommended-tier accent must reuse `--accent` from `app.css`, not a fresh hex. Place the named `Memorable detail` somewhere visible — often on the recommended tier (e.g. an art-deco sunburst ornament, a gold-foil hover state).
-2. `bosia add theme/editorial ui/card ui/table ui/badge ui/accordion ui/button ui/separator ui/switch`.
+2. `bosia add theme/editorial ui/badge ui/button ui/separator` then `bosia add block pricing/columns pricing/comparison faq/accordion`.
 3. Create `src/routes/pricing/+page.svelte`.
-4. Compose: tier row → comparison table → FAQ.
+4. Compose: `pricing/columns` → `pricing/comparison` → `faq/accordion`.
 5. Run design + a11y review.
 
 ## Rules
@@ -76,7 +78,7 @@ P0:
 - [ ] One CTA per tier, identical verb.
 - [ ] Comparison table renders without horizontal scroll on desktop.
 - [ ] Mobile (375px): tier cards stack, table either collapses or scrolls inside its container.
-- [ ] FAQ uses `ui/accordion`, keyboard navigable.
+- [ ] FAQ uses `faq/accordion` (native `<details>`), keyboard navigable.
 - [ ] BRIEF.md § Aesthetic direction applied to tier cards + table density; recommended-tier accent uses `--accent` (no fresh hex); memorable detail present.
 
 P1:

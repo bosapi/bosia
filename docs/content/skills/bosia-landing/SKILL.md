@@ -11,7 +11,7 @@ od:
 bosia:
   design: true
   requires:
-    blocks: [cards/feature]
+    blocks: [features/grid, testimonials/spotlight, cta/banner, footers/minimal]
     themes: [editorial]
     components: [ui/button, ui/badge, ui/typography, ui/separator]
     feats: []
@@ -27,12 +27,13 @@ bosia:
 A single-page marketing landing at `src/routes/(public)/+page.svelte` with:
 
 1. **Hero** — headline (h1), subhead, primary + secondary CTA.
-2. **Features** — 3-card grid built from `blocks/cards/feature`.
-3. **Social proof** — short logo row or testimonial quote.
-4. **CTA band** — restated value prop + primary action.
-5. **Footer** — minimal: brand, links, copyright.
+2. **Features** — install `blocks/features/grid`.
+3. **Social proof** — install `blocks/logos/row` (logo cloud) or `blocks/testimonials/spotlight`.
+4. **CTA band** — install `blocks/cta/banner`.
+5. **Footer** — install `blocks/footers/minimal` (replace its `__BRAND__` placeholder).
 
-Editorial typography. Semantic tokens only.
+Editorial typography. Semantic tokens only. Prefer installing these blocks (see [[bosia-sections]]
+and [[bosia-footers]]) over hand-rolling the sections inline.
 
 ## When to use
 
@@ -43,8 +44,8 @@ Anti-trigger: SaaS-style pricing or feature matrix → `bosia-saas-landing`.
 ## Workflow
 
 1. **Read `BRIEF.md § Aesthetic`.** Apply the locked `Direction` to hero composition (e.g. editorial → asymmetric grid + pull quote, brutalist → visible grid lines + hairline borders, brutally-minimal → oversized type + single accent). Place the named `Memorable detail` on the hero or in the footer — landing is the highest-leverage surface for it. Do NOT re-pick the stance here; that's `bosia-frontend-design` at intake.
-2. `list_registry()` → confirm `blocks/cards/feature`, `theme/editorial`, `ui/button`, `ui/badge`, `ui/typography`, `ui/separator`.
-3. `bosia add theme editorial` then `bosia add ui/button ui/badge ui/typography ui/separator` then `bosia add block cards/feature`.
+2. `list_registry()` → confirm `blocks/features/grid`, `blocks/testimonials/spotlight`, `blocks/logos/row`, `blocks/cta/banner`, `blocks/footers/minimal`, `theme/editorial`, `ui/button`, `ui/badge`, `ui/typography`, `ui/separator`.
+3. `bosia add theme editorial` then `bosia add ui/button ui/badge ui/typography ui/separator` then `bosia add block features/grid testimonials/spotlight cta/banner footers/minimal` (add `logos/row` if using a logo cloud).
 4. Create `src/routes/(public)/+page.svelte` (route group keeps it outside any auth shell).
 5. Compose hero → features → social proof → CTA → footer.
 6. Run `bosia-design-review` and `bosia-accessibility-review` (both verify stance compliance).
@@ -71,7 +72,7 @@ P0:
 - [ ] One `<h1>`, one primary CTA above the fold.
 - [ ] All sections use semantic tokens.
 - [ ] Mobile-safe at 375px.
-- [ ] Feature cards installed via `bosia add`, not pasted.
+- [ ] Sections installed via `bosia add block`, not pasted; footer `__BRAND__` replaced.
 - [ ] BRIEF.md § Aesthetic direction visibly applied (hero composition matches direction); memorable detail present on hero or footer.
 - [ ] `bosia-design-review` + `bosia-accessibility-review` pass.
 

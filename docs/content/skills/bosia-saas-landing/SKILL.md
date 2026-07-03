@@ -11,7 +11,18 @@ od:
 bosia:
   design: true
   requires:
-    blocks: [cards/feature]
+    blocks:
+      [
+        heros/app,
+        logos/row,
+        features/grid,
+        stats/band,
+        pricing/columns,
+        testimonials/grid,
+        faq/accordion,
+        cta/banner,
+        footers/columns,
+      ]
     themes: [editorial]
     components: [ui/button, ui/card, ui/badge, ui/separator, ui/avatar, ui/typography]
     feats: []
@@ -24,17 +35,23 @@ bosia:
 
 ## What it builds
 
-A multi-section SaaS landing under `(public)/+page.svelte`:
+A multi-section SaaS landing under `(public)/+page.svelte`. **Shortcut:** the whole page ships
+pre-composed — `bosia add page landing/saas` installs it and every block below (see
+[[bosia-landing]]). Compose by hand only when you need a layout the ready-made page doesn't cover.
 
-1. **Hero** — headline + subhead + dual CTA + product visual.
-2. **Logo row** — social proof (customer logos / count badge).
-3. **Feature grid** — 4–6 features, each with icon, title, body.
-4. **Deep feature** — one "headline feature" with a screenshot or animated visual.
-5. **Pricing tease** — 3 tier cards (or "Free / Pro / Talk to us"). Detailed comparison on `/pricing`.
-6. **Testimonials** — 2–3 quote cards with avatar + name + role.
-7. **Integrations** — logo grid of supported integrations (if applicable).
-8. **CTA band** — restated promise + primary action.
-9. **Footer** — nav, social, legal.
+Composed from these blocks, in order (install with `bosia add block <family>/<name>`):
+
+1. **Hero** — `heros/app`.
+2. **Logo row** — `logos/row` (social proof).
+3. **Feature grid** — `features/grid` (4–6 features, icon + title + body).
+4. **Stats** — `stats/band` (headline metrics).
+5. **Pricing tease** — `pricing/columns` (3 tiers; detailed comparison on `/pricing`).
+6. **Testimonials** — `testimonials/grid` (quote cards with avatar + name + role).
+7. **FAQ** — `faq/accordion` (native `<details>`, no JS).
+8. **CTA band** — `cta/banner`.
+9. **Footer** — `footers/columns` (replace its `__BRAND__` placeholder).
+
+See [[bosia-sections]] for the section catalog and [[bosia-footers]] for footer options.
 
 ## When to use
 
@@ -43,8 +60,8 @@ User asks for a "SaaS landing", a homepage for a paid product, or anything with 
 ## Workflow
 
 1. **Read `BRIEF.md § Aesthetic`.** Apply the locked `Direction` to hero, feature grid rhythm, and testimonial card style (e.g. luxury → hairline gold rule + restrained palette, maximalist → overlapping rotated cards, industrial → square corners + tabular numerics in pricing tease). Place the named `Memorable detail` on the hero. This skill does not re-pick the stance.
-2. `bosia add theme editorial` then `bosia add ui/button ui/card ui/badge ui/separator ui/avatar ui/typography` then `bosia add block cards/feature`.
-3. Optionally also add `ui/accordion` for FAQ if including.
+2. **Fastest path:** `bosia add page landing/saas` — installs the composed page plus every block, then edit copy in place. Skip to step 4.
+3. **By hand:** `bosia add theme editorial` then `bosia add ui/button ui/card ui/badge ui/separator ui/avatar ui/typography` then `bosia add block heros/app logos/row features/grid stats/band pricing/columns testimonials/grid faq/accordion cta/banner footers/columns`.
 4. Compose section by section. Don't shortcut on testimonials — fake-feeling ones hurt conversion.
 
 ## Rules
@@ -60,7 +77,7 @@ User asks for a "SaaS landing", a homepage for a paid product, or anything with 
 
 - 4–6 features. Six is the cap; more dilutes.
 - Each: icon, verb-led title, one-sentence body.
-- Use `blocks/cards/feature`.
+- Use `blocks/features/grid` (or `features/bento` for a mixed layout).
 
 ### Testimonials
 
