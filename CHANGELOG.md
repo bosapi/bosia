@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - New `CACHE_MAX_BODY_BYTES` setting stops very large responses from filling up server memory.
+- A loud warning now fires if a cached page reads a cookie the cache can't tell users apart by.
+- Server startup now ends by listing which cookies the cache uses to tell users apart.
 
 ### Changed
 

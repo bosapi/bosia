@@ -11,7 +11,7 @@
 > Discovered during planning: `Bun.brotliCompressSync` doesn't exist — brotli variants were never built (fixed by P1).
 
 - [x] 🔴 S1 — identity hash FNV-1a-32 → SHA-256 (64-bit hex); collision could serve user A's page to user B.
-- [~] S2 — anonymous-identity write gate — CANCELED during planning.
+- [~] S2 — anonymous-identity write gate — CANCELED during planning. Replaced by: [x] loud runtime warning (dev+prod, once per name) when a cached response's loader read a cookie not in `CACHE_KEYS`, + docs callout in response-cache guide.
 - [x] 🟠 S3 — `CACHE_MAX_BODY_BYTES` per-entry cap (default 2MB, `0` unlimited); guard in `cacheSet` + early-skip before compression.
 - [x] 🟡 P1 — brotli via `node:zlib` quality 5 (also un-breaks brotli entirely).
 - [x] 🟡 P2 — prerendered pages: boot-time manifest (`buildPrerenderManifest`) instead of per-request `exists()` probes.

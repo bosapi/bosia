@@ -31,6 +31,19 @@ describe("CookieJar — incoming", () => {
 		expect(jar.get("bad")).toBe("%E0%A4%A");
 	});
 
+	test("readNames tracks only cookies that were read AND present", () => {
+		const jar = new CookieJar("a=1; b=2");
+		jar.get("a");
+		jar.get("missing");
+		expect([...jar.readNames]).toEqual(["a"]);
+	});
+
+	test("getAll marks every incoming cookie as read", () => {
+		const jar = new CookieJar("a=1; b=2");
+		jar.getAll();
+		expect([...jar.readNames].sort()).toEqual(["a", "b"]);
+	});
+
 	test("accessed flips on get / getAll", () => {
 		const a = new CookieJar("x=1");
 		expect(a.accessed).toBe(false);

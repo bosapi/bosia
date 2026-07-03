@@ -741,15 +741,19 @@ export async function renderSSRStream(
 			const keyForWrite = cacheKey;
 			queueMicrotask(() => {
 				const { gzip, brotli } = buildCompressedVariants(fullBody);
-				cacheSet(keyForWrite, {
-					raw: fullBody,
-					gzip,
-					brotli,
-					contentType: "text/html; charset=utf-8",
-					status: 200,
-					extraHeaders: {},
-					tags,
-				});
+				cacheSet(
+					keyForWrite,
+					{
+						raw: fullBody,
+						gzip,
+						brotli,
+						contentType: "text/html; charset=utf-8",
+						status: 200,
+						extraHeaders: {},
+						tags,
+					},
+					cookies,
+				);
 			});
 		}
 	}

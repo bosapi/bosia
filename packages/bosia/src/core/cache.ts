@@ -180,9 +180,37 @@ export function cacheGet(key: string): CacheEntry | undefined {
 	return htmlCache.get(key);
 }
 
-export function cacheSet(key: string, entry: CacheEntry): void {
+// ─── Uncovered-cookie warning ────────────────────────────
+// The identity hash only sees cookies named in CACHE_KEYS. If a loader read a
+// cookie outside that list and the response got cached anyway, the response
+// may be personalised on something the cache key can't distinguish — users
+// could be served each other's pages. Warn loudly (dev AND prod), once per
+// cookie name per process.
+
+const warnedUncoveredCookies = new Set<string>();
+
+function warnUncoveredCookies(cookies: Cookies): void {
+	const readNames = (cookies as { readNames?: ReadonlySet<string> }).readNames;
+	if (!readNames) return;
+	for (const name of readNames) {
+		if (CACHE_KEYS.includes(name) || warnedUncoveredCookies.has(name)) continue;
+		warnedUncoveredCookies.add(name);
+		console.warn(
+			`\n🚨 [bosia] SECURITY WARNING — possible cross-user cache leak 🚨\n` +
+				`   A cached response's loader read the cookie "${name}", which is NOT in CACHE_KEYS.\n` +
+				`   The cache key cannot tell users apart by this cookie: if the page content\n` +
+				`   depends on it, one user's page can be served to another.\n` +
+				`   Fix (pick one):\n` +
+				`     - Add it to the identity key list: CACHE_KEYS=${[...CACHE_KEYS, name].join(",")}\n` +
+				`     - Or opt the route out of caching: export const cache = false\n`,
+		);
+	}
+}
+
+export function cacheSet(key: string, entry: CacheEntry, cookies?: Cookies): void {
 	if (!CACHE_ENABLED) return;
 	if (CACHE_MAX_BODY_BYTES > 0 && entry.raw.length > CACHE_MAX_BODY_BYTES) return;
+	if (cookies) warnUncoveredCookies(cookies);
 	// Drop any existing entry's index pointers first
 	cacheDeleteKey(key);
 	const evicted = htmlCache.set(key, entry);

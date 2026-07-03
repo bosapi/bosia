@@ -28,6 +28,7 @@ import { buildPrerenderManifest, buildStaticManifest, lookupStatic } from "./sta
 import { dedup, dedupKey } from "./dedup.ts";
 import {
 	CACHE_ENABLED,
+	CACHE_KEYS,
 	CACHE_MAX_BODY_BYTES,
 	buildCompressedVariants,
 	cacheGet,
@@ -444,15 +445,19 @@ async function resolve(event: RequestEvent): Promise<Response> {
 						const { gzip, brotli } = buildCompressedVariants(buf);
 						// API endpoints have no LoaderDeps in v0.6 — invalidation is
 						// URL/prefix only. See ROADMAP for deferred tag support.
-						cacheSet(keyForWrite, {
-							raw: buf,
-							gzip,
-							brotli,
-							contentType,
-							status: 200,
-							extraHeaders,
-							tags: [],
-						});
+						cacheSet(
+							keyForWrite,
+							{
+								raw: buf,
+								gzip,
+								brotli,
+								contentType,
+								status: 200,
+								extraHeaders,
+								tags: [],
+							},
+							cookies,
+						);
 					} catch {
 						/* drop silently — cache population is best-effort */
 					}
@@ -1103,6 +1108,16 @@ for (const plugin of plugins) {
 app.listen(PORT, () => {
 	// In dev mode the proxy owns the user-facing port — don't print the internal port
 	if (!isDev) console.log(`⬡ Bosia server running at http://localhost:${PORT}`);
+	// Last line of startup on purpose — the cache identity contract is the one
+	// config mistake that leaks one user's page to another, so it stays visible.
+	if (CACHE_ENABLED) {
+		console.log(
+			`\n🔑 Response cache tells users apart ONLY by these cookies/headers: [${CACHE_KEYS.join(", ")}]\n` +
+				`   Using a different session cookie or auth header? Add its name to CACHE_KEYS,\n` +
+				`   or one user's personalised page can be served to another. Routes personalised\n` +
+				`   by anything else should set \`export const cache = false\`.\n`,
+		);
+	}
 });
 
 async function shutdown() {

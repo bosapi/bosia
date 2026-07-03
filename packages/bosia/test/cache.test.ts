@@ -13,6 +13,7 @@ import {
 	serveCached,
 	type CacheEntry,
 } from "../src/core/cache.ts";
+import { CookieJar } from "../src/core/cookies.ts";
 import type { Cookies, LoaderDeps } from "../src/core/hooks.ts";
 
 // ─── Helpers ─────────────────────────────────────────────
@@ -185,6 +186,28 @@ describe("cacheGet / cacheSet", () => {
 		) as Uint8Array<ArrayBuffer>;
 		cacheSet("/fit|i=0", mkEntry({ raw: atLimit }));
 		expect(cacheGet("/fit|i=0")).toBeDefined();
+	});
+
+	test("warns loudly once per cookie read that is not in CACHE_KEYS", () => {
+		const warnings: string[] = [];
+		const orig = console.warn;
+		console.warn = (msg: unknown) => warnings.push(String(msg));
+		try {
+			const jar = new CookieJar("my_app_sess=abc; session=xyz");
+			jar.get("my_app_sess");
+			jar.get("session");
+			cacheSet("/warn-a|i=0", mkEntry(), jar);
+			cacheSet("/warn-b|i=0", mkEntry(), jar); // same name → no second warning
+		} finally {
+			console.warn = orig;
+		}
+		const hits = warnings.filter((w) => w.includes('"my_app_sess"'));
+		expect(hits.length).toBe(1);
+		expect(hits[0]).toContain("CACHE_KEYS");
+		// registered key never warns
+		expect(warnings.some((w) => w.includes('"session"'))).toBe(false);
+		// entry still cached — warning does not block the write
+		expect(cacheGet("/warn-a|i=0")).toBeDefined();
 	});
 
 	test("overwriting same key replaces the entry and updates index", () => {

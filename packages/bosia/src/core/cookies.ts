@@ -58,6 +58,7 @@ export class CookieJar implements Cookies {
 	private _outgoing: string[] = [];
 	private _defaults: CookieOptions;
 	private _accessed = false;
+	private _readNames = new Set<string>();
 	private _isHttps: boolean;
 
 	constructor(cookieHeader: string, isHttps = false) {
@@ -70,16 +71,23 @@ export class CookieJar implements Cookies {
 
 	get(name: string): string | undefined {
 		this._accessed = true;
+		if (name in this._incoming) this._readNames.add(name);
 		return this._incoming[name];
 	}
 
 	getAll(): Record<string, string> {
 		this._accessed = true;
+		for (const name of Object.keys(this._incoming)) this._readNames.add(name);
 		return { ...this._incoming };
 	}
 
 	get accessed(): boolean {
 		return this._accessed;
+	}
+
+	/** Names of incoming cookies that were actually read (present in the request). */
+	get readNames(): ReadonlySet<string> {
+		return this._readNames;
 	}
 
 	set(name: string, value: string, options?: CookieOptions): void {

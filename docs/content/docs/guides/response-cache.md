@@ -29,6 +29,13 @@ CACHE_KEYS=session,sid,auth,token,jwt,Authorization
 
 Add custom names if your app uses a different cookie or header for authentication. Any non-empty value contributes to the hash; two requests with the same set of values share a cache entry, two with different values do not.
 
+> **⚠️ Using a custom session cookie? Register it — or personalised pages will leak between users.** If your session cookie is named anything not in the list above (e.g. `my_app_sess`), the cache cannot tell your users apart: the first user's rendered page is cached and **served to every other user**. Either add the name to `CACHE_KEYS`, or set `export const cache = false` on the personalised routes. This is the same contract as configuring `Vary`/cache keys on a CDN — the framework cannot key on every cookie (analytics and timestamp cookies would make the hit rate zero), so the allowlist is authoritative.
+
+Bosia reminds you of this contract twice, in dev **and** prod:
+
+- **At startup** — the last line of boot output lists the active identity keys: `🔑 Response cache tells users apart ONLY by these cookies/headers: […]`.
+- **At runtime** — whenever a cached response's loader read a cookie that is **not** in `CACHE_KEYS`, it logs a `🚨 SECURITY WARNING` naming the cookie (once per cookie name). If you see it, apply one of the two fixes above.
+
 If a route's per-user content is not keyed by anything in `CACHE_KEYS`, opt it out (see below).
 
 ## Eligibility
