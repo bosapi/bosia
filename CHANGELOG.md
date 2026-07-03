@@ -13,16 +13,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - New `CACHE_MAX_BODY_BYTES` setting stops very large responses from filling up server memory.
 - A loud warning now fires if a cached page reads a cookie the cache can't tell users apart by.
 - Server startup now ends by listing which cookies the cache uses to tell users apart.
+- Concurrent cache misses for the same page or API route now build once instead of N times.
 
 ### Changed
 
 - Prerendered pages are now found instantly at startup instead of checking disk on every visit.
+- BREAKING: `(private)` no longer switches off dedup — add custom session cookies to CACHE_KEYS.
+- Request deduplication now tells users apart by CACHE_KEYS, so per-user routes are deduped safely.
 
 ### Fixed
 
 - Cached pages for logged-in users now use a stronger hash, so one user can never see another's page.
 - Brotli compression now actually works for cached pages — it was silently never applied before.
 - Files with spaces or special characters in their names now load instead of returning 404.
+- Building the cache identity no longer counts as a cookie read (no forced Cache-Control: private).
 
 ## [0.8.3] - 2026-07-02
 

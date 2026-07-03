@@ -1,21 +1,13 @@
-// Module-level counters demonstrate scope-aware dedup:
-// public route → counter increments once per unique URL even with N concurrent loads
-// private route → counter increments N times for N concurrent loads
-const counters = { public: 0, private: 0 };
+// Module-level counters demonstrate identity-aware dedup: concurrent loads
+// with the SAME identity (CACHE_KEYS cookie/header) share one loader run;
+// different identities run separately.
+const counters: Record<string, number> = {};
 
-export async function slowQuery(scope: "public" | "private"): Promise<{
-	count: number;
-	loadedAt: string;
-	scope: "public" | "private";
-}> {
-	counters[scope] += 1;
-	const count = counters[scope];
+export async function slowQuery(key: string): Promise<{ count: number; loadedAt: string }> {
+	counters[key] = (counters[key] ?? 0) + 1;
+	const count = counters[key];
 	const loadedAt = new Date().toISOString();
 	// Simulate a slow DB hit so concurrent requests overlap in flight
 	await new Promise((r) => setTimeout(r, 300));
-	return { count, loadedAt, scope };
-}
-
-export function resetCounter(scope: "public" | "private") {
-	counters[scope] = 0;
+	return { count, loadedAt };
 }

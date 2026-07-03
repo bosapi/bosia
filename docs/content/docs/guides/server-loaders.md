@@ -190,7 +190,7 @@ Under the hood, Bosia tracks whether `cookies.get()` or `cookies.getAll()` was c
 
 ## Request Deduplication
 
-Concurrent identical requests share a single in-flight loader by default. Per-user routes (anything reading cookies or session) **must** opt out by living under a `(private)` group folder, or User B will receive User A's data.
+Concurrent identical requests share a single in-flight loader by default. The dedup key includes the `CACHE_KEYS` identity hash, so per-user routes are deduped safely — users with different session cookies never share a loader result. If your app authenticates with a custom cookie or header name, add it to `CACHE_KEYS`.
 
 See [Request Deduplication](./request-deduplication) for the full model and the safety rules.
 

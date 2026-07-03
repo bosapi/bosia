@@ -1,12 +1,12 @@
 ---
 title: Request Deduplication
-description: Coalesce concurrent identical requests into one in-flight loader to cut redundant DB and API calls.
+description: Coalesce concurrent identical requests into one in-flight loader to cut redundant DB and API calls — identity-aware, so per-user routes are deduped safely.
 ---
 
-When N concurrent users hit the same URL, Bosia runs the loader **once** and shares the result with every waiter. Settled responses are not cached — once the promise resolves, the next request runs `load()` fresh.
+When N concurrent requests hit the same URL **from the same identity**, Bosia runs the loader **once** and shares the result with every waiter. Settled responses are not cached — once the promise resolves, the next request runs `load()` fresh.
 
 ```
-3 concurrent requests to /blog/post-1
+3 concurrent requests to /blog/post-1 (same identity)
 ┌─────────────┐
 │ request 1 ──┐
 │ request 2 ──┼──► load() runs once ──► result fans out to all 3
@@ -14,73 +14,60 @@ When N concurrent users hit the same URL, Bosia runs the loader **once** and sha
 └─────────────┘
 ```
 
-This is **on by default** for every route. The dedup key is the URL: pathname + sorted query string. There is no identity hashing, no cookie reading.
+This is **on by default** for every route. The dedup key is the URL (pathname + sorted query string) **plus the same identity hash the [response cache](./response-cache) uses**: a hash of every cookie and header named in `CACHE_KEYS`. Two users with different session cookies never share a loader result; two anonymous users (no `CACHE_KEYS` values) do.
 
-## Opt out: per-user routes must use `(private)`
+:::warning[Breaking change in 0.8.4]
+`(private)` route groups **no longer switch off deduplication** — dedup is now identity-aware everywhere, and the route `scope` concept is gone. `(private)` behaves like any other `(group)` folder: invisible in the URL, useful for sharing auth layouts.
 
-Sharing a loader result across users is only safe when the response does not depend on who is asking. For per-user content (dashboards, carts, settings, anything that reads `cookies` or `locals.user`), you must place the route under a `(private)` group folder:
-
-```
-src/routes/
-├── (public)/                 ← optional, scope is "public" by default
-│   └── blog/
-│       └── [slug]/
-│           └── +page.server.ts   ← deduped
-│
-└── (private)/                ← descendants run per-request
-    ├── dashboard/
-    │   └── +page.server.ts       ← NOT deduped
-    └── account/
-        └── settings/
-            └── +page.server.ts   ← NOT deduped
-```
-
-`(private)` is recognized anywhere in the folder chain. The group itself is invisible in the URL (same as any `(group)`), so `routes/(private)/dashboard` serves `/dashboard`.
-
-:::danger[Forgetting `(private)` leaks data across users.]
-A route that reads cookies, sessions, or user-specific data **must** live under `(private)`. If it does not, two concurrent users hitting the same URL share one loader result — the second user receives the first user's data.
-
-If you cannot prove a route is the same for everyone, mark it private.
+If your app authenticates with a **custom cookie or header name**, add it to `CACHE_KEYS` (see below) — that is now the one contract that keeps per-user routes isolated, for both the response cache and dedup.
 :::
 
-### Routes that MUST be private
+## Per-user isolation via `CACHE_KEYS`
 
-- `/dashboard`, `/account`, `/settings` — anything reading the session
-- `/cart`, `/checkout` — per-user state
-- Anything calling `cookies.get()`, `cookies.getAll()`, or reading `locals.user` inside `load()` / `metadata()`
+The identity hash is built from every cookie AND header whose name appears in `CACHE_KEYS`. The default covers common session names:
 
-### Routes that benefit most from dedup (public)
+```
+CACHE_KEYS=session,sid,auth,token,jwt,Authorization
+```
 
-- Blog posts, marketing pages, product catalogs
-- Public listings, documentation, search results without user context
-- Anything cacheable by a CDN with a `public` `Cache-Control`
+- Users with **different** values for any of these get different dedup keys — their loaders run independently and can never see each other's data.
+- Requests with **no** `CACHE_KEYS` values (anonymous traffic) share one identity bucket — exactly what you want for public pages under load.
+
+If your session cookie has a custom name (e.g. `my_app_sess`), register it:
+
+```
+CACHE_KEYS=session,sid,auth,token,jwt,Authorization,my_app_sess
+```
+
+Bosia warns at runtime — in dev **and** prod — whenever a deduped or cached response's loader read a cookie that is not in `CACHE_KEYS` (a `🚨 SECURITY WARNING` naming the cookie, once per name). If you see it, add the cookie to `CACHE_KEYS` or opt the route out of caching.
 
 ## Examples
 
 ```
-✅ Good
-
-routes/(public)/blog/[slug]/+page.server.ts
-   load() reads from a CMS — same result for everyone, deduped
-```
-
-```
-❌ Bad
+✅ Deduped per user
 
 routes/dashboard/+page.server.ts
-   load() reads cookies.get("session") — User B receives User A's data
+   load() reads cookies.get("session") — each session value gets its own
+   loader run; concurrent requests from the SAME session share one run
 ```
 
 ```
-✅ Good
+✅ Deduped globally
 
-routes/(private)/dashboard/+page.server.ts
-   load() reads cookies.get("session") — runs per-request, no leak
+routes/blog/[slug]/+page.server.ts
+   load() reads from a CMS — anonymous requests share one loader run
+```
+
+```
+❌ Unsafe — custom session cookie not registered
+
+CACHE_KEYS is the default list, app authenticates with "my_app_sess"
+   All users hash to the same identity — add my_app_sess to CACHE_KEYS
 ```
 
 ## Limitations
 
 - **Dedup is concurrent-only.** Once the promise settles, the entry is removed from the in-flight map. The next request runs the loader again. This is not a TTL cache.
-- **Public-route loaders should be deterministic given the URL.** If the loader's output depends on `Date.now()`, randomness, or external state that changes mid-window, every waiter sees the same snapshot from whoever triggered the call.
-- **Cookies set inside a deduped loader** flow only to the request that triggered it. Other waiters receive the response body but not the `Set-Cookie` headers. If your public loader sets cookies, mark the route `(private)`.
+- **Loaders should be deterministic given the URL + identity.** If the loader's output depends on `Date.now()`, randomness, or external state that changes mid-window, every waiter sees the same snapshot from whoever triggered the call.
+- **Cookies set inside a deduped loader** flow only to the request that triggered it. Other waiters receive the response body but not the `Set-Cookie` headers.
 - The auto `Cache-Control` heuristic (`private, no-cache` when cookies were accessed) still applies inside the deduped block — if the underlying loader read cookies, every waiter's response is marked private.

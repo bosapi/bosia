@@ -11,7 +11,10 @@ The cache is **safe for logged-in users** because the key includes a hash of coo
 
 1. Look up `<dedup-key>|i=<identity-hash>` in the cache.
 2. **Hit** → serve the matching compressed variant (brotli, gzip, or identity) based on `Accept-Encoding`. Done.
-3. **Miss** → run `metadata()`, run `load()`, render, build HTML chunks, stream the response. Compression + cache write happen in a microtask after the response goes out.
+3. **Miss** → the **first** miss on a key becomes the leader: it runs `metadata()`, runs `load()`, renders, builds HTML chunks, and streams the response. Compression + cache write happen in a microtask after the response goes out.
+4. **Concurrent misses** on the same key wait for the leader, then re-check the cache — a hit is served from cache, so N simultaneous misses build the page once instead of N times. If the leader skipped the write (e.g. it set cookies or the response wasn't cacheable), each waiter builds independently.
+
+The identity hash here is the same one [request deduplication](./request-deduplication) uses — one `CACHE_KEYS` contract isolates users across both mechanisms.
 
 ## Per-user isolation
 

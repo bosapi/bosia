@@ -11,11 +11,13 @@ import {
 	buildCompressedVariants,
 	cacheGet,
 	cacheSet,
+	coalesceMiss,
 	collectTags,
 	computeCacheKey,
 	concatChunks,
 	serveCached,
 } from "./cache.ts";
+import type { CookieJar } from "./cookies.ts";
 import { HttpError, Redirect } from "./errors.ts";
 import { pickErrorPage, type ErrorOrigin } from "./errorMatch.ts";
 import App from "./client/App.svelte";
@@ -533,260 +535,288 @@ export async function renderSSRStream(
 	const cacheable =
 		CACHE_ENABLED && !CSP_ENABLED && pageMod.cache !== false && req.method === "GET";
 	let cacheKey: string | null = null;
+	let releaseMiss: (() => void) | null = null;
 	if (cacheable) {
-		cacheKey = computeCacheKey(url, req, cookies);
+		cacheKey = computeCacheKey(url, req, cookies as CookieJar);
 		if (!cacheBypass) {
 			const hit = cacheGet(cacheKey);
 			if (hit) return serveCached(hit, req);
+			// Miss coalescing: the first miss leads the build; concurrent misses
+			// wait, then re-check the cache. A waiter that still misses (leader
+			// skipped the write) builds independently — no re-leadering.
+			const gate = coalesceMiss(cacheKey);
+			if (gate.wait) {
+				await gate.wait;
+				const rehit = cacheGet(cacheKey);
+				if (rehit) return serveCached(rehit, req);
+			} else {
+				releaseMiss = gate.release;
+			}
 		}
 	}
 
-	// ── Pre-stream phase: resolve metadata before committing to a 200 ──
-	// Errors here return a proper error response with correct status code.
-	let metadata: Metadata | null = null;
+	// INVARIANT: releaseMiss must fire exactly once — a missed release() hangs
+	// coalesced waiters for the process lifetime. Every early return and throw
+	// below must stay inside this try; the cache-write path hands the release
+	// off to its cacheSet microtask by nulling releaseMiss first.
 	try {
-		metadata = await loadMetadata(route, params, url, locals, cookies, req);
-	} catch (err) {
-		if (err instanceof Redirect) {
-			return Response.redirect(err.location, err.status);
-		}
-		if (err instanceof HttpError) {
-			return renderErrorPage(
-				err.status,
-				err.message,
-				url,
-				req,
-				route,
-				undefined,
-				undefined,
-				undefined,
-				nonce,
-			);
-		}
-		if (isDev) console.error("Metadata load error:", err);
-		else console.error("Metadata load error:", (err as Error).message ?? err);
-		if (isDev) reportDevErrorFromCatch(err);
-		// Continue with null metadata — don't break the page for a metadata failure
-	}
-
-	// ── Pre-stream phase: run load() + module imports in parallel before committing to a 200 ──
-	// This ensures HttpError/Redirect from load() can return a proper response before any bytes are sent.
-	const metadataData = metadata?.data ?? null;
-	let data: Awaited<ReturnType<typeof loadRouteData>>;
-	let layoutMods: any[];
-
-	try {
-		[data, layoutMods] = await Promise.all([
-			loadRouteData(url, locals, req, cookies, metadataData, match),
-			Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
-		]);
-	} catch (err) {
-		if (err instanceof Redirect) return Response.redirect(err.location, err.status);
-		if (err instanceof HttpError) {
-			const e = err as HttpError & {
-				errorDepth?: number;
-				errorOrigin?: ErrorOrigin;
-				partialLayoutData?: Record<string, any>[];
-			};
-			return renderErrorPage(
-				err.status,
-				err.message,
-				url,
-				req,
-				route,
-				e.errorDepth,
-				e.errorOrigin,
-				e.partialLayoutData,
-				nonce,
-			);
-		}
-		if (isDev) console.error("SSR load error:", err);
-		else console.error("SSR load error:", (err as Error).message ?? err);
-		if (isDev) reportDevErrorFromCatch(err);
-		return renderErrorPage(
-			500,
-			"Internal Server Error",
-			url,
-			req,
-			route,
-			undefined,
-			undefined,
-			undefined,
-			nonce,
-		);
-	}
-
-	if (!data)
-		return renderErrorPage(
-			404,
-			"Not Found",
-			url,
-			req,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			nonce,
-		);
-
-	const enc = new TextEncoder();
-	const renderCtx: RenderContext = {
-		request: req,
-		url,
-		route: { pattern: route.pattern },
-		metadata,
-	};
-	const [headExtras, bodyEndExtras] = await Promise.all([
-		pluginRenderFragments("head", renderCtx),
-		pluginRenderFragments("bodyEnd", renderCtx),
-	]);
-
-	// SSR always runs every loader, so coerce types from the optional sparse shape.
-	const layoutDataFull = (data.layoutData as Record<string, any>[]).map((d) => d ?? {});
-	const pageDataFull = data.pageData ?? {};
-
-	// ssr=false → no render() needed; ship shell + hydration as a single response.
-	// ssr=false && csr=false is meaningless (nothing renders) — force csr=true.
-	if (!data.ssr) {
-		if (!data.csr && isDev) {
-			console.warn(
-				`⚠️  ${url.pathname}: ssr=false && csr=false renders nothing — forcing csr=true`,
-			);
-		}
-		const html =
-			buildHtmlShellOpen(metadata?.lang, nonce, appHtmlSegments) +
-			buildMetadataChunk(metadata, headExtras, appHtmlSegments) +
-			buildHtmlTail(
-				"",
-				"",
-				pageDataFull,
-				layoutDataFull,
-				true,
-				null,
-				false,
-				bodyEndExtras,
-				nonce,
-				data.pageDeps,
-				data.layoutDeps,
-				appHtmlSegments,
-			);
-		return new Response(html, {
-			headers: { "Content-Type": "text/html; charset=utf-8" },
-		});
-	}
-
-	// Render-first: run render() before committing to a 200. Failure → proper error page
-	// with correct status code, instead of a bare <p> mixed into an already-flushed shell.
-	let body: string, head: string;
-	try {
-		({ body, head } = render(App, {
-			props: {
-				ssrMode: true,
-				ssrPageComponent: pageMod.default,
-				ssrLayoutComponents: layoutMods.map((m: any) => m.default),
-				ssrPageData: pageDataFull,
-				ssrLayoutData: layoutDataFull,
-			},
-		}));
-	} catch (err) {
-		if (isDev) console.error("SSR render error:", err);
-		else console.error("SSR render error:", (err as Error).message ?? err);
-		if (isDev) reportDevErrorFromCatch(err);
-		// Render-phase errors fall through to deepest boundary like a page error.
-		return renderErrorPage(
-			500,
-			"Internal Server Error",
-			url,
-			req,
-			route,
-			route.layoutModules.length,
-			"page",
-			layoutDataFull,
-			nonce,
-		);
-	}
-
-	// Pre-compute all chunks; pull-based stream gives Bun native backpressure.
-	const chunks: Uint8Array[] = [
-		enc.encode(buildHtmlShellOpen(metadata?.lang, nonce, appHtmlSegments)),
-		enc.encode(buildMetadataChunk(metadata, headExtras, appHtmlSegments)),
-		enc.encode(
-			buildHtmlTail(
-				body,
-				head,
-				pageDataFull,
-				layoutDataFull,
-				data.csr,
-				null,
-				true,
-				bodyEndExtras,
-				nonce,
-				data.pageDeps,
-				data.layoutDeps,
-				appHtmlSegments,
-			),
-		),
-	];
-
-	// ── Response cache: write after chunks built, before stream creation ──
-	// Skip if the handler set cookies — cached response can't reproduce
-	// per-request Set-Cookie headers. Compression runs in a microtask so
-	// the response goes out first.
-	if (cacheable && cacheKey && (cookies as any).outgoing?.length === 0) {
-		const fullBody = concatChunks(chunks);
-		// Oversized bodies skip early so they never pay compression; cacheSet
-		// re-checks as the authoritative guard.
-		if (CACHE_MAX_BODY_BYTES === 0 || fullBody.length <= CACHE_MAX_BODY_BYTES) {
-			const tags = collectTags(data.layoutDeps ?? null, data.pageDeps ?? null);
-			const keyForWrite = cacheKey;
-			queueMicrotask(() => {
-				const { gzip, brotli } = buildCompressedVariants(fullBody);
-				cacheSet(
-					keyForWrite,
-					{
-						raw: fullBody,
-						gzip,
-						brotli,
-						contentType: "text/html; charset=utf-8",
-						status: 200,
-						extraHeaders: {},
-						tags,
-					},
-					cookies,
+		// ── Pre-stream phase: resolve metadata before committing to a 200 ──
+		// Errors here return a proper error response with correct status code.
+		let metadata: Metadata | null = null;
+		try {
+			metadata = await loadMetadata(route, params, url, locals, cookies, req);
+		} catch (err) {
+			if (err instanceof Redirect) {
+				return Response.redirect(err.location, err.status);
+			}
+			if (err instanceof HttpError) {
+				return renderErrorPage(
+					err.status,
+					err.message,
+					url,
+					req,
+					route,
+					undefined,
+					undefined,
+					undefined,
+					nonce,
 				);
+			}
+			if (isDev) console.error("Metadata load error:", err);
+			else console.error("Metadata load error:", (err as Error).message ?? err);
+			if (isDev) reportDevErrorFromCatch(err);
+			// Continue with null metadata — don't break the page for a metadata failure
+		}
+
+		// ── Pre-stream phase: run load() + module imports in parallel before committing to a 200 ──
+		// This ensures HttpError/Redirect from load() can return a proper response before any bytes are sent.
+		const metadataData = metadata?.data ?? null;
+		let data: Awaited<ReturnType<typeof loadRouteData>>;
+		let layoutMods: any[];
+
+		try {
+			[data, layoutMods] = await Promise.all([
+				loadRouteData(url, locals, req, cookies, metadataData, match),
+				Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
+			]);
+		} catch (err) {
+			if (err instanceof Redirect) return Response.redirect(err.location, err.status);
+			if (err instanceof HttpError) {
+				const e = err as HttpError & {
+					errorDepth?: number;
+					errorOrigin?: ErrorOrigin;
+					partialLayoutData?: Record<string, any>[];
+				};
+				return renderErrorPage(
+					err.status,
+					err.message,
+					url,
+					req,
+					route,
+					e.errorDepth,
+					e.errorOrigin,
+					e.partialLayoutData,
+					nonce,
+				);
+			}
+			if (isDev) console.error("SSR load error:", err);
+			else console.error("SSR load error:", (err as Error).message ?? err);
+			if (isDev) reportDevErrorFromCatch(err);
+			return renderErrorPage(
+				500,
+				"Internal Server Error",
+				url,
+				req,
+				route,
+				undefined,
+				undefined,
+				undefined,
+				nonce,
+			);
+		}
+
+		if (!data)
+			return renderErrorPage(
+				404,
+				"Not Found",
+				url,
+				req,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				nonce,
+			);
+
+		const enc = new TextEncoder();
+		const renderCtx: RenderContext = {
+			request: req,
+			url,
+			route: { pattern: route.pattern },
+			metadata,
+		};
+		const [headExtras, bodyEndExtras] = await Promise.all([
+			pluginRenderFragments("head", renderCtx),
+			pluginRenderFragments("bodyEnd", renderCtx),
+		]);
+
+		// SSR always runs every loader, so coerce types from the optional sparse shape.
+		const layoutDataFull = (data.layoutData as Record<string, any>[]).map((d) => d ?? {});
+		const pageDataFull = data.pageData ?? {};
+
+		// ssr=false → no render() needed; ship shell + hydration as a single response.
+		// ssr=false && csr=false is meaningless (nothing renders) — force csr=true.
+		if (!data.ssr) {
+			if (!data.csr && isDev) {
+				console.warn(
+					`⚠️  ${url.pathname}: ssr=false && csr=false renders nothing — forcing csr=true`,
+				);
+			}
+			const html =
+				buildHtmlShellOpen(metadata?.lang, nonce, appHtmlSegments) +
+				buildMetadataChunk(metadata, headExtras, appHtmlSegments) +
+				buildHtmlTail(
+					"",
+					"",
+					pageDataFull,
+					layoutDataFull,
+					true,
+					null,
+					false,
+					bodyEndExtras,
+					nonce,
+					data.pageDeps,
+					data.layoutDeps,
+					appHtmlSegments,
+				);
+			return new Response(html, {
+				headers: { "Content-Type": "text/html; charset=utf-8" },
 			});
 		}
-	}
 
-	let i = 0;
-	let cancelled = false;
-	const onAbort = () => {
-		cancelled = true;
-	};
-	req.signal.addEventListener("abort", onAbort, { once: true });
+		// Render-first: run render() before committing to a 200. Failure → proper error page
+		// with correct status code, instead of a bare <p> mixed into an already-flushed shell.
+		let body: string, head: string;
+		try {
+			({ body, head } = render(App, {
+				props: {
+					ssrMode: true,
+					ssrPageComponent: pageMod.default,
+					ssrLayoutComponents: layoutMods.map((m: any) => m.default),
+					ssrPageData: pageDataFull,
+					ssrLayoutData: layoutDataFull,
+				},
+			}));
+		} catch (err) {
+			if (isDev) console.error("SSR render error:", err);
+			else console.error("SSR render error:", (err as Error).message ?? err);
+			if (isDev) reportDevErrorFromCatch(err);
+			// Render-phase errors fall through to deepest boundary like a page error.
+			return renderErrorPage(
+				500,
+				"Internal Server Error",
+				url,
+				req,
+				route,
+				route.layoutModules.length,
+				"page",
+				layoutDataFull,
+				nonce,
+			);
+		}
 
-	const stream = new ReadableStream<Uint8Array>({
-		pull(controller) {
-			if (cancelled || i >= chunks.length) {
-				controller.close();
-				req.signal.removeEventListener("abort", onAbort);
-				return;
+		// Pre-compute all chunks; pull-based stream gives Bun native backpressure.
+		const chunks: Uint8Array[] = [
+			enc.encode(buildHtmlShellOpen(metadata?.lang, nonce, appHtmlSegments)),
+			enc.encode(buildMetadataChunk(metadata, headExtras, appHtmlSegments)),
+			enc.encode(
+				buildHtmlTail(
+					body,
+					head,
+					pageDataFull,
+					layoutDataFull,
+					data.csr,
+					null,
+					true,
+					bodyEndExtras,
+					nonce,
+					data.pageDeps,
+					data.layoutDeps,
+					appHtmlSegments,
+				),
+			),
+		];
+
+		// ── Response cache: write after chunks built, before stream creation ──
+		// Skip if the handler set cookies — cached response can't reproduce
+		// per-request Set-Cookie headers. Compression runs in a microtask so
+		// the response goes out first.
+		if (cacheable && cacheKey && (cookies as any).outgoing?.length === 0) {
+			const fullBody = concatChunks(chunks);
+			// Oversized bodies skip early so they never pay compression; cacheSet
+			// re-checks as the authoritative guard.
+			if (CACHE_MAX_BODY_BYTES === 0 || fullBody.length <= CACHE_MAX_BODY_BYTES) {
+				const tags = collectTags(data.layoutDeps ?? null, data.pageDeps ?? null);
+				const keyForWrite = cacheKey;
+				// Hand the gate release to the write microtask: waiters resume only
+				// after cacheSet ran, so their re-check hits.
+				const rel = releaseMiss;
+				releaseMiss = null;
+				queueMicrotask(() => {
+					try {
+						const { gzip, brotli } = buildCompressedVariants(fullBody);
+						cacheSet(
+							keyForWrite,
+							{
+								raw: fullBody,
+								gzip,
+								brotli,
+								contentType: "text/html; charset=utf-8",
+								status: 200,
+								extraHeaders: {},
+								tags,
+							},
+							cookies,
+						);
+					} finally {
+						rel?.();
+					}
+				});
 			}
-			controller.enqueue(chunks[i++]);
-			if (i >= chunks.length) {
-				controller.close();
-				req.signal.removeEventListener("abort", onAbort);
-			}
-		},
-		cancel() {
+		}
+
+		let i = 0;
+		let cancelled = false;
+		const onAbort = () => {
 			cancelled = true;
-			req.signal.removeEventListener("abort", onAbort);
-		},
-	});
+		};
+		req.signal.addEventListener("abort", onAbort, { once: true });
 
-	return new Response(stream, {
-		headers: { "Content-Type": "text/html; charset=utf-8" },
-	});
+		const stream = new ReadableStream<Uint8Array>({
+			pull(controller) {
+				if (cancelled || i >= chunks.length) {
+					controller.close();
+					req.signal.removeEventListener("abort", onAbort);
+					return;
+				}
+				controller.enqueue(chunks[i++]);
+				if (i >= chunks.length) {
+					controller.close();
+					req.signal.removeEventListener("abort", onAbort);
+				}
+			},
+			cancel() {
+				cancelled = true;
+				req.signal.removeEventListener("abort", onAbort);
+			},
+		});
+
+		return new Response(stream, {
+			headers: { "Content-Type": "text/html; charset=utf-8" },
+		});
+	} finally {
+		releaseMiss?.();
+	}
 }
 
 // ─── Form Action Page Renderer ───────────────────────────

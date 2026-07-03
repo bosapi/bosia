@@ -1,12 +1,12 @@
 // ─── Request Deduplication ──────────────────────────────
-// Concurrent in-flight coalescing for public routes. When N parallel requests
-// hit the same URL, run the loader once and share the resolved value across
-// all N waiters. Settled responses are NOT cached — once the promise resolves,
-// the entry is dropped, so the next request runs the loader again.
+// Concurrent in-flight coalescing. When N parallel requests hit the same URL,
+// run the loader once and share the resolved value across all N waiters.
+// Settled responses are NOT cached — once the promise resolves, the entry is
+// dropped, so the next request runs the loader again.
 //
-// Scope decision lives in the scanner: routes under a `(private)` group skip
-// dedup entirely. Per-user routes MUST be private — sharing a loader result
-// across users would leak data. See docs/guides/request-deduplication.md.
+// The caller's key includes the CACHE_KEYS identity hash (see cache.ts), so
+// different users never share a loader result. Custom session cookie names
+// must be listed in CACHE_KEYS. See docs/guides/request-deduplication.md.
 
 const inflight = new Map<string, Promise<unknown>>();
 

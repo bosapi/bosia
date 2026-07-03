@@ -44,6 +44,25 @@ describe("CookieJar — incoming", () => {
 		expect([...jar.readNames].sort()).toEqual(["a", "b"]);
 	});
 
+	test("peek returns value without flipping accessed", () => {
+		const jar = new CookieJar("session=abc");
+		expect(jar.peek("session")).toBe("abc");
+		expect(jar.accessed).toBe(false);
+	});
+
+	test("peek does not record the name in readNames", () => {
+		const jar = new CookieJar("session=abc");
+		jar.peek("session");
+		expect([...jar.readNames]).toEqual([]);
+	});
+
+	test("peek of missing cookie returns undefined, still no flip", () => {
+		const jar = new CookieJar("session=abc");
+		expect(jar.peek("nope")).toBeUndefined();
+		expect(jar.accessed).toBe(false);
+		expect([...jar.readNames]).toEqual([]);
+	});
+
 	test("accessed flips on get / getAll", () => {
 		const a = new CookieJar("x=1");
 		expect(a.accessed).toBe(false);

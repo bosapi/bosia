@@ -25,7 +25,7 @@ import { isDev, compress, isStaticPath } from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
 import { buildPrerenderManifest, buildStaticManifest, lookupStatic } from "./staticManifest.ts";
-import { dedup, dedupKey } from "./dedup.ts";
+import { dedup } from "./dedup.ts";
 import {
 	CACHE_ENABLED,
 	CACHE_KEYS,
@@ -33,8 +33,10 @@ import {
 	buildCompressedVariants,
 	cacheGet,
 	cacheSet,
+	coalesceMiss,
 	computeCacheKey,
 	serveCached,
+	warnUncoveredCookies,
 } from "./cache.ts";
 import { reportDevErrorFromCatch } from "./devErrorReport.ts";
 import {
@@ -287,15 +289,18 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				return { data, metadata, cookiesAccessed: (cookies as CookieJar).accessed };
 			};
 
-			// Dedup public routes by URL + mask. `(private)` scope routes (per-user
-			// content) skip the cache to prevent cross-user data leaks. The mask is
-			// part of the key so concurrent requests for the same URL with different
-			// invalidation patterns don't collapse onto each other. See dedup.ts.
-			const dedupK = invalidatedBits
-				? `${dedupKey(routeUrl)}|m=${invalidatedBits}`
-				: dedupKey(routeUrl);
-			const result =
-				pageMatch?.route.scope === "private" ? await runLoad() : await dedup(dedupK, runLoad);
+			// Dedup concurrent identical requests. The key includes the CACHE_KEYS
+			// identity hash, so different users never share a loader result — same
+			// isolation contract as the response cache. The mask is part of the key
+			// so concurrent requests for the same URL with different invalidation
+			// patterns don't collapse onto each other. See dedup.ts.
+			const dedupK =
+				computeCacheKey(routeUrl, request, cookies as CookieJar) +
+				(invalidatedBits ? `|m=${invalidatedBits}` : "");
+			const result = await dedup(dedupK, runLoad);
+			// Identity only covers CACHE_KEYS — warn if a loader read a session
+			// cookie outside that list (dedup could then mix users' results).
+			warnUncoveredCookies(cookies);
 
 			const cookiesWereAccessed = (cookies as CookieJar).accessed || result.cookiesAccessed;
 			const cc = cookiesWereAccessed ? "private, no-cache" : "public, max-age=0, must-revalidate";
@@ -362,6 +367,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 	// `.webp` URLs that would otherwise be intercepted by isStaticPath).
 	const apiMatch = await resolveApiMatch(apiRoutes, path);
 	if (apiMatch) {
+		// INVARIANT: once set, releaseApiMiss must fire exactly once — a missed
+		// release() hangs coalesced waiters for the process lifetime. The cache
+		// write path hands it off to its microtask by nulling it first.
+		let releaseApiMiss: (() => void) | null = null;
 		try {
 			const mod = await apiMatch.route.module();
 			const handler = mod[method];
@@ -386,10 +395,20 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				CACHE_ENABLED && !CSP_ENABLED && (mod as any).cache !== false && method === "GET";
 			let apiCacheKey: string | null = null;
 			if (apiCacheable) {
-				apiCacheKey = computeCacheKey(url, request, cookies);
+				apiCacheKey = computeCacheKey(url, request, cookies as CookieJar);
 				if (!url.searchParams.has("_invalidated")) {
 					const hit = cacheGet(apiCacheKey);
 					if (hit) return serveCached(hit, request);
+					// Miss coalescing: first miss runs the handler; concurrent misses
+					// wait, re-check the cache, and on a still-miss run independently.
+					const gate = coalesceMiss(apiCacheKey);
+					if (gate.wait) {
+						await gate.wait;
+						const rehit = cacheGet(apiCacheKey);
+						if (rehit) return serveCached(rehit, request);
+					} else {
+						releaseApiMiss = gate.release;
+					}
 				}
 			}
 
@@ -436,6 +455,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				const extraHeaders = captureCacheableHeaders(response.headers);
 				const contentType = responseContentType || "application/octet-stream";
 				const keyForWrite = apiCacheKey;
+				// Hand the gate release to the write microtask: waiters resume only
+				// after the cacheSet attempt, so their re-check hits.
+				const rel = releaseApiMiss;
+				releaseApiMiss = null;
 				queueMicrotask(async () => {
 					try {
 						const buf = new Uint8Array(await cloned.arrayBuffer());
@@ -460,6 +483,8 @@ async function resolve(event: RequestEvent): Promise<Response> {
 						);
 					} catch {
 						/* drop silently — cache population is best-effort */
+					} finally {
+						rel?.();
 					}
 				});
 			}
@@ -490,6 +515,8 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				});
 			}
 			return Response.json({ error: "Internal Server Error" }, { status: 500 });
+		} finally {
+			releaseApiMiss?.();
 		}
 	}
 
@@ -1021,7 +1048,6 @@ function loadBuiltManifest(): RouteManifest {
 			layoutServers: [],
 			errorPages: [],
 			trailingSlash: r.trailingSlash,
-			scope: r.scope,
 		})),
 		apis: apiRoutes.map((r: any) => ({ pattern: r.pattern, server: "" })),
 		errorPage: null,

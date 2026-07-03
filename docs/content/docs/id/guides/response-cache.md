@@ -11,7 +11,10 @@ Cache ini **aman untuk user yang login** karena key menyertakan hash dari cookie
 
 1. Lookup `<dedup-key>|i=<identity-hash>` di cache.
 2. **Hit** → kirim varian terkompresi yang cocok (brotli, gzip, atau identity) berdasarkan `Accept-Encoding`. Selesai.
-3. **Miss** → jalankan `metadata()`, jalankan `load()`, render, bangun chunk HTML, stream response. Kompresi + tulis cache jalan di microtask setelah response keluar.
+3. **Miss** → miss **pertama** pada sebuah kunci menjadi leader: menjalankan `metadata()`, `load()`, render, membangun chunk HTML, lalu stream response. Kompresi + tulis cache jalan di microtask setelah response keluar.
+4. **Miss bersamaan** pada kunci yang sama menunggu leader, lalu cek ulang cache — hit dilayani dari cache, jadi N miss simultan membangun halaman sekali, bukan N kali. Jika leader melewatkan penulisan (mis. mengeset cookie atau response tidak cacheable), tiap waiter membangun sendiri-sendiri.
+
+Hash identitas di sini sama dengan yang dipakai [deduplikasi request](./request-deduplication) — satu kontrak `CACHE_KEYS` mengisolasi pengguna di kedua mekanisme.
 
 ## Isolasi per-user
 

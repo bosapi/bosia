@@ -4,36 +4,63 @@
 
 	let { data }: { data: PageData } = $props();
 
-	let parallelResult = $state<string | null>(null);
+	let sameResult = $state<string | null>(null);
+	let diffResult = $state<string | null>(null);
+	let coalesceResult = $state<string | null>(null);
 	let busy = $state(false);
 
-	async function fireParallel() {
-		busy = true;
-		parallelResult = null;
-		const fetches = Array.from({ length: 5 }, () =>
-			fetch("/__bosia/data/dedup-demo").then((r) => r.json()),
+	// Identity = hash of CACHE_KEYS cookies/headers. `Authorization` is in the
+	// default list, so one browser can simulate N users by varying the header.
+	async function fireParallel(auth: (i: number) => string) {
+		const results = await Promise.all(
+			Array.from({ length: 5 }, (_, i) =>
+				fetch("/__bosia/data/dedup-demo", { headers: { Authorization: auth(i) } }).then((r) =>
+					r.json(),
+				),
+			),
 		);
-		const results = await Promise.all(fetches);
 		const counts = results.map((r) => r.pageData.count);
 		const loadedAts = new Set(results.map((r) => r.pageData.loadedAt));
-		parallelResult = `5 parallel requests → counter values: [${counts.join(
-			", ",
-		)}], unique loadedAt timestamps: ${loadedAts.size}`;
+		return `counter values: [${counts.join(", ")}], unique loadedAt timestamps: ${loadedAts.size}`;
+	}
+
+	async function fireSameIdentity() {
+		busy = true;
+		sameResult = null;
+		sameResult = await fireParallel(() => "Bearer alice");
+		busy = false;
+	}
+
+	async function fireDifferentIdentities() {
+		busy = true;
+		diffResult = null;
+		diffResult = await fireParallel((i) => `Bearer user-${i}`);
+		busy = false;
+	}
+
+	async function fireColdCacheParallel() {
+		busy = true;
+		coalesceResult = null;
+		// Fresh query string → guaranteed cold cache key for this round.
+		const url = `/dedup-demo?run=${Date.now()}`;
+		const responses = await Promise.all(Array.from({ length: 5 }, () => fetch(url)));
+		const hits = responses.filter((r) => r.headers.get("X-Bosia-Cache") === "HIT").length;
+		coalesceResult = `5 parallel SSR requests to a cold key → ${5 - hits} built the page, ${hits} served from cache`;
 		busy = false;
 	}
 </script>
 
 <svelte:head>
-	<title>Public dedup demo</title>
+	<title>Identity-aware dedup demo</title>
 </svelte:head>
 
 <div class="space-y-6">
 	<div class="space-y-2">
-		<h1 class="text-3xl font-bold tracking-tight">Public dedup demo</h1>
+		<h1 class="text-3xl font-bold tracking-tight">Identity-aware dedup demo</h1>
 		<p class="text-muted-foreground">
-			This route lives under <code class="font-mono">(public)</code> — no
-			<code class="font-mono">(private)</code> in the chain — so the loader is
-			<strong>shared</strong> across concurrent identical requests.
+			Concurrent identical requests share <strong>one</strong> in-flight loader — but only within
+			the same identity. Identity is a hash of the cookies/headers named in
+			<code class="font-mono">CACHE_KEYS</code>, so different users never share a result.
 		</p>
 	</div>
 
@@ -44,21 +71,53 @@
 	</div>
 
 	<div class="rounded-lg border bg-card p-6 space-y-3">
-		<p class="font-medium">Fire 5 parallel data fetches</p>
+		<p class="font-medium">5 parallel fetches — same identity</p>
 		<p class="text-sm text-muted-foreground">
-			Expected: all 5 share <strong>one</strong> in-flight loader. Counter advances by 1; all 5
-			responses share the same <code class="font-mono">loadedAt</code>.
+			All 5 send <code class="font-mono">Authorization: Bearer alice</code>. Expected: one shared
+			loader run — counter advances by <strong>1</strong>, one unique
+			<code class="font-mono">loadedAt</code>.
 		</p>
-		<Button onclick={fireParallel} disabled={busy}>
-			{busy ? "Loading…" : "Fire 5 parallel"}
+		<Button onclick={fireSameIdentity} disabled={busy}>
+			{busy ? "Loading…" : "Fire 5 as one user"}
 		</Button>
-		{#if parallelResult}
-			<p class="text-sm font-mono p-3 bg-muted rounded">{parallelResult}</p>
+		{#if sameResult}
+			<p class="text-sm font-mono p-3 bg-muted rounded">{sameResult}</p>
+		{/if}
+	</div>
+
+	<div class="rounded-lg border bg-card p-6 space-y-3">
+		<p class="font-medium">5 parallel fetches — five different identities</p>
+		<p class="text-sm text-muted-foreground">
+			Each sends its own <code class="font-mono">Authorization: Bearer user-N</code>. Expected:
+			separate loader runs — counter advances by <strong>5</strong>, five unique
+			<code class="font-mono">loadedAt</code> timestamps. No cross-user sharing.
+		</p>
+		<Button onclick={fireDifferentIdentities} disabled={busy}>
+			{busy ? "Loading…" : "Fire 5 as five users"}
+		</Button>
+		{#if diffResult}
+			<p class="text-sm font-mono p-3 bg-muted rounded">{diffResult}</p>
+		{/if}
+	</div>
+
+	<div class="rounded-lg border bg-card p-6 space-y-3">
+		<p class="font-medium">Miss coalescing — 5 parallel SSR requests, cold cache</p>
+		<p class="text-sm text-muted-foreground">
+			5 parallel requests to this page with a fresh query string (never cached). Expected: the first
+			miss builds the page once; the other 4 wait and get
+			<code class="font-mono">X-Bosia-Cache: HIT</code>.
+		</p>
+		<Button onclick={fireColdCacheParallel} disabled={busy}>
+			{busy ? "Loading…" : "Fire 5 at a cold cache key"}
+		</Button>
+		{#if coalesceResult}
+			<p class="text-sm font-mono p-3 bg-muted rounded">{coalesceResult}</p>
 		{/if}
 	</div>
 
 	<div class="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
 		Compare with <a href="/dedup-demo-private" class="underline">/dedup-demo-private</a>
-		— same loader, but the <code class="font-mono">(private)</code> group disables sharing.
+		— same simulation under a <code class="font-mono">(private)</code> group, which is now an ordinary
+		route group: the results are identical.
 	</div>
 </div>

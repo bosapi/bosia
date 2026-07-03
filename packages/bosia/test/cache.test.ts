@@ -4,6 +4,7 @@ import {
 	cacheClear,
 	cacheGet,
 	cacheSet,
+	coalesceMiss,
 	collectTags,
 	computeCacheKey,
 	computeIdentityHash,
@@ -14,17 +15,16 @@ import {
 	type CacheEntry,
 } from "../src/core/cache.ts";
 import { CookieJar } from "../src/core/cookies.ts";
-import type { Cookies, LoaderDeps } from "../src/core/hooks.ts";
+import type { LoaderDeps } from "../src/core/hooks.ts";
 
 // ─── Helpers ─────────────────────────────────────────────
 
-function mkCookies(jar: Record<string, string> = {}): Cookies {
-	return {
-		get: (name) => jar[name],
-		getAll: () => ({ ...jar }),
-		set: () => {},
-		delete: () => {},
-	};
+function mkCookies(jar: Record<string, string> = {}): CookieJar {
+	return new CookieJar(
+		Object.entries(jar)
+			.map(([k, v]) => `${k}=${v}`)
+			.join("; "),
+	);
 }
 
 function mkRequest(url: string, headers: Record<string, string> = {}): Request {
@@ -101,6 +101,13 @@ describe("computeIdentityHash", () => {
 			mkCookies({ auth: "a", session: "s" }),
 		);
 		expect(a).toBe(b);
+	});
+
+	test("does not count as a cookie read (accessed stays false, readNames empty)", () => {
+		const jar = mkCookies({ session: "alice" });
+		computeIdentityHash(mkRequest("http://localhost/"), jar);
+		expect(jar.accessed).toBe(false);
+		expect([...jar.readNames]).toEqual([]);
 	});
 });
 
@@ -222,6 +229,78 @@ describe("cacheGet / cacheSet", () => {
 		// Second entry's tag should evict it
 		invalidate("b");
 		expect(cacheGet("/x|i=0")).toBeUndefined();
+	});
+});
+
+// ─── coalesceMiss ────────────────────────────────────────
+
+describe("coalesceMiss", () => {
+	test("first caller becomes leader, concurrent caller becomes waiter", () => {
+		const leader = coalesceMiss("/cm/a|i=0");
+		expect(typeof leader.release).toBe("function");
+		expect(leader.wait).toBeUndefined();
+		const waiter = coalesceMiss("/cm/a|i=0");
+		expect(waiter.wait).toBeInstanceOf(Promise);
+		expect(waiter.release).toBeUndefined();
+		leader.release!();
+	});
+
+	test("waiter re-check hits when leader writes in a microtask before release", async () => {
+		const key = "/cm/b|i=0";
+		const leader = coalesceMiss(key);
+		const waiter = coalesceMiss(key);
+		// Mirrors the production handoff: cacheSet + release inside queueMicrotask.
+		queueMicrotask(() => {
+			cacheSet(key, mkEntry());
+			leader.release!();
+		});
+		await waiter.wait!;
+		expect(cacheGet(key)).toBeDefined();
+	});
+
+	test("waiter is not resumed before the leader releases", async () => {
+		const key = "/cm/c|i=0";
+		const leader = coalesceMiss(key);
+		const waiter = coalesceMiss(key);
+		let resumed = false;
+		const done = waiter.wait!.then(() => {
+			resumed = true;
+		});
+		await Promise.resolve();
+		await Promise.resolve();
+		expect(resumed).toBe(false);
+		leader.release!();
+		await done;
+		expect(resumed).toBe(true);
+	});
+
+	test("leader released without writing → waiter re-check misses", async () => {
+		const key = "/cm/d|i=0";
+		const leader = coalesceMiss(key);
+		const waiter = coalesceMiss(key);
+		leader.release!();
+		await waiter.wait!;
+		expect(cacheGet(key)).toBeUndefined();
+	});
+
+	test("caller after release becomes a new leader", () => {
+		const key = "/cm/e|i=0";
+		const first = coalesceMiss(key);
+		first.release!();
+		const second = coalesceMiss(key);
+		expect(typeof second.release).toBe("function");
+		second.release!();
+	});
+
+	test("release is idempotent and never deletes a successor leader's gate", () => {
+		const key = "/cm/f|i=0";
+		const first = coalesceMiss(key);
+		first.release!();
+		const second = coalesceMiss(key);
+		first.release!(); // stale double-release must not evict the new gate
+		const third = coalesceMiss(key);
+		expect(third.wait).toBeInstanceOf(Promise);
+		second.release!();
 	});
 });
 

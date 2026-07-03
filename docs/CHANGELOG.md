@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Cache guide now warns loudly: register your custom session cookie or personalised pages leak.
+- Dedup guide rewritten: `(private)` opt-out is gone; CACHE_KEYS now keeps users apart everywhere.
+- Cache guide now explains that simultaneous misses build a page once instead of many times.
 
 ## [0.8.1] - 2026-07-02
 

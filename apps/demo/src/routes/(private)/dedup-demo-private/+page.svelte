@@ -4,35 +4,50 @@
 
 	let { data }: { data: PageData } = $props();
 
-	let parallelResult = $state<string | null>(null);
+	let sameResult = $state<string | null>(null);
+	let diffResult = $state<string | null>(null);
 	let busy = $state(false);
 
-	async function fireParallel() {
-		busy = true;
-		parallelResult = null;
-		const fetches = Array.from({ length: 5 }, () =>
-			fetch("/__bosia/data/dedup-demo-private").then((r) => r.json()),
+	async function fireParallel(auth: (i: number) => string) {
+		const results = await Promise.all(
+			Array.from({ length: 5 }, (_, i) =>
+				fetch("/__bosia/data/dedup-demo-private", { headers: { Authorization: auth(i) } }).then(
+					(r) => r.json(),
+				),
+			),
 		);
-		const results = await Promise.all(fetches);
 		const counts = results.map((r) => r.pageData.count);
 		const loadedAts = new Set(results.map((r) => r.pageData.loadedAt));
-		parallelResult = `5 parallel requests → counter values: [${counts.join(
-			", ",
-		)}], unique loadedAt timestamps: ${loadedAts.size}`;
+		return `counter values: [${counts.join(", ")}], unique loadedAt timestamps: ${loadedAts.size}`;
+	}
+
+	async function fireSameIdentity() {
+		busy = true;
+		sameResult = null;
+		sameResult = await fireParallel(() => "Bearer alice");
+		busy = false;
+	}
+
+	async function fireDifferentIdentities() {
+		busy = true;
+		diffResult = null;
+		diffResult = await fireParallel((i) => `Bearer user-${i}`);
 		busy = false;
 	}
 </script>
 
 <svelte:head>
-	<title>Private dedup demo</title>
+	<title>(private) group dedup demo</title>
 </svelte:head>
 
 <div class="space-y-6">
 	<div class="space-y-2">
-		<h1 class="text-3xl font-bold tracking-tight">Private dedup demo</h1>
+		<h1 class="text-3xl font-bold tracking-tight">(private) group dedup demo</h1>
 		<p class="text-muted-foreground">
-			This route lives under <code class="font-mono">(private)</code> — so the loader runs
-			<strong>per request</strong>, never shared. Required for any per-user data (cookies, session).
+			This route lives under <code class="font-mono">(private)</code> — which is now an
+			<strong>ordinary route group</strong>: invisible in the URL, no effect on dedup. Per-user
+			isolation comes from the <code class="font-mono">CACHE_KEYS</code> identity instead, so the behavior
+			here is identical to the public demo.
 		</p>
 	</div>
 
@@ -43,21 +58,35 @@
 	</div>
 
 	<div class="rounded-lg border bg-card p-6 space-y-3">
-		<p class="font-medium">Fire 5 parallel data fetches</p>
+		<p class="font-medium">5 parallel fetches — same identity</p>
 		<p class="text-sm text-muted-foreground">
-			Expected: each request runs its own loader. Counter advances by 5; 5 distinct
-			<code class="font-mono">loadedAt</code> timestamps.
+			Expected: one shared loader run — counter advances by <strong>1</strong>, one unique
+			<code class="font-mono">loadedAt</code>. Same as the public route.
 		</p>
-		<Button onclick={fireParallel} disabled={busy}>
-			{busy ? "Loading…" : "Fire 5 parallel"}
+		<Button onclick={fireSameIdentity} disabled={busy}>
+			{busy ? "Loading…" : "Fire 5 as one user"}
 		</Button>
-		{#if parallelResult}
-			<p class="text-sm font-mono p-3 bg-muted rounded">{parallelResult}</p>
+		{#if sameResult}
+			<p class="text-sm font-mono p-3 bg-muted rounded">{sameResult}</p>
+		{/if}
+	</div>
+
+	<div class="rounded-lg border bg-card p-6 space-y-3">
+		<p class="font-medium">5 parallel fetches — five different identities</p>
+		<p class="text-sm text-muted-foreground">
+			Expected: separate loader runs — counter advances by <strong>5</strong>, five unique
+			<code class="font-mono">loadedAt</code> timestamps. Users never share a result.
+		</p>
+		<Button onclick={fireDifferentIdentities} disabled={busy}>
+			{busy ? "Loading…" : "Fire 5 as five users"}
+		</Button>
+		{#if diffResult}
+			<p class="text-sm font-mono p-3 bg-muted rounded">{diffResult}</p>
 		{/if}
 	</div>
 
 	<div class="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
 		Compare with <a href="/dedup-demo" class="underline">/dedup-demo</a>
-		— same loader, but no <code class="font-mono">(private)</code> group means responses are shared.
+		— same simulation on a public route, plus a miss-coalescing demo.
 	</div>
 </div>

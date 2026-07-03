@@ -75,6 +75,16 @@ export class CookieJar implements Cookies {
 		return this._incoming[name];
 	}
 
+	/**
+	 * Read an incoming cookie WITHOUT flipping `accessed` or recording the name
+	 * in `readNames`. Framework-internal (identity hashing must not count as a
+	 * cookie read); deliberately absent from the public `Cookies` interface so
+	 * loaders can't bypass dependency tracking.
+	 */
+	peek(name: string): string | undefined {
+		return this._incoming[name];
+	}
+
 	getAll(): Record<string, string> {
 		this._accessed = true;
 		for (const name of Object.keys(this._incoming)) this._readNames.add(name);

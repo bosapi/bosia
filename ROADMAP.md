@@ -16,6 +16,10 @@
 - [x] 🟡 P1 — brotli via `node:zlib` quality 5 (also un-breaks brotli entirely).
 - [x] 🟡 P2 — prerendered pages: boot-time manifest (`buildPrerenderManifest`) instead of per-request `exists()` probes.
 - [x] 🟡 P3 — percent-encoded static paths 404 fixed (`decodeURIComponent` in `lookupStatic` + dev fallthrough).
+- [x] 🟠 Identity-aware dedup — data-endpoint dedup key now includes the `CACHE_KEYS` identity hash (`computeCacheKey`), so per-user routes dedup safely. BREAKING: `(private)` no longer skips dedup; custom session cookies must be in `CACHE_KEYS`.
+- [x] 🟠 Route `scope` deleted — zero runtime consumers after identity-aware dedup; `(private)` is an ordinary route group (scanner/types/ambient/codegen field removed).
+- [x] 🟠 Miss coalescing — `coalesceMiss` gate in cache.ts wired into SSR + API paths; N concurrent misses on one key build once, waiters re-check after the leader's microtask write.
+- [x] 🟡 `CookieJar.peek` — identity hashing no longer flips `accessed`/`readNames`, so it can't force `Cache-Control: private` (latent bug on all cached paths).
 
 ---
 

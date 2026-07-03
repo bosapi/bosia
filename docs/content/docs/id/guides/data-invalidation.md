@@ -98,7 +98,7 @@ Menghapus seluruh entri cache. Semua loader dijalankan ulang pada navigasi berik
 - **`setHeaders`**: loader yang di-cache tidak menerapkan ulang response headers. Jika loader menetapkan `Cache-Control` atau `Set-Cookie` via `setHeaders`, pastikan itu tidak bergantung pada data yang dilewatkan loader.
 - **`metadata()`**: `metadata()` di level page selalu berjalan di setiap navigasi. Cakupan cache hanya untuk loader.
 - **Hard refresh**: cache hidup di memori browser dan terhapus saat reload penuh. Navigasi berikutnya akan berperilaku seperti pemuatan pertama.
-- **Rute privat**: cache hidup per-browser, jadi rute `(private)` aman — tidak ada kebocoran antar pengguna. Server-side request dedup tetap dinonaktifkan untuk rute `(private)` seperti sebelumnya.
+- **Rute privat**: cache hidup per-browser, jadi rute per-user aman — tidak ada kebocoran antar pengguna. Server-side request dedup sadar identitas via `CACHE_KEYS`, jadi aman juga untuk rute per-user.
 
 ## `invalidate()` sisi server untuk response cache
 

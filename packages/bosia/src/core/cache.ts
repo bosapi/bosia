@@ -7,6 +7,7 @@
 
 import { brotliCompressSync, constants as zlibConstants } from "node:zlib";
 import type { Cookies, LoaderDeps } from "./hooks.ts";
+import type { CookieJar } from "./cookies.ts";
 import { dedupKey } from "./dedup.ts";
 
 // ─── Config ──────────────────────────────────────────────
@@ -126,11 +127,13 @@ function identityDigest(s: string): string {
 	return new Bun.CryptoHasher("sha256").update(s).digest("hex").slice(0, 16);
 }
 
-export function computeIdentityHash(req: Request, cookies: Cookies): string {
+export function computeIdentityHash(req: Request, cookies: Pick<CookieJar, "peek">): string {
 	const headers = req.headers;
 	const parts: string[] = [];
 	for (const name of CACHE_KEYS) {
-		const cv = cookies.get(name);
+		// peek, not get — building the identity must not count as a cookie read
+		// (get flips `accessed`, which forces Cache-Control: private downstream).
+		const cv = cookies.peek(name);
 		if (cv) parts.push(`c:${name}=${cv}`);
 		const hv = headers.get(name);
 		if (hv) parts.push(`h:${name}=${hv}`);
@@ -140,7 +143,7 @@ export function computeIdentityHash(req: Request, cookies: Cookies): string {
 	return identityDigest(parts.join("&"));
 }
 
-export function computeCacheKey(url: URL, req: Request, cookies: Cookies): string {
+export function computeCacheKey(url: URL, req: Request, cookies: Pick<CookieJar, "peek">): string {
 	return `${dedupKey(url)}|i=${computeIdentityHash(req, cookies)}`;
 }
 
@@ -189,7 +192,7 @@ export function cacheGet(key: string): CacheEntry | undefined {
 
 const warnedUncoveredCookies = new Set<string>();
 
-function warnUncoveredCookies(cookies: Cookies): void {
+export function warnUncoveredCookies(cookies: Cookies): void {
 	const readNames = (cookies as { readNames?: ReadonlySet<string> }).readNames;
 	if (!readNames) return;
 	for (const name of readNames) {
@@ -306,6 +309,35 @@ export function concatChunks(chunks: Uint8Array[]): Bytes {
 		off += c.length;
 	}
 	return out;
+}
+
+// ─── Miss coalescing ─────────────────────────────────────
+// Stampede protection for cache misses. The first miss on a key becomes the
+// leader (gets `release`); concurrent misses become waiters (get `wait`).
+// Waiters re-check cacheGet after the wait resolves — hit: serve it; miss
+// (leader skipped the write): build independently, no re-leadering. Distinct
+// from dedup(), which shares the *result*; this shares only the *wait*.
+//
+// INVARIANT: the leader must call release() exactly once, after its cacheSet
+// attempt completed or was skipped. A missed release() hangs waiters for the
+// process lifetime — callers guard with try/finally.
+
+const missGates = new Map<string, { promise: Promise<void>; release: () => void }>();
+
+export function coalesceMiss(
+	key: string,
+): { release: () => void; wait?: undefined } | { wait: Promise<void>; release?: undefined } {
+	const existing = missGates.get(key);
+	if (existing) return { wait: existing.promise };
+	let resolve!: () => void;
+	const promise = new Promise<void>((r) => (resolve = r));
+	const release = () => {
+		// Idempotent, and never deletes a successor leader's gate.
+		if (missGates.get(key)?.promise === promise) missGates.delete(key);
+		resolve();
+	};
+	missGates.set(key, { promise, release });
+	return { release };
 }
 
 // ─── Serve a cache hit ───────────────────────────────────

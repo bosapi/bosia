@@ -98,7 +98,7 @@ Wipes every cache entry. Every loader re-runs on the next nav.
 - **`setHeaders`**: a cached loader does not re-apply response headers. If a loader sets `Cache-Control` or `Set-Cookie` via `setHeaders`, ensure those don't depend on data the loader skips.
 - **`metadata()`**: page-level `metadata()` always runs on every navigation. Cache scope is loaders only.
 - **Hard refresh**: the cache lives in browser memory and is wiped on full reload. The next navigation behaves like a first-load.
-- **Private routes**: cache lives per-browser, so `(private)` routes are safe — there is no cross-user leakage. Server-side request dedup remains disabled for `(private)` routes as before.
+- **Private routes**: cache lives per-browser, so per-user routes are safe — there is no cross-user leakage. Server-side request dedup is identity-aware via `CACHE_KEYS`, so it is safe for per-user routes too.
 
 ## Server-side `invalidate()` for the response cache
 

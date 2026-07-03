@@ -94,7 +94,6 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 	lines.push("  layoutServers: { loader: () => Promise<any>; depth: number }[];");
 	lines.push("  errorPages: { loader: () => Promise<any>; depth: number }[];");
 	lines.push('  trailingSlash: "never" | "always" | "ignore";');
-	lines.push('  scope: "public" | "private";');
 	lines.push("}> = [");
 	for (const r of pages) {
 		const layoutImports = r.layouts
@@ -122,7 +121,6 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 		lines.push(`    layoutServers: [${layoutServerImports}],`);
 		lines.push(`    errorPages: [${errorPageImports}],`);
 		lines.push(`    trailingSlash: ${JSON.stringify(r.trailingSlash)},`);
-		lines.push(`    scope: ${JSON.stringify(r.scope)},`);
 		lines.push("  },");
 	}
 	lines.push("];\n");
