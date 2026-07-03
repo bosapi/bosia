@@ -1,0 +1,9 @@
+{
+	"name": "footer-newsletter",
+	"description": "Footer with an email-capture band above three link columns and a legal row.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

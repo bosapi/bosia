@@ -176,7 +176,19 @@
 		"navbars/docs",
 		"navbars/mega-menu",
 		"navbars/announcement",
-		"navbars/mobile"
+		"navbars/mobile",
+		"footers/minimal",
+		"footers/columns",
+		"footers/newsletter",
+		"footers/centered",
+		"footers/mega",
+		"footers/split-brand",
+		"footers/dark",
+		"footers/glass",
+		"footers/gradient",
+		"footers/brutalist",
+		"footers/editorial",
+		"footers/terminal"
 	],
 	"pages": [
 		"storefront/home",

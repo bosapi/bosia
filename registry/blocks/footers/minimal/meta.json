@@ -1,0 +1,9 @@
+{
+	"name": "footer-minimal",
+	"description": "Single-row footer: wordmark left, inline links centre, copyright right; stacks on mobile.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

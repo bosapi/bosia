@@ -1,0 +1,9 @@
+{
+	"name": "footer-editorial",
+	"description": "Editorial footer: oversized serif wordmark, hairline rules and small-caps link rows.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

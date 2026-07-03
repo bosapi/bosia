@@ -1,0 +1,9 @@
+{
+	"name": "footer-dark",
+	"description": "Dark multi-column footer on the foreground colour with inverted text and socials.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

@@ -1,0 +1,9 @@
+{
+	"name": "footer-split-brand",
+	"description": "Split footer: oversized wordmark and CTA pair left, compact two-column links right, legal strip.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

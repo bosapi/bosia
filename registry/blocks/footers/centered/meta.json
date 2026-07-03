@@ -1,0 +1,9 @@
+{
+	"name": "footer-centered",
+	"description": "Centre-stacked footer: glyph, tagline, link row, circular social buttons and muted copyright.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

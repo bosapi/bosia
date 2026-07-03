@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.8.2] - 2026-07-03
 
+### Added
+
+- Twelve new footer blocks: six standard layouts and six styled themes, all theme-aware.
+
 ### Changed
 
 - Cache guide now warns loudly: register your custom session cookie or personalised pages leak.

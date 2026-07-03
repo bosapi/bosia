@@ -1,0 +1,9 @@
+{
+	"name": "footer-terminal",
+	"description": "Terminal-style footer: mono text on foreground, prompt-prefixed links and a blinking cursor.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

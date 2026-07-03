@@ -5,6 +5,17 @@
 
 ---
 
+## docs 0.8.2 (2026-07-03) — Footers + marketing sections
+
+> Registry had 19 navbars and 17 heros but zero footers and nothing for the middle of a landing page. Net-new design across four phases.
+
+- [x] Phase A — `footers/*` (12 blocks): 6 standard + 6 themes, docs, demos, nav group.
+- [ ] Phase B — 7 section families (16 blocks): pricing, testimonials, faq, cta, features, stats, logos.
+- [ ] Phase C — `pages/landing/*` (2 pages): saas + simple.
+- [ ] Phase D — skills (`bosia-footers`, `bosia-sections`) + landing/saas/pricing skill repoints + indexes.
+
+---
+
 ## 0.8.4 (2026-07-03) — Cache security fixes (framework review S-findings)
 
 > Review of the response-cache + static-serving layers found identity-hash collision + memory-DoS risks and 3 perf issues.

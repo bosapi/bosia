@@ -1,0 +1,9 @@
+{
+	"name": "footer-glass",
+	"description": "Translucent blurred footer panel floating on a muted band with a soft primary glow.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

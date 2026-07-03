@@ -1,0 +1,9 @@
+{
+	"name": "footer-brutalist",
+	"description": "Brutalist footer: primary brand band, thick borders, boxed mono link cells and a copyright stamp.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

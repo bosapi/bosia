@@ -1,0 +1,9 @@
+{
+	"name": "footer-gradient",
+	"description": "Dark gradient footer with a soft primary glow behind a large centred CTA headline.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

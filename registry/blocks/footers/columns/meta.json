@@ -1,0 +1,9 @@
+{
+	"name": "footer-columns",
+	"description": "Four-column footer: brand column with blurb and socials, three link columns, legal row.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {}
+}

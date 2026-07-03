@@ -203,6 +203,13 @@ export const sidebar: NavGroup[] = [
 				],
 			},
 			{
+				label: "Footers",
+				children: [
+					{ label: "Standard", slug: "blocks/footers/standard" },
+					{ label: "Themes", slug: "blocks/footers/themes" },
+				],
+			},
+			{
 				label: "Files",
 				children: [
 					{ label: "Crop Image", slug: "blocks/files/crop-image" },

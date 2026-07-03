@@ -1,0 +1,12 @@
+{
+	"name": "footer-mega",
+	"description": "Dense mega footer: five link columns, a contact column and language/currency selects.",
+	"category": "footers",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}
