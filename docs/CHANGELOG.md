@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Twelve new footer blocks: six standard layouts and six styled themes, all theme-aware.
 - Sixteen new marketing section blocks: pricing, testimonials, FAQ, CTA, features, stats, logos.
+- Two composed landing pages: a full SaaS landing and a lean simple landing.
 
 ### Changed
 

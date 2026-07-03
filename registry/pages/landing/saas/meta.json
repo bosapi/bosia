@@ -1,0 +1,19 @@
+{
+	"name": "landing-saas",
+	"description": "Full SaaS landing page: navbar, hero, logos, features, stats, pricing, testimonials, FAQ, CTA and footer.",
+	"category": "landing",
+	"dependencies": [
+		"blocks/navbars/classic",
+		"blocks/heros/app",
+		"blocks/logos/row",
+		"blocks/features/grid",
+		"blocks/stats/band",
+		"blocks/pricing/columns",
+		"blocks/testimonials/grid",
+		"blocks/faq/accordion",
+		"blocks/cta/banner",
+		"blocks/footers/columns"
+	],
+	"files": ["page.svelte"],
+	"fonts": {}
+}

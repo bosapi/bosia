@@ -277,6 +277,13 @@ export const sidebar: NavGroup[] = [
 					{ label: "SSO", slug: "pages/auth/sso" },
 				],
 			},
+			{
+				label: "Landing",
+				children: [
+					{ label: "SaaS Landing", slug: "pages/landing/saas" },
+					{ label: "Simple Landing", slug: "pages/landing/simple" },
+				],
+			},
 		],
 	},
 	{

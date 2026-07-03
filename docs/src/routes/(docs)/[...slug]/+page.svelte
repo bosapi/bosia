@@ -124,6 +124,8 @@
 	import AuthMagicLinkDemo from "$lib/components/demos/AuthMagicLinkDemo.svelte";
 	import AuthOtpDemo from "$lib/components/demos/AuthOtpDemo.svelte";
 	import AuthSsoDemo from "$lib/components/demos/AuthSsoDemo.svelte";
+	import PagesLandingSaasDemo from "$lib/components/demos/PagesLandingSaasDemo.svelte";
+	import PagesLandingSimpleDemo from "$lib/components/demos/PagesLandingSimpleDemo.svelte";
 
 	const demos: Record<string, any> = {
 		AspectRatioDemo,
@@ -247,6 +249,8 @@
 		AuthMagicLinkDemo,
 		AuthOtpDemo,
 		AuthSsoDemo,
+		PagesLandingSaasDemo,
+		PagesLandingSimpleDemo,
 	};
 
 	let { data }: { data: any } = $props();
