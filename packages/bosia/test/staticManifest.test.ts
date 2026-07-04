@@ -38,6 +38,7 @@ describe("buildStaticManifest", () => {
 		touch(join(outDir, "client", "hydrate-abcd1234.js"), "// hashed");
 		touch(join(outDir, "client", "hydrate.js"), "// unhashed");
 		touch(join(outDir, "client", "chunks", "nested-deadbeef.css"), "/* hashed */");
+		touch(join(outDir, "client", "bosia-tw-abcdef1234.css"), "/* tailwind */");
 
 		const m = buildStaticManifest(outDir);
 
@@ -46,6 +47,9 @@ describe("buildStaticManifest", () => {
 		);
 		expect(m.get("/dist/client/hydrate.js")?.cacheControl).toBe("no-cache");
 		expect(m.get("/dist/client/chunks/nested-deadbeef.css")?.cacheControl).toBe(
+			"public, max-age=31536000, immutable",
+		);
+		expect(m.get("/dist/client/bosia-tw-abcdef1234.css")?.cacheControl).toBe(
 			"public, max-age=31536000, immutable",
 		);
 	});

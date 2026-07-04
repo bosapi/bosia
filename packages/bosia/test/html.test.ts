@@ -10,6 +10,7 @@ import {
 	buildHtmlTail,
 	buildHtmlShellOpen,
 	buildMetadataChunk,
+	distManifest,
 } from "../src/core/html.ts";
 import type { AppHtmlSegments } from "../src/core/appHtml.ts";
 
@@ -183,6 +184,25 @@ describe("buildHtmlTail — JSON-island loader payloads", () => {
 		expect(layoutIdx).toBeGreaterThan(pageIdx);
 		expect(formIdx).toBeGreaterThan(layoutIdx);
 		expect(moduleIdx).toBeGreaterThan(formIdx);
+	});
+});
+
+describe("tailwind stylesheet link", () => {
+	test("uses hashed /dist/client/ link without cache buster when manifest.tw is set", () => {
+		distManifest.tw = "bosia-tw-abcdef1234.css";
+		try {
+			const html = buildHtml("", "", {}, [], true, null, "en", true);
+			expect(html).toContain(`<link rel="stylesheet" href="/dist/client/bosia-tw-abcdef1234.css">`);
+			expect(html).not.toContain("/bosia-tw.css");
+			expect(buildHtmlShellOpen("en")).toContain("/dist/client/bosia-tw-abcdef1234.css");
+		} finally {
+			delete distManifest.tw;
+		}
+	});
+
+	test("falls back to /bosia-tw.css when manifest.tw is absent", () => {
+		expect(buildHtml("", "", {}, [], true, null, "en", true)).toContain(`href="/bosia-tw.css`);
+		expect(buildHtmlShellOpen("en")).toContain(`href="/bosia-tw.css`);
 	});
 });
 

@@ -10,6 +10,7 @@ import { prerenderStaticRoutes, generateStaticSite } from "./prerender.ts";
 import { loadEnv, classifyEnvVars } from "./env.ts";
 import { generateEnvModules } from "./envCodegen.ts";
 import { BOSIA_NODE_PATH, OUT_DIR, resolveBosiaBin } from "./paths.ts";
+import { finalizeTailwindCss, TW_TEMP_BASENAME } from "./twHash.ts";
 import { loadPlugins } from "./config.ts";
 import type { BuildContext } from "./types/plugin.ts";
 import { loadAppHtmlTemplate, writeAppHtmlSegments } from "./appHtml.ts";
@@ -113,15 +114,21 @@ ensureRootDirs();
 // 2d. Generate .bosia/env.server.ts, .bosia/env.client.ts, .bosia/types/env.d.ts
 generateEnvModules(classifiedEnv);
 
-// 3. Start Tailwind CSS (async — runs concurrently with client+server builds)
+// 3. Start Tailwind CSS (async — runs concurrently with client+server builds).
+// Output goes to a temp name in dist/client; after the build we content-hash it
+// and rename to bosia-tw-<hash>.css so it gets immutable caching and rebuilds
+// bust browser caches only when the CSS actually changed. mkdir up front —
+// Bun.build writes the same dir concurrently and mkdir is idempotent.
+mkdirSync(join(OUT_DIR, "client"), { recursive: true });
 const tailwindBin = resolveBosiaBin("tailwindcss");
+const tailwindTempPath = join(OUT_DIR, "client", TW_TEMP_BASENAME);
 const tailwindProc = Bun.spawn(
 	[
 		tailwindBin,
 		"-i",
 		"./src/app.css",
 		"-o",
-		"./public/bosia-tw.css",
+		tailwindTempPath,
 		...(isProduction ? ["--minify"] : []),
 	],
 	{
@@ -191,7 +198,8 @@ if (tailwindExitCode !== 0) {
 	console.error("❌ Tailwind CSS build failed:\n" + stderr);
 	process.exit(1);
 }
-console.log("✅ Tailwind CSS built: public/bosia-tw.css");
+const twFile = finalizeTailwindCss(tailwindTempPath);
+console.log(`✅ Tailwind CSS built: ${OUT_DIR}/client/${twFile}`);
 
 if (!clientResult.success) {
 	console.error("❌ Client build failed:");
@@ -253,6 +261,7 @@ const distManifest = {
 		jsFiles.find((f) => f.startsWith("hydrate")) ??
 		"hydrate.js",
 	serverEntry,
+	tw: twFile,
 };
 writeFileSync(`${OUT_DIR}/manifest.json`, JSON.stringify(distManifest, null, 2));
 console.log(`✅ Client bundle: ${jsFiles.join(", ")}`);

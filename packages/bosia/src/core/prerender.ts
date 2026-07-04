@@ -300,8 +300,9 @@ export function generateStaticSite(): void {
 
 	// Mirror `public/` → `dist/static/` on every build (not only SSG builds) so
 	// production containers can ship dist/ alone. Without this, apps with zero
-	// prerendered routes (pure SSR) would lose bosia-tw.css and favicons when
-	// public/ is dropped from the image.
+	// prerendered routes (pure SSR) would lose favicons and other public assets
+	// when public/ is dropped from the image. (bosia-tw-<hash>.css lives in
+	// dist/client/ and is served from the client walk, no mirror needed.)
 	if (!hasPublic && !hasPrerender) {
 		console.log("\n⏭️  No public/ or prerendered pages — skipping static site output");
 		return;
@@ -310,7 +311,7 @@ export function generateStaticSite(): void {
 	console.log("\n📦 Generating static site...");
 	mkdirSync(`${OUT_DIR}/static`, { recursive: true });
 
-	// 1. Public assets (bosia-tw.css, favicon, etc.) — preserves /bosia-tw.css path
+	// 1. Public assets (favicon, etc.) — preserves absolute /... paths
 	if (hasPublic) {
 		cpSync("./public", `${OUT_DIR}/static`, { recursive: true });
 	}

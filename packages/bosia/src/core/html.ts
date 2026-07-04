@@ -9,7 +9,7 @@ import { interpolateSegment } from "./appHtml.ts";
 // Maps hashed filenames → script/link tags.
 // Cached at startup; server restarts on rebuild in dev anyway.
 
-export const distManifest: { js: string[]; css: string[]; entry: string } = (() => {
+export const distManifest: { js: string[]; css: string[]; entry: string; tw?: string } = (() => {
 	const p = `${OUT_DIR}/manifest.json`;
 	return existsSync(p)
 		? JSON.parse(readFileSync(p, "utf-8"))
@@ -18,6 +18,14 @@ export const distManifest: { js: string[]; css: string[]; entry: string } = (() 
 
 export const isDev = process.env.NODE_ENV !== "production";
 const cacheBust = isDev ? `?v=${Date.now()}` : "";
+
+/** Tailwind stylesheet link. Content-hashed name needs no cache buster — the
+ *  hash IS the buster. Fallback keeps older dist/ artifacts (no `tw` field) styled. */
+function twCssLink(): string {
+	return distManifest.tw
+		? `<link rel="stylesheet" href="/dist/client/${distManifest.tw}">`
+		: `<link rel="stylesheet" href="/bosia-tw.css${cacheBust}">`;
+}
 
 /** Inline theme bootstrap — runs before paint to avoid FOUC. theme ∈ light|dark|system (missing = system). */
 const THEME_INIT_JS =
@@ -161,7 +169,7 @@ export function buildHtml(
 		return (
 			headOpenInterpolated +
 			`\n  ${faviconLine}${cssLinks}\n` +
-			`  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
+			`  ${twCssLink()}\n` +
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
 			`  ${fallbackTitle}${head}` +
 			headCloseInterpolated +
@@ -180,7 +188,7 @@ export function buildHtml(
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   ${head}
   ${cssLinks}
-  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">
+  ${twCssLink()}
   <script${n}>${THEME_INIT_JS}</script>
 </head>
 <body>
@@ -213,7 +221,7 @@ export function buildHtmlShellOpen(
 		return (
 			headOpenInterpolated +
 			`\n  ${faviconLine}${cssLinks}\n` +
-			`  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
+			`  ${twCssLink()}\n` +
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
 			`  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`
 		);
@@ -225,7 +233,7 @@ export function buildHtmlShellOpen(
 		`  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n` +
 		`  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n` +
 		`  ${cssLinks}\n` +
-		`  <link rel="stylesheet" href="/bosia-tw.css${cacheBust}">\n` +
+		`  ${twCssLink()}\n` +
 		`  <script${n}>${THEME_INIT_JS}</script>\n` +
 		`  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`
 	);

@@ -5,6 +5,15 @@
 
 ---
 
+## 0.8.5 (2026-07-04) — Content-hashed Tailwind CSS delivery
+
+> Prod served `/bosia-tw.css` with no Cache-Control (browser heuristic caching → stale styles after deploys); dev used `?v=Date.now()`.
+
+- [x] 🟠 Tailwind output → `dist/client/bosia-tw-<sha256:10>.css` (temp file + rename via `twHash.ts`); `tw` field in dist/manifest.json; all 4 html link sites via `twCssLink()`, no cache buster; fallback `/bosia-tw.css` for old artifacts. Immutable caching free via `HASHED_BASENAME`.
+- [ ] 🟡 File Bun upstream issue: CSS output collision under `splitting: true` when N chunks share a CSS import (repro described in `plugin.ts` app.css no-op comment).
+
+---
+
 ## docs 0.8.2 (2026-07-03) — Footers + marketing sections
 
 > Registry had 19 navbars and 17 heros but zero footers and nothing for the middle of a landing page. Net-new design across four phases.
@@ -1408,9 +1417,9 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 
 ---
 
-## v0.7.0 — CSS Pipeline Overhaul
+## v0.7.0 — CSS Pipeline Overhaul (deferred)
 
-> Replace the `app.css` no-op workaround with a proper CSS dedup pipeline. Single global stylesheet doesn't scale: large apps need per-route CSS chunks, component-scoped styles, and code-split delivery.
+> **Status (2026-07-04): deferred pending Bun upstream CSS-chunk dedup under `splitting: true` (issue to file — see 0.8.5).** Hashed delivery shipped in 0.8.5. Per-route Tailwind chunks rejected: Tailwind v4 emits one deduplicated utilities file by design; splitting would duplicate shared utilities and ship more bytes. Component styles are already scoped + code-split via `css: "injected"`. Acceptance items below stay open under the upstream dependency.
 
 ### Problem
 

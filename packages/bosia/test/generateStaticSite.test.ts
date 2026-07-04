@@ -34,7 +34,8 @@ afterEach(() => {
 
 describe("generateStaticSite", () => {
 	test("mirrors ./public → ./dist/static even with zero prerendered routes", () => {
-		// Pure-SSR app: tailwind wrote bosia-tw.css into public/, no prerender output.
+		// Pure-SSR app: user assets in public/ (plus a stale pre-0.8.5 bosia-tw.css),
+		// no prerender output.
 		touch(join(workdir, "public", "bosia-tw.css"), "body{}");
 		touch(join(workdir, "public", "favicon.svg"), "<svg/>");
 
@@ -49,12 +50,16 @@ describe("generateStaticSite", () => {
 		touch(join(workdir, "public", "bosia-tw.css"), "body{}");
 		touch(join(workdir, "dist", "prerendered", "about.html"), "<html/>");
 		touch(join(workdir, "dist", "client", "hydrate.js"), "// js");
+		touch(join(workdir, "dist", "client", "bosia-tw-abcdef1234.css"), "body{}");
 
 		generateStaticSite();
 
 		expect(existsSync(join(workdir, "dist", "static", "bosia-tw.css"))).toBe(true);
 		expect(existsSync(join(workdir, "dist", "static", "about.html"))).toBe(true);
 		expect(existsSync(join(workdir, "dist", "static", "dist", "client", "hydrate.js"))).toBe(true);
+		expect(
+			existsSync(join(workdir, "dist", "static", "dist", "client", "bosia-tw-abcdef1234.css")),
+		).toBe(true);
 	});
 
 	test("skips entirely when neither public/ nor prerendered/ exists", () => {

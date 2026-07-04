@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.8.5] - 2026-07-04
 
+### Changed
+
+- Styles now load from a fingerprinted file cached for a year — no more stale styles after updates.
+- Leftover `public/bosia-tw.css` files from older builds are unused now and safe to delete.
+
 ### Fixed
 
 - Evicting a full cache is now fast — cleanup touches only the evicted page's tags, not every tag.

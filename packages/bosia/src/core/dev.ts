@@ -470,7 +470,7 @@ console.log(`\n🌐 Open http://localhost:${DEV_PORT}\n`);
 // ─── File Watcher ─────────────────────────────────────────
 // Watch src/ recursively. Skip generated files to avoid loops.
 
-const GENERATED = [join(process.cwd(), ".bosia"), join(process.cwd(), "public", "bosia-tw.css")];
+const GENERATED = [join(process.cwd(), ".bosia")];
 
 function isGenerated(path: string): boolean {
 	return GENERATED.some((g) => path.startsWith(g));

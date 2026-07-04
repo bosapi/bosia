@@ -82,13 +82,13 @@ export function makeBosiaPlugin(target: "browser" | "bun" = "bun") {
 			});
 
 			// "tailwindcss" inside app.css is a Tailwind CLI directive —
-			// it's already compiled to public/bosia-tw.css by the CLI step.
+			// it's already compiled to dist/client/bosia-tw-<hash>.css by the CLI step.
 			// Return an empty CSS module so Bun's CSS bundler doesn't choke on it.
 			build.onResolve({ filter: /^tailwindcss$/ }, () => ({
 				path: "tailwindcss",
 				namespace: "bosia-empty-css",
 			}));
-			// app.css is processed by Tailwind CLI into public/bosia-tw.css and
+			// app.css is processed by Tailwind CLI into dist/client/bosia-tw-<hash>.css and
 			// loaded via <link> tag in HTML. User layouts often `import "../app.css"`
 			// for IDE/Tailwind tooling — bundle as JS no-op so Bun doesn't emit a
 			// CSS chunk per dynamic-imported route (identical content → output
