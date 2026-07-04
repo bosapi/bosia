@@ -138,11 +138,50 @@ async function runBuild(): Promise<boolean> {
 const DEV_PORT = Number(process.env.PORT) || 9000;
 const APP_PORT = DEV_PORT + 1; // internal, hidden from user
 
+// A previous dev session's app-server child can outlive its parent: an unclean
+// stop (SIGKILL, IDE stop button, crash) skips graceful cleanup, or a shutdown
+// slower than the SIGTERM grace window orphans it. The orphan keeps APP_PORT
+// bound and answers the new proxy with bundle hashes that no longer exist on
+// disk → "ENOENT reading +page-<hash>.js" 500s. Reap whatever is listening on
+// APP_PORT before we spawn, so a stale child can never shadow the fresh build.
+async function reapStaleAppServer(port: number) {
+	try {
+		const proc = spawn(["lsof", "-ti", `tcp:${port}`, "-sTCP:LISTEN"], {
+			stdout: "pipe",
+			stderr: "ignore",
+		});
+		const out = await new Response(proc.stdout).text();
+		await proc.exited;
+		const pids = [...new Set(out.split("\n").map((s) => s.trim()))]
+			.map(Number)
+			.filter((pid) => Number.isInteger(pid) && pid > 0 && pid !== process.pid);
+		for (const pid of pids) {
+			try {
+				process.kill(pid, "SIGKILL");
+				console.log(`🧹 Reaped stale app server holding port ${port} (pid ${pid})`);
+			} catch {}
+		}
+		if (pids.length) await Bun.sleep(200); // let the port free before we bind
+	} catch {
+		// lsof unavailable or errored — fail open; a real conflict surfaces on bind.
+	}
+}
+
 async function startAppServer() {
 	if (appProcess) {
 		intentionalKill = true;
-		appProcess.kill();
-		await appProcess.exited;
+		appProcess.kill("SIGTERM");
+		// Escalate to SIGKILL if the child won't stop — otherwise `await exited`
+		// hangs the rebuild forever, or (on a slow exit) the child lingers on
+		// APP_PORT and shadows the next spawn.
+		const exited = await Promise.race([
+			appProcess.exited.then(() => true),
+			Bun.sleep(3_000).then(() => false),
+		]);
+		if (!exited) {
+			appProcess.kill("SIGKILL");
+			await appProcess.exited;
+		}
 		intentionalKill = false;
 	}
 
@@ -421,6 +460,9 @@ const devServer = Bun.serve({
 
 // ─── Initial Build ────────────────────────────────────────
 
+// Clear any orphaned app server from a previous session before the first spawn.
+await reapStaleAppServer(APP_PORT);
+
 await buildAndRestart();
 
 console.log(`\n🌐 Open http://localhost:${DEV_PORT}\n`);
@@ -586,7 +628,13 @@ async function shutdown() {
 
 	if (appProcess) {
 		appProcess.kill("SIGTERM");
-		await Promise.race([appProcess.exited, Bun.sleep(2_500)]);
+		const exited = await Promise.race([
+			appProcess.exited.then(() => true),
+			Bun.sleep(2_500).then(() => false),
+		]);
+		// Don't orphan a slow-to-stop child (it would keep APP_PORT bound and
+		// break the next `bun run dev`). Force it down before we exit.
+		if (!exited) appProcess.kill("SIGKILL");
 	}
 
 	// Everything is stopped — exit now rather than waiting for the loop to drain.
