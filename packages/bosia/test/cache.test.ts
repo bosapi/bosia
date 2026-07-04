@@ -230,6 +230,24 @@ describe("cacheGet / cacheSet", () => {
 		invalidate("b");
 		expect(cacheGet("/x|i=0")).toBeUndefined();
 	});
+
+	test("LRU eviction cleans the evicted entry's tag index, leaving live keys alone", async () => {
+		const { CACHE_MAX_ENTRIES } = await import("../src/core/cache.ts");
+		// Oldest tagged entry — will be pushed out by the LRU.
+		cacheSet("/evictme|i=0", mkEntry({ tags: ["k:gone"] }));
+		// Second-oldest, different tag — must survive.
+		cacheSet("/keep|i=0", mkEntry({ tags: ["k:live"] }));
+		// Push exactly one entry past the cap so only /evictme (the oldest) evicts.
+		for (let i = 0; i < CACHE_MAX_ENTRIES - 1; i++) cacheSet(`/fill-${i}|i=0`, mkEntry());
+		expect(cacheGet("/evictme|i=0")).toBeUndefined();
+		expect(cacheGet("/keep|i=0")).toBeDefined();
+		// Evicted entry's tag must leave no dangling pointer: a stale pointer would
+		// make invalidate count it (return 1). Targeted cleanup → the tag is gone.
+		expect(invalidate("gone")).toBe(0);
+		// Live sibling's tag still resolves and evicts it.
+		expect(invalidate("live")).toBe(1);
+		expect(cacheGet("/keep|i=0")).toBeUndefined();
+	});
 });
 
 // ─── coalesceMiss ────────────────────────────────────────

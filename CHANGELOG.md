@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.5] - 2026-07-04
+
+### Fixed
+
+- Evicting a full cache is now fast — cleanup touches only the evicted page's tags, not every tag.
+- Startup notice now warns that custom auth _headers_ must be added to CACHE_KEYS by hand.
+
 ## [0.8.4] - 2026-07-03
 
 ### Added

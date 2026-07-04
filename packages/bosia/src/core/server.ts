@@ -1141,7 +1141,10 @@ app.listen(PORT, () => {
 			`\n🔑 Response cache tells users apart ONLY by these cookies/headers: [${CACHE_KEYS.join(", ")}]\n` +
 				`   Using a different session cookie or auth header? Add its name to CACHE_KEYS,\n` +
 				`   or one user's personalised page can be served to another. Routes personalised\n` +
-				`   by anything else should set \`export const cache = false\`.\n`,
+				`   by anything else should set \`export const cache = false\`.\n` +
+				`   Note: the runtime auto-warns only on uncovered *cookie* reads — it CANNOT\n` +
+				`   detect header-based personalisation, so custom auth headers (X-Api-Key,\n` +
+				`   X-Auth-Token, …) must be added to CACHE_KEYS by hand.\n`,
 		);
 	}
 });

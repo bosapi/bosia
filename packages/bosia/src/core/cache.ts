@@ -88,14 +88,15 @@ class LRU<K, V> {
 		this.map.set(key, v);
 		return v;
 	}
-	set(key: K, value: V): K | undefined {
+	set(key: K, value: V): { key: K; value: V } | undefined {
 		if (this.map.has(key)) this.map.delete(key);
 		this.map.set(key, value);
 		if (this.map.size > this.cap) {
 			const oldest = this.map.keys().next().value as K | undefined;
 			if (oldest !== undefined) {
+				const evicted = this.map.get(oldest) as V;
 				this.map.delete(oldest);
-				return oldest;
+				return { key: oldest, value: evicted };
 			}
 		}
 		return undefined;
@@ -217,7 +218,7 @@ export function cacheSet(key: string, entry: CacheEntry, cookies?: Cookies): voi
 	// Drop any existing entry's index pointers first
 	cacheDeleteKey(key);
 	const evicted = htmlCache.set(key, entry);
-	if (evicted) cacheDeleteIndexOnly(evicted);
+	if (evicted) cacheDeleteIndexOnly(evicted.key, evicted.value);
 	for (const tag of entry.tags) {
 		let set = tagIndex.get(tag);
 		if (!set) {
@@ -257,9 +258,14 @@ function cacheDeleteKey(key: string): void {
 }
 
 /** Cleanup index pointers for a key after LRU evicted it. */
-function cacheDeleteIndexOnly(key: string): void {
-	for (const set of tagIndex.values()) set.delete(key);
-	for (const [tag, set] of tagIndex) if (set.size === 0) tagIndex.delete(tag);
+function cacheDeleteIndexOnly(key: string, entry: CacheEntry): void {
+	for (const tag of entry.tags) {
+		const set = tagIndex.get(tag);
+		if (set) {
+			set.delete(key);
+			if (set.size === 0) tagIndex.delete(tag);
+		}
+	}
 	const path = pathOfKey(key);
 	const pset = pathIndex.get(path);
 	if (pset) {

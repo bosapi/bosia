@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.3] - 2026-07-04
+
+### Changed
+
+- Cache guide now warns that custom auth _headers_ aren't auto-detected — add them to CACHE_KEYS.
+
+### Fixed
+
+- Login and register now send you back to the page you came from instead of always the dashboard.
+
 ## [0.8.2] - 2026-07-03
 
 ### Added

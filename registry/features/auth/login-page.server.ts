@@ -1,14 +1,14 @@
 import { fail, redirect } from "bosia";
 import type { RequestEvent } from "bosia";
-import { AuthService, SESSION_COOKIE, SESSION_TTL_MS } from "../../../features/auth";
+import { AuthService, SESSION_COOKIE, SESSION_TTL_MS, safeNext } from "../../../features/auth";
 
-export async function load({ locals }: RequestEvent) {
-	if (locals.user) throw redirect(303, "/dashboard");
+export async function load({ locals, url }: RequestEvent) {
+	if (locals.user) throw redirect(303, safeNext(url.searchParams.get("next")));
 	return {};
 }
 
 export const actions = {
-	default: async ({ request, cookies }: RequestEvent) => {
+	default: async ({ request, cookies, url }: RequestEvent) => {
 		const data = await request.formData();
 		const email = (data.get("email") ?? "").toString();
 		const password = (data.get("password") ?? "").toString();
@@ -29,6 +29,6 @@ export const actions = {
 			return fail(400, { error: message, email });
 		}
 
-		throw redirect(303, "/dashboard");
+		throw redirect(303, safeNext(url.searchParams.get("next")));
 	},
 };

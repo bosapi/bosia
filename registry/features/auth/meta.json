@@ -58,6 +58,10 @@
 			"target": "src/features/auth/tokens.ts"
 		},
 		{
+			"src": "next-url.ts",
+			"target": "src/features/auth/next-url.ts"
+		},
+		{
 			"src": "session-resolver.ts",
 			"target": "src/features/auth/session-resolver.ts"
 		},

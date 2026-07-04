@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.4**
+> Current version: **0.8.5**
 
 ---
 
@@ -28,6 +28,9 @@
 - [x] 🟡 P2 — prerendered pages: boot-time manifest (`buildPrerenderManifest`) instead of per-request `exists()` probes.
 - [x] 🟡 P3 — percent-encoded static paths 404 fixed (`decodeURIComponent` in `lookupStatic` + dev fallthrough).
 - [x] 🟠 Identity-aware dedup — data-endpoint dedup key now includes the `CACHE_KEYS` identity hash (`computeCacheKey`), so per-user routes dedup safely. BREAKING: `(private)` no longer skips dedup; custom session cookies must be in `CACHE_KEYS`.
+- [x] 🟡 P4 — LRU eviction is O(evicted.tags), not O(all tags): `LRU.set` returns the evicted `{key,value}` so `cacheDeleteIndexOnly` uses `entry.tags` directly.
+- [x] 🟠 Header-auth cache-isolation caveat — startup banner + response-cache docs now say the uncovered-_cookie_ warning cannot see request _headers_; custom auth headers must be in `CACHE_KEYS`.
+- [x] 🟡 Auth `next` round-trip — `registry/features/auth` login/register now honor `?next=` via `safeNext` (same-site paths only, else `/dashboard`); was always forcing `/dashboard`.
 - [x] 🟠 Route `scope` deleted — zero runtime consumers after identity-aware dedup; `(private)` is an ordinary route group (scanner/types/ambient/codegen field removed).
 - [x] 🟠 Miss coalescing — `coalesceMiss` gate in cache.ts wired into SSR + API paths; N concurrent misses on one key build once, waiters re-check after the leader's microtask write.
 - [x] 🟡 `CookieJar.peek` — identity hashing no longer flips `accessed`/`readNames`, so it can't force `Cache-Control: private` (latent bug on all cached paths).

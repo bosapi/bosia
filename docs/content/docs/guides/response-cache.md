@@ -39,6 +39,8 @@ Bosia reminds you of this contract twice, in dev **and** prod:
 - **At startup** — the last line of boot output lists the active identity keys: `🔑 Response cache tells users apart ONLY by these cookies/headers: […]`.
 - **At runtime** — whenever a cached response's loader read a cookie that is **not** in `CACHE_KEYS`, it logs a `🚨 SECURITY WARNING` naming the cookie (once per cookie name). If you see it, apply one of the two fixes above.
 
+> **⚠️ The runtime warning covers cookies only — not request headers.** Handlers read headers via `request.headers.get(...)` directly, so the framework cannot track header reads the way it tracks cookies. If you authorize requests by a **custom header** (`X-Api-Key`, `X-Auth-Token`, etc.) whose name is not in `CACHE_KEYS`, personalised pages leak between users with **no runtime warning**. `Authorization: Bearer` is covered by the default set; any other header-based scheme must be added to `CACHE_KEYS` by hand, or the route opted out of caching.
+
 If a route's per-user content is not keyed by anything in `CACHE_KEYS`, opt it out (see below).
 
 ## Eligibility
