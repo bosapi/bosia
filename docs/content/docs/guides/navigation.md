@@ -43,6 +43,13 @@ await goto("/login", { replaceState: true, invalidateAll: true });
 
 If the URL matches the current route, `goto()` resolves immediately without re-running loaders. The `invalidateAll: true` option is **not** honored on same-path calls — call `invalidateAll()` directly (imported from `bosia/client`) to refresh in place.
 
+## Scroll behavior
+
+- **Forward navigation** (link, `goto()`, form redirect) scrolls to the top — or to the `#hash` element if the destination URL has one. `goto(url, { noScroll: true })` skips this for one navigation.
+- **Back/forward (popstate)** restores the scroll position the page had when you left it. The router saves the position per history entry and restores it _after_ the destination page renders, so long listings don't snap to the top when the user presses Back. Positions survive reloads via `sessionStorage`.
+
+This is automatic — no app code needed.
+
 ## Lifecycle hooks
 
 `beforeNavigate` runs before each client-side navigation. The callback may call `nav.cancel()` to block the navigation (except on browser back/forward — see below).

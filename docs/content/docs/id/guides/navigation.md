@@ -43,6 +43,13 @@ await goto("/login", { replaceState: true, invalidateAll: true });
 
 Jika URL cocok dengan route saat ini, `goto()` resolve langsung tanpa menjalankan ulang loader. Opsi `invalidateAll: true` **tidak** dihormati pada panggilan ke path yang sama — panggil `invalidateAll()` langsung (diimpor dari `bosia/client`) untuk menyegarkan di tempat.
 
+## Perilaku scroll
+
+- **Navigasi maju** (link, `goto()`, redirect form) scroll ke atas — atau ke elemen `#hash` jika URL tujuan memilikinya. `goto(url, { noScroll: true })` melewatinya untuk satu navigasi.
+- **Back/forward (popstate)** memulihkan posisi scroll halaman saat ditinggalkan. Router menyimpan posisi per entri history dan memulihkannya _setelah_ halaman tujuan dirender, jadi listing panjang tidak melompat ke atas saat pengguna menekan Back. Posisi bertahan melewati reload via `sessionStorage`.
+
+Ini otomatis — tanpa kode aplikasi.
+
 ## Lifecycle hooks
 
 `beforeNavigate` berjalan sebelum setiap navigasi sisi-klien. Callback boleh memanggil `nav.cancel()` untuk memblokir navigasi (kecuali pada back/forward browser — lihat di bawah).

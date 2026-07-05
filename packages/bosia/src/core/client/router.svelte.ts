@@ -16,6 +16,20 @@ function buildTarget(path: string): { url: URL; params: Record<string, string> }
 	return { url, params: match?.params ?? {} };
 }
 
+// ─── Scroll restoration ───
+// Positions keyed by a per-entry index stamped into `history.state.bosiaIndex`.
+// `scrollRestoration = "manual"` because the browser restores at popstate time,
+// before the SPA has rendered the destination page — it clamps against the
+// wrong document height. We restore ourselves after the nav settles (App.svelte).
+// Persisted to sessionStorage on unload so reload / back-into-app still restores.
+const SCROLL_KEY = "bosia:scroll";
+let scrollPositions: Record<number, { x: number; y: number }> = {};
+let historyIndex = 0;
+
+function saveScroll() {
+	scrollPositions[historyIndex] = { x: window.scrollX, y: window.scrollY };
+}
+
 export function scrollToHash(hash: string): boolean {
 	if (typeof document === "undefined" || !hash) return false;
 	const raw = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -45,6 +59,8 @@ export const router = new (class Router {
 	lastNavType: NavType = "enter";
 	/** Set by `goto({ noScroll: true })`; consumed once by App.svelte after the next nav settles. */
 	suppressScroll = false;
+	/** Saved scroll position for the entry a popstate landed on; consumed once by App.svelte after the nav settles. */
+	pendingScroll: { x: number; y: number } | null = null;
 
 	navigate(path: string, opts: { replace?: boolean; source?: NavType } = {}) {
 		if (this.currentRoute === path) return;
@@ -74,18 +90,37 @@ export const router = new (class Router {
 
 		this.lastNavType = navType;
 		this.isPush = true;
+		this.pendingScroll = null;
 		this.currentRoute = finalPath;
 		if (typeof history !== "undefined") {
 			if (opts.replace) {
-				history.replaceState({}, "", finalPath);
+				history.replaceState({ bosiaIndex: historyIndex }, "", finalPath);
 			} else {
-				history.pushState({}, "", finalPath);
+				saveScroll();
+				historyIndex++;
+				history.pushState({ bosiaIndex: historyIndex }, "", finalPath);
 			}
 		}
 	}
 
 	init() {
 		if (typeof window === "undefined") return;
+
+		history.scrollRestoration = "manual";
+		try {
+			scrollPositions = JSON.parse(sessionStorage.getItem(SCROLL_KEY) ?? "{}");
+		} catch {
+			scrollPositions = {};
+		}
+		const stamped = history.state?.bosiaIndex != null;
+		historyIndex = stamped ? history.state.bosiaIndex : 0;
+		history.replaceState({ ...history.state, bosiaIndex: historyIndex }, "");
+		// Restore after a reload — manual mode means the browser won't. Only for
+		// entries we stamped before (a fresh visit has no bosiaIndex in state).
+		const initial = scrollPositions[historyIndex];
+		if (stamped && initial) {
+			requestAnimationFrame(() => window.scrollTo(initial.x, initial.y));
+		}
 
 		// Intercept <a> clicks for client-side navigation
 		window.addEventListener("click", (e) => {
@@ -110,7 +145,9 @@ export const router = new (class Router {
 				e.preventDefault();
 				const finalPath = anchor.pathname + anchor.search + anchor.hash;
 				if (this.currentRoute !== finalPath) {
-					history.pushState({}, "", finalPath);
+					saveScroll();
+					historyIndex++;
+					history.pushState({ bosiaIndex: historyIndex }, "", finalPath);
 					this.currentRoute = finalPath;
 				}
 				scrollToHash(anchor.hash);
@@ -122,8 +159,13 @@ export const router = new (class Router {
 		});
 
 		// Browser back/forward
-		window.addEventListener("popstate", () => {
+		window.addEventListener("popstate", (e) => {
 			const finalPath = window.location.pathname + window.location.search + window.location.hash;
+			// Save the position of the entry we're leaving (historyIndex is still
+			// the old entry's), then look up where the landed-on entry was.
+			saveScroll();
+			historyIndex = e.state?.bosiaIndex ?? 0;
+			this.pendingScroll = scrollPositions[historyIndex] ?? null;
 			// Fire beforeNavigate listeners; popstate can't be reliably cancelled
 			// (browser history already advanced), so we surface the event for
 			// observation only — `cancel()` is a no-op for this source.
@@ -147,6 +189,14 @@ export const router = new (class Router {
 		// listeners can warn-on-leave (return value ignored; cancellation here
 		// requires `beforeunload`, not in scope).
 		window.addEventListener("beforeunload", () => {
+			// ponytail: beforeunload can be skipped on mobile page-discard; add a
+			// visibilitychange persist if restore-after-reload proves flaky there.
+			saveScroll();
+			try {
+				sessionStorage.setItem(SCROLL_KEY, JSON.stringify(scrollPositions));
+			} catch {
+				// sessionStorage unavailable (private mode / quota) — skip persistence.
+			}
 			const fromTarget = buildTarget(this.currentRoute);
 			const nav: Navigation = {
 				from: fromTarget,

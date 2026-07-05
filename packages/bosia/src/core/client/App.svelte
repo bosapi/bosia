@@ -63,6 +63,26 @@
 	let firstNav = true;
 	let navDoneTimer: ReturnType<typeof setTimeout> | null = null;
 
+	// Scroll after a nav settles: forward navs go to top (or the URL hash);
+	// back/forward navs restore the position saved for that history entry.
+	// Runs after tick() so the destination page's real height is in the DOM.
+	// goto({ noScroll: true }) flips `router.suppressScroll` for one nav.
+	function settleScroll() {
+		if (router.isPush && !router.suppressScroll) {
+			const hash = window.location.hash;
+			tick().then(() => {
+				if (!scrollToHash(hash)) window.scrollTo(0, 0);
+			});
+		} else if (!router.isPush) {
+			const pos = router.pendingScroll;
+			// ponytail: single post-tick restore; content that loads later (images
+			// without dimensions) can still shift it. Revisit only if reported.
+			if (pos) tick().then(() => window.scrollTo(pos.x, pos.y));
+		}
+		router.pendingScroll = null;
+		router.suppressScroll = false;
+	}
+
 	$effect(() => {
 		if (ssrMode) return;
 
@@ -247,13 +267,7 @@
 					appState.errorComponent = errMod.default;
 					appState.errorProps = { error: { status: errStatus, message: errMessage } };
 					appState.errorDepth = K;
-					if (router.isPush && !router.suppressScroll) {
-						const hash = window.location.hash;
-						tick().then(() => {
-							if (!scrollToHash(hash)) window.scrollTo(0, 0);
-						});
-					}
-					router.suppressScroll = false;
+					settleScroll();
 					settle({ url, params: match.params });
 				} catch {
 					window.location.href = path;
@@ -342,16 +356,7 @@
 			appState.errorProps = null;
 			appState.errorDepth = null;
 
-			// Scroll to top on forward navigation (not on popstate/back-forward).
-			// goto({ noScroll: true }) flips `router.suppressScroll` for one nav.
-			// If the destination URL has a hash, scroll to that element instead.
-			if (router.isPush && !router.suppressScroll) {
-				const hash = window.location.hash;
-				tick().then(() => {
-					if (!scrollToHash(hash)) window.scrollTo(0, 0);
-				});
-			}
-			router.suppressScroll = false;
+			settleScroll();
 
 			// Update document title and meta description from server metadata
 			if (result?.metadata) {

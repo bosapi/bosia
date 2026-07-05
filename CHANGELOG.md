@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.8.6] - 2026-07-05
 
+### Added
+
+- Pressing Back now returns you to where you were on the page, not the top.
+
 ### Changed
 
 - Dev builds now bundle component styles the same way as production — simpler and consistent.

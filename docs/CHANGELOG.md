@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.4] - 2026-07-05
+
+### Added
+
+- Navigation guide and skill now cover built-in scroll restore when pressing Back.
+
 ## [0.8.3] - 2026-07-04
 
 ### Changed

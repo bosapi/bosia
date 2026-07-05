@@ -5,6 +5,17 @@
 
 ---
 
+## 0.8.6 (2026-07-05) — Scroll restoration on back/forward
+
+> Browser auto-restoration fired at popstate time, before the SPA rendered the destination — it clamped against the wrong document height (worse with `+loading.svelte` skeletons). Router now owns it: `scrollRestoration="manual"`, position saved per history entry, restored after the nav settles.
+
+- [x] 🟠 `core/client/router.svelte.ts` — manual mode; per-entry index in `history.state.bosiaIndex`; save on push/hash-push/popstate/unload; `pendingScroll` handoff; sessionStorage persistence + reload restore.
+- [x] 🟠 `core/client/App.svelte` — shared `settleScroll()` replaces the two duplicated top-scroll blocks; popstate branch restores `router.pendingScroll` after `tick()`.
+- [x] ⚪ Docs `guides/navigation` (en+id) "Scroll behavior" section; `bosia-navigation` skill notes it's built-in (never hand-roll in `afterNavigate`). `CHANGELOG.md` appended.
+- [ ] ⚪ Split off: `export const snapshot` (form/UI state restore) — separate feature; v0.2.1 backlog line stays open for it.
+
+---
+
 ## 0.8.6 (2026-07-05) — Unify dev/prod component CSS (drop the collision workaround)
 
 > Investigated the open 0.8.5 Bun-collision item. It does NOT reproduce on Bun 1.3.14: CSS-chunk hashes now include source-module identity, and shared CSS hoists to one chunk (proved via isolated `Bun.build` harness). Prod was never at risk — its client compiler uses `css:"injected"` (styles in JS, no chunking). Only the dev inspector used `css:"external"` + a hand-rolled runtime `<style>` injection to dodge the (now-fixed) collision — functionally identical to `injected`, just more code.
@@ -824,7 +835,7 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 ### Navigation
 
 - [x] 🟠 `beforeNavigate` / `afterNavigate` lifecycle hooks — exported from `bosia/client`; fired by SPA router around pushState/popstate navs and on full-page unload (`willUnload=true`); cancel support via `cancel()` on programmatic navs
-- [ ] 🟠 Scroll restoration and snapshot support (`export const snapshot`)
+- [ ] 🟠 Scroll restoration and snapshot support (`export const snapshot`) — scroll restoration shipped 0.8.6; `snapshot` still open
 
 ### Routing
 

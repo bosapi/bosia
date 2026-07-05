@@ -80,6 +80,8 @@ Options:
 | `keepFocus`     | `false` | Reserved — not yet honored.                                            |
 | `state`         | —       | Reserved — no shallow routing yet.                                     |
 
+Scroll is handled by the framework: forward navs scroll to top (or the `#hash`), browser Back/Forward restores the saved per-entry position after the destination renders. NEVER hand-roll scroll restoration in `afterNavigate` — it is built in since 0.8.6.
+
 ### R3 — Lifecycle hooks auto-unregister
 
 ```svelte
@@ -93,7 +95,7 @@ Options:
 	});
 
 	afterNavigate((nav) => {
-		// analytics, focus mgmt, scroll restore, etc.
+		// analytics, focus mgmt, etc. (scroll restore is built in — don't redo it)
 	});
 </script>
 ```
