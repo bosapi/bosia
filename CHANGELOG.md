@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.6] - 2026-07-05
+
+### Changed
+
+- Dev builds now bundle component styles the same way as production — simpler and consistent.
+
+---
+
 ## [0.8.5] - 2026-07-04
 
 ### Changed

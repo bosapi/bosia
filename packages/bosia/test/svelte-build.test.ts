@@ -4,6 +4,7 @@ import { join } from "path";
 
 import { makeBosiaPlugin } from "../src/core/plugin.ts";
 import { makeBosiaSvelteCompiler } from "../src/core/svelteCompiler.ts";
+import { createInspectorBunPlugin } from "../src/core/plugins/inspector/bun-plugin.ts";
 
 // Regression: production builds with `splitting: true` and many .svelte routes
 // that all transitively import a shared app.css used to fail with
@@ -100,5 +101,79 @@ describe("svelte build CSS collision regression", () => {
 			console.error("Build logs:", result.logs.map(String).join("\n"));
 		}
 		expect(result.success).toBe(true);
+	});
+});
+
+// The dev inspector plugin does its own .svelte compile (to inject data-bosia-loc).
+// It used to compile with css:"external" and hand-inject styles at runtime to dodge
+// Bun's splitting CSS-chunk collision. It now uses css:"injected" (client), matching
+// the prod compiler: Svelte embeds scoped CSS in the JS, so no CSS chunk is emitted
+// and the collision class can't arise.
+describe("dev inspector styled-component CSS injection", () => {
+	let styledDir: string;
+
+	beforeAll(() => {
+		styledDir = join(import.meta.dir, "..", `.tmp-inspector-css-${Date.now()}`);
+		mkdirSync(join(styledDir, "src", "routes"), { recursive: true });
+		writeFileSync(
+			join(styledDir, "tsconfig.json"),
+			JSON.stringify({ compilerOptions: { paths: {} } }),
+		);
+		// One shared styled component imported by many same-named +page routes —
+		// the exact fan-out that produced "Multiple files share the same output path".
+		writeFileSync(
+			join(styledDir, "src", "Styled.svelte"),
+			`<div class="probe">x</div>\n<style>.probe{ animation: probe-blink 1s infinite } @keyframes probe-blink{50%{opacity:0}}</style>`,
+		);
+		const routesArr: string[] = [];
+		for (let i = 0; i < ROUTE_COUNT; i++) {
+			const dir = join(styledDir, "src", "routes", `r${i}`);
+			mkdirSync(dir, { recursive: true });
+			writeFileSync(
+				join(dir, "+page.svelte"),
+				`<script>import Styled from "../../Styled.svelte";</script><h1>Page ${i}</h1><Styled />`,
+			);
+			routesArr.push(`	{ page: () => import("./routes/r${i}/+page.svelte") },`);
+		}
+		writeFileSync(
+			join(styledDir, "src", "hydrate.ts"),
+			`export const routes = [\n${routesArr.join("\n")}\n];\n`,
+		);
+	});
+
+	afterAll(() => {
+		rmSync(styledDir, { recursive: true, force: true });
+	});
+
+	test("client build injects scoped CSS into JS, emits no CSS chunk, no collision", async () => {
+		const result = await Bun.build({
+			entrypoints: [join(styledDir, "src", "hydrate.ts")],
+			outdir: join(styledDir, "dist", "client"),
+			target: "browser",
+			splitting: true,
+			naming: { chunk: "[name]-[hash].[ext]" },
+			// Inspector plugin registered BEFORE the svelte compiler, mirroring dev
+			// (build.ts). dev:true so its .svelte onLoad wins.
+			plugins: [
+				makeBosiaPlugin("browser"),
+				createInspectorBunPlugin({ cwd: styledDir, target: "browser", dev: true }),
+				makeBosiaSvelteCompiler("browser"),
+			],
+		});
+
+		if (!result.success) {
+			console.error("Build logs:", result.logs.map(String).join("\n"));
+		}
+		expect(result.success).toBe(true);
+
+		// css:"injected" → styles live in JS, no standalone CSS chunk.
+		const cssOutputs = result.outputs.filter((o) => o.path.endsWith(".css"));
+		expect(cssOutputs.length).toBe(0);
+
+		// The scoped keyframe must actually ship — inside a JS chunk.
+		const js = await Promise.all(
+			result.outputs.filter((o) => o.path.endsWith(".js")).map((o) => o.text()),
+		);
+		expect(js.some((code) => code.includes("probe-blink"))).toBe(true);
 	});
 });

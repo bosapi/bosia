@@ -1,7 +1,17 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.5**
+> Current version: **0.8.6**
+
+---
+
+## 0.8.6 (2026-07-05) — Unify dev/prod component CSS (drop the collision workaround)
+
+> Investigated the open 0.8.5 Bun-collision item. It does NOT reproduce on Bun 1.3.14: CSS-chunk hashes now include source-module identity, and shared CSS hoists to one chunk (proved via isolated `Bun.build` harness). Prod was never at risk — its client compiler uses `css:"injected"` (styles in JS, no chunking). Only the dev inspector used `css:"external"` + a hand-rolled runtime `<style>` injection to dodge the (now-fixed) collision — functionally identical to `injected`, just more code.
+
+- [x] 🟠 `plugins/inspector/bun-plugin.ts` — inspector compile now `css: generate==="client" ? "injected" : "external"`, mirroring `svelteCompiler.ts`. Deleted the `virtualCss` map, the `VIRTUAL_NS` virtual-module resolve/load handlers, and the runtime injection block (~30 lines); dropped unused `basename` import.
+- [x] ⚪ `test/svelte-build.test.ts` — new dev-inspector case: many `+page` routes sharing one styled component → build succeeds, zero CSS chunks, scoped keyframe present in JS.
+- [x] ⚪ Version bump `0.8.6` + `CHANGELOG.md`.
 
 ---
 
@@ -10,7 +20,7 @@
 > Prod served `/bosia-tw.css` with no Cache-Control (browser heuristic caching → stale styles after deploys); dev used `?v=Date.now()`.
 
 - [x] 🟠 Tailwind output → `dist/client/bosia-tw-<sha256:10>.css` (temp file + rename via `twHash.ts`); `tw` field in dist/manifest.json; all 4 html link sites via `twCssLink()`, no cache buster; fallback `/bosia-tw.css` for old artifacts. Immutable caching free via `HASHED_BASENAME`.
-- [ ] 🟡 File Bun upstream issue: CSS output collision under `splitting: true` when N chunks share a CSS import (repro described in `plugin.ts` app.css no-op comment).
+- [x] 🟡 CSS output collision under `splitting: true` — RESOLVED in 0.8.6. Doesn't reproduce on Bun 1.3.14 (hash now includes module identity + shared CSS hoists); won't file upstream. Dev switched to `css:"injected"`, workaround removed.
 
 ---
 

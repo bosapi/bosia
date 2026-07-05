@@ -1,11 +1,9 @@
 import { parse, compile } from "svelte/compiler";
 import MagicString from "magic-string";
-import { basename, relative } from "node:path";
+import { relative } from "node:path";
 import type { BunPlugin } from "bun";
 import { svelteMapCache } from "../../svelteCompiler.ts";
 import { lineColFromOffset } from "../../sourceLoc.ts";
-
-const VIRTUAL_NS = "bosia-inspector-css";
 
 type AnyNode = {
 	type?: string;
@@ -124,7 +122,6 @@ const fnv = (s: string): string => {
 export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPlugin {
 	const { cwd, target, dev } = opts;
 	const generate: "client" | "server" = target === "browser" ? "client" : "server";
-	const virtualCss = new Map<string, string>();
 
 	return {
 		name: "bosia-inspector",
@@ -139,7 +136,11 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 					generate,
 					dev,
 					hmr: dev,
-					css: "external",
+					// Mirror the prod compiler (svelteCompiler.ts): client injects scoped
+					// CSS into the JS via `append_styles`, server discards it. No CSS
+					// chunks means Bun's `splitting:true` output-path collisions can't
+					// arise, so no runtime-injection workaround is needed.
+					css: generate === "client" ? "injected" : "external",
 					preserveWhitespace: dev,
 					preserveComments: dev,
 					cssHash: ({ css }) => `svelte-${fnv(css)}`,
@@ -164,38 +165,8 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 					svelteMapCache.set(args.path, m);
 				}
 
-				let js = dev ? fixBindShadow(result.js.code) : result.js.code;
-				// Inject component <style> blocks via runtime JS, not CSS chunks.
-				// Bun's `splitting: true` names CSS chunks after the importing JS
-				// chunk's `[name]`, not the virtual module's uid — so when several
-				// routes (e.g. multiple `+page.svelte`) transitively import the same
-				// styled component, each route emits its own CSS sidecar named
-				// `+page-<contentHash>.css`. Identical content → identical hash →
-				// "Multiple files share the same output path". Runtime injection
-				// avoids CSS chunking entirely.
-				if (result.css?.code?.trim() && generate !== "server") {
-					const safeBase = basename(args.path).replace(/\./g, "_");
-					const uid = `${safeBase}-${fnv(args.path)}-style.css`;
-					const virtualName = `${VIRTUAL_NS}:${uid}`;
-					virtualCss.set(virtualName, result.css.code);
-					js += `\nimport ${JSON.stringify(virtualName)};`;
-				}
-
+				const js = dev ? fixBindShadow(result.js.code) : result.js.code;
 				return { contents: js, loader: "ts" };
-			});
-
-			build.onResolve({ filter: new RegExp(`^${VIRTUAL_NS}:`) }, (args) => ({
-				path: args.path,
-				namespace: VIRTUAL_NS,
-			}));
-
-			build.onLoad({ filter: /.*/, namespace: VIRTUAL_NS }, (args) => {
-				const css = virtualCss.get(args.path) ?? "";
-				virtualCss.delete(args.path);
-				const contents = css
-					? `(()=>{const s=document.createElement('style');s.textContent=${JSON.stringify(css)};document.head.appendChild(s);})();`
-					: "";
-				return { contents, loader: "js" };
 			});
 		},
 	};
