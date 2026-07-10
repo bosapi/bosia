@@ -204,7 +204,9 @@
 		"stats/band",
 		"stats/cards",
 		"logos/row",
-		"logos/grid"
+		"logos/grid",
+		"cards/pick-list",
+		"stats/sentiment-bar"
 	],
 	"pages": [
 		"storefront/home",

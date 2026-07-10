@@ -1,0 +1,12 @@
+{
+	"name": "card-pick-list",
+	"description": "Selectable checkbox list card — title, meta line, trailing star stat, selected ring. Controlled via selectedIds + onToggle.",
+	"category": "cards",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

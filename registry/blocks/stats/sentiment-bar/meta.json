@@ -1,0 +1,10 @@
+{
+	"name": "stat-sentiment-bar",
+	"description": "Stacked n-segment sentiment bar with legend — emerald/amber/red status tones, accessible aria-label.",
+	"category": "stats",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

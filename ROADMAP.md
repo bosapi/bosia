@@ -13,6 +13,8 @@
 - [x] 🟠 `core/client/App.svelte` — shared `settleScroll()` replaces the two duplicated top-scroll blocks; popstate branch restores `router.pendingScroll` after `tick()`.
 - [x] ⚪ Docs `guides/navigation` (en+id) "Scroll behavior" section; `bosia-navigation` skill notes it's built-in (never hand-roll in `afterNavigate`). `CHANGELOG.md` appended.
 - [ ] ⚪ Split off: `export const snapshot` (form/UI state restore) — separate feature; v0.2.1 backlog line stays open for it.
+- [ ] ⚪ Known ceiling: scroll save relies on `beforeunload`, which mobile page-discard can skip (`router.svelte.ts:192`) — add `visibilitychange`/`pagehide` fallback if reports come in.
+- [ ] ⚪ Known ceiling: restore is a single post-`tick()` jump; images/async content loading later can shift the position (`App.svelte:78`) — re-clamp on load events if it bites.
 
 ---
 
