@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # need the previous commit to diff package.json
+          fetch-depth: 0 # full history: diff the whole push range, not just HEAD^
 
       - name: Decide what to do
         id: decide
@@ -43,8 +43,16 @@ jobs:
           VERSION=$(jq -r '.version' packages/bosia/package.json)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          # Publish to npm ONLY when this push changed package.json.
-          if git diff --name-only HEAD^ HEAD 2>/dev/null | grep -qx 'packages/bosia/package.json'; then
+          # Publish to npm ONLY when this push changed package.json — check the
+          # WHOLE push range (before..after), not just the last commit, so a bump
+          # in an earlier commit of a multi-commit push isn't missed.
+          BEFORE="${{ github.event.before }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            RANGE="HEAD^ HEAD" # first push / workflow_dispatch: no before SHA
+          else
+            RANGE="$BEFORE HEAD"
+          fi
+          if git diff --name-only $RANGE 2>/dev/null | grep -qx 'packages/bosia/package.json'; then
             echo "pkg_changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "pkg_changed=false" >> "$GITHUB_OUTPUT"
