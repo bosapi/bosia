@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - `bun run check` now catches un-replaced `__BRAND__` in every app template.
+- Inspector AI popover now stays visible when clicking elements near the screen edge.
 
 ---
 

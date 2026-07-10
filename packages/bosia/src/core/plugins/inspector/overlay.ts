@@ -140,7 +140,7 @@ function openForm(loc,el){
   closeForm();
   var r=el.getBoundingClientRect();
   form=document.createElement("div");
-  form.style.cssText="position:fixed;left:"+r.left+"px;top:"+(r.bottom+6)+"px;background:#fff;color:#111;border:1px solid #d4d4d8;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:10px;width:340px;z-index:2147483647;font:13px ui-sans-serif,system-ui,sans-serif";
+  form.style.cssText="position:fixed;left:0;top:0;background:#fff;color:#111;border:1px solid #d4d4d8;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:10px;width:340px;z-index:2147483647;font:13px ui-sans-serif,system-ui,sans-serif";
   form.innerHTML=
     '<textarea placeholder="Describe a fix (Enter to send, Esc to cancel, empty = open in editor)" style="width:100%;min-height:64px;border:1px solid #e4e4e7;border-radius:4px;padding:6px;font:13px ui-sans-serif,system-ui,sans-serif;resize:vertical;box-sizing:border-box;outline:none"></textarea>'+
     '<div style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end">'+
@@ -148,6 +148,12 @@ function openForm(loc,el){
     '<button data-send style="padding:4px 10px;border:0;background:#111;color:#fff;border-radius:4px;cursor:pointer;font-size:12px">Send</button>'+
     '</div>';
   document.body.appendChild(form);
+  var fw=form.offsetWidth,fh=form.offsetHeight;
+  var top=r.bottom+6;
+  if(top+fh>window.innerHeight)top=r.top-fh-6;
+  if(top<8)top=Math.max(8,window.innerHeight-fh-8);
+  var left=Math.min(r.left,window.innerWidth-fw-8);if(left<8)left=8;
+  form.style.left=left+"px";form.style.top=top+"px";
   var ta=form.querySelector("textarea");
   ta.focus();
   function submit(){

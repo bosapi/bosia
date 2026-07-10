@@ -5,6 +5,15 @@
 
 ---
 
+## 0.8.8 (2026-07-11) — Inspector: AI popover clamped to viewport
+
+> `openForm()` placed the popover at a fixed `r.bottom+6` — off-screen for elements near the bottom of the page/iframe (rukoku editor embed).
+
+- [x] 🟠 `plugins/inspector/overlay.ts` — mount at 0,0, measure `offsetWidth/Height`, flip above when no room below, clamp both axes to the (iframe) viewport with 8px margin.
+- [ ] ⚪ Known ceiling: position computed once at click; no scroll/resize reposition (popover is short-lived).
+
+---
+
 ## 0.8.8 (2026-07-11) — `__BRAND__` guard reaches all templates
 
 > The 0.8.3 brand guard lives in `bosia sync`, but only the `default` template's `check` script ran sync — demo/shop/store (rukoku apps) passed `bun run check` with `__BRAND__` still in the footer.
