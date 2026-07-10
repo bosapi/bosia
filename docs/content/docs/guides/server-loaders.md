@@ -99,15 +99,31 @@ For the full guide on `metadata()` — including Open Graph tags, language/link 
 
 ## LoadEvent Properties
 
-| Property   | Type                     | Description                                       |
-| ---------- | ------------------------ | ------------------------------------------------- |
-| `url`      | `URL`                    | The request URL                                   |
-| `params`   | `Record<string, string>` | Dynamic route parameters                          |
-| `locals`   | `Record<string, any>`    | Data set by middleware hooks                      |
-| `cookies`  | `Cookies`                | Read/write cookies                                |
-| `fetch`    | `Function`               | Fetch helper (cookies forwarded same-origin only) |
-| `parent`   | `() => Promise<Record>`  | Data from parent layout loaders                   |
-| `metadata` | `Record \| null`         | Data passed from `metadata()` function            |
+| Property     | Type                     | Description                                                                           |
+| ------------ | ------------------------ | ------------------------------------------------------------------------------------- |
+| `url`        | `URL`                    | The request URL                                                                       |
+| `params`     | `Record<string, string>` | Dynamic route parameters                                                              |
+| `locals`     | `Record<string, any>`    | Data set by middleware hooks                                                          |
+| `cookies`    | `Cookies`                | Read/write cookies                                                                    |
+| `fetch`      | `Function`               | Fetch helper (cookies forwarded same-origin only)                                     |
+| `parent`     | `() => Promise<Record>`  | Data from parent layout loaders                                                       |
+| `metadata`   | `Record \| null`         | Data passed from `metadata()` function                                                |
+| `depends`    | `(...keys) => void`      | Declare custom invalidation keys (see [Data Invalidation](/guides/data-invalidation)) |
+| `setHeaders` | `(headers) => void`      | Set response headers (see below)                                                      |
+
+## Setting Response Headers
+
+Use `setHeaders` to add headers to the page response — for example `Cache-Control`:
+
+```ts
+// +page.server.ts
+export async function load({ setHeaders }: LoadEvent) {
+	setHeaders({ "cache-control": "public, max-age=60" });
+	return { posts: await getPosts() };
+}
+```
+
+Headers land on both the SSR HTML response and the client-navigation data response. Setting the same header twice (across any loaders in the chain) throws, and `set-cookie` is forbidden — use the `cookies` API instead. During prerendering `setHeaders` is a no-op (only HTML files are written to disk). If the loader read cookies, the data response stays `private, no-cache` regardless of a loader-set `cache-control` — privacy beats intent.
 
 ## Cookie Forwarding
 

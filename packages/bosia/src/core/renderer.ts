@@ -3,6 +3,7 @@ import { render } from "svelte/server";
 import { findMatch } from "./matcher.ts";
 import { serverRoutes, errorPage } from "bosia:routes";
 import type { RouteMatch } from "./types.ts";
+import { makeSetHeaders } from "./hooks.ts";
 import type { Cookies, LoaderDeps } from "./hooks.ts";
 import { CSP_ENABLED } from "./csp.ts";
 import {
@@ -333,6 +334,10 @@ export async function loadRouteData(
 	const layoutData: (Record<string, any> | null)[] = [];
 	const layoutDeps: (LoaderDeps | null)[] = [];
 	let parentData: Record<string, any> = {};
+	// Shared across layout + page loaders so cross-loader duplicate
+	// setHeaders() calls throw. Keys stored lowercased.
+	const loaderHeaders: Record<string, string> = {};
+	const setHeaders = makeSetHeaders(loaderHeaders);
 
 	// Run layout server loaders root → leaf, each gets parent() data
 	for (const ls of route.layoutServers) {
@@ -366,6 +371,7 @@ export async function loadRouteData(
 							fetch: trackedFetch(fetch, origin, deps),
 							metadata: null,
 							depends: makeDepends(deps),
+							setHeaders,
 						}),
 						LOAD_TIMEOUT,
 						`layout load (depth=${ls.depth}, ${url.pathname})`,
@@ -431,6 +437,7 @@ export async function loadRouteData(
 							fetch: trackedFetch(fetch, origin, deps),
 							metadata: metadataData,
 							depends: makeDepends(deps),
+							setHeaders,
 						}),
 						LOAD_TIMEOUT,
 						`page load (${url.pathname})`,
@@ -472,7 +479,7 @@ export async function loadRouteData(
 	// When pageData is skipped, the client merges its cached pageData with current
 	// route params separately, so we keep the `null` sentinel here.
 	const pageOut = pageData === null ? null : { ...pageData, params };
-	return { pageData: pageOut, layoutData, csr, ssr, pageDeps, layoutDeps };
+	return { pageData: pageOut, layoutData, csr, ssr, pageDeps, layoutDeps, loaderHeaders };
 }
 
 // ─── Metadata Loader ─────────────────────────────────────
@@ -690,7 +697,7 @@ export async function renderSSRStream(
 					appHtmlSegments,
 				);
 			return new Response(html, {
-				headers: { "Content-Type": "text/html; charset=utf-8" },
+				headers: { "content-type": "text/html; charset=utf-8", ...data.loaderHeaders },
 			});
 		}
 
@@ -773,7 +780,7 @@ export async function renderSSRStream(
 								brotli,
 								contentType: "text/html; charset=utf-8",
 								status: 200,
-								extraHeaders: {},
+								extraHeaders: data.loaderHeaders,
 								tags,
 							},
 							cookies,
@@ -812,7 +819,7 @@ export async function renderSSRStream(
 		});
 
 		return new Response(stream, {
-			headers: { "Content-Type": "text/html; charset=utf-8" },
+			headers: { "content-type": "text/html; charset=utf-8", ...data.loaderHeaders },
 		});
 	} finally {
 		releaseMiss?.();
@@ -894,7 +901,7 @@ export async function renderPageWithFormData(
 			undefined,
 			appHtmlSegments,
 		);
-		return compress(html, "text/html; charset=utf-8", req, status);
+		return compress(html, "text/html; charset=utf-8", req, status, data.loaderHeaders);
 	}
 
 	const { body, head } = render(App, {
@@ -923,7 +930,7 @@ export async function renderPageWithFormData(
 		undefined,
 		appHtmlSegments,
 	);
-	return compress(html, "text/html; charset=utf-8", req, status);
+	return compress(html, "text/html; charset=utf-8", req, status, data.loaderHeaders);
 }
 
 // ─── Error Page Renderer ──────────────────────────────────

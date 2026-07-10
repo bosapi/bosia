@@ -350,18 +350,20 @@ export function coalesceMiss(
 
 export function serveCached(entry: CacheEntry, req: Request): Response {
 	const accept = req.headers.get("accept-encoding") ?? "";
+	// Base keys lowercased so lowercased extraHeaders (e.g. loader setHeaders)
+	// override them instead of getting comma-joined by Headers.
 	const headers: Record<string, string> = {
-		"Content-Type": entry.contentType,
-		Vary: "Accept-Encoding",
-		"X-Bosia-Cache": "HIT",
+		"content-type": entry.contentType,
+		vary: "Accept-Encoding",
+		"x-bosia-cache": "HIT",
 		...entry.extraHeaders,
 	};
 	if (entry.brotli && accept.includes("br")) {
-		headers["Content-Encoding"] = "br";
+		headers["content-encoding"] = "br";
 		return new Response(entry.brotli, { status: entry.status, headers });
 	}
 	if (entry.gzip && accept.includes("gzip")) {
-		headers["Content-Encoding"] = "gzip";
+		headers["content-encoding"] = "gzip";
 		return new Response(entry.gzip, { status: entry.status, headers });
 	}
 	return new Response(entry.raw, { status: entry.status, headers });

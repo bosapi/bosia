@@ -1,7 +1,7 @@
 {
 	"name": "docs",
 	"private": true,
-	"version": "0.8.4",
+	"version": "0.8.5",
 	"type": "module",
 	"scripts": {
 		"sync": "bun run sync-docs.ts",

@@ -63,7 +63,37 @@ export type LoadEvent = {
 	 * namespaced (e.g. `"app:user"`).
 	 */
 	depends: (...keys: string[]) => void;
+	/**
+	 * Set response headers for this request. Headers accumulate across
+	 * layout and page loaders and land on both the SSR HTML response and
+	 * the client-navigation data response. Setting the same header twice
+	 * throws, as does `set-cookie` (use the `cookies` API instead).
+	 * No-op during prerendering (only bodies are written to disk).
+	 */
+	setHeaders: (headers: Record<string, string>) => void;
 };
+
+/**
+ * Build a `setHeaders` closure over a shared accumulator. Keys are stored
+ * lowercased; duplicates (any casing) and `set-cookie` throw. Shared across
+ * all loaders of one request so cross-loader duplicates are caught too.
+ */
+export function makeSetHeaders(
+	acc: Record<string, string>,
+): (headers: Record<string, string>) => void {
+	return (headers) => {
+		for (const [key, value] of Object.entries(headers)) {
+			const k = key.toLowerCase();
+			if (k === "set-cookie") {
+				throw new Error('setHeaders() cannot set "set-cookie" — use the cookies API instead');
+			}
+			if (k in acc) {
+				throw new Error(`setHeaders() called twice for header "${k}"`);
+			}
+			acc[k] = value;
+		}
+	};
+}
 
 /**
  * Tracked dependencies captured for a single loader during one run.

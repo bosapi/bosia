@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.5] - 2026-07-10
+
+### Added
+
+- Server loaders guide now covers `setHeaders` for custom response headers, plus the `depends` row.
+
 ## [0.8.4] - 2026-07-05
 
 ### Added

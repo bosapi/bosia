@@ -97,15 +97,31 @@ Properti `data` pada nilai kembalian `metadata()` diteruskan ke `load()` sebagai
 
 ## Properti LoadEvent
 
-| Properti   | Tipe                     | Deskripsi                                     |
-| ---------- | ------------------------ | --------------------------------------------- |
-| `url`      | `URL`                    | URL request                                   |
-| `params`   | `Record<string, string>` | Parameter route dinamis                       |
-| `locals`   | `Record<string, any>`    | Data yang disetel oleh middleware hooks       |
-| `cookies`  | `Cookies`                | Membaca/menulis cookies                       |
-| `fetch`    | `Function`               | Fetch yang sadar sesi (meneruskan cookies)    |
-| `parent`   | `() => Promise<Record>`  | Data dari loader layout induk                 |
-| `metadata` | `Record \| null`         | Data yang diteruskan dari fungsi `metadata()` |
+| Properti     | Tipe                     | Deskripsi                                                                                 |
+| ------------ | ------------------------ | ----------------------------------------------------------------------------------------- |
+| `url`        | `URL`                    | URL request                                                                               |
+| `params`     | `Record<string, string>` | Parameter route dinamis                                                                   |
+| `locals`     | `Record<string, any>`    | Data yang disetel oleh middleware hooks                                                   |
+| `cookies`    | `Cookies`                | Membaca/menulis cookies                                                                   |
+| `fetch`      | `Function`               | Fetch yang sadar sesi (meneruskan cookies)                                                |
+| `parent`     | `() => Promise<Record>`  | Data dari loader layout induk                                                             |
+| `metadata`   | `Record \| null`         | Data yang diteruskan dari fungsi `metadata()`                                             |
+| `depends`    | `(...keys) => void`      | Deklarasi kunci invalidasi kustom (lihat [Invalidasi Data](/id/guides/data-invalidation)) |
+| `setHeaders` | `(headers) => void`      | Setel header response (lihat di bawah)                                                    |
+
+## Menyetel Header Response
+
+Gunakan `setHeaders` untuk menambahkan header ke response halaman — misalnya `Cache-Control`:
+
+```ts
+// +page.server.ts
+export async function load({ setHeaders }: LoadEvent) {
+	setHeaders({ "cache-control": "public, max-age=60" });
+	return { posts: await getPosts() };
+}
+```
+
+Header diterapkan ke response HTML SSR maupun response data navigasi klien. Menyetel header yang sama dua kali (di loader mana pun dalam rantai) akan melempar error, dan `set-cookie` dilarang — gunakan API `cookies`. Saat prerendering, `setHeaders` tidak berefek (hanya file HTML yang ditulis ke disk). Jika loader membaca cookies, response data tetap `private, no-cache` meskipun loader menyetel `cache-control` sendiri — privasi mengalahkan niat.
 
 ## Penanganan Error
 

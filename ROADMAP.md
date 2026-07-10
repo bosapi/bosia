@@ -1,7 +1,19 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.6**
+> Current version: **0.8.7**
+
+---
+
+## 0.8.7 (2026-07-10) — `setHeaders()` in load functions
+
+> SvelteKit-parity `setHeaders(headers)` on the server-loader event. One accumulator shared across layout+page loaders (cross-loader dup detection); keys lowercased; `set-cookie` and duplicates throw → existing 500 path. Headers land on SSR HTML, the response-cache write, form-action re-renders, and `/__bosia/data/*.json`. Data endpoint: loader `cache-control` wins over the computed default unless cookies were accessed — then `private, no-cache` wins (privacy beats intent).
+
+- [x] 🟡 `hooks.ts` — `LoadEvent.setHeaders` type + `makeSetHeaders()` (lives here so tests avoid `bosia:routes`); `renderer.ts` wires it into both loader events, returns `loaderHeaders`, spreads onto response sites + cache write.
+- [x] ⚪ `compress()` + `serveCached()` base keys lowercased so extraHeaders override instead of comma-joining.
+- [x] ⚪ `server.ts` data endpoint destructures `loaderHeaders` out of the JSON body, merges with cookie-privacy override.
+- [x] ⚪ `test/setHeaders.test.ts`; docs `guides/server-loaders` (en+id) incl. missing `depends` row; `bosia-routing` skill R3b; roadmap check-off; `CHANGELOG.md`; version `0.8.7`.
+- [ ] ⚪ Deliberately skipped: headers on error/redirect responses; prerender = silent no-op; masked data requests don't re-set headers.
 
 ---
 
@@ -832,7 +844,7 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 
 - [x] 🟠 `depends()` and `invalidate()` — selective data reloading
 - [x] 🟡 Prefetch sends the loader cache mask — hover/viewport `data-bosia-preload` was warming the data endpoint with no mask, re-running every loader server-side; now it sends the same `_invalidated` bits as a real nav
-- [ ] 🟡 `setHeaders()` in load functions — set response headers from loaders
+- [x] 🟡 `setHeaders()` in load functions — set response headers from loaders — shipped 0.8.7
 
 ### Navigation
 

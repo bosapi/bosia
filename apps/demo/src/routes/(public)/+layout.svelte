@@ -36,6 +36,10 @@
 				class="text-sm text-muted-foreground hover:text-foreground transition-colors">Loading</a
 			>
 			<a
+				href="/set-headers-demo"
+				class="text-sm text-muted-foreground hover:text-foreground transition-colors">Headers</a
+			>
+			<a
 				href="/api/hello"
 				target="_blank"
 				class="text-sm text-muted-foreground hover:text-foreground transition-colors">API</a

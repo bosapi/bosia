@@ -373,9 +373,11 @@ export function compress(
 	status = 200,
 	extraHeaders?: Record<string, string>,
 ): Response {
+	// Base keys lowercased so lowercased extraHeaders (e.g. loader setHeaders)
+	// override them instead of getting comma-joined by Headers.
 	const headers: Record<string, string> = {
-		"Content-Type": contentType,
-		Vary: "Accept-Encoding",
+		"content-type": contentType,
+		vary: "Accept-Encoding",
 		...extraHeaders,
 	};
 	const accept = req.headers.get("accept-encoding") ?? "";
@@ -385,7 +387,7 @@ export function compress(
 	if (!isDev && bytes.length > GZIP_MIN_BYTES && accept.includes("gzip")) {
 		return new Response(Bun.gzipSync(bytes), {
 			status,
-			headers: { ...headers, "Content-Encoding": "gzip" },
+			headers: { ...headers, "content-encoding": "gzip" },
 		});
 	}
 	return new Response(bytes, { status, headers });

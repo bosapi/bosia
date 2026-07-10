@@ -314,12 +314,18 @@ async function resolve(event: RequestEvent): Promise<Response> {
 					{ "Cache-Control": cc },
 				);
 			}
+			// loaderHeaders must not leak into the JSON body the client router consumes.
+			const { loaderHeaders = {}, ...payload } = result.data;
+			const extra: Record<string, string> = { "cache-control": cc, ...loaderHeaders };
+			// Privacy beats intent: cookie-derived responses stay private even if
+			// a loader set its own cache-control.
+			if (cookiesWereAccessed) extra["cache-control"] = cc;
 			return compress(
-				JSON.stringify({ ...result.data, metadata: result.metadata }),
+				JSON.stringify({ ...payload, metadata: result.metadata }),
 				"application/json",
 				request,
 				200,
-				{ "Cache-Control": cc },
+				extra,
 			);
 		} catch (err) {
 			if (err instanceof Redirect) {
