@@ -5,6 +5,17 @@
 
 ---
 
+## 0.8.7 (2026-07-10) — `export const snapshot` (page state on back/forward)
+
+> SvelteKit-parity `snapshot = { capture, restore }` in `+page.svelte`. Mirrors scroll restoration: captured at the same save points keyed by `history.state.bosiaIndex`, restored post-`tick()` after the destination mounts; persisted to `sessionStorage` on unload (JSON-serializable values only).
+
+- [x] 🟠 `core/client/router.svelte.ts` — `pageSnapshots` map + `savePageSnapshot()` at the four `saveScroll()` sites; `pendingSnapshot` handoff (popstate + reload-restore in `init()`); separate sessionStorage flush so a non-serializable snapshot can't kill scroll persistence.
+- [x] 🟠 `core/client/App.svelte` — `bind:this={pageInstance}` on both `<PageComponent>` spots; `router.getPageSnapshot` closure; `settleSnapshot()` in `settleScroll()` + first-hydration branch.
+- [x] ⚪ `Snapshot<T>` type in `bosia/client` + generated `$types.d.ts` (`routeTypes.ts`); `routeTypes.test.ts` assertion; docs `guides/navigation` (en+id) "Snapshots" section; `bosia-navigation` skill R2b; `CHANGELOG.md` appended.
+- [ ] ⚪ Deliberately skipped: layout snapshots (need per-depth instance refs in the recursive layout snippets); non-JSON values (no devalue); inherits the `beforeunload` mobile page-discard ceiling from scroll.
+
+---
+
 ## 0.8.7 (2026-07-10) — `setHeaders()` in load functions
 
 > SvelteKit-parity `setHeaders(headers)` on the server-loader event. One accumulator shared across layout+page loaders (cross-loader dup detection); keys lowercased; `set-cookie` and duplicates throw → existing 500 path. Headers land on SSR HTML, the response-cache write, form-action re-renders, and `/__bosia/data/*.json`. Data endpoint: loader `cache-control` wins over the computed default unless cookies were accessed — then `private, no-cache` wins (privacy beats intent).
@@ -24,7 +35,7 @@
 - [x] 🟠 `core/client/router.svelte.ts` — manual mode; per-entry index in `history.state.bosiaIndex`; save on push/hash-push/popstate/unload; `pendingScroll` handoff; sessionStorage persistence + reload restore.
 - [x] 🟠 `core/client/App.svelte` — shared `settleScroll()` replaces the two duplicated top-scroll blocks; popstate branch restores `router.pendingScroll` after `tick()`.
 - [x] ⚪ Docs `guides/navigation` (en+id) "Scroll behavior" section; `bosia-navigation` skill notes it's built-in (never hand-roll in `afterNavigate`). `CHANGELOG.md` appended.
-- [ ] ⚪ Split off: `export const snapshot` (form/UI state restore) — separate feature; v0.2.1 backlog line stays open for it.
+- [x] ⚪ Split off: `export const snapshot` (form/UI state restore) — shipped 0.8.7.
 - [ ] ⚪ Known ceiling: scroll save relies on `beforeunload`, which mobile page-discard can skip (`router.svelte.ts:192`) — add `visibilitychange`/`pagehide` fallback if reports come in.
 - [ ] ⚪ Known ceiling: restore is a single post-`tick()` jump; images/async content loading later can shift the position (`App.svelte:78`) — re-clamp on load events if it bites.
 
@@ -849,7 +860,7 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 ### Navigation
 
 - [x] 🟠 `beforeNavigate` / `afterNavigate` lifecycle hooks — exported from `bosia/client`; fired by SPA router around pushState/popstate navs and on full-page unload (`willUnload=true`); cancel support via `cancel()` on programmatic navs
-- [ ] 🟠 Scroll restoration and snapshot support (`export const snapshot`) — scroll restoration shipped 0.8.6; `snapshot` still open
+- [x] 🟠 Scroll restoration and snapshot support (`export const snapshot`) — scroll restoration shipped 0.8.6; `snapshot` shipped 0.8.7
 
 ### Routing
 

@@ -12,6 +12,8 @@ triggers:
   - redirect after submit
   - full reload
   - window.location
+  - snapshot
+  - restore form state on back
   - sidebar
   - navbar
   - menu item
@@ -81,6 +83,29 @@ Options:
 | `state`         | —       | Reserved — no shallow routing yet.                                     |
 
 Scroll is handled by the framework: forward navs scroll to top (or the `#hash`), browser Back/Forward restores the saved per-entry position after the destination renders. NEVER hand-roll scroll restoration in `afterNavigate` — it is built in since 0.8.6.
+
+### R2b — `export const snapshot` restores page state on Back/Forward
+
+To bring back in-progress UI state (a draft comment, an open filter panel) when the user presses Back, export a `snapshot` from `+page.svelte` — do NOT hand-roll sessionStorage in `beforeNavigate`/`afterNavigate`; it is built in since 0.8.7.
+
+```svelte
+<script lang="ts">
+	import type { Snapshot } from "./$types";
+
+	let comment = $state("");
+
+	export const snapshot: Snapshot<string> = {
+		capture: () => comment,
+		restore: (value) => (comment = value),
+	};
+</script>
+```
+
+- `capture()` fires on nav-away; `restore()` fires on Back/Forward and after a full reload (persisted to `sessionStorage` on unload).
+- Captured value MUST be JSON-serializable (no functions; `Date` round-trips as a string).
+- Forward navs never restore — only Back/Forward/reload, matching SvelteKit.
+- `+page.svelte` only — layouts don't support `snapshot`.
+- `Snapshot<T>` type: import from `./$types` or `bosia/client`.
 
 ### R3 — Lifecycle hooks auto-unregister
 

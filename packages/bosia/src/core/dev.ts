@@ -265,7 +265,7 @@ let buildPending = false;
 async function buildAndRestart(): Promise<boolean> {
 	if (building) {
 		buildPending = true;
-		// ponytail: coalesced into the in-flight build. Managed mode fires one
+		// coalesced into the in-flight build. Managed mode fires one
 		// rebuild per turn so overlap is rare; report optimistic rather than a
 		// false build failure to the host.
 		return true;

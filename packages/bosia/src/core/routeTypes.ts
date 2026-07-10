@@ -86,6 +86,14 @@ export function generateRouteTypes(manifest: RouteManifest): void {
 		lines.push(` *  or +server.ts to opt the route out of the server response cache. */`);
 		lines.push(`export type CacheOption = false;`);
 		lines.push(``);
+		lines.push(
+			`/** \`export const snapshot: Snapshot<T>\` in +page.svelte — captured on nav-away,`,
+		);
+		lines.push(` *  restored on back/forward. Values must be JSON-serializable. */`);
+		lines.push(
+			`export type Snapshot<T = any> = { capture: () => T; restore: (snapshot: T) => void };`,
+		);
+		lines.push(``);
 		lines.push(`type _LoadEvent = Omit<LoadEvent, 'params'> & { params: Params };`);
 		lines.push(`type _MetadataEvent = Omit<MetadataEvent, 'params'> & { params: Params };`);
 		lines.push(`type _RequestEvent = Omit<RequestEvent, 'params'> & { params: Params };`);

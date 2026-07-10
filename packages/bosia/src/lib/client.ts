@@ -18,4 +18,7 @@ export {
 	invalidateAll,
 } from "../core/client/navigation.ts";
 export type { GotoOptions, Navigation, NavigationTarget } from "../core/client/navigation.ts";
+/** `export const snapshot: Snapshot<T>` in +page.svelte — captured on nav-away,
+ *  restored on back/forward. Values must be JSON-serializable. */
+export type Snapshot<T = any> = { capture: () => T; restore: (snapshot: T) => void };
 export { page } from "../core/client/page.svelte.ts";

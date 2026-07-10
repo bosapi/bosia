@@ -50,6 +50,35 @@ If the URL matches the current route, `goto()` resolves immediately without re-r
 
 This is automatic — no app code needed.
 
+## Snapshots
+
+Scroll restoration brings back the position; snapshots bring back the _state_ — an in-progress form field, an open accordion, a search box. Export a `snapshot` object from `+page.svelte`:
+
+```svelte
+<script lang="ts">
+	import type { Snapshot } from "./$types";
+
+	let comment = $state("");
+
+	export const snapshot: Snapshot<string> = {
+		capture: () => comment,
+		restore: (value) => (comment = value),
+	};
+</script>
+
+<textarea bind:value={comment}></textarea>
+```
+
+`capture()` runs when the user navigates away; `restore(value)` runs when they come back via the browser's Back/Forward buttons. Snapshots also survive a full page reload — they persist to `sessionStorage` on unload.
+
+Rules:
+
+- The captured value must be **JSON-serializable** (no functions, Dates become strings) — that's how it survives reloads.
+- Forward navigation to a page never restores — only Back/Forward (and reload) do, matching SvelteKit.
+- Only `+page.svelte` supports `snapshot` (not layouts).
+
+`Snapshot<T>` is also importable from `bosia/client`.
+
 ## Lifecycle hooks
 
 `beforeNavigate` runs before each client-side navigation. The callback may call `nav.cancel()` to block the navigation (except on browser back/forward — see below).

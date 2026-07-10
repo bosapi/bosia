@@ -13,7 +13,7 @@
 		value?: string;
 	} = $props();
 
-	// ponytail: native SVG rect/text, not <foreignObject>. Chrome doesn't
+	// native SVG rect/text, not <foreignObject>. Chrome doesn't
 	// repaint an old foreignObject's box/shadow when it moves, leaving ghosts.
 	const W = 110;
 	const H = 44;

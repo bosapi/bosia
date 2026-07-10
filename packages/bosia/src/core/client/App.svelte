@@ -34,6 +34,24 @@
 
 	let PageComponent = $state<any>(ssrPageComponent);
 	let layoutComponents = $state<any[]>(ssrLayoutComponents ?? []);
+	// Mounted page instance — the two <PageComponent> render spots are mutually
+	// exclusive branches, so one ref suffices. Exposes `export const snapshot`.
+	let pageInstance = $state<any>(null);
+	if (!ssrMode) router.getPageSnapshot = () => pageInstance?.snapshot;
+
+	// Call the landed-on page's snapshot.restore() once it's mounted (post-tick).
+	function settleSnapshot() {
+		const snap = router.pendingSnapshot;
+		if (snap !== undefined)
+			tick().then(() => {
+				try {
+					pageInstance?.snapshot?.restore?.(snap);
+				} catch {
+					// user restore() threw — never break navigation
+				}
+			});
+		router.pendingSnapshot = undefined;
+	}
 	// Network protocol still ships `params` merged into pageData (see renderer.ts).
 	// Strip it at the component boundary so consumers receive `params` only via
 	// the dedicated prop, matching SvelteKit's surface.
@@ -75,12 +93,13 @@
 			});
 		} else if (!router.isPush) {
 			const pos = router.pendingScroll;
-			// ponytail: single post-tick restore; content that loads later (images
+			// single post-tick restore; content that loads later (images
 			// without dimensions) can still shift it. Revisit only if reported.
 			if (pos) tick().then(() => window.scrollTo(pos.x, pos.y));
 		}
 		router.pendingScroll = null;
 		router.suppressScroll = false;
+		settleSnapshot();
 	}
 
 	$effect(() => {
@@ -102,6 +121,8 @@
 		if (isFirst) {
 			currentLayoutPaths = (match.route as any).layoutPaths ?? [];
 			lastSettledPath = pathname;
+			// Restore-after-reload: router.init() staged this entry's snapshot.
+			settleSnapshot();
 			return; // Initial hydration — data already in SSR props, no fetch needed
 		}
 
@@ -404,7 +425,7 @@
 {:else if layoutComponents.length > 0}
 	{@render renderLayout(0, layoutComponents.length)}
 {:else if PageComponent}
-	<PageComponent data={pageData} {params} form={formData} />
+	<PageComponent bind:this={pageInstance} data={pageData} {params} form={formData} />
 {:else}
 	<p>Loading...</p>
 {/if}
@@ -434,7 +455,7 @@
 			{#if ErrorComponent}
 				<ErrorComponent {...errorProps ?? {}} />
 			{:else if PageComponent}
-				<PageComponent data={pageData} {params} form={formData} />
+				<PageComponent bind:this={pageInstance} data={pageData} {params} form={formData} />
 			{:else}
 				<p>Loading...</p>
 			{/if}

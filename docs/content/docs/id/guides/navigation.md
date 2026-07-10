@@ -50,6 +50,35 @@ Jika URL cocok dengan route saat ini, `goto()` resolve langsung tanpa menjalanka
 
 Ini otomatis — tanpa kode aplikasi.
 
+## Snapshot
+
+Scroll restoration mengembalikan posisi; snapshot mengembalikan _state_ — isi form yang belum dikirim, accordion yang terbuka, kotak pencarian. Export objek `snapshot` dari `+page.svelte`:
+
+```svelte
+<script lang="ts">
+	import type { Snapshot } from "./$types";
+
+	let comment = $state("");
+
+	export const snapshot: Snapshot<string> = {
+		capture: () => comment,
+		restore: (value) => (comment = value),
+	};
+</script>
+
+<textarea bind:value={comment}></textarea>
+```
+
+`capture()` berjalan saat pengguna meninggalkan halaman; `restore(value)` berjalan saat mereka kembali via tombol Back/Forward browser. Snapshot juga bertahan melewati reload penuh — dipersist ke `sessionStorage` saat unload.
+
+Aturan:
+
+- Nilai yang di-capture harus **bisa diserialisasi JSON** (tanpa fungsi, Date jadi string) — begitulah cara ia bertahan melewati reload.
+- Navigasi maju ke halaman tidak pernah me-restore — hanya Back/Forward (dan reload), sama seperti SvelteKit.
+- Hanya `+page.svelte` yang mendukung `snapshot` (bukan layout).
+
+`Snapshot<T>` juga bisa diimpor dari `bosia/client`.
+
 ## Lifecycle hooks
 
 `beforeNavigate` berjalan sebelum setiap navigasi sisi-klien. Callback boleh memanggil `nav.cancel()` untuk memblokir navigasi (kecuali pada back/forward browser — lihat di bawah).

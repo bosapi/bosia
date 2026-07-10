@@ -30,6 +30,24 @@ function saveScroll() {
 	scrollPositions[historyIndex] = { x: window.scrollX, y: window.scrollY };
 }
 
+// ─── Page snapshots ───
+// `export const snapshot = { capture, restore }` in +page.svelte. Captured
+// alongside scroll on every history mutation, keyed by the same bosiaIndex,
+// restored post-tick by App.svelte. Values must be JSON-serializable — raw in
+// memory, stringified only at the unload flush.
+// page-only; layout snapshots need per-depth instance refs — add if asked.
+const SNAPSHOT_KEY = "bosia:snapshot";
+let pageSnapshots: Record<number, unknown> = {};
+
+function savePageSnapshot() {
+	try {
+		const s = router.getPageSnapshot?.();
+		if (s?.capture) pageSnapshots[historyIndex] = s.capture();
+	} catch {
+		// user capture() threw — never break navigation
+	}
+}
+
 export function scrollToHash(hash: string): boolean {
 	if (typeof document === "undefined" || !hash) return false;
 	const raw = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -61,6 +79,12 @@ export const router = new (class Router {
 	suppressScroll = false;
 	/** Saved scroll position for the entry a popstate landed on; consumed once by App.svelte after the nav settles. */
 	pendingScroll: { x: number; y: number } | null = null;
+	/** Set by App.svelte; returns the mounted page's `export const snapshot` (if any) at capture time. */
+	getPageSnapshot:
+		| (() => { capture: () => unknown; restore: (v: any) => void } | undefined)
+		| null = null;
+	/** Captured snapshot for the entry a popstate/reload landed on; consumed once by App.svelte. `undefined` = nothing to restore. */
+	pendingSnapshot: unknown = undefined;
 
 	navigate(path: string, opts: { replace?: boolean; source?: NavType } = {}) {
 		if (this.currentRoute === path) return;
@@ -91,12 +115,14 @@ export const router = new (class Router {
 		this.lastNavType = navType;
 		this.isPush = true;
 		this.pendingScroll = null;
+		this.pendingSnapshot = undefined;
 		this.currentRoute = finalPath;
 		if (typeof history !== "undefined") {
 			if (opts.replace) {
 				history.replaceState({ bosiaIndex: historyIndex }, "", finalPath);
 			} else {
 				saveScroll();
+				savePageSnapshot();
 				historyIndex++;
 				history.pushState({ bosiaIndex: historyIndex }, "", finalPath);
 			}
@@ -112,8 +138,14 @@ export const router = new (class Router {
 		} catch {
 			scrollPositions = {};
 		}
+		try {
+			pageSnapshots = JSON.parse(sessionStorage.getItem(SNAPSHOT_KEY) ?? "{}");
+		} catch {
+			pageSnapshots = {};
+		}
 		const stamped = history.state?.bosiaIndex != null;
 		historyIndex = stamped ? history.state.bosiaIndex : 0;
+		this.pendingSnapshot = stamped ? pageSnapshots[historyIndex] : undefined;
 		history.replaceState({ ...history.state, bosiaIndex: historyIndex }, "");
 		// Restore after a reload — manual mode means the browser won't. Only for
 		// entries we stamped before (a fresh visit has no bosiaIndex in state).
@@ -146,6 +178,7 @@ export const router = new (class Router {
 				const finalPath = anchor.pathname + anchor.search + anchor.hash;
 				if (this.currentRoute !== finalPath) {
 					saveScroll();
+					savePageSnapshot();
 					historyIndex++;
 					history.pushState({ bosiaIndex: historyIndex }, "", finalPath);
 					this.currentRoute = finalPath;
@@ -164,8 +197,10 @@ export const router = new (class Router {
 			// Save the position of the entry we're leaving (historyIndex is still
 			// the old entry's), then look up where the landed-on entry was.
 			saveScroll();
+			savePageSnapshot();
 			historyIndex = e.state?.bosiaIndex ?? 0;
 			this.pendingScroll = scrollPositions[historyIndex] ?? null;
+			this.pendingSnapshot = pageSnapshots[historyIndex];
 			// Fire beforeNavigate listeners; popstate can't be reliably cancelled
 			// (browser history already advanced), so we surface the event for
 			// observation only — `cancel()` is a no-op for this source.
@@ -189,13 +224,20 @@ export const router = new (class Router {
 		// listeners can warn-on-leave (return value ignored; cancellation here
 		// requires `beforeunload`, not in scope).
 		window.addEventListener("beforeunload", () => {
-			// ponytail: beforeunload can be skipped on mobile page-discard; add a
+			// beforeunload can be skipped on mobile page-discard; add a
 			// visibilitychange persist if restore-after-reload proves flaky there.
 			saveScroll();
+			savePageSnapshot();
 			try {
 				sessionStorage.setItem(SCROLL_KEY, JSON.stringify(scrollPositions));
 			} catch {
 				// sessionStorage unavailable (private mode / quota) — skip persistence.
+			}
+			try {
+				// Separate try: a non-JSON-serializable snapshot must not kill scroll persistence.
+				sessionStorage.setItem(SNAPSHOT_KEY, JSON.stringify(pageSnapshots));
+			} catch {
+				// sessionStorage unavailable or snapshot not serializable — skip persistence.
 			}
 			const fromTarget = buildTarget(this.currentRoute);
 			const nav: Navigation = {

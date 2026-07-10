@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Pages can now set their own response headers, like how long browsers should cache them.
+- Pages can now remember what you typed when you go back or forward in the browser.
 
 ---
 

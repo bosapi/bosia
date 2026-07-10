@@ -7,7 +7,7 @@ export function safeNext(next: string | null | undefined, fallback = "/dashboard
 	return fallback;
 }
 
-// ponytail: self-check — security path (redirect target), earns one runnable check.
+// self-check — security path (redirect target), earns one runnable check.
 if (import.meta.main) {
 	const eq = (a: string, b: string) => {
 		if (a !== b) throw new Error(`expected ${b}, got ${a}`);

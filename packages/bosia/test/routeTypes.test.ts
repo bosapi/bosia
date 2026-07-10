@@ -150,6 +150,7 @@ describe("generateRouteTypes() — exports", () => {
 		expect(out).toContain("export type Action ");
 		expect(out).toContain("export type ActionData");
 		expect(out).toContain("import type { load as _pageLoad }");
+		expect(out).toContain("export type Snapshot");
 	});
 
 	test("without pageServer: PageData is empty, params in PageProps", () => {
