@@ -6,7 +6,7 @@
 		"dev": "bosia dev",
 		"build": "bosia build",
 		"start": "bosia start",
-		"check": "tsc --noEmit && prettier --check .",
+		"check": "bosia sync && tsc --noEmit && prettier --check .",
 		"format": "prettier --write .",
 		"format:check": "prettier --check ."
 	},

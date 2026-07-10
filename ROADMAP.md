@@ -1,7 +1,16 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.7**
+> Current version: **0.8.8**
+
+---
+
+## 0.8.8 (2026-07-11) — `__BRAND__` guard reaches all templates
+
+> The 0.8.3 brand guard lives in `bosia sync`, but only the `default` template's `check` script ran sync — demo/shop/store (rukoku apps) passed `bun run check` with `__BRAND__` still in the footer.
+
+- [x] 🟠 `templates/{demo,shop,store}/package.json` — `check` now runs `bosia sync &&` first (also fixes tsc checking stale `.bosia/` codegen).
+- [ ] ⚪ Existing scaffolded apps keep their baked `check` script; fix is the same one-line edit per app.
 
 ---
 
