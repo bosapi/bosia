@@ -1,7 +1,16 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.8**
+> Current version: **0.8.9**
+
+---
+
+## 0.8.9 (2026-07-14) — `create` into current/existing folder
+
+> `create` required a name and refused any existing dir. Users want `create .` / no-name to scaffold in place.
+
+- [x] 🟠 `packages/bosia/src/cli/create.ts` — `.`/omitted → cwd; project name = cwd basename; existence guard → emptiness guard (ignores `.git`/`.DS_Store`); thread `projectName` (not path) through copy/prebuilt/finish; drop misleading `cd` when in place.
+- [x] 🟢 Docs `reference/cli.md` (+id) updated to `[name]` optional syntax.
 
 ---
 

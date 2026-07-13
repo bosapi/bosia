@@ -8,13 +8,13 @@ description: Semua perintah CLI bosia — create, dev, build, start, test, add, 
 Buat kerangka proyek Bosia baru.
 
 ```bash
-bosia create <name> [--template <template>]
+bosia create [name] [--template <template>]
 ```
 
-| Opsi         | Deskripsi                                                        |
-| ------------ | ---------------------------------------------------------------- |
-| `<name>`     | Nama direktori proyek                                            |
-| `--template` | Lewati pemilih template: `default`, `demo`, `shop`, atau `store` |
+| Opsi         | Deskripsi                                                                                        |
+| ------------ | ------------------------------------------------------------------------------------------------ |
+| `[name]`     | Nama direktori proyek. Pakai `.` atau kosongkan untuk scaffold di folder saat ini (harus kosong) |
+| `--template` | Lewati pemilih template: `default`, `demo`, `shop`, atau `store`                                 |
 
 **Template:**
 

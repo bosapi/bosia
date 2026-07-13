@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.9] - 2026-07-14
+
+### Changed
+
+- `create` can now scaffold into the current folder with `.` or no name (folder must be empty).
+
+---
+
 ## [0.8.8] - 2026-07-11
 
 ### Fixed

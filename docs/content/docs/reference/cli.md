@@ -8,13 +8,13 @@ description: All bosia CLI commands — create, dev, build, start, test, add, fe
 Scaffold a new Bosia project.
 
 ```bash
-bosia create <name> [--template <template>]
+bosia create [name] [--template <template>]
 ```
 
-| Option       | Description                                            |
-| ------------ | ------------------------------------------------------ |
-| `<name>`     | Project directory name                                 |
-| `--template` | Skip the picker: `default`, `demo`, `shop`, or `store` |
+| Option       | Description                                                                                    |
+| ------------ | ---------------------------------------------------------------------------------------------- |
+| `[name]`     | Project directory name. Use `.` or omit it to scaffold into the current folder (must be empty) |
+| `--template` | Skip the picker: `default`, `demo`, `shop`, or `store`                                         |
 
 **Templates:**
 

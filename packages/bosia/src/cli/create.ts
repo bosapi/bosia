@@ -20,16 +20,21 @@ const TEMPLATE_DESCRIPTIONS: Record<string, string> = {
 };
 
 export async function runCreate(name: string | undefined, args: string[] = []) {
-	if (!name) {
-		console.error("❌ Please provide a project name.\n   Usage: bun x bosia@latest create my-app");
-		process.exit(1);
-	}
+	// "." or omitted → scaffold into the current directory
+	const inCurrentDir = !name || name === ".";
+	const targetDir = inCurrentDir ? process.cwd() : resolve(process.cwd(), name);
+	// package.json / placeholder name: cwd basename when scaffolding in place
+	const projectName = inCurrentDir ? basename(targetDir) : name!;
 
-	const targetDir = resolve(process.cwd(), name);
-
+	// allowlist covers the two files that routinely sit in an otherwise empty
+	// scaffold target (git init'd, macOS). Widen if users hit others.
+	const IGNORE = new Set([".git", ".DS_Store"]);
 	if (existsSync(targetDir)) {
-		console.error(`❌ Directory already exists: ${targetDir}`);
-		process.exit(1);
+		const entries = readdirSync(targetDir).filter((e) => !IGNORE.has(e));
+		if (entries.length > 0) {
+			console.error(`❌ Directory is not empty: ${targetDir}`);
+			process.exit(1);
+		}
 	}
 
 	// Parse --template flag (supports `--template foo` and `--template=foo`)
@@ -77,15 +82,15 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
 	// `BOSIA_BUILDING_PREBUILT` is set by the artifact generator so it scaffolds
 	// via the registry instead of trying to download the asset it's producing.
 	if (config?.prebuilt === true && !isLocal && !process.env.BOSIA_BUILDING_PREBUILT) {
-		const ok = await scaffoldFromPrebuilt(template, targetDir, name);
+		const ok = await scaffoldFromPrebuilt(template, targetDir, projectName);
 		if (ok) {
-			await finishCreate(targetDir, name, templateDir, skipInstall);
+			await finishCreate(targetDir, projectName, templateDir, skipInstall, inCurrentDir);
 			return;
 		}
 		console.log("⚠️  Prebuilt artifact unavailable — installing from registry instead.\n");
 	}
 
-	copyDir(templateDir, targetDir, name, isLocal);
+	copyDir(templateDir, targetDir, projectName, isLocal);
 
 	if (existsSync(join(targetDir, ".env.example"))) {
 		writeFileSync(join(targetDir, ".env"), readFileSync(join(targetDir, ".env.example"), "utf-8"));
@@ -116,7 +121,7 @@ export async function runCreate(name: string | undefined, args: string[] = []) {
 		}
 	}
 
-	await finishCreate(targetDir, name, templateDir, skipInstall);
+	await finishCreate(targetDir, projectName, templateDir, skipInstall, inCurrentDir);
 }
 
 // ─── Shared finish: optional `bun install` + printed instructions ──────────
@@ -125,7 +130,10 @@ async function finishCreate(
 	name: string,
 	templateDir: string,
 	skipInstall: boolean,
+	inCurrentDir = false,
 ) {
+	// Already inside the project dir → no `cd` step to show
+	const cd = inCurrentDir ? "" : `cd ${name} && `;
 	const printInstructions = () => {
 		const instPath = join(templateDir, "instructions.txt");
 		if (existsSync(instPath)) {
@@ -137,7 +145,7 @@ async function finishCreate(
 	console.log(`\n✅ Project created at ${targetDir}\n`);
 
 	if (skipInstall) {
-		console.log(`Skipped \`bun install\` (--no-install).\n\ncd ${name} && bun install\n`);
+		console.log(`Skipped \`bun install\` (--no-install).\n\n${cd}bun install\n`);
 		printInstructions();
 		return;
 	}
@@ -152,7 +160,8 @@ async function finishCreate(
 	if (exitCode !== 0) {
 		console.warn("⚠️  bun install failed — run it manually.");
 	} else {
-		console.log(`\n🎉 Ready!\n\ncd ${name}`);
+		console.log(`\n🎉 Ready!\n`);
+		if (!inCurrentDir) console.log(`cd ${name}`);
 		printInstructions();
 		console.log(`bun x bosia dev\n`);
 	}
