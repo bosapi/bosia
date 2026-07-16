@@ -52,6 +52,10 @@ Phased so each batch is reviewed before the next:
 
 - [x] 🟡 `pages/overview`, `pages/auth/*` ×6, `pages/storefront/*` ×4
 
+### Phase 6 — Gap fixes (12 pages) ✅
+
+- [x] 🟡 12 pages missed the "Done" sweep and 404'd in the `id` sidebar: `blocks/` section blocks ×7 (`cta`, `faq`, `features`, `logos`, `pricing`, `stats`, `testimonials`), `blocks/footers/*` ×2, `pages/landing/*` ×2, `components/ui/mode-switcher`.
+
 ---
 
 ## Completed

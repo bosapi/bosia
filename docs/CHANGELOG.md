@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Mobile bottom-nav (dock) blocks: edge, floating, pill and a center-FAB tab bar.
 
+### Fixed
+
+- Indonesian docs: add the 12 missing block/page/component translations (no more broken `id` links).
+
 ## [0.8.5] - 2026-07-10
 
 ### Added
