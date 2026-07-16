@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.10] - 2026-07-16
+
+### Changed
+
+- Dev server ignores edits to notes, tests, and editor temp files instead of rebuilding.
+- Dev rebuilds skip re-reading the routes folder when no route file changed.
+- Page reload after a rebuild now fires as soon as the app is ready, not after a fixed wait.
+
+---
+
 ## [0.8.9] - 2026-07-14
 
 ### Changed

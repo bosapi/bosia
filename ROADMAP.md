@@ -1,7 +1,18 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.9**
+> Current version: **0.8.10**
+
+---
+
+## 0.8.10 (2026-07-16) — Dev DX trio (rebuild filter, cached route scan, health-poll reload)
+
+> The three v0.2.1 DX items: dev rebuilt on `.md`/test/editor-temp edits, re-walked `src/routes` every build, and slept a flat 200ms before broadcasting reload.
+
+- [x] 🟡 `core/devWatch.ts` (new) — `shouldIgnoreForRebuild` (md/test/spec/swap files) + `affectsRouteManifest` (only `+` files & dirs under `src/routes` matter); `test/devWatch.test.ts`.
+- [x] 🟡 `core/dev.ts` — watcher + mtime poll skip ignored files; `routesDirty` flag → `BOSIA_SKIP_ROUTE_SCAN` env on the build spawn (always scans in managed mode); `Bun.sleep(200)` → `waitForAppHealthy()` polling `/_health` (50ms, 10s cap).
+- [x] 🟡 `core/build.ts` — when flagged, reuses previous `route-manifest.json` (read before cleanup) instead of `scanRoutes()`; falls back to a real scan if missing.
+- [ ] ⚪ Known ceiling: apps importing `.md` from `src/` lose live-reload for those files; drop `.md` from the ignore list if it bites.
 
 ---
 
@@ -911,9 +922,9 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 
 ### DX
 
-- [ ] 🟡 Cache route scanning in dev mode — skip `fs.readdirSync()` re-scan when changed file is not a route file (`+page`/`+layout`/`+server`/`+error`)
-- [ ] 🟡 Remove hardcoded 200ms SSE delay — poll `/_health` instead of `Bun.sleep(200)` before broadcasting reload
-- [ ] 🟡 Smarter dev rebuild triggers — filter watcher by extension; skip rebuilds for `.md`, test files, and non-source changes
+- [x] 🟡 Cache route scanning in dev mode — skip `fs.readdirSync()` re-scan when changed file is not a route file (`+page`/`+layout`/`+server`/`+error`) — shipped 0.8.10
+- [x] 🟡 Remove hardcoded 200ms SSE delay — poll `/_health` instead of `Bun.sleep(200)` before broadcasting reload — shipped 0.8.10
+- [x] 🟡 Smarter dev rebuild triggers — filter watcher by extension; skip rebuilds for `.md`, test files, and non-source changes — shipped 0.8.10
 
 ---
 

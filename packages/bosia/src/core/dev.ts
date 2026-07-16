@@ -3,6 +3,7 @@ import { readdirSync, statSync, watch, type Dirent } from "fs";
 import { join } from "path";
 import { loadEnv, resetDeclaredKeys } from "./env.ts";
 import { BOSIA_NODE_PATH } from "./paths.ts";
+import { affectsRouteManifest, shouldIgnoreForRebuild } from "./devWatch.ts";
 
 // Dev always writes to .bosia/dev so a parallel `bun run build` (writing to ./dist)
 // can't clobber the live preview. Hardcoded — BOSIA_OUT_DIR is a build-mode knob,
@@ -122,13 +123,26 @@ const STARTING_PAGE = `<!doctype html>
 
 const BUILD_SCRIPT = join(import.meta.dir, "build.ts");
 
+// True when a change since the last build may have altered the route manifest
+// (any `+` file or directory under src/routes — see devWatch.ts). While false,
+// build.ts reuses the previous route-manifest.json instead of re-walking
+// src/routes. Starts true so the first build always scans.
+let routesDirty = true;
+
 async function runBuild(): Promise<boolean> {
 	console.log("🏗️  Building...");
+	// Managed mode has no watcher, so we never know what changed — always scan.
+	const skipScan = !MANAGED && !routesDirty;
+	routesDirty = false;
 	const proc = spawn(["bun", "run", BUILD_SCRIPT], {
 		stdout: "inherit",
 		stderr: "inherit",
 		cwd: process.cwd(),
-		env: { ...process.env, BOSIA_OUT_DIR: DEV_OUT_DIR },
+		env: {
+			...process.env,
+			BOSIA_OUT_DIR: DEV_OUT_DIR,
+			BOSIA_SKIP_ROUTE_SCAN: skipScan ? "1" : "0",
+		},
 	});
 	return (await proc.exited) === 0;
 }
@@ -281,13 +295,29 @@ async function buildAndRestart(): Promise<boolean> {
 				return false;
 			}
 			await startAppServer();
-			// Give the app server a moment to bind its port
-			await Bun.sleep(200);
+			// Wait until the app server actually answers before telling browsers
+			// to reload — a fixed sleep was too slow for fast binds and too short
+			// for slow ones.
+			await waitForAppHealthy();
 			broadcastReload();
 		} while (buildPending);
 		return ok;
 	} finally {
 		building = false;
+	}
+}
+
+// Poll /_health until the freshly-spawned app server answers. 127.0.0.1, not
+// "localhost" — same IPv6-vs-IPv4 pin as the proxy below. On timeout we give
+// up and broadcast anyway; the STARTING_PAGE retry loop covers stragglers.
+async function waitForAppHealthy(timeoutMs = 10_000): Promise<void> {
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		try {
+			const res = await fetch(`http://127.0.0.1:${APP_PORT}/_health`);
+			if (res.ok) return;
+		} catch {}
+		await Bun.sleep(50);
 	}
 }
 
@@ -488,6 +518,7 @@ function isGenerated(path: string): boolean {
 // scheduleBuild() for an edit that was already handled.
 
 const SRC_DIR = join(process.cwd(), "src");
+const ROUTES_DIR = join(SRC_DIR, "routes");
 const MTIME_POLL_MS = 5_000;
 const mtimes = new Map<string, number>();
 
@@ -503,6 +534,8 @@ if (!MANAGED) {
 		if (!filename) return;
 		const abs = join(process.cwd(), "src", filename);
 		if (isGenerated(abs)) return;
+		if (shouldIgnoreForRebuild(abs)) return;
+		if (affectsRouteManifest(abs, ROUTES_DIR)) routesDirty = true;
 		console.log(`[watch] changed: ${filename}`);
 		try {
 			mtimes.set(abs, statSync(abs).mtimeMs);
@@ -533,6 +566,9 @@ function walkSrc(out: Map<string, number>): void {
 				continue;
 			}
 			if (!ent.isFile()) continue;
+			// Keep ignored files out of the mtime map entirely, mirroring the
+			// fs.watch filter — the poll then can't fire on them either.
+			if (shouldIgnoreForRebuild(abs)) continue;
 			try {
 				out.set(abs, statSync(abs).mtimeMs);
 			} catch {
@@ -552,19 +588,20 @@ if (!MANAGED) {
 
 		let changed: string | null = null;
 
+		// One sweep can absorb several files (agents write in batches) and the
+		// whole map is replaced below, so every diff — not just the first —
+		// must be checked against the route manifest.
 		for (const [path, ts] of fresh) {
 			const prev = mtimes.get(path);
 			if (prev === undefined || prev !== ts) {
-				changed = path;
-				break;
+				changed ??= path;
+				if (affectsRouteManifest(path, ROUTES_DIR)) routesDirty = true;
 			}
 		}
-		if (!changed) {
-			for (const path of mtimes.keys()) {
-				if (!fresh.has(path)) {
-					changed = path;
-					break;
-				}
+		for (const path of mtimes.keys()) {
+			if (!fresh.has(path)) {
+				changed ??= path;
+				if (affectsRouteManifest(path, ROUTES_DIR)) routesDirty = true;
 			}
 		}
 

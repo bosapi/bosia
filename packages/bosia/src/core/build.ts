@@ -1,5 +1,6 @@
-import { writeFileSync, rmSync, mkdirSync, existsSync } from "fs";
+import { writeFileSync, readFileSync, rmSync, mkdirSync, existsSync } from "fs";
 import { join, relative } from "path";
+import type { RouteManifest } from "./types.ts";
 
 import { scanRoutes } from "./scanner.ts";
 import { generateRoutesFile } from "./routeFile.ts";
@@ -50,6 +51,17 @@ const envMode = isProduction ? "production" : "development";
 const envVars = loadEnv(envMode);
 const classifiedEnv = classifyEnvVars(envVars);
 
+// 0b-pre. Dev fast path: when the dev watcher knows no route file changed
+// (BOSIA_SKIP_ROUTE_SCAN=1), reuse the previous build's route manifest instead
+// of re-walking src/routes. Read before the cleanup below deletes it. Missing
+// or corrupt (e.g. the previous build failed before writing it) → real scan.
+let cachedManifest: RouteManifest | null = null;
+if (process.env.BOSIA_SKIP_ROUTE_SCAN === "1") {
+	try {
+		cachedManifest = JSON.parse(readFileSync(join(OUT_DIR, "route-manifest.json"), "utf-8"));
+	} catch {}
+}
+
 // 0b. Clean generated output. Only OUT_DIR (this build's artifacts) and the
 // codegen files inside .bosia/ that this build owns. A blanket wipe of .bosia/
 // would clobber a concurrently-running `bosia dev` whose compiled server lives
@@ -70,10 +82,12 @@ for (const p of [
 	} catch {}
 }
 
-// 1. Scan routes
-const manifest = scanRoutes();
+// 1. Scan routes (or reuse the cached manifest — see 0b-pre)
+const manifest = cachedManifest ?? scanRoutes();
 buildCtx.manifest = manifest;
-console.log(`📂 Found ${manifest.pages.length} page route(s):`);
+console.log(
+	`📂 Found ${manifest.pages.length} page route(s)${cachedManifest ? " (cached scan)" : ""}:`,
+);
 for (const r of manifest.pages) {
 	console.log(`   ${r.pattern} → ${r.page}${r.pageServer ? " (server)" : ""}`);
 }
