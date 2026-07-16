@@ -1,0 +1,12 @@
+{
+	"name": "dock-floating",
+	"description": "Mobile bottom-nav — a rounded card lifted off the bottom edge with a soft shadow.",
+	"category": "docks",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

@@ -1,6 +1,6 @@
 ---
 name: bosia-skills-catalog
-description: Top-level index of 54 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
+description: Top-level index of 55 Bosia skills the LLM consults when generating Bosia projects. Two tracks — design (✦) governs visual output, framework (·) governs code correctness. Brief intake (✦) runs once per app before any UI emit.
 od:
   mode: catalog
   category: index
@@ -8,7 +8,7 @@ od:
 
 # Bosia Skills Catalog
 
-54 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
+55 skills the AI uses when generating Bosia projects. Adapted from `nexu-io/open-design` `SKILL.md` format; bodies rewritten for Bosia's multi-file Bun + Svelte 5 Runes + Elysia output.
 
 ## Usage
 
@@ -118,6 +118,7 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 | `bosia-cards`             | ✦     | Catalog of the 29 `cards/*` blocks. Install with `bosia add block cards/<name>`; brand = `primary`, status = emerald/amber/blue/destructive.                                                                                  |
 | `bosia-heros`             | ✦     | Catalog of the 17 `heros/*` full-bleed hero sections. Install with `bosia add block heros/<name>`; brand = `primary`, dark heroes = `bg-foreground text-background`.                                                          |
 | `bosia-navbars`           | ✦     | Catalog of the 19 `navbars/*` blocks (standard/themes/app). Install with `bosia add block navbars/<name>`; brand = `primary`, dark bars = `bg-foreground text-background`, glass = `backdrop-blur-xl`.                        |
+| `bosia-docks`             | ✦     | Catalog of the 4 `docks/*` mobile bottom-nav blocks (edge/floating/pill/fab). Install with `bosia add block docks/<name>`; brand = `primary`, active tab = `bg-primary/10 text-primary`, FAB = `bg-primary`.                  |
 | `bosia-footers`           | ✦     | Catalog of the 12 `footers/*` blocks (standard/themes). Install with `bosia add block footers/<name>`; brand = `primary`, ships `__BRAND__` placeholder (replace it — `check` fails otherwise), social glyphs inline SVG.     |
 | `bosia-sections`          | ✦     | Catalog of 16 marketing section blocks across 7 families (pricing/testimonials/faq/cta/features/stats/logos). Install with `bosia add block <family>/<name>`; brand = `primary`, no `__BRAND__` in sections.                  |
 | `bosia-storefront`        | ✦     | Mercato storefront — 4 pages (home/PLP/PDP/checkout) + 24 `storefront/*` blocks + `clay` theme. Install pages with `bosia add page storefront/<name>`; one template, six purposes, one shared cart.                           |

@@ -202,6 +202,7 @@ export const sidebar: NavGroup[] = [
 					{ label: "App & Interactive", slug: "blocks/navbars/app" },
 				],
 			},
+			{ label: "Docks", slug: "blocks/docks" },
 			{
 				label: "Footers",
 				children: [

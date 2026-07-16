@@ -1,0 +1,12 @@
+{
+	"name": "dock-edge",
+	"description": "Mobile bottom-nav — a full-width flush tab bar with icon labels, a count badge and a dot.",
+	"category": "docks",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

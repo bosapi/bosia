@@ -5,6 +5,15 @@
 
 ---
 
+## docs 0.8.6 (2026-07-17) — Docks: mobile bottom-nav blocks
+
+> Bosia had 19 top navbars but no mobile bottom navigation. Ported the Dockline design into a new `docks` block category, adapted to semantic tokens + `@lucide/svelte`.
+
+- [x] 🟢 `registry/blocks/docks/{edge,floating,pill,fab}/` — self-contained `<nav>` tab bars; active tab `bg-primary/10 text-primary`, FAB `bg-primary`, count/dot badges; registered in `registry/index.json`.
+- [x] 🟢 Docs — `blocks/docks.md` (+ `DocksDemo` wired into slug route), overview section, `bosia-docks` skill.
+
+---
+
 ## 0.8.10 (2026-07-16) — Dev DX trio (rebuild filter, cached route scan, health-poll reload)
 
 > The three v0.2.1 DX items: dev rebuilt on `.md`/test/editor-temp edits, re-walked `src/routes` every build, and slept a flat 200ms before broadcasting reload.

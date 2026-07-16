@@ -1,0 +1,12 @@
+{
+	"name": "dock-fab",
+	"description": "Mobile bottom-nav — a flush tab bar split around a raised circular center action button.",
+	"category": "docks",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

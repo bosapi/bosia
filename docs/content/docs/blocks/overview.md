@@ -59,6 +59,10 @@ Full-bleed landing hero sections, one per vertical:
 - [App & Interactive](/docs/blocks/navbars/app/) — dashboard, e-commerce, docs, mega-menu, announcement, mobile
 - [Themes](/docs/blocks/navbars/themes/) — dark, glass, brutalist, floating pill, gradient, brand bar, overlay
 
+### Docks (4)
+
+Mobile [bottom-navigation bars](/docs/blocks/docks/) — edge, floating, pill, center-FAB.
+
 ### Cards (29)
 
 - [People](/docs/blocks/cards/people/) — profile, contact, testimonial

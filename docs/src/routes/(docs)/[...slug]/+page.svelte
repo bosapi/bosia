@@ -92,6 +92,7 @@
 	import NavbarsStandardDemo from "$lib/components/demos/NavbarsStandardDemo.svelte";
 	import NavbarsThemesDemo from "$lib/components/demos/NavbarsThemesDemo.svelte";
 	import NavbarsAppDemo from "$lib/components/demos/NavbarsAppDemo.svelte";
+	import DocksDemo from "$lib/components/demos/DocksDemo.svelte";
 	import FootersStandardDemo from "$lib/components/demos/FootersStandardDemo.svelte";
 	import FootersThemesDemo from "$lib/components/demos/FootersThemesDemo.svelte";
 	import PricingSectionsDemo from "$lib/components/demos/PricingSectionsDemo.svelte";
@@ -217,6 +218,7 @@
 		NavbarsStandardDemo,
 		NavbarsThemesDemo,
 		NavbarsAppDemo,
+		DocksDemo,
 		FootersStandardDemo,
 		FootersThemesDemo,
 		PricingSectionsDemo,

@@ -1,0 +1,12 @@
+{
+	"name": "dock-pill",
+	"description": "Mobile bottom-nav — a compact centered icon-only capsule that floats above the edge.",
+	"category": "docks",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}
