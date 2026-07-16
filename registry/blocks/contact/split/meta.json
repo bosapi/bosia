@@ -1,0 +1,12 @@
+{
+	"name": "contact-split",
+	"description": "Contact section — heading and contact details beside a card form that posts to /api/contact.",
+	"category": "contact",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

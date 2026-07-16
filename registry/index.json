@@ -62,7 +62,7 @@
 		"ui/sidebar",
 		"ui/slider"
 	],
-	"features": ["drizzle", "file-upload"],
+	"features": ["drizzle", "file-upload", "contact-form"],
 	"blocks": [
 		"cards/stat",
 		"cards/progress",
@@ -210,7 +210,11 @@
 		"logos/row",
 		"logos/grid",
 		"cards/pick-list",
-		"stats/sentiment-bar"
+		"stats/sentiment-bar",
+		"contact/split",
+		"contact/simple",
+		"team/grid",
+		"team/spotlight"
 	],
 	"pages": [
 		"storefront/home",
@@ -228,7 +232,9 @@
 		"auth/otp",
 		"auth/sso",
 		"landing/saas",
-		"landing/simple"
+		"landing/simple",
+		"company/contact",
+		"company/about"
 	],
 	"themes": [
 		"neutral",

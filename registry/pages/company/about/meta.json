@@ -1,0 +1,15 @@
+{
+	"name": "company-about",
+	"description": "About page: minimal navbar, consulting hero, stats band, team grid, CTA panel and minimal footer.",
+	"category": "company",
+	"dependencies": [
+		"blocks/navbars/minimal",
+		"blocks/heros/consulting",
+		"blocks/stats/band",
+		"blocks/team/grid",
+		"blocks/cta/panel",
+		"blocks/footers/minimal"
+	],
+	"files": ["page.svelte"],
+	"fonts": {}
+}

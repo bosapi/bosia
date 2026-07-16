@@ -1,0 +1,10 @@
+{
+	"name": "contact-simple",
+	"description": "Centered contact form section that posts name, email and message to /api/contact.",
+	"category": "contact",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

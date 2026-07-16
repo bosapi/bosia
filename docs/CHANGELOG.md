@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Mobile bottom-nav (dock) blocks: edge, floating, pill and a center-FAB tab bar.
+- Contact and team section blocks: split/simple forms, member grid and founder spotlight.
+- Company pages: ready-made About and Contact pages built from blocks.
+- Contact form backend: submissions are checked and saved to your database automatically.
 
 ### Fixed
 

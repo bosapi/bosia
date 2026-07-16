@@ -1,0 +1,12 @@
+{
+	"name": "team-spotlight",
+	"description": "Founder or leadership spotlight — portrait beside a quote, bio and story link.",
+	"category": "team",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {
+		"@lucide/svelte": "^1.17.0"
+	}
+}

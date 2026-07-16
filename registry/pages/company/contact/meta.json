@@ -1,0 +1,8 @@
+{
+	"name": "company-contact",
+	"description": "Contact page: minimal navbar, split contact section with form and details, minimal footer.",
+	"category": "company",
+	"dependencies": ["blocks/navbars/minimal", "blocks/contact/split", "blocks/footers/minimal"],
+	"files": ["page.svelte"],
+	"fonts": {}
+}

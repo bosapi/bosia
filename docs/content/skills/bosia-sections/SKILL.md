@@ -1,6 +1,6 @@
 ---
 name: bosia-sections
-description: Catalog of 16 marketing section blocks across 7 families (pricing, testimonials, faq, cta, features, stats, logos). Install with `bosia add block <family>/<name>`; self-contained `<section>` blocks that restyle across all themes via semantic tokens.
+description: Catalog of 20 marketing section blocks across 9 families (pricing, testimonials, faq, cta, features, stats, logos, contact, team). Install with `bosia add block <family>/<name>`; self-contained `<section>` blocks that restyle across all themes via semantic tokens.
 triggers:
   - pricing section
   - testimonials
@@ -10,6 +10,10 @@ triggers:
   - stats section
   - logo cloud
   - marketing section
+  - contact section
+  - contact form
+  - team section
+  - meet the team
 od:
   mode: convention
   category: design
@@ -25,7 +29,7 @@ bosia:
   stack: [svelte-5-runes, tailwind-v4]
 ---
 
-Bosia ships **16 marketing section blocks** across **7 families** — the middle of a landing page,
+Bosia ships **20 marketing section blocks** across **9 families** — the middle of a landing page,
 between the [[bosia-navbars]] navbar/[[bosia-heros]] hero and the [[bosia-footers]] footer. Each is
 a self-contained, full-width Svelte 5 `<section>` built **only** from semantic tokens, so it
 restyles across every theme with no edits. Install individually:
@@ -67,11 +71,18 @@ those to match your product.
 | `features`     | `grid`, `split`, `bento`          | 3×2 icon tiles / alternating copy+visual rows / 1 large + 4 small bento tiles |
 | `stats`        | `band`, `cards`                   | slim muted number band / four stat cards with delta chips                     |
 | `logos`        | `row`, `grid`                     | trusted-by wordmark row / bordered cell grid of wordmarks                     |
+| `contact`      | `split`, `simple`                 | form beside contact details / centered form — both POST to `/api/contact`     |
+| `team`         | `grid`, `spotlight`               | member-card grid / one oversized founder card with quote and bio              |
 
 Each family has its own page with live previews and install lines under **Blocks → Sections** in the
 sidebar: [Pricing](/docs/blocks/pricing/), [Testimonials](/docs/blocks/testimonials/),
 [FAQ](/docs/blocks/faq/), [CTA](/docs/blocks/cta/), [Features](/docs/blocks/features/),
-[Stats](/docs/blocks/stats/), [Logos](/docs/blocks/logos/).
+[Stats](/docs/blocks/stats/), [Logos](/docs/blocks/logos/), [Contact](/docs/blocks/contact/),
+[Team](/docs/blocks/team/).
+
+The `contact` forms post JSON to `/api/contact`; install the `contact-form` feature
+(`bosia feat contact-form`) for the validated, Drizzle-backed endpoint, or point the block's
+`action` prop at your own route.
 
 ## Canonical section order
 

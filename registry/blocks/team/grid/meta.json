@@ -1,0 +1,10 @@
+{
+	"name": "team-grid",
+	"description": "Team section — member cards in a responsive grid with avatar, name, role and social links.",
+	"category": "team",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

@@ -55,6 +55,7 @@ export const sidebar: NavGroup[] = [
 			{ label: "Testing", slug: "guides/testing" },
 			{ label: "Plugins", labelId: "Plugin", slug: "guides/plugins" },
 			{ label: "File Upload", labelId: "Unggah Berkas", slug: "guides/file-upload" },
+			{ label: "Contact Form", labelId: "Form Kontak", slug: "guides/contact-form" },
 		],
 	},
 	{
@@ -220,6 +221,8 @@ export const sidebar: NavGroup[] = [
 					{ label: "Features", slug: "blocks/features" },
 					{ label: "Stats", slug: "blocks/stats" },
 					{ label: "Logos", slug: "blocks/logos" },
+					{ label: "Contact", labelId: "Kontak", slug: "blocks/contact" },
+					{ label: "Team", labelId: "Tim", slug: "blocks/team" },
 				],
 			},
 			{
@@ -283,6 +286,14 @@ export const sidebar: NavGroup[] = [
 				children: [
 					{ label: "SaaS Landing", slug: "pages/landing/saas" },
 					{ label: "Simple Landing", slug: "pages/landing/simple" },
+				],
+			},
+			{
+				label: "Company",
+				labelId: "Perusahaan",
+				children: [
+					{ label: "About", labelId: "Tentang", slug: "pages/company/about" },
+					{ label: "Contact", labelId: "Kontak", slug: "pages/company/contact" },
 				],
 			},
 		],

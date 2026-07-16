@@ -5,6 +5,20 @@
 
 ---
 
+## docs 0.8.6 (2026-07-17) — Registry gap-fill Phase 1: contact + about + team
+
+> General-purpose sites hit registry gaps at once: no contact/about/team. Phase 1 of 4 (plan: mellow-jingling-dragon); Phases 2–4 (blog, gallery/process/errors, newsletter/consent/SEO) await approval.
+
+- [x] 🟢 `registry/blocks/{contact/{split,simple},team/{grid,spotlight}}` — form sections POST JSON to `/api/contact` (`action` prop overrides); team cards + founder spotlight.
+- [x] 🟢 `registry/pages/company/{contact,about}` — composed from navbar/hero/stats/team/cta/footer blocks.
+- [x] 🟢 `registry/features/contact-form/` — dialect-split submissions table, repository, service (plain validation), `POST/GET /api/contact`; drizzle append-line.
+- [x] 🟢 Docs: `blocks/{contact,team}.md`, `pages/company/{about,contact}.md`, `guides/contact-form.md` + `id/` mirrors, 4 demos, nav; `bosia-sections` skill → 20 blocks / 9 families.
+- [ ] ⚪ Phase 2 — blog blocks/pages/feature (needs approval).
+- [ ] ⚪ Phase 3 — gallery/process/error pages (needs approval).
+- [ ] ⚪ Phase 4 — newsletter/consent/SEO (needs approval).
+
+---
+
 ## docs 0.8.6 (2026-07-17) — Docks: mobile bottom-nav blocks
 
 > Bosia had 19 top navbars but no mobile bottom navigation. Ported the Dockline design into a new `docks` block category, adapted to semantic tokens + `@lucide/svelte`.

@@ -1,0 +1,65 @@
+{
+	"name": "contact-form",
+	"description": "Contact form backend — POST /api/contact validates and stores submissions via Drizzle. Pick dialect at install via -d sqlite|postgres|mysql (or -y for sqlite default).",
+	"features": ["drizzle"],
+	"components": [],
+	"blocks": [],
+	"options": [
+		{
+			"name": "dialect",
+			"flag": "-d",
+			"long": "--dialect",
+			"prompt": "Which database dialect should contact-form use?",
+			"choices": [
+				{
+					"value": "sqlite",
+					"label": "SQLite",
+					"hint": "default — zero-config, local file"
+				},
+				{ "value": "postgres", "label": "Postgres" },
+				{ "value": "mysql", "label": "MySQL" }
+			],
+			"default": "sqlite"
+		}
+	],
+	"files": [
+		{
+			"src": "submissions.pg.table.ts",
+			"target": "src/features/contact-form/schemas/submissions.table.ts",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "submissions.mysql.table.ts",
+			"target": "src/features/contact-form/schemas/submissions.table.ts",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "submissions.sqlite.table.ts",
+			"target": "src/features/contact-form/schemas/submissions.table.ts",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "submission.repository.ts",
+			"target": "src/features/contact-form/submission.repository.ts"
+		},
+		{
+			"src": "contact.service.ts",
+			"target": "src/features/contact-form/contact.service.ts"
+		},
+		{
+			"src": "contact-index.ts",
+			"target": "src/features/contact-form/index.ts"
+		},
+		{
+			"src": "schemas.ts",
+			"target": "src/features/drizzle/schemas.ts",
+			"strategy": "append-line"
+		},
+		{
+			"src": "api-contact-server.ts",
+			"target": "src/routes/api/contact/+server.ts"
+		}
+	],
+	"npmDeps": {},
+	"envVars": {}
+}
