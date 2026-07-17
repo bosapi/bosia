@@ -3,4 +3,5 @@ dist
 build
 .bosia
 public/bosia-tw.css
+public/search-index.json
 bun.lock

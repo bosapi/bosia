@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ThemeToggle from "./ThemeToggle.svelte";
+	import { Search } from "@lucide/svelte";
 	import type { Locale } from "$lib/docs/i18n";
 
 	let {
@@ -7,11 +8,13 @@
 		locale,
 		switchLocaleUrl,
 		onMenuToggle,
+		onSearch,
 	}: {
 		version?: string;
 		locale: Locale;
 		switchLocaleUrl: string;
 		onMenuToggle?: () => void;
+		onSearch?: () => void;
 	} = $props();
 </script>
 
@@ -62,6 +65,22 @@
 
 		<!-- Right actions -->
 		<nav class="flex items-center gap-1">
+			<!-- Search -->
+			{#if onSearch}
+				<button
+					onclick={onSearch}
+					class="inline-flex h-8 items-center gap-2 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:border sm:border-border"
+					aria-label={locale === "id" ? "Cari dokumentasi" : "Search docs"}
+				>
+					<Search size={14} />
+					<span class="hidden sm:inline">{locale === "id" ? "Cari..." : "Search..."}</span>
+					<kbd
+						class="hidden rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline"
+						>⌘K</kbd
+					>
+				</button>
+			{/if}
+
 			<!-- Language switcher -->
 			<a
 				href={switchLocaleUrl}

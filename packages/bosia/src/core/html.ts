@@ -410,6 +410,7 @@ const STATIC_EXTS = new Set([
 	".ttf",
 	".xml",
 	".txt",
+	".json",
 	".webmanifest",
 ]);
 

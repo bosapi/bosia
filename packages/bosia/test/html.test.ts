@@ -107,6 +107,7 @@ describe("isStaticPath", () => {
 		expect(isStaticPath("/foo.js")).toBe(true);
 		expect(isStaticPath("/img/logo.png")).toBe(true);
 		expect(isStaticPath("/favicon.ico")).toBe(true);
+		expect(isStaticPath("/search-index.json")).toBe(true);
 	});
 
 	test("non-static paths", () => {

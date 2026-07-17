@@ -4,6 +4,7 @@ docs/.astro/
 .bosia/
 **/public/bosia-tw.css
 **/public/llms.txt
+**/public/search-index.json
 .DS_Store
 *.log
 .env*.local

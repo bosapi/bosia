@@ -11,6 +11,12 @@
 
 ---
 
+## Done — Docs search (⌘K) ✅
+
+- [x] 🟡 Search palette over page titles + H2 sections, per locale. Build-time `public/search-index.json` (`gen-search-index.ts`) + registry `command`/`dialog` in `DocsSearch.svelte`; section hits jump to `#anchor`.
+
+---
+
 ## Done — Complete the Indonesian (`id/`) translation ✅
 
 > The docs now ship full Bahasa Indonesia parity under `content/docs/id/` —

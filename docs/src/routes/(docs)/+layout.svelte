@@ -1,9 +1,11 @@
 <script lang="ts">
 	import DocsNavbar from "$lib/components/DocsNavbar.svelte";
 	import DocsSidebar from "$lib/components/DocsSidebar.svelte";
+	import DocsSearch from "$lib/components/DocsSearch.svelte";
 
 	let { children, data }: { children: any; data: any } = $props();
 	let mobileOpen = $state(false);
+	let searchOpen = $state(false);
 
 	function closeMobile() {
 		mobileOpen = false;
@@ -16,7 +18,10 @@
 		locale={data.locale}
 		switchLocaleUrl={data.switchLocaleUrl}
 		onMenuToggle={() => (mobileOpen = !mobileOpen)}
+		onSearch={() => (searchOpen = true)}
 	/>
+
+	<DocsSearch bind:open={searchOpen} locale={data.locale} />
 
 	<div class="mx-auto max-w-7xl px-4 sm:px-6">
 		<div class="flex gap-8">

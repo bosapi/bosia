@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.11] - 2026-07-17
+
+### Fixed
+
+- JSON files in your `public/` folder are now served instead of returning 404.
+
+---
+
 ## [0.8.10] - 2026-07-16
 
 ### Changed

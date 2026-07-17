@@ -6,8 +6,9 @@
 	"scripts": {
 		"sync": "bun run sync-docs.ts",
 		"gen-llms": "bun run scripts/gen-llms.ts",
-		"dev": "bun run sync && bun run gen-llms && bun run ../packages/bosia/src/core/dev.ts",
-		"build": "bun run sync && bun run gen-llms && NODE_ENV=production bun run ../packages/bosia/src/core/build.ts && bun run scripts/post-build.ts",
+		"gen-search": "bun run scripts/gen-search-index.ts",
+		"dev": "bun run sync && bun run gen-llms && bun run gen-search && bun run ../packages/bosia/src/core/dev.ts",
+		"build": "bun run sync && bun run gen-llms && bun run gen-search && NODE_ENV=production bun run ../packages/bosia/src/core/build.ts && bun run scripts/post-build.ts",
 		"start": "bun run ../packages/bosia/src/cli/index.ts start",
 		"check": "tsc --noEmit && prettier --check .",
 		"test": "bun test"

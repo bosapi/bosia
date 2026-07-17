@@ -1,5 +1,6 @@
 <script lang="ts">
 	import DocsNavbar from "./DocsNavbar.svelte";
+	import DocsSearch from "./DocsSearch.svelte";
 	import { localizeUrl, type Locale } from "$lib/docs/i18n";
 	import { Button } from "$registry/button";
 	import { Badge } from "$registry/badge";
@@ -22,6 +23,8 @@
 		locale,
 		switchLocaleUrl,
 	}: { version: string; locale: Locale; switchLocaleUrl: string } = $props();
+
+	let searchOpen = $state(false);
 
 	const strings = {
 		en: {
@@ -201,7 +204,9 @@
 </script>
 
 <div class="min-h-screen flex flex-col">
-	<DocsNavbar {version} {locale} {switchLocaleUrl} />
+	<DocsNavbar {version} {locale} {switchLocaleUrl} onSearch={() => (searchOpen = true)} />
+
+	<DocsSearch bind:open={searchOpen} {locale} />
 
 	<!-- Hero -->
 	<section class="relative overflow-hidden px-4 pt-20 pb-16 sm:pt-28 sm:pb-24">

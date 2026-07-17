@@ -20,6 +20,17 @@ export interface DocPage {
 	demoCode?: string;
 }
 
+// Shared with scripts/gen-search-index.ts — search anchors must match rendered heading ids.
+export function slugifyHeading(text: string): string {
+	return text
+		.toLowerCase()
+		.replace(/<[^>]*>/g, "")
+		.replace(/[^\w\s-]/g, "")
+		.replace(/\s+/g, "-")
+		.replace(/-+/g, "-")
+		.trim();
+}
+
 export async function parseMarkdown(raw: string): Promise<DocPage> {
 	const { data: frontmatter, content } = matter(raw);
 	const hl = await getHighlighter();
@@ -30,13 +41,7 @@ export async function parseMarkdown(raw: string): Promise<DocPage> {
 	marked.use({
 		renderer: {
 			heading({ text, depth }: { text: string; depth: number }) {
-				const id = text
-					.toLowerCase()
-					.replace(/<[^>]*>/g, "")
-					.replace(/[^\w\s-]/g, "")
-					.replace(/\s+/g, "-")
-					.replace(/-+/g, "-")
-					.trim();
+				const id = slugifyHeading(text);
 				if (depth >= 2 && depth <= 4) {
 					headings.push({ id, text: text.replace(/<[^>]*>/g, ""), level: depth });
 				}
