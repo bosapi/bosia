@@ -20,6 +20,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Gallery blocks: an image grid that opens photos full-size, and a Pinterest-style masonry layout.
 - Process blocks: a numbered how-it-works row and a company-story timeline.
 - Error pages: ready-made 404, 500 and under-maintenance screens, each a single file.
+- Newsletter blocks and backend: signup sections that save subscribers to your database safely.
+- Cookie consent banner: visitors choose once and the choice is remembered on their device.
+- SEO routes: sitemap, robots and RSS feed served from one small settings file.
 
 ### Fixed
 

@@ -1,0 +1,10 @@
+{
+	"name": "newsletter-split",
+	"description": "Newsletter section — heading and copy beside an email signup form in a card, POSTs to /api/newsletter.",
+	"category": "newsletter",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

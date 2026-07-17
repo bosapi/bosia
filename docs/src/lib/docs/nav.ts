@@ -57,6 +57,8 @@ export const sidebar: NavGroup[] = [
 			{ label: "File Upload", labelId: "Unggah Berkas", slug: "guides/file-upload" },
 			{ label: "Contact Form", labelId: "Form Kontak", slug: "guides/contact-form" },
 			{ label: "Blog", slug: "guides/blog" },
+			{ label: "Newsletter", slug: "guides/newsletter" },
+			{ label: "SEO Routes", labelId: "Route SEO", slug: "guides/seo" },
 		],
 	},
 	{
@@ -226,6 +228,8 @@ export const sidebar: NavGroup[] = [
 					{ label: "Team", labelId: "Tim", slug: "blocks/team" },
 					{ label: "Gallery", labelId: "Galeri", slug: "blocks/gallery" },
 					{ label: "Process", labelId: "Proses", slug: "blocks/process" },
+					{ label: "Newsletter", slug: "blocks/newsletter" },
+					{ label: "Consent", labelId: "Persetujuan", slug: "blocks/consent" },
 				],
 			},
 			{

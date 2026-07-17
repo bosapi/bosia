@@ -5,6 +5,17 @@
 
 ---
 
+## docs 0.8.6 (2026-07-17) — Registry gap-fill Phase 4: newsletter + consent + SEO
+
+> Phase 4 of 4 (plan: mellow-jingling-dragon) — the registry gap-fill is complete.
+
+- [x] 🟢 `registry/blocks/{newsletter/{centered,split},consent/banner}` — signup forms POST to `/api/newsletter`; consent bar persists accept/decline in localStorage with `onDecision` hook.
+- [x] 🟢 `registry/features/newsletter/` — dialect-split subscribers table (email unique, lowercased), duplicate-safe subscribe, `POST/GET /api/newsletter`; drizzle append-line.
+- [x] 🟢 `registry/features/seo/` — no DB: `/sitemap.xml`, `/robots.txt` (staging noindex), `/rss.xml` fed by `src/features/seo/config.ts`; `PUBLIC_BASE_URL` envVar, request-origin fallback.
+- [x] 🟢 Docs: `blocks/{newsletter,consent}.md`, `guides/{newsletter,seo}.md` + `id/` mirrors, 2 demos, nav; `bosia-sections` → 27 blocks / 13 families; `bosia-seo` points at `feat seo`.
+
+---
+
 ## docs 0.8.6 (2026-07-17) — Registry gap-fill Phase 3: gallery + process + errors
 
 > Phase 3 of 4 (plan: mellow-jingling-dragon): purely frontend — no feature. Gallery/process section blocks + standalone error pages.
@@ -38,7 +49,7 @@
 - [ ] ⚪ `cards/pick-list` and `stats/sentiment-bar` named in overview but have no section on their category doc pages (`cards/utility.md`, `stats.md`).
 - [x] 🟢 Phase 2 — blog blocks/pages/feature (shipped, see Phase 2 section).
 - [x] 🟢 Phase 3 — gallery/process/error pages (shipped, see Phase 3 section).
-- [ ] ⚪ Phase 4 — newsletter/consent/SEO (needs approval).
+- [x] 🟢 Phase 4 — newsletter/consent/SEO (shipped, see Phase 4 section).
 
 ---
 

@@ -62,6 +62,11 @@ Production-standard SEO and link-preview hygiene for a Bosia app:
 - JSON-LD structured data — `Organization` + `WebSite` at layout, page-specific schemas on content routes.
 - Environment-gated `noindex` for staging/preview, emitted from `metadata()` so crawlers actually see it.
 
+Shortcut for the route plumbing: `bun x bosia@latest feat seo` installs ready-made
+`/sitemap.xml`, `/robots.txt` and `/rss.xml` routes fed by one `src/features/seo/config.ts`
+(see the [SEO routes guide](/guides/seo/)) — then this skill covers the meta/OG/JSON-LD layers
+on top.
+
 ## When to use
 
 - Before first production deploy of any Bosia app.

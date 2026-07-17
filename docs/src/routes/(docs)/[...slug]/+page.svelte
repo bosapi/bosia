@@ -137,6 +137,8 @@
 	import GallerySectionsDemo from "$lib/components/demos/GallerySectionsDemo.svelte";
 	import ProcessSectionsDemo from "$lib/components/demos/ProcessSectionsDemo.svelte";
 	import PagesErrorsDemo from "$lib/components/demos/PagesErrorsDemo.svelte";
+	import NewsletterSectionsDemo from "$lib/components/demos/NewsletterSectionsDemo.svelte";
+	import ConsentBannerDemo from "$lib/components/demos/ConsentBannerDemo.svelte";
 
 	const demos: Record<string, any> = {
 		AspectRatioDemo,
@@ -273,6 +275,8 @@
 		GallerySectionsDemo,
 		ProcessSectionsDemo,
 		PagesErrorsDemo,
+		NewsletterSectionsDemo,
+		ConsentBannerDemo,
 	};
 
 	let { data }: { data: any } = $props();

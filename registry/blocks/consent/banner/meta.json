@@ -1,0 +1,10 @@
+{
+	"name": "consent-banner",
+	"description": "Cookie-consent bar fixed to the bottom edge — accept/decline choice persisted in localStorage, with an onDecision callback.",
+	"category": "consent",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

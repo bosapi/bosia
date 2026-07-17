@@ -1,0 +1,28 @@
+{
+	"name": "seo",
+	"description": "SEO routes — /sitemap.xml, /robots.txt and /rss.xml served from one small config file. No database.",
+	"features": [],
+	"components": [],
+	"blocks": [],
+	"options": [],
+	"files": [
+		{
+			"src": "seo-config.ts",
+			"target": "src/features/seo/config.ts"
+		},
+		{
+			"src": "sitemap-server.ts",
+			"target": "src/routes/sitemap.xml/+server.ts"
+		},
+		{
+			"src": "robots-server.ts",
+			"target": "src/routes/robots.txt/+server.ts"
+		},
+		{
+			"src": "rss-server.ts",
+			"target": "src/routes/rss.xml/+server.ts"
+		}
+	],
+	"npmDeps": {},
+	"envVars": { "PUBLIC_BASE_URL": "" }
+}

@@ -1,6 +1,6 @@
 ---
 name: bosia-sections
-description: Catalog of 24 marketing section blocks across 11 families (pricing, testimonials, faq, cta, features, stats, logos, contact, team, gallery, process). Install with `bosia add block <family>/<name>`; self-contained `<section>` blocks that restyle across all themes via semantic tokens.
+description: Catalog of 27 marketing section blocks across 13 families (pricing, testimonials, faq, cta, features, stats, logos, contact, team, gallery, process, newsletter, consent). Install with `bosia add block <family>/<name>`; self-contained `<section>` blocks that restyle across all themes via semantic tokens.
 triggers:
   - pricing section
   - testimonials
@@ -19,6 +19,10 @@ triggers:
   - how it works
   - process section
   - timeline section
+  - newsletter signup
+  - email signup
+  - cookie consent
+  - consent banner
 od:
   mode: convention
   category: design
@@ -34,7 +38,7 @@ bosia:
   stack: [svelte-5-runes, tailwind-v4]
 ---
 
-Bosia ships **24 marketing section blocks** across **11 families** — the middle of a landing page,
+Bosia ships **27 marketing section blocks** across **13 families** — the middle of a landing page,
 between the [[bosia-navbars]] navbar/[[bosia-heros]] hero and the [[bosia-footers]] footer. Each is
 a self-contained, full-width Svelte 5 `<section>` built **only** from semantic tokens, so it
 restyles across every theme with no edits. Install individually:
@@ -80,16 +84,22 @@ those to match your product.
 | `team`         | `grid`, `spotlight`               | member-card grid / one oversized founder card with quote and bio              |
 | `gallery`      | `grid`, `masonry`                 | square thumbnails with a `ui/dialog` lightbox / CSS-columns masonry, no JS    |
 | `process`      | `steps`, `timeline`               | numbered horizontal how-it-works row / vertical milestone timeline            |
+| `newsletter`   | `centered`, `split`               | centered signup / card with form beside copy — both POST to `/api/newsletter` |
+| `consent`      | `banner`                          | fixed bottom cookie bar, choice persisted in localStorage, `onDecision` hook  |
 
 Each family has its own page with live previews and install lines under **Blocks → Sections** in the
 sidebar: [Pricing](/docs/blocks/pricing/), [Testimonials](/docs/blocks/testimonials/),
 [FAQ](/docs/blocks/faq/), [CTA](/docs/blocks/cta/), [Features](/docs/blocks/features/),
 [Stats](/docs/blocks/stats/), [Logos](/docs/blocks/logos/), [Contact](/docs/blocks/contact/),
-[Team](/docs/blocks/team/), [Gallery](/docs/blocks/gallery/), [Process](/docs/blocks/process/).
+[Team](/docs/blocks/team/), [Gallery](/docs/blocks/gallery/), [Process](/docs/blocks/process/),
+[Newsletter](/docs/blocks/newsletter/), [Consent](/docs/blocks/consent/).
 
 The `contact` forms post JSON to `/api/contact`; install the `contact-form` feature
 (`bosia feat contact-form`) for the validated, Drizzle-backed endpoint, or point the block's
-`action` prop at your own route.
+`action` prop at your own route. Likewise `newsletter/*` posts to `/api/newsletter` — install the
+`newsletter` feature (`bosia feat newsletter`) for the duplicate-safe subscriber endpoint.
+`consent/banner` is client-only (localStorage), no backend; render it once in the root layout,
+not per page.
 
 ## Canonical section order
 

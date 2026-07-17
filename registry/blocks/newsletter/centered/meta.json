@@ -1,0 +1,10 @@
+{
+	"name": "newsletter-centered",
+	"description": "Newsletter section — centered heading and copy over an email signup form that POSTs to /api/newsletter.",
+	"category": "newsletter",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

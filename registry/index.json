@@ -62,7 +62,7 @@
 		"ui/sidebar",
 		"ui/slider"
 	],
-	"features": ["drizzle", "file-upload", "contact-form", "blog"],
+	"features": ["drizzle", "file-upload", "contact-form", "blog", "newsletter", "seo"],
 	"blocks": [
 		"cards/stat",
 		"cards/progress",
@@ -222,7 +222,10 @@
 		"gallery/grid",
 		"gallery/masonry",
 		"process/steps",
-		"process/timeline"
+		"process/timeline",
+		"newsletter/centered",
+		"newsletter/split",
+		"consent/banner"
 	],
 	"pages": [
 		"storefront/home",

@@ -1,0 +1,65 @@
+{
+	"name": "newsletter",
+	"description": "Newsletter backend — POST /api/newsletter validates and stores subscribers via Drizzle, duplicate-safe. Pick dialect at install via -d sqlite|postgres|mysql (or -y for sqlite default).",
+	"features": ["drizzle"],
+	"components": [],
+	"blocks": [],
+	"options": [
+		{
+			"name": "dialect",
+			"flag": "-d",
+			"long": "--dialect",
+			"prompt": "Which database dialect should newsletter use?",
+			"choices": [
+				{
+					"value": "sqlite",
+					"label": "SQLite",
+					"hint": "default — zero-config, local file"
+				},
+				{ "value": "postgres", "label": "Postgres" },
+				{ "value": "mysql", "label": "MySQL" }
+			],
+			"default": "sqlite"
+		}
+	],
+	"files": [
+		{
+			"src": "subscribers.pg.table.ts",
+			"target": "src/features/newsletter/schemas/subscribers.table.ts",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "subscribers.mysql.table.ts",
+			"target": "src/features/newsletter/schemas/subscribers.table.ts",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "subscribers.sqlite.table.ts",
+			"target": "src/features/newsletter/schemas/subscribers.table.ts",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "subscriber.repository.ts",
+			"target": "src/features/newsletter/subscriber.repository.ts"
+		},
+		{
+			"src": "newsletter.service.ts",
+			"target": "src/features/newsletter/newsletter.service.ts"
+		},
+		{
+			"src": "newsletter-index.ts",
+			"target": "src/features/newsletter/index.ts"
+		},
+		{
+			"src": "schemas.ts",
+			"target": "src/features/drizzle/schemas.ts",
+			"strategy": "append-line"
+		},
+		{
+			"src": "api-newsletter-server.ts",
+			"target": "src/routes/api/newsletter/+server.ts"
+		}
+	],
+	"npmDeps": {},
+	"envVars": {}
+}
