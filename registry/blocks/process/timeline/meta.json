@@ -1,0 +1,10 @@
+{
+	"name": "process-timeline",
+	"description": "Process section — a vertical milestone timeline with year labels, titles and descriptions.",
+	"category": "process",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

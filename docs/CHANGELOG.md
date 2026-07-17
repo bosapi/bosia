@@ -17,6 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Blog blocks and pages: post list, post header, article body and related-posts sections.
 - Blog backend: posts live in your database, with three sample posts to start from.
 - Search the docs with ⌘K — find any page or section by its heading, in English or Indonesian.
+- Gallery blocks: an image grid that opens photos full-size, and a Pinterest-style masonry layout.
+- Process blocks: a numbered how-it-works row and a company-story timeline.
+- Error pages: ready-made 404, 500 and under-maintenance screens, each a single file.
 
 ### Fixed
 

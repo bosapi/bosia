@@ -1,0 +1,10 @@
+{
+	"name": "gallery-masonry",
+	"description": "Gallery section — a CSS-columns masonry of mixed-height photos, no JavaScript or library.",
+	"category": "gallery",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

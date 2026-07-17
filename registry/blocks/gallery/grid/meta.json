@@ -1,0 +1,10 @@
+{
+	"name": "gallery-grid",
+	"description": "Gallery section — a uniform square image grid that opens each photo in a dialog lightbox.",
+	"category": "gallery",
+	"themes": [],
+	"dependencies": ["ui/dialog"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

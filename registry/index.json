@@ -218,7 +218,11 @@
 		"blog/post-list",
 		"blog/post-header",
 		"blog/post-body",
-		"blog/related"
+		"blog/related",
+		"gallery/grid",
+		"gallery/masonry",
+		"process/steps",
+		"process/timeline"
 	],
 	"pages": [
 		"storefront/home",
@@ -240,7 +244,10 @@
 		"company/contact",
 		"company/about",
 		"blog/index",
-		"blog/post"
+		"blog/post",
+		"errors/not-found",
+		"errors/server-error",
+		"errors/maintenance"
 	],
 	"themes": [
 		"neutral",

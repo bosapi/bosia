@@ -68,7 +68,7 @@ Section hero landing full-bleed, satu per vertikal:
 - [Standard](/docs/blocks/footers/standard/) — layout terang klasik: minimal, columns, newsletter, centered, mega, split-brand
 - [Themes](/docs/blocks/footers/themes/) — dark, glass, gradient, brutalist, editorial, terminal
 
-### Sections (21)
+### Sections (25)
 
 Section marketing untuk bagian tengah halaman — di antara hero dan footer:
 
@@ -81,6 +81,8 @@ Section marketing untuk bagian tengah halaman — di antara hero dan footer:
 - [Logos](/docs/blocks/logos/) — row, grid
 - [Contact](/docs/blocks/contact/) — split, simple
 - [Team](/docs/blocks/team/) — grid, spotlight
+- [Gallery](/docs/blocks/gallery/) — grid dengan lightbox, masonry
+- [Process](/docs/blocks/process/) — steps, timeline
 
 ### Blog (4)
 

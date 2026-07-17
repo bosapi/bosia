@@ -68,7 +68,7 @@ Mobile [bottom-navigation bars](/docs/blocks/docks/) — edge, floating, pill, c
 - [Standard](/docs/blocks/footers/standard/) — classic light layouts: minimal, columns, newsletter, centered, mega, split-brand
 - [Themes](/docs/blocks/footers/themes/) — dark, glass, gradient, brutalist, editorial, terminal
 
-### Sections (21)
+### Sections (25)
 
 Marketing sections for the middle of a page — between the hero and the footer:
 
@@ -81,6 +81,8 @@ Marketing sections for the middle of a page — between the hero and the footer:
 - [Logos](/docs/blocks/logos/) — row, grid
 - [Contact](/docs/blocks/contact/) — split, simple
 - [Team](/docs/blocks/team/) — grid, spotlight
+- [Gallery](/docs/blocks/gallery/) — grid with lightbox, masonry
+- [Process](/docs/blocks/process/) — steps, timeline
 
 ### Blog (4)
 

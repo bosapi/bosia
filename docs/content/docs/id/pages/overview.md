@@ -108,3 +108,12 @@ Indeks blog editorial dan halaman post, lengkap dengan post contoh:
 - [Indeks](/pages/blog/index) — tumpukan kartu post-list di antara navbar dan footer
 - [Post](/pages/blog/post) — header post, isi prosa 70ch dan baris post terkait; pasangkan dengan
   [feature `blog`](/guides/blog/) untuk post berbasis database dan loader siap pakai
+
+## Halaman error
+
+Tiga [layar error mandiri](/pages/errors) — berbeda dari yang lain, ketiganya tidak menyusun blok
+dan tanpa dependensi, satu file per halaman:
+
+- **Not Found** — 404 besar, pesan singkat, tautan kembali ke beranda
+- **Server Error** — 500 dengan aksi coba lagi dan beranda
+- **Maintenance** — layar "kami segera kembali" dengan email kontak opsional

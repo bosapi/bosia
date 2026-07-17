@@ -134,6 +134,9 @@
 	import BlogSectionsDemo from "$lib/components/demos/BlogSectionsDemo.svelte";
 	import PagesBlogIndexDemo from "$lib/components/demos/PagesBlogIndexDemo.svelte";
 	import PagesBlogPostDemo from "$lib/components/demos/PagesBlogPostDemo.svelte";
+	import GallerySectionsDemo from "$lib/components/demos/GallerySectionsDemo.svelte";
+	import ProcessSectionsDemo from "$lib/components/demos/ProcessSectionsDemo.svelte";
+	import PagesErrorsDemo from "$lib/components/demos/PagesErrorsDemo.svelte";
 
 	const demos: Record<string, any> = {
 		AspectRatioDemo,
@@ -267,6 +270,9 @@
 		BlogSectionsDemo,
 		PagesBlogIndexDemo,
 		PagesBlogPostDemo,
+		GallerySectionsDemo,
+		ProcessSectionsDemo,
+		PagesErrorsDemo,
 	};
 
 	let { data }: { data: any } = $props();

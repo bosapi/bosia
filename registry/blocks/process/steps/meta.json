@@ -1,0 +1,10 @@
+{
+	"name": "process-steps",
+	"description": "Process section — a numbered horizontal how-it-works row with connector lines between steps.",
+	"category": "process",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

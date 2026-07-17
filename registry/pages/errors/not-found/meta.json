@@ -1,0 +1,8 @@
+{
+	"name": "errors-not-found",
+	"description": "Standalone 404 page: big status code, short message and a back-to-home link. No dependencies.",
+	"category": "errors",
+	"dependencies": [],
+	"files": ["page.svelte"],
+	"fonts": {}
+}

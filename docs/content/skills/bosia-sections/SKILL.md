@@ -1,6 +1,6 @@
 ---
 name: bosia-sections
-description: Catalog of 20 marketing section blocks across 9 families (pricing, testimonials, faq, cta, features, stats, logos, contact, team). Install with `bosia add block <family>/<name>`; self-contained `<section>` blocks that restyle across all themes via semantic tokens.
+description: Catalog of 24 marketing section blocks across 11 families (pricing, testimonials, faq, cta, features, stats, logos, contact, team, gallery, process). Install with `bosia add block <family>/<name>`; self-contained `<section>` blocks that restyle across all themes via semantic tokens.
 triggers:
   - pricing section
   - testimonials
@@ -14,6 +14,11 @@ triggers:
   - contact form
   - team section
   - meet the team
+  - image gallery
+  - masonry gallery
+  - how it works
+  - process section
+  - timeline section
 od:
   mode: convention
   category: design
@@ -29,7 +34,7 @@ bosia:
   stack: [svelte-5-runes, tailwind-v4]
 ---
 
-Bosia ships **20 marketing section blocks** across **9 families** — the middle of a landing page,
+Bosia ships **24 marketing section blocks** across **11 families** — the middle of a landing page,
 between the [[bosia-navbars]] navbar/[[bosia-heros]] hero and the [[bosia-footers]] footer. Each is
 a self-contained, full-width Svelte 5 `<section>` built **only** from semantic tokens, so it
 restyles across every theme with no edits. Install individually:
@@ -73,12 +78,14 @@ those to match your product.
 | `logos`        | `row`, `grid`                     | trusted-by wordmark row / bordered cell grid of wordmarks                     |
 | `contact`      | `split`, `simple`                 | form beside contact details / centered form — both POST to `/api/contact`     |
 | `team`         | `grid`, `spotlight`               | member-card grid / one oversized founder card with quote and bio              |
+| `gallery`      | `grid`, `masonry`                 | square thumbnails with a `ui/dialog` lightbox / CSS-columns masonry, no JS    |
+| `process`      | `steps`, `timeline`               | numbered horizontal how-it-works row / vertical milestone timeline            |
 
 Each family has its own page with live previews and install lines under **Blocks → Sections** in the
 sidebar: [Pricing](/docs/blocks/pricing/), [Testimonials](/docs/blocks/testimonials/),
 [FAQ](/docs/blocks/faq/), [CTA](/docs/blocks/cta/), [Features](/docs/blocks/features/),
 [Stats](/docs/blocks/stats/), [Logos](/docs/blocks/logos/), [Contact](/docs/blocks/contact/),
-[Team](/docs/blocks/team/).
+[Team](/docs/blocks/team/), [Gallery](/docs/blocks/gallery/), [Process](/docs/blocks/process/).
 
 The `contact` forms post JSON to `/api/contact`; install the `contact-form` feature
 (`bosia feat contact-form`) for the validated, Drizzle-backed endpoint, or point the block's

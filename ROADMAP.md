@@ -5,6 +5,16 @@
 
 ---
 
+## docs 0.8.6 (2026-07-17) — Registry gap-fill Phase 3: gallery + process + errors
+
+> Phase 3 of 4 (plan: mellow-jingling-dragon): purely frontend — no feature. Gallery/process section blocks + standalone error pages.
+
+- [x] 🟢 `registry/blocks/{gallery/{grid,masonry},process/{steps,timeline}}` — dialog-lightbox grid, CSS-columns masonry (no JS), numbered steps row, milestone timeline.
+- [x] 🟢 `registry/pages/errors/{not-found,server-error,maintenance}` — standalone single-file pages, zero deps.
+- [x] 🟢 Docs: `blocks/{gallery,process}.md`, `pages/errors.md` (one doc for all three) + `id/` mirrors, 3 demos, nav, overviews (Sections 21→25); `bosia-sections` skill → 24 blocks / 11 families.
+
+---
+
 ## docs 0.8.6 (2026-07-17) — Registry gap-fill Phase 2: blog
 
 > Phase 2 of 4 (plan: mellow-jingling-dragon): blog blocks + pages + a drizzle-backed blog feature, so the `bosia-blog` skill composes real registry blocks instead of scaffolding from scratch.
@@ -27,7 +37,7 @@
 - [x] 🟢 Overviews backfilled (rule: every registry item appears in its overview): blocks overview +Footers/+Sections/+counts, pages overview +Landing/+Company; `id/` mirrors (id blocks overview gained the whole catalog).
 - [ ] ⚪ `cards/pick-list` and `stats/sentiment-bar` named in overview but have no section on their category doc pages (`cards/utility.md`, `stats.md`).
 - [x] 🟢 Phase 2 — blog blocks/pages/feature (shipped, see Phase 2 section).
-- [ ] ⚪ Phase 3 — gallery/process/error pages (needs approval).
+- [x] 🟢 Phase 3 — gallery/process/error pages (shipped, see Phase 3 section).
 - [ ] ⚪ Phase 4 — newsletter/consent/SEO (needs approval).
 
 ---

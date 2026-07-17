@@ -107,3 +107,12 @@ An editorial blog index and post page, sample posts included:
 - [Index](/pages/blog/index) — post-list card stack between navbar and footer
 - [Post](/pages/blog/post) — post header, 70ch prose body and related-posts row; pair with the
   [`blog` feature](/guides/blog/) for database-backed posts and ready-made loaders
+
+## The error pages
+
+Three [standalone error screens](/pages/errors) — unlike the rest, they compose no blocks and have
+zero dependencies, one file each:
+
+- **Not Found** — big 404, short message, back-to-home link
+- **Server Error** — 500 with retry and home actions
+- **Maintenance** — "we'll be right back" screen with an optional contact email

@@ -1,0 +1,8 @@
+{
+	"name": "errors-maintenance",
+	"description": "Standalone maintenance page: badge, headline, reassurance copy and an optional contact email. No dependencies.",
+	"category": "errors",
+	"dependencies": [],
+	"files": ["page.svelte"],
+	"fonts": {}
+}

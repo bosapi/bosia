@@ -224,6 +224,8 @@ export const sidebar: NavGroup[] = [
 					{ label: "Logos", slug: "blocks/logos" },
 					{ label: "Contact", labelId: "Kontak", slug: "blocks/contact" },
 					{ label: "Team", labelId: "Tim", slug: "blocks/team" },
+					{ label: "Gallery", labelId: "Galeri", slug: "blocks/gallery" },
+					{ label: "Process", labelId: "Proses", slug: "blocks/process" },
 				],
 			},
 			{
@@ -308,6 +310,7 @@ export const sidebar: NavGroup[] = [
 					{ label: "Post", slug: "pages/blog/post" },
 				],
 			},
+			{ label: "Errors", labelId: "Error", slug: "pages/errors" },
 		],
 	},
 	{

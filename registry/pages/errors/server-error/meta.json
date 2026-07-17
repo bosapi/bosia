@@ -1,0 +1,8 @@
+{
+	"name": "errors-server-error",
+	"description": "Standalone 500 page: status code, apology message, retry and back-to-home actions. No dependencies.",
+	"category": "errors",
+	"dependencies": [],
+	"files": ["page.svelte"],
+	"fonts": {}
+}
