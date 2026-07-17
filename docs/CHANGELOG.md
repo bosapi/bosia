@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Indonesian docs: add the 12 missing block/page/component translations (no more broken `id` links).
+- Block and page overviews now list every category — footers, sections, landing and company pages.
 
 ## [0.8.5] - 2026-07-10
 

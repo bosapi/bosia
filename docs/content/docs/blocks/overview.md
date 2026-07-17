@@ -30,7 +30,7 @@ Page-level blocks (heros, cards, sections) don't carry their own site navbar —
 
 ## Available blocks
 
-100+ blocks across six categories. Install any with `bun x bosia@latest add block <category>/<name>`.
+150+ blocks across nine categories. Install any with `bun x bosia@latest add block <category>/<name>`.
 
 ### Heros (17)
 
@@ -63,14 +63,33 @@ Full-bleed landing hero sections, one per vertical:
 
 Mobile [bottom-navigation bars](/docs/blocks/docks/) — edge, floating, pill, center-FAB.
 
-### Cards (29)
+### Footers (12)
+
+- [Standard](/docs/blocks/footers/standard/) — classic light layouts: minimal, columns, newsletter, centered, mega, split-brand
+- [Themes](/docs/blocks/footers/themes/) — dark, glass, gradient, brutalist, editorial, terminal
+
+### Sections (21)
+
+Marketing sections for the middle of a page — between the hero and the footer:
+
+- [Pricing](/docs/blocks/pricing/) — columns, comparison, simple
+- [Testimonials](/docs/blocks/testimonials/) — grid, spotlight
+- [FAQ](/docs/blocks/faq/) — accordion, grid
+- [CTA](/docs/blocks/cta/) — banner, panel
+- [Features](/docs/blocks/features/) — grid, split, bento
+- [Stats](/docs/blocks/stats/) — band, cards, sentiment bar
+- [Logos](/docs/blocks/logos/) — row, grid
+- [Contact](/docs/blocks/contact/) — split, simple
+- [Team](/docs/blocks/team/) — grid, spotlight
+
+### Cards (30)
 
 - [People](/docs/blocks/cards/people/) — profile, contact, testimonial
 - [Data & Dashboard](/docs/blocks/cards/data/) — stat, progress, chart, balance
 - [Auth & Marketing](/docs/blocks/cards/auth/) — login, feature
 - [Media](/docs/blocks/cards/media/) — article, music, video, gallery
 - [Commerce](/docs/blocks/cards/commerce/) — product, pricing, order, review
-- [Utility & System](/docs/blocks/cards/utility/) — notification, weather, event, file, task, storage, code, map, integration, poll, stepper, chat
+- [Utility & System](/docs/blocks/cards/utility/) — notification, weather, event, file, task, storage, code, map, integration, poll, stepper, chat, pick list
 
 ### Storefront (36)
 

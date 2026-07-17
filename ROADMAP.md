@@ -13,6 +13,8 @@
 - [x] 🟢 `registry/pages/company/{contact,about}` — composed from navbar/hero/stats/team/cta/footer blocks.
 - [x] 🟢 `registry/features/contact-form/` — dialect-split submissions table, repository, service (plain validation), `POST/GET /api/contact`; drizzle append-line.
 - [x] 🟢 Docs: `blocks/{contact,team}.md`, `pages/company/{about,contact}.md`, `guides/contact-form.md` + `id/` mirrors, 4 demos, nav; `bosia-sections` skill → 20 blocks / 9 families.
+- [x] 🟢 Overviews backfilled (rule: every registry item appears in its overview): blocks overview +Footers/+Sections/+counts, pages overview +Landing/+Company; `id/` mirrors (id blocks overview gained the whole catalog).
+- [ ] ⚪ `cards/pick-list` and `stats/sentiment-bar` named in overview but have no section on their category doc pages (`cards/utility.md`, `stats.md`).
 - [ ] ⚪ Phase 2 — blog blocks/pages/feature (needs approval).
 - [ ] ⚪ Phase 3 — gallery/process/error pages (needs approval).
 - [ ] ⚪ Phase 4 — newsletter/consent/SEO (needs approval).

@@ -84,3 +84,18 @@ bun x bosia@latest add page auth/login
 
 These are the visual layer only — no sessions or password hashing. For real authentication, pair
 them with the `bosia-auth-flow` server wiring.
+
+## The landing pages
+
+Two marketing landings composed end to end from section blocks — navbar and footer included:
+
+- [SaaS Landing](/pages/landing/saas) — hero, logos, features, stats, pricing, testimonials, FAQ, CTA
+- [Simple Landing](/pages/landing/simple) — lean single-product layout: hero, split features, spotlight testimonial, CTA panel
+
+## The company pages
+
+General-purpose site pages for an about and a contact route:
+
+- [About](/pages/company/about) — consulting hero, stats band, team grid, CTA panel
+- [Contact](/pages/company/contact) — split contact form beside company details; pair with the
+  [`contact-form` feature](/guides/contact-form/) for the validated, database-backed endpoint

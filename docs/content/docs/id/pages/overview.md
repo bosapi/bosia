@@ -85,3 +85,18 @@ bun x bosia@latest add page auth/login
 
 Ini hanya lapisan visual — tanpa sesi atau hashing kata sandi. Untuk autentikasi sungguhan,
 pasangkan dengan rangkaian server `bosia-auth-flow`.
+
+## Halaman landing
+
+Dua landing marketing yang dirangkai ujung-ke-ujung dari block section — termasuk navbar dan footer:
+
+- [SaaS Landing](/pages/landing/saas) — hero, logos, features, stats, pricing, testimonials, FAQ, CTA
+- [Simple Landing](/pages/landing/simple) — layout satu-produk yang ramping: hero, split features, spotlight testimonial, panel CTA
+
+## Halaman perusahaan
+
+Halaman situs serbaguna untuk rute about dan kontak:
+
+- [Tentang](/pages/company/about) — hero konsultan, pita statistik, grid tim, panel CTA
+- [Kontak](/pages/company/contact) — form kontak split di samping detail perusahaan; pasangkan dengan
+  [feature `contact-form`](/guides/contact-form/) untuk endpoint tervalidasi yang didukung database
