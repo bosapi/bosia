@@ -1,0 +1,8 @@
+{
+	"name": "blog-index",
+	"description": "Blog index page: minimal navbar, post-list cards and minimal footer. Pass posts from a server loader or use the sample posts.",
+	"category": "blog",
+	"dependencies": ["blocks/navbars/minimal", "blocks/blog/post-list", "blocks/footers/minimal"],
+	"files": ["page.svelte"],
+	"fonts": {}
+}

@@ -30,7 +30,7 @@ Page-level blocks (heros, cards, sections) don't carry their own site navbar —
 
 ## Available blocks
 
-150+ blocks across nine categories. Install any with `bun x bosia@latest add block <category>/<name>`.
+150+ blocks across ten categories. Install any with `bun x bosia@latest add block <category>/<name>`.
 
 ### Heros (17)
 
@@ -81,6 +81,13 @@ Marketing sections for the middle of a page — between the hero and the footer:
 - [Logos](/docs/blocks/logos/) — row, grid
 - [Contact](/docs/blocks/contact/) — split, simple
 - [Team](/docs/blocks/team/) — grid, spotlight
+
+### Blog (4)
+
+Editorial sections for a content site — pair with the [`blog` feature](/guides/blog/) for the
+database-backed posts behind them:
+
+- [Blog](/docs/blocks/blog/) — post-list, post-header, post-body, related
 
 ### Cards (30)
 

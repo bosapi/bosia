@@ -1,0 +1,73 @@
+{
+	"name": "blog",
+	"description": "Blog backend — posts table, repository, service and server loaders for /blog and /blog/[slug], plus a sample seed. Pick dialect at install via -d sqlite|postgres|mysql (or -y for sqlite default).",
+	"features": ["drizzle"],
+	"components": [],
+	"blocks": [],
+	"options": [
+		{
+			"name": "dialect",
+			"flag": "-d",
+			"long": "--dialect",
+			"prompt": "Which database dialect should blog use?",
+			"choices": [
+				{
+					"value": "sqlite",
+					"label": "SQLite",
+					"hint": "default — zero-config, local file"
+				},
+				{ "value": "postgres", "label": "Postgres" },
+				{ "value": "mysql", "label": "MySQL" }
+			],
+			"default": "sqlite"
+		}
+	],
+	"files": [
+		{
+			"src": "posts.pg.table.ts",
+			"target": "src/features/blog/schemas/posts.table.ts",
+			"when": { "dialect": "postgres" }
+		},
+		{
+			"src": "posts.mysql.table.ts",
+			"target": "src/features/blog/schemas/posts.table.ts",
+			"when": { "dialect": "mysql" }
+		},
+		{
+			"src": "posts.sqlite.table.ts",
+			"target": "src/features/blog/schemas/posts.table.ts",
+			"when": { "dialect": "sqlite" }
+		},
+		{
+			"src": "post.repository.ts",
+			"target": "src/features/blog/post.repository.ts"
+		},
+		{
+			"src": "blog.service.ts",
+			"target": "src/features/blog/blog.service.ts"
+		},
+		{
+			"src": "blog-index.ts",
+			"target": "src/features/blog/index.ts"
+		},
+		{
+			"src": "schemas.ts",
+			"target": "src/features/drizzle/schemas.ts",
+			"strategy": "append-line"
+		},
+		{
+			"src": "blog-page-server.ts",
+			"target": "src/routes/blog/+page.server.ts"
+		},
+		{
+			"src": "blog-slug-page-server.ts",
+			"target": "src/routes/blog/[slug]/+page.server.ts"
+		},
+		{
+			"src": "seed-blog.ts",
+			"target": "src/features/drizzle/seeds/003_blog.ts"
+		}
+	],
+	"npmDeps": {},
+	"envVars": {}
+}

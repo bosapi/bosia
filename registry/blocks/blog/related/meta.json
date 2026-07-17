@@ -1,0 +1,10 @@
+{
+	"name": "blog-related",
+	"description": "Related-posts row — up to three compact post cards with tag, date and title.",
+	"category": "blog",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

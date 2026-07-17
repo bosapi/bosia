@@ -1,0 +1,10 @@
+{
+	"name": "blog-post-body",
+	"description": "Blog post body — a 70ch prose article wrapper; renders an html string, a children snippet or sample prose via ui/typography.",
+	"category": "blog",
+	"themes": [],
+	"dependencies": ["ui/typography"],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

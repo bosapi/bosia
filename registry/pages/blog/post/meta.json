@@ -1,0 +1,14 @@
+{
+	"name": "blog-post",
+	"description": "Blog post page: minimal navbar, post header, prose body, related-posts row and minimal footer.",
+	"category": "blog",
+	"dependencies": [
+		"blocks/navbars/minimal",
+		"blocks/blog/post-header",
+		"blocks/blog/post-body",
+		"blocks/blog/related",
+		"blocks/footers/minimal"
+	],
+	"files": ["page.svelte"],
+	"fonts": {}
+}

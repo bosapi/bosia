@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Contact and team section blocks: split/simple forms, member grid and founder spotlight.
 - Company pages: ready-made About and Contact pages built from blocks.
 - Contact form backend: submissions are checked and saved to your database automatically.
+- Blog blocks and pages: post list, post header, article body and related-posts sections.
+- Blog backend: posts live in your database, with three sample posts to start from.
 
 ### Fixed
 

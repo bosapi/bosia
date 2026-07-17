@@ -1,0 +1,10 @@
+{
+	"name": "blog-post-list",
+	"description": "Blog index section — a vertical stack of post cards with tag, date, title and excerpt.",
+	"category": "blog",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

@@ -12,7 +12,7 @@ od:
 bosia:
   design: true
   requires:
-    blocks: []
+    blocks: [blog/post-list, blog/post-header, blog/post-body, blog/related]
     themes: [editorial]
     components: [ui/typography, ui/card, ui/separator, ui/badge]
     feats: []
@@ -34,10 +34,15 @@ bosia:
 
 1. **Read `BRIEF.md § Aesthetic`.** Apply the locked `Direction` to typography rhythm and post-page layout (e.g. editorial → drop caps + pull quotes + asymmetric image crops, brutalist → mono everywhere + visible grid lines, organic → hand-drawn dividers between sections). The blog is text-heavy, so the type pair from § Aesthetic does the heavy lifting — verify display + body fonts are wired in `app.css @theme` before drafting prose styles. Place the named `Memorable detail` on the post page (e.g. scroll-driven reading progress bar) or the list page (e.g. hand-set pull quote from the latest post).
 2. `bosia add theme/editorial ui/typography ui/card ui/separator ui/badge`.
-3. Create `src/routes/blog/+page.svelte` (list).
-4. Create `src/routes/blog/[slug]/+page.svelte` (post).
-5. Add `+page.server.ts` for each to load posts from MD/data source.
-6. Apply prose styles via `ui/typography`'s `prose` wrapper.
+3. `bosia add block blog/post-list blog/post-header blog/post-body blog/related` — the registry
+   blocks for list cards, post header, prose body and related row. Restyle them to the locked
+   direction instead of building from scratch.
+4. Create `src/routes/blog/+page.svelte` (list) composing `blog/post-list`.
+5. Create `src/routes/blog/[slug]/+page.svelte` (post) composing `blog/post-header` +
+   `blog/post-body` + `blog/related`.
+6. Add `+page.server.ts` for each to load posts from MD/data source — or install the `blog`
+   feature (`bosia feat blog`) for a Drizzle-backed posts table, loaders and seed.
+7. Apply prose styles via `blog/post-body` (wraps `ui/typography`).
 
 ## Bosia conventions
 

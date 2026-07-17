@@ -1,0 +1,10 @@
+{
+	"name": "blog-post-header",
+	"description": "Blog post header — tag, date, title, excerpt, author byline with reading time and a cover image.",
+	"category": "blog",
+	"themes": [],
+	"dependencies": [],
+	"files": ["block.svelte"],
+	"fonts": {},
+	"npmDeps": {}
+}

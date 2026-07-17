@@ -100,3 +100,11 @@ Halaman situs serbaguna untuk rute about dan kontak:
 - [Tentang](/pages/company/about) — hero konsultan, pita statistik, grid tim, panel CTA
 - [Kontak](/pages/company/contact) — form kontak split di samping detail perusahaan; pasangkan dengan
   [feature `contact-form`](/guides/contact-form/) untuk endpoint tervalidasi yang didukung database
+
+## Halaman blog
+
+Indeks blog editorial dan halaman post, lengkap dengan post contoh:
+
+- [Indeks](/pages/blog/index) — tumpukan kartu post-list di antara navbar dan footer
+- [Post](/pages/blog/post) — header post, isi prosa 70ch dan baris post terkait; pasangkan dengan
+  [feature `blog`](/guides/blog/) untuk post berbasis database dan loader siap pakai

@@ -30,7 +30,7 @@ Block tingkat halaman (heros, cards, sections) tidak membawa navbar situsnya sen
 
 ## Block yang tersedia
 
-150+ block dalam sembilan kategori. Instal apa pun dengan `bun x bosia@latest add block <category>/<name>`.
+150+ block dalam sepuluh kategori. Instal apa pun dengan `bun x bosia@latest add block <category>/<name>`.
 
 ### Heros (17)
 
@@ -81,6 +81,13 @@ Section marketing untuk bagian tengah halaman — di antara hero dan footer:
 - [Logos](/docs/blocks/logos/) — row, grid
 - [Contact](/docs/blocks/contact/) — split, simple
 - [Team](/docs/blocks/team/) — grid, spotlight
+
+### Blog (4)
+
+Section editorial untuk situs konten — pasangkan dengan [feature `blog`](/guides/blog/) untuk
+post berbasis database di baliknya:
+
+- [Blog](/docs/blocks/blog/) — post-list, post-header, post-body, related
 
 ### Cards (30)
 

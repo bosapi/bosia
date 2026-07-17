@@ -56,6 +56,7 @@ export const sidebar: NavGroup[] = [
 			{ label: "Plugins", labelId: "Plugin", slug: "guides/plugins" },
 			{ label: "File Upload", labelId: "Unggah Berkas", slug: "guides/file-upload" },
 			{ label: "Contact Form", labelId: "Form Kontak", slug: "guides/contact-form" },
+			{ label: "Blog", slug: "guides/blog" },
 		],
 	},
 	{
@@ -226,6 +227,10 @@ export const sidebar: NavGroup[] = [
 				],
 			},
 			{
+				label: "Blog",
+				children: [{ label: "Blog Sections", labelId: "Section Blog", slug: "blocks/blog" }],
+			},
+			{
 				label: "Files",
 				children: [
 					{ label: "Crop Image", slug: "blocks/files/crop-image" },
@@ -294,6 +299,13 @@ export const sidebar: NavGroup[] = [
 				children: [
 					{ label: "About", labelId: "Tentang", slug: "pages/company/about" },
 					{ label: "Contact", labelId: "Kontak", slug: "pages/company/contact" },
+				],
+			},
+			{
+				label: "Blog",
+				children: [
+					{ label: "Index", labelId: "Indeks", slug: "pages/blog/index" },
+					{ label: "Post", slug: "pages/blog/post" },
 				],
 			},
 		],

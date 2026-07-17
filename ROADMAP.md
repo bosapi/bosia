@@ -5,6 +5,17 @@
 
 ---
 
+## docs 0.8.6 (2026-07-17) — Registry gap-fill Phase 2: blog
+
+> Phase 2 of 4 (plan: mellow-jingling-dragon): blog blocks + pages + a drizzle-backed blog feature, so the `bosia-blog` skill composes real registry blocks instead of scaffolding from scratch.
+
+- [x] 🟢 `registry/blocks/blog/{post-list,post-header,post-body,related}` — editorial post cards, header with byline + cover, 70ch prose wrapper (`html` / snippet / sample via `ui/typography`), related row.
+- [x] 🟢 `registry/pages/blog/{index,post}` — navbar/footer compositions; optional `posts` / `post` / `bodyHtml` / `related` props match the feature loaders' shape.
+- [x] 🟢 `registry/features/blog/` — dialect-split posts table (slug unique, title, excerpt, body, cover, tag, published_at), repository, service, loaders for `/blog` + `/blog/[slug]` (404 unknown slugs), seed `003_blog`; drizzle append-line.
+- [x] 🟢 Docs: `blocks/blog.md`, `pages/blog/{index,post}.md`, `guides/blog.md` + `id/` mirrors, 3 demos, nav, overviews (+Blog category, nine→ten); `bosia-blog` skill now requires the blocks and points at `feat blog`.
+
+---
+
 ## docs 0.8.6 (2026-07-17) — Registry gap-fill Phase 1: contact + about + team
 
 > General-purpose sites hit registry gaps at once: no contact/about/team. Phase 1 of 4 (plan: mellow-jingling-dragon); Phases 2–4 (blog, gallery/process/errors, newsletter/consent/SEO) await approval.
@@ -15,7 +26,7 @@
 - [x] 🟢 Docs: `blocks/{contact,team}.md`, `pages/company/{about,contact}.md`, `guides/contact-form.md` + `id/` mirrors, 4 demos, nav; `bosia-sections` skill → 20 blocks / 9 families.
 - [x] 🟢 Overviews backfilled (rule: every registry item appears in its overview): blocks overview +Footers/+Sections/+counts, pages overview +Landing/+Company; `id/` mirrors (id blocks overview gained the whole catalog).
 - [ ] ⚪ `cards/pick-list` and `stats/sentiment-bar` named in overview but have no section on their category doc pages (`cards/utility.md`, `stats.md`).
-- [ ] ⚪ Phase 2 — blog blocks/pages/feature (needs approval).
+- [x] 🟢 Phase 2 — blog blocks/pages/feature (shipped, see Phase 2 section).
 - [ ] ⚪ Phase 3 — gallery/process/error pages (needs approval).
 - [ ] ⚪ Phase 4 — newsletter/consent/SEO (needs approval).
 
