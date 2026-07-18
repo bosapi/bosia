@@ -42,12 +42,16 @@ export function checkCsrf(
 	const protocol = forwardedProto ?? url.protocol.replace(":", "");
 	const expectedOrigin = host ? `${protocol}://${host}` : url.origin;
 
-	const allowedOrigins = new Set([expectedOrigin, ...(config.allowedOrigins ?? [])]);
+	// expectedOrigin is per-request (host-derived), so no Set to precompute — a
+	// direct compare plus the tiny static allow-list avoids a per-request alloc.
+	const extraOrigins = config.allowedOrigins;
+	const isAllowed = (origin: string) =>
+		origin === expectedOrigin || (extraOrigins ? extraOrigins.includes(origin) : false);
 
 	// Check Origin header first (sent by all modern browsers on cross-origin requests)
 	const originHeader = request.headers.get("origin");
 	if (originHeader) {
-		if (allowedOrigins.has(originHeader)) return null;
+		if (isAllowed(originHeader)) return null;
 		return `Cross-origin request blocked: Origin "${originHeader}" is not allowed`;
 	}
 
@@ -56,7 +60,7 @@ export function checkCsrf(
 	if (refererHeader) {
 		try {
 			const refererOrigin = new URL(refererHeader).origin;
-			if (allowedOrigins.has(refererOrigin)) return null;
+			if (isAllowed(refererOrigin)) return null;
 			return `Cross-origin request blocked: Referer "${refererHeader}" is not allowed`;
 		} catch {
 			return `Cross-origin request blocked: Referer header is malformed`;

@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.12] - 2026-07-19
+
+### Changed
+
+- Routes resolve by direct lookup instead of scanning every route on each request.
+- Framework assets under `/dist/` and `/__bosia/` skip the route scan for a faster reply.
+- Cookies are parsed only when a request actually reads one.
+- Cached pages skip loading the page module, so cache hits return sooner.
+
+---
+
 ## [0.8.11] - 2026-07-17
 
 ### Fixed

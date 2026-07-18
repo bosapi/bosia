@@ -23,6 +23,25 @@ const ROUTES_DIR = "./src/routes";
  * regex. Static-string read only — runtime expressions return null. Build-time
  * scan avoids invoking server modules during the client bundle.
  */
+/**
+ * Read `export const cache` from +page.svelte's `<script module>` at scan time.
+ * Conservative on purpose — the flag lets the renderer skip caching, so a wrong
+ * "cacheable" answer would leak a per-user page. Returns `true` ONLY when there
+ * is no `cache` export at all; a literal `= false` returns `false`; anything
+ * else (dynamic expression, unreadable file) returns `null` so the renderer
+ * imports the module and reads the real value.
+ */
+function readPageCache(filePath: string): boolean | null {
+	try {
+		const src = readFileSync(filePath, "utf-8");
+		if (!/export\s+const\s+cache\b/.test(src)) return true;
+		if (/export\s+const\s+cache\s*(?::[^=]+)?=\s*false\b/.test(src)) return false;
+		return null;
+	} catch {
+		return null;
+	}
+}
+
 function readTrailingSlash(filePath: string): TrailingSlash | null {
 	try {
 		const src = readFileSync(filePath, "utf-8");
@@ -100,15 +119,17 @@ export function scanRoutes(): RouteManifest {
 			const pageTs = pageServerFile ? readTrailingSlash(join(ROUTES_DIR, pageServerFile)) : null;
 			const effectiveTs: TrailingSlash = pageTs ?? currentTrailingSlash;
 
+			const pageFile = join(dir, "+page.svelte");
 			pages.push({
 				pattern: toUrlPath(urlSegments),
-				page: join(dir, "+page.svelte"),
+				page: pageFile,
 				layouts: [...currentLayouts],
 				pageServer: pageServerFile,
 				loading: loadingFile,
 				layoutServers: [...currentLayoutServers],
 				errorPages: [...currentErrorPages],
 				trailingSlash: effectiveTs,
+				cache: readPageCache(join(ROUTES_DIR, pageFile)),
 			});
 		}
 

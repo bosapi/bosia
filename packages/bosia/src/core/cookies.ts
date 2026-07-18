@@ -54,7 +54,8 @@ function parseCookies(header: string): Record<string, string> {
 export class CookieJar implements Cookies {
 	private static _warnedSecureOverHttp = false;
 
-	private _incoming: Record<string, string>;
+	private _cookieHeader: string;
+	private _parsed: Record<string, string> | null = null;
 	private _outgoing: string[] = [];
 	private _defaults: CookieOptions;
 	private _accessed = false;
@@ -62,11 +63,18 @@ export class CookieJar implements Cookies {
 	private _isHttps: boolean;
 
 	constructor(cookieHeader: string, isHttps = false) {
-		this._incoming = parseCookies(cookieHeader);
+		// Defer parsing until first read — static-asset and health requests never
+		// touch cookies and shouldn't pay the split/decode.
+		this._cookieHeader = cookieHeader;
 		this._isHttps = isHttps;
 		// Browsers drop Secure cookies sent over HTTP — only default `secure` on
 		// when the current request actually arrived over HTTPS.
 		this._defaults = isHttps ? COOKIE_DEFAULTS : { ...COOKIE_DEFAULTS, secure: false };
+	}
+
+	private get _incoming(): Record<string, string> {
+		if (this._parsed === null) this._parsed = parseCookies(this._cookieHeader);
+		return this._parsed;
 	}
 
 	get(name: string): string | undefined {

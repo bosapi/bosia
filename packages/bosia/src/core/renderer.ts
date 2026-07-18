@@ -38,6 +38,9 @@ import type { BosiaPlugin, RenderContext } from "./types/plugin.ts";
 import { getAppHtmlSegments } from "./appHtml.ts";
 import type { AppHtmlSegments } from "./appHtml.ts";
 
+// Shared, stateless — one instance instead of a fresh allocation per stream.
+const enc = new TextEncoder();
+
 // Plugins are loaded once per process at module init via top-level await elsewhere
 // (server.ts), but renderer is also reachable from build/prerender contexts where
 // loadPlugins() may not have been called yet. The function is cached, so awaiting
@@ -533,14 +536,24 @@ export async function renderSSRStream(
 	// render, compress). Key includes URL + identity hash (cookies/headers
 	// from CACHE_KEYS), so per-user pages stay isolated. Routes opt out via
 	// `export const cache = false`. See cache.ts and docs/guides/response-cache.md.
-	const pageMod: any = await route.pageModule();
 	const cacheBypass = url.searchParams.has("_invalidated");
+	// `route.cache` is the build-time static read of `export const cache` in
+	// +page.svelte, letting a cache hit skip the page-module import entirely:
+	//   true  → cacheable, false → opted out, null → import to read the real value.
+	let pageMod: any = null;
+	const staticCache = (route as any).cache as boolean | null | undefined;
+	let routeCacheable: boolean;
+	if (staticCache === true || staticCache === false) {
+		routeCacheable = staticCache;
+	} else {
+		pageMod = await route.pageModule();
+		routeCacheable = pageMod.cache !== false;
+	}
 	// CSP is incompatible with response cache — the per-request nonce is baked
 	// into the cached HTML but the CSP header is re-derived each request, so a
 	// cached page would ship with a dead nonce and the browser would block its
 	// inline scripts. Operators who turn on CSP_DIRECTIVES forfeit the cache.
-	const cacheable =
-		CACHE_ENABLED && !CSP_ENABLED && pageMod.cache !== false && req.method === "GET";
+	const cacheable = CACHE_ENABLED && !CSP_ENABLED && routeCacheable && req.method === "GET";
 	let cacheKey: string | null = null;
 	let releaseMiss: (() => void) | null = null;
 	if (cacheable) {
@@ -602,10 +615,15 @@ export async function renderSSRStream(
 		let layoutMods: any[];
 
 		try {
-			[data, layoutMods] = await Promise.all([
+			// pageMod is already loaded when the cache flag was unknown; otherwise
+			// fold its import into this parallel block instead of a serial await.
+			let pm: any;
+			[data, layoutMods, pm] = await Promise.all([
 				loadRouteData(url, locals, req, cookies, metadataData, match),
 				Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
+				pageMod ?? route.pageModule(),
 			]);
+			pageMod = pm;
 		} catch (err) {
 			if (err instanceof Redirect) return Response.redirect(err.location, err.status);
 			if (err instanceof HttpError) {
@@ -655,7 +673,6 @@ export async function renderSSRStream(
 				nonce,
 			);
 
-		const enc = new TextEncoder();
 		const renderCtx: RenderContext = {
 			request: req,
 			url,

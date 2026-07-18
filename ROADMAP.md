@@ -1,7 +1,19 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.10**
+> Current version: **0.8.12**
+
+---
+
+## bosia 0.8.12 (2026-07-19) — Perf Phase 1: runtime hot path
+
+> Phase 1 of 4 (plan: quizzical-storm) — per-request wins on the production hot path.
+
+- [x] 🟢 Map-based exact-route lookup in `matcher.ts` — O(1) before the dynamic/catch-all linear scan.
+- [x] 🟢 `/dist/` + `/__bosia/` static requests short-circuit before the API scan.
+- [x] 🟢 Sync fast path in `resolveApiMatch` — non-`.json` paths skip the microtask hop.
+- [x] 🟢 Lazy cookie parsing; skip page-module import on cache hits via build-time `cache` flag; module-level `TextEncoder`; alloc-free CSRF origin check.
+- [ ] 🟢 Deferred from item 6: Set-based `LoaderDeps` (ripples into serialization) + CORS origin Set (opt-in, tiny list) — not worth it on 1-5 element lists.
 
 ---
 

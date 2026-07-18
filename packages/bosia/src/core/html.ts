@@ -366,6 +366,9 @@ export function buildHtmlTail(
 
 const GZIP_MIN_BYTES = 2048;
 
+// Shared, stateless — one instance instead of a fresh allocation per response.
+const textEncoder = new TextEncoder();
+
 export function compress(
 	body: string,
 	contentType: string,
@@ -381,7 +384,7 @@ export function compress(
 		...extraHeaders,
 	};
 	const accept = req.headers.get("accept-encoding") ?? "";
-	const bytes = new TextEncoder().encode(body);
+	const bytes = textEncoder.encode(body);
 	// Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
 	// responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
 	if (!isDev && bytes.length > GZIP_MIN_BYTES && accept.includes("gzip")) {

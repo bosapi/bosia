@@ -367,11 +367,26 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		}
 	}
 
+	// Framework-owned static prefixes (`/dist/…`, `/__bosia/…`) can't be shadowed
+	// by a user `+server.ts`, so serve them straight from the manifest before the
+	// API scan. A miss falls through to the normal path (which 404s). Keeps the
+	// api-before-static ordering intact for every user-facing path.
+	if (staticManifest && (path.startsWith("/dist/") || path.startsWith("/__bosia/"))) {
+		const hit = lookupStatic(staticManifest, path);
+		if (hit) {
+			return new Response(
+				Bun.file(hit.absPath),
+				hit.cacheControl ? { headers: { "Cache-Control": hit.cacheControl } } : undefined,
+			);
+		}
+	}
+
 	// API routes (+server.ts) — resolve with `.json` alias preference.
 	// Matched BEFORE static fallthrough so explicit handlers shadow extension-
 	// based static detection (e.g. `/uploads/[...path]/+server.ts` can serve
 	// `.webp` URLs that would otherwise be intercepted by isStaticPath).
-	const apiMatch = await resolveApiMatch(apiRoutes, path);
+	const apiMaybe = resolveApiMatch(apiRoutes, path);
+	const apiMatch = apiMaybe instanceof Promise ? await apiMaybe : apiMaybe;
 	if (apiMatch) {
 		// INVARIANT: once set, releaseApiMiss must fire exactly once — a missed
 		// release() hangs coalesced waiters for the process lifetime. The cache
@@ -1054,6 +1069,7 @@ function loadBuiltManifest(): RouteManifest {
 			layoutServers: [],
 			errorPages: [],
 			trailingSlash: r.trailingSlash,
+			cache: r.cache ?? null,
 		})),
 		apis: apiRoutes.map((r: any) => ({ pattern: r.pattern, server: "" })),
 		errorPage: null,

@@ -63,6 +63,12 @@ function compilePattern(pattern: string): CompiledRoute {
 	return { regex: new RegExp(regexStr), paramNames, isExact: false };
 }
 
+// Exact routes bucketed by pathname, keyed by the routes-array identity so
+// findMatch can O(1) Map.get before linearly scanning the dynamic/catch-all
+// remainder. WeakMap keeps it tied to whichever array (server/api/client) was
+// compiled; uncompiled arrays simply fall back to the full linear scan.
+const exactMaps = new WeakMap<object, Map<string, unknown>>();
+
 /**
  * Pre-compile all route patterns in-place.
  * Mutates each route by adding a `_compiled` property.
@@ -71,9 +77,14 @@ function compilePattern(pattern: string): CompiledRoute {
 export function compileRoutes<T extends { pattern: string }>(
 	routes: T[],
 ): (T & { _compiled: CompiledRoute })[] {
+	const exact = new Map<string, T>();
 	for (const route of routes) {
-		(route as any)._compiled = compilePattern(route.pattern);
+		const compiled = compilePattern(route.pattern);
+		(route as any)._compiled = compiled;
+		// Exact patterns contain no dynamic segments, so pattern === pathname.
+		if (compiled.isExact) exact.set(route.pattern, route);
 	}
+	exactMaps.set(routes, exact);
 	return routes as (T & { _compiled: CompiledRoute })[];
 }
 
@@ -166,8 +177,17 @@ export function findMatch<T extends { pattern: string }>(
 		pathname = pathname.slice(0, -1);
 	}
 
+	// Exact-match fast path: one Map.get instead of scanning every exact route.
+	const exact = exactMaps.get(routes) as Map<string, T> | undefined;
+	if (exact) {
+		const hit = exact.get(pathname);
+		if (hit) return { route: hit, params: {} };
+	}
+
 	for (const route of routes) {
 		const compiled = (route as any)._compiled as CompiledRoute | undefined;
+		// Exact routes already covered by the Map lookup above — skip them.
+		if (exact && compiled?.isExact) continue;
 		const params = compiled
 			? matchCompiled(compiled, route.pattern, pathname)
 			: matchPattern(route.pattern, pathname);

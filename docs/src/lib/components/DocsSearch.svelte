@@ -55,7 +55,7 @@
 
 	function go(url: string) {
 		open = false;
-		// ponytail: full page navigation, like every other link on the site; swap
+		// full page navigation, like every other link on the site; swap
 		// for a client-side goto if Bosia grows one.
 		window.location.href = url;
 	}
