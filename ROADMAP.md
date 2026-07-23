@@ -1,7 +1,13 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.12**
+> Current version: **0.8.13**
+
+---
+
+## bosia 0.8.13 (2026-07-23) — CSRF webhook exemption
+
+- [x] 🟢 `CSRF_EXEMPT_PATHS` env var: exempt server-to-server webhook paths (no Origin/Referer) from the CSRF origin check. Exact or path-boundary match; exempt routes self-authenticate. Docs + tests.
 
 ---
 

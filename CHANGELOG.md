@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.13] - 2026-07-23
+
+### Added
+
+- Webhook routes can skip CSRF origin checks via the `CSRF_EXEMPT_PATHS` env var.
+
 ## [0.8.12] - 2026-07-19
 
 ### Changed

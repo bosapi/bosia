@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.7] - 2026-07-23
+
+### Added
+
+- Security + env-var guides: how to exempt webhook paths from CSRF with `CSRF_EXEMPT_PATHS`.
+
 ## [0.8.6] - 2026-07-17
 
 ### Added

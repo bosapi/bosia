@@ -10,6 +10,14 @@ export interface CsrfConfig {
 	checkOrigin: boolean;
 	/** Additional origins to allow (e.g. CDN or mobile app origin). */
 	allowedOrigins?: string[];
+	/**
+	 * Request paths exempt from the origin check — for server-to-server webhooks
+	 * that carry no Origin/Referer. Matched exact or on a path boundary
+	 * ("/webhook" also covers "/webhook/…", but not "/webhooky"). Exempt routes
+	 * bypass CSRF entirely, so they MUST authenticate the caller themselves
+	 * (verify a webhook token/signature).
+	 */
+	exemptPaths?: string[];
 }
 
 const DEFAULT_CSRF_CONFIG: CsrfConfig = {
@@ -17,6 +25,18 @@ const DEFAULT_CSRF_CONFIG: CsrfConfig = {
 };
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+// Exact match, or a prefix match on a path boundary so "/webhook" covers
+// "/webhook/xendit" but never "/webhooky". Prefix-boundary, no globs — swap in a
+// matcher if wildcard path segments are ever needed.
+function isPathExempt(pathname: string, patterns: string[]): boolean {
+	for (const p of patterns) {
+		if (pathname === p) return true;
+		const prefix = p.endsWith("/") ? p : p + "/";
+		if (pathname.startsWith(prefix)) return true;
+	}
+	return false;
+}
 
 /**
  * Check whether a request passes CSRF validation.
@@ -29,6 +49,7 @@ export function checkCsrf(
 ): string | null {
 	if (!config.checkOrigin) return null;
 	if (SAFE_METHODS.has(request.method.toUpperCase())) return null;
+	if (config.exemptPaths && isPathExempt(url.pathname, config.exemptPaths)) return null;
 
 	// Derive the expected origin.
 	// `X-Forwarded-*` headers are only trusted when `TRUST_PROXY=true`, since a

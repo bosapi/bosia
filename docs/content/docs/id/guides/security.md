@@ -21,6 +21,18 @@ Izinkan origin tambahan melalui variabel lingkungan `CSRF_ALLOWED_ORIGINS`:
 CSRF_ALLOWED_ORIGINS=https://app.example.com, https://mobile.example.com
 ```
 
+### Mengecualikan path webhook (`CSRF_EXEMPT_PATHS`)
+
+Webhook server-ke-server (Stripe, Xendit, GitHub, …) melakukan POST dari server lain, sehingga tidak membawa header `Origin` atau `Referer` dan akan ditolak oleh pemeriksaan origin. Daftarkan path-nya di `CSRF_EXEMPT_PATHS` agar diloloskan:
+
+```bash
+CSRF_EXEMPT_PATHS=/webhook/xendit, /webhook/stripe
+```
+
+Pencocokan bersifat persis atau pada batas path: `/webhook` mencakup `/webhook` dan semua di bawah `/webhook/…`, tetapi bukan kemiripan seperti `/webhooky`. Gunakan path spesifik (`/webhook/xendit`) untuk membuka satu rute saja, atau prefix (`/webhook`) untuk membuka satu grup.
+
+**Path yang dikecualikan melewati CSRF sepenuhnya — rute tersebut WAJIB mengautentikasi pemanggilnya sendiri.** Verifikasi token atau signature webhook dari penyedia (mis. membandingkan header `x-callback-token` dengan sebuah secret) sebelum memproses request. CSRF bukan pengganti pemeriksaan itu; CSRF memang tidak pernah melindungi panggilan server-ke-server.
+
 ### Deployment di belakang reverse-proxy (`TRUST_PROXY`)
 
 Secara bawaan Bosia **tidak** mempercayai header `X-Forwarded-Host` dan `X-Forwarded-Proto` saat menentukan apakah origin sebuah request cocok. Server yang langsung terekspos ke internet bisa membiarkan klien memalsukan origin yang diharapkan melalui header forwarded buatan penyerang, sehingga melewati pemeriksaan CSRF.

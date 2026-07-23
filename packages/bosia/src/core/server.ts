@@ -113,16 +113,23 @@ function splitCsvEnv(key: string): string[] | undefined {
 // ─── CSRF Config ─────────────────────────────────────────
 
 const _csrfAllowedOrigins = splitCsvEnv("CSRF_ALLOWED_ORIGINS");
+const _csrfExemptPaths = splitCsvEnv("CSRF_EXEMPT_PATHS");
 
 const CSRF_CONFIG: CsrfConfig = {
 	checkOrigin: true,
 	allowedOrigins: _csrfAllowedOrigins,
+	exemptPaths: _csrfExemptPaths,
 };
 
 if (_csrfAllowedOrigins?.length) {
 	console.log(`🛡️  CSRF allowed origins: ${_csrfAllowedOrigins.join(", ")}`);
 } else {
 	console.log("🛡️  CSRF: same-origin only");
+}
+
+if (_csrfExemptPaths?.length) {
+	// These paths skip the origin check — they must authenticate callers themselves.
+	console.warn(`⚠️  CSRF exempt paths (must self-authenticate): ${_csrfExemptPaths.join(", ")}`);
 }
 
 // ─── CORS Config ──────────────────────────────────────────

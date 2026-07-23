@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { checkCsrf } from "../src/core/csrf.ts";
+import { checkCsrf, type CsrfConfig } from "../src/core/csrf.ts";
 
 function req(method: string, headers: Record<string, string> = {}) {
 	return new Request("https://app.example.com/x", { method, headers });
@@ -47,6 +47,37 @@ describe("checkCsrf", () => {
 		expect(
 			checkCsrf(r, url, { checkOrigin: true, allowedOrigins: ["https://cdn.example.com"] }),
 		).toBe(null);
+	});
+});
+
+describe("checkCsrf — exemptPaths (webhooks)", () => {
+	const cfg = (exemptPaths: string[]): CsrfConfig => ({ checkOrigin: true, exemptPaths });
+	const at = (pathname: string) => new URL(`https://app.example.com${pathname}`);
+
+	test("exact exempt path bypasses a header-less POST", () => {
+		const r = req("POST"); // no Origin/Referer, like a server-to-server webhook
+		expect(checkCsrf(r, at("/webhook/xendit"), cfg(["/webhook/xendit"]))).toBe(null);
+	});
+
+	test("prefix exempts sub-paths and the bare path", () => {
+		expect(checkCsrf(req("POST"), at("/webhook/xendit"), cfg(["/webhook"]))).toBe(null);
+		expect(checkCsrf(req("POST"), at("/webhook/stripe"), cfg(["/webhook"]))).toBe(null);
+		expect(checkCsrf(req("POST"), at("/webhook"), cfg(["/webhook"]))).toBe(null);
+	});
+
+	test("boundary: a lookalike path is NOT exempt", () => {
+		expect(checkCsrf(req("POST"), at("/webhooky-evil"), cfg(["/webhook"]))).toContain("missing");
+	});
+
+	test("exact entry does not exempt a sibling path", () => {
+		expect(checkCsrf(req("POST"), at("/webhook/stripe"), cfg(["/webhook/xendit"]))).toContain(
+			"missing",
+		);
+	});
+
+	test("exemption does not weaken a non-exempt path with a bad Origin", () => {
+		const r = req("POST", { origin: "https://evil.com" });
+		expect(checkCsrf(r, at("/api/pay"), cfg(["/webhook"]))).toContain("Origin");
 	});
 });
 

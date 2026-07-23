@@ -21,6 +21,18 @@ Allow additional origins via the `CSRF_ALLOWED_ORIGINS` environment variable:
 CSRF_ALLOWED_ORIGINS=https://app.example.com, https://mobile.example.com
 ```
 
+### Exempting webhook paths (`CSRF_EXEMPT_PATHS`)
+
+Server-to-server webhooks (Stripe, Xendit, GitHub, …) POST from another server, so they carry no `Origin` or `Referer` header and are rejected by the origin check. List their paths in `CSRF_EXEMPT_PATHS` to let them through:
+
+```bash
+CSRF_EXEMPT_PATHS=/webhook/xendit, /webhook/stripe
+```
+
+Matching is exact or on a path boundary: `/webhook` covers `/webhook` and everything under `/webhook/…`, but not a lookalike like `/webhooky`. Use a specific path (`/webhook/xendit`) to open just one route, or a prefix (`/webhook`) to open a group.
+
+**An exempt path bypasses CSRF entirely — the route MUST authenticate the caller itself.** Verify the provider's webhook token or signature (e.g. compare an `x-callback-token` header against a secret) before acting on the request. CSRF is not a substitute for that check; it never protected server-to-server calls in the first place.
+
 ### Reverse-proxy deployments (`TRUST_PROXY`)
 
 By default Bosia does **not** trust the `X-Forwarded-Host` and `X-Forwarded-Proto` request headers when deciding whether a request's origin matches. A directly-exposed server would otherwise let any client spoof the expected origin via attacker-supplied forwarded headers, defeating the CSRF check.
