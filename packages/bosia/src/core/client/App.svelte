@@ -77,6 +77,8 @@
 	let showLoading = $state(false);
 	let currentLayoutPaths: string[] = [];
 	let lastSettledPath = "";
+	let lastNavKey = ""; // pathname + search of the last processed nav
+	let lastTick = 0; // invalidationTick value last processed
 	// Skip bar on the very first effect run (initial hydration — data already present)
 	let firstNav = true;
 	let navDoneTimer: ReturnType<typeof setTimeout> | null = null;
@@ -107,10 +109,12 @@
 
 		// Subscribe to `invalidationTick` so `invalidate()` can wake the effect
 		// without a URL change.
-		void appState.invalidationTick;
+		const currentTick = appState.invalidationTick; // still tracks reactively
 
 		const path = router.currentRoute;
-		const pathname = path.split("?")[0].split("#")[0];
+		const url = new URL(path, window.location.origin);
+		const pathname = url.pathname;
+		const navKey = pathname + url.search;
 		const match = findMatch(clientRoutes, pathname);
 		if (!match) return;
 
@@ -121,10 +125,21 @@
 		if (isFirst) {
 			currentLayoutPaths = (match.route as any).layoutPaths ?? [];
 			lastSettledPath = pathname;
+			lastNavKey = navKey;
+			lastTick = currentTick;
 			// Restore-after-reload: router.init() staged this entry's snapshot.
 			settleSnapshot();
 			return; // Initial hydration — data already in SSR props, no fetch needed
 		}
+
+		// Hash-only change (same pathname+search, no invalidation): scroll, don't
+		// refetch. A static host can't answer the parent-snapshot POST a refetch may
+		// issue, which would otherwise render the error page.
+		if (navKey === lastNavKey && currentTick === lastTick) {
+			settleScroll();
+			return;
+		}
+		lastTick = currentTick;
 
 		appState.form = null;
 		if (navDoneTimer) {
@@ -160,7 +175,6 @@
 		// For each layout depth + the page, compare the cached entry (if any)
 		// against the live URL/params and the dirty set. If everything is
 		// cacheable, skip the fetch entirely.
-		const url = new URL(path, window.location.origin);
 		const ctx = liveContext(pathname, match.params, url);
 		const layoutIds = (match.route as any).layoutIds as (string | null)[];
 		const pageId = (match.route as any).pageId as string | null;
@@ -243,6 +257,7 @@
 			LoadingComponent = null;
 			currentLayoutPaths = destLayoutPaths;
 			lastSettledPath = pathname;
+			lastNavKey = navKey;
 			navDoneTimer = setTimeout(() => {
 				navDone = false;
 			}, 400);

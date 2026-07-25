@@ -1,7 +1,13 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.13**
+> Current version: **0.8.14**
+
+---
+
+## bosia 0.8.14 (2026-07-25) — Static-host hash-nav fix
+
+- [x] 🟢 Hash-only nav guard in `App.svelte`: same-page TOC anchors scroll only, no loader refetch/POST — fixes error page on static hosts (Cloudflare Assets).
 
 ---
 
