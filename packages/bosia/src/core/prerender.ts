@@ -27,6 +27,7 @@ export function getEphemeralPort(): Promise<number> {
 const CORE_DIR = import.meta.dir;
 
 const PRERENDER_TIMEOUT = Number(process.env.PRERENDER_TIMEOUT) || 5_000; // 5s default
+const PRERENDER_CONCURRENCY = Number(process.env.PRERENDER_CONCURRENCY) || 6;
 
 // ─── Prerendering ─────────────────────────────────────────
 
@@ -97,79 +98,62 @@ export function prerenderApiOutPath(routePath: string): string {
 	return `${OUT_DIR}/prerendered${routePath.replace(/\/$/, "")}.json`;
 }
 
+/** Dynamic route → import module, call entries(), expand to concrete targets. */
+async function expandDynamicRoute(
+	pattern: string,
+	filePath: string,
+	kind: "page" | "api",
+	ts: TrailingSlash,
+): Promise<PrerenderTarget[]> {
+	try {
+		const mod = await import(join(process.cwd(), filePath));
+		if (typeof mod.entries !== "function") {
+			console.warn(`   ⚠️  ${pattern} has prerender=true but no entries() export — skipped`);
+			return [];
+		}
+		const entryList: Record<string, string>[] = await mod.entries();
+		return entryList.map((entry) => ({
+			path: substituteParams(pattern, entry),
+			kind,
+			trailingSlash: ts,
+		}));
+	} catch (err) {
+		console.error(`   ❌ Failed to resolve entries() for ${pattern}:`, err);
+		return [];
+	}
+}
+
 async function detectPrerenderRoutes(manifest: RouteManifest): Promise<PrerenderTarget[]> {
-	const targets: PrerenderTarget[] = [];
-	for (const route of manifest.pages) {
-		if (!route.pageServer) continue;
+	const pageTasks = manifest.pages.map(async (route): Promise<PrerenderTarget[]> => {
+		if (!route.pageServer) return [];
 		const filePath = join("src", "routes", route.pageServer);
 		const content = await Bun.file(filePath).text();
-		if (!/export\s+const\s+prerender\s*=\s*true/.test(content)) continue;
+		if (!/export\s+const\s+prerender\s*=\s*true/.test(content)) return [];
 		if (/export\s+const\s+ssr\s*=\s*false/.test(content)) {
 			console.warn(
 				`   ⚠️  ${route.pattern} has prerender=true && ssr=false — contradictory, skipped`,
 			);
-			continue;
+			return [];
 		}
-
 		const ts = route.trailingSlash;
+		if (route.pattern.includes("[")) return expandDynamicRoute(route.pattern, filePath, "page", ts);
+		return [{ path: route.pattern, kind: "page", trailingSlash: ts }];
+	});
 
-		if (route.pattern.includes("[")) {
-			// Dynamic route — import module and call entries() to get param values
-			try {
-				const mod = await import(join(process.cwd(), filePath));
-				if (typeof mod.entries !== "function") {
-					console.warn(
-						`   ⚠️  ${route.pattern} has prerender=true but no entries() export — skipped`,
-					);
-					continue;
-				}
-				const entryList: Record<string, string>[] = await mod.entries();
-				for (const entry of entryList) {
-					targets.push({
-						path: substituteParams(route.pattern, entry),
-						kind: "page",
-						trailingSlash: ts,
-					});
-				}
-			} catch (err) {
-				console.error(`   ❌ Failed to resolve entries() for ${route.pattern}:`, err);
-			}
-		} else {
-			targets.push({ path: route.pattern, kind: "page", trailingSlash: ts });
-		}
-	}
-
-	for (const route of manifest.apis) {
+	const apiTasks = manifest.apis.map(async (route): Promise<PrerenderTarget[]> => {
 		const filePath = join("src", "routes", route.server);
 		const content = await Bun.file(filePath).text();
-		if (!/export\s+const\s+prerender\s*=\s*true/.test(content)) continue;
+		if (!/export\s+const\s+prerender\s*=\s*true/.test(content)) return [];
+		if (route.pattern.includes("["))
+			return expandDynamicRoute(route.pattern, filePath, "api", "never");
+		return [{ path: route.pattern, kind: "api", trailingSlash: "never" }];
+	});
 
-		if (route.pattern.includes("[")) {
-			try {
-				const mod = await import(join(process.cwd(), filePath));
-				if (typeof mod.entries !== "function") {
-					console.warn(
-						`   ⚠️  ${route.pattern} has prerender=true but no entries() export — skipped`,
-					);
-					continue;
-				}
-				const entryList: Record<string, string>[] = await mod.entries();
-				for (const entry of entryList) {
-					targets.push({
-						path: substituteParams(route.pattern, entry),
-						kind: "api",
-						trailingSlash: "never",
-					});
-				}
-			} catch (err) {
-				console.error(`   ❌ Failed to resolve entries() for ${route.pattern}:`, err);
-			}
-		} else {
-			targets.push({ path: route.pattern, kind: "api", trailingSlash: "never" });
-		}
-	}
-
-	return targets;
+	// Unbounded Promise.all over all routes; each task holds only small text reads
+	// and route metadata, so RAM stays trivial. Chunk it if route counts ever hit
+	// tens of thousands (open file descriptors would be the first limit).
+	const results = await Promise.all([...pageTasks, ...apiTasks]);
+	return results.flat();
 }
 
 export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<void> {
@@ -198,11 +182,12 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 	for (const sig of signals) process.once(sig, onSignal);
 
 	try {
-		// Poll /_health until ready (max 10s)
+		// Poll /_health until ready (max 10s). Check first, sleep only on failure —
+		// avoids a guaranteed floor when the server is already up.
 		const base = `http://localhost:${port}`;
 		let ready = false;
-		for (let i = 0; i < 50; i++) {
-			await Bun.sleep(200);
+		const deadline = Date.now() + 10_000;
+		while (Date.now() < deadline) {
 			try {
 				const res = await fetch(`${base}/_health`);
 				if (res.ok) {
@@ -212,6 +197,7 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 			} catch {
 				/* not ready yet */
 			}
+			await Bun.sleep(50);
 		}
 
 		if (!ready) {
@@ -221,7 +207,11 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 
 		mkdirSync(`${OUT_DIR}/prerendered`, { recursive: true });
 
-		for (const { path: routePath, kind, trailingSlash: ts } of targets) {
+		const prerenderOne = async ({
+			path: routePath,
+			kind,
+			trailingSlash: ts,
+		}: PrerenderTarget): Promise<void> => {
 			try {
 				if (kind === "api") {
 					// APIs: fetch the bare route URL, write body to `<path>.json`.
@@ -233,7 +223,7 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 					mkdirSync(outPath.substring(0, outPath.lastIndexOf("/")), { recursive: true });
 					writeFileSync(outPath, body);
 					console.log(`   ✅ ${routePath} → ${outPath}`);
-					continue;
+					return;
 				}
 
 				// Hit the canonical URL so the server doesn't 308 us mid-prerender
@@ -278,7 +268,19 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 					console.error(`   ❌ Failed to prerender ${routePath}:`, err);
 				}
 			}
-		}
+		};
+
+		// Bounded worker pool: N workers pull from a shared index until targets drain.
+		let next = 0;
+		const worker = async () => {
+			while (next < targets.length) {
+				const target = targets[next++];
+				if (target) await prerenderOne(target);
+			}
+		};
+		await Promise.all(
+			Array.from({ length: Math.min(PRERENDER_CONCURRENCY, targets.length) }, worker),
+		);
 
 		console.log("✅ Prerendering complete");
 	} finally {

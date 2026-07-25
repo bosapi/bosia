@@ -11,6 +11,17 @@
 
 ---
 
+## bosia 0.8.14 (2026-07-25) — Perf Phase 3: prerender
+
+> Phase 3 of 4 (plan: snazzy-dream) — parallelize `prerenderStaticRoutes`. Items 1–3 only.
+
+- [x] 🟢 `detectPrerenderRoutes`: read files + run dynamic `entries()` imports concurrently via `Promise.all` (was two serial loops). All warnings/skip semantics preserved.
+- [x] 🟢 Bounded worker pool (`PRERENDER_CONCURRENCY`, default 6) over prerender fetches; per-target try/catch keeps one failure from aborting the batch.
+- [x] 🟢 Health poll checks first, sleeps 50ms only on failure — drops the guaranteed 200ms floor.
+- [ ] ⚪ Item 4 skipped: mtime-skip of the `cpSync` static mirror — marginal gain on a once-per-build copy, real staleness risk.
+
+---
+
 ## bosia 0.8.13 (2026-07-23) — CSRF webhook exemption
 
 - [x] 🟢 `CSRF_EXEMPT_PATHS` env var: exempt server-to-server webhook paths (no Origin/Referer) from the CSRF origin check. Exact or path-boundary match; exempt routes self-authenticate. Docs + tests.

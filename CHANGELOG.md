@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.8.14] - 2026-07-25
 
+### Changed
+
+- Prerendering builds pages in parallel, making large static-site builds much faster.
+
 ### Fixed
 
 - In-page anchor links no longer refetch page data, fixing errors on static hosts.
