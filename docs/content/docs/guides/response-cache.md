@@ -59,21 +59,90 @@ A skip never breaks the response — it just falls back to the normal render pat
 
 ## Opting out per route
 
-Add `export const cache = false;` to a `+page.ts`, `+page.server.ts`, or `+server.ts` file:
+> **⚠️ For page routes the export MUST live in `+page.svelte`, inside `<script module>`.**
+> Putting it in `+page.server.ts` compiles, type-checks, and is **silently ignored** — the
+> page keeps being cached. The build-time scan reads `+page.svelte`
+> (`core/scanner.ts` → `readPageCache`), and the runtime fallback reads the compiled
+> `+page.svelte` module (`core/renderer.ts` → `pageMod.cache`). The server module's
+> exports are never consulted for this flag.
 
-```ts
-// +page.server.ts
-import type { CacheOption } from "./$types";
-export const cache: CacheOption = false;
+```svelte
+<!-- +page.svelte -->
+<script module lang="ts">
+	export const cache = false;
+</script>
+
+<script lang="ts">
+	let { data } = $props();
+</script>
 ```
 
-Use this for live data (ticker, per-second counter) or pages where personalisation is not covered by `CACHE_KEYS`.
-
-Note that `$types` is only generated for page routes — API `+server.ts` handlers don't have one. Use the literal there:
+API handlers are the opposite — they have no component, so the export goes in the handler:
 
 ```ts
 // +server.ts (API)
 export const cache = false;
+```
+
+Use this for live data (ticker, per-second counter) or pages where personalisation is not covered by `CACHE_KEYS`.
+
+To confirm it took effect, check the scanned flag rather than trusting the source:
+
+```ts
+import { scanRoutes } from "bosia/src/core/scanner.ts";
+for (const r of scanRoutes().pages) console.log(r.cache, r.pattern);
+// false → opted out.  true → still cached.
+```
+
+### Authenticated app shells — the case that bites
+
+If a **layout** renders per-user mutable data (a sidebar of the signed-in user's
+conversations, projects, notifications), then **every page under that layout** inherits the
+problem: the whole HTML document is cached, sidebar included.
+
+The failure looks like this, and it is easy to misread as a client bug:
+
+1. Delete a row. It disappears from the sidebar. ✅
+2. Press F5. **The deleted row is back.** ❌
+
+Both steps are working as designed. Step 1 goes through the client `invalidate()` path,
+which requests `?_invalidated=…` — and per the eligibility table above, that **skips the
+cache read**. Step 2 is a plain `GET` with no such param, so it is served from cache.
+
+That asymmetry is the trap: **clicking around the app never reveals the staleness — only a
+hard refresh does.** Under normal development you can easily ship this.
+
+Two ways out:
+
+- **Tag + evict** (keeps the cache): `depends("app:sidebar")` in the layout loader, and
+  `invalidate("app:sidebar")` from **every** write path. The tag on a layout loader covers
+  all pages beneath it, so one eviction clears the whole section.
+- **Opt out**: `export const cache = false` in every `+page.svelte` under the layout.
+  Fewer moving parts, but you give up caching for the entire authenticated area.
+
+Tag + evict is the better default — it is what `depends()` exists for. Two things decide
+whether it holds:
+
+1. **Enumerate write paths honestly, including ordering-only writes.** A list sorted by
+   `updated_at` changes whenever anything bumps that column, not only on create/delete.
+   In a chat app that is _every message_, so the hot path needs an `invalidate()` too.
+2. **Background work must evict itself.** An action that kicks off an async job and returns
+   evicts only the state at kick-off. The job keeps writing for minutes with no request in
+   flight, so nothing else will evict for it — call `invalidate()` from inside the job, at
+   each checkpoint and on completion, not just from the action that started it.
+
+Reach for the opt-out when a page has no natural tag boundary, or when you cannot enumerate
+its writers with confidence — a missed writer is silent, and only shows up on someone
+else's hard refresh.
+
+```ts
+// features/ingest/ingest.service.ts — a long-running sweep evicting its own tag
+for (const source of sources) {
+	await processSource(source);
+	invalidate("app:ingest"); // per item, so a mid-run reload isn't frozen at t=0
+}
+await finishRun(run.id);
+invalidate("app:ingest");
 ```
 
 ## Opting out per response (`Cache-Control` header)
@@ -112,6 +181,17 @@ export const actions = {
 
 Names mirror the existing browser-side `invalidate()` from `bosia/client`. The server version applies the same key concept to the new server cache.
 
+> **These are two different functions with the same name.** `invalidate` from `bosia/client`
+> re-runs loaders in the browser; `invalidate` from `bosia/server` evicts server-rendered
+> HTML. Calling only the client one leaves the cached document stale — the live UI updates
+> and the next refresh reverts it. A mutation that changes SSR output needs **both**.
+
+> **`invalidate()` from `bosia/client` resolves immediately.** It flags the loader and bumps
+> a tick; it does not wait for the refetch, so `await invalidate(...)` gives no ordering
+> guarantee. Do not race it against `goto()` — the navigation supersedes the in-flight
+> refetch after the dirty flag has already been consumed, and the stale data sticks. Await
+> the `goto()` first, then invalidate.
+
 ## Tagging loaders
 
 `depends()` tags both the client loader cache AND the server response cache, so one call serves both layers:
@@ -125,6 +205,12 @@ export async function load({ depends, locals }) {
 ```
 
 When the form action runs `invalidate("app:user")`, both caches drop the entry and the next GET re-runs `load()`.
+
+`depends()` works the same in `+layout.server.ts`, and the tag propagates to **every page
+rendered under that layout** — `collectTags()` merges layout and page deps into one tag set
+per cached document (`core/cache.ts`). That is what makes a single
+`invalidate("app:sidebar")` able to clear an entire authenticated section; it is also why a
+missed write path leaves _all_ of those pages stale at once.
 
 ## API endpoints
 

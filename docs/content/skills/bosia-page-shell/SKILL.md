@@ -171,5 +171,6 @@ P1 (shell-hygiene warns; address before done):
 - [ ] `logout/+server.ts` exists; the dropdown's Log out hits it.
 - [ ] Section layouts live in their own `(private)/<section>/+layout.svelte`.
 - [ ] `data-table` `onStateChange` wired to URL `limit`/`offset`; empty/loading/error via bosia-empty-states.
+- [ ] If `(private)/+layout.server.ts` loads mutable per-user data (conversation list, notifications), the pages under it are opted out of the response cache — `export const cache = false` in each `+page.svelte` `<script module>` — or the layout is tagged with `depends()` and every write path evicts it. Otherwise a deleted row reappears on refresh, and client-side navigation hides it because `?_invalidated=…` bypasses the cache. See bosia-response-cache R3/R3.1.
 
-Related: bosia-routing, bosia-navigation, bosia-auth-flow, bosia-query-defaults, bosia-rbac-permission. References: `docs/content/docs/components/ui/navbar.md`, `data-table.md`, `guides/routing.md`.
+Related: bosia-routing, bosia-navigation, bosia-auth-flow, bosia-query-defaults, bosia-rbac-permission, bosia-response-cache. References: `docs/content/docs/components/ui/navbar.md`, `data-table.md`, `guides/routing.md`.
