@@ -24,6 +24,7 @@ import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } f
 import { isDev, compress, isStaticPath } from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
+import { pidsOnPort } from "./port.ts";
 import { buildPrerenderManifest, buildStaticManifest, lookupStatic } from "./staticManifest.ts";
 import { dedup } from "./dedup.ts";
 import {
@@ -1092,7 +1093,14 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : isDev ? 9001 : 
 // Elysia's chained generics drift when plugins add routes — track the app as a
 // loose `Elysia` so plugin-extended types stay assignable.
 let app: Elysia = new Elysia({
-	serve: { maxRequestBodySize: BODY_SIZE_LIMIT, idleTimeout: IDLE_TIMEOUT },
+	serve: {
+		maxRequestBodySize: BODY_SIZE_LIMIT,
+		idleTimeout: IDLE_TIMEOUT,
+		// Elysia's Bun adapter defaults reusePort:true — SO_REUSEPORT lets a second
+		// server silently join the port and the kernel splits traffic between two
+		// different builds. Opt in only for deliberate N-worker clustering.
+		reusePort: process.env.BOSIA_REUSE_PORT === "1",
+	},
 }) as unknown as Elysia;
 
 // Plugins.backend.before — runs before framework middleware/routes.
@@ -1160,23 +1168,34 @@ for (const plugin of plugins) {
 	}
 }
 
-app.listen(PORT, () => {
-	// In dev mode the proxy owns the user-facing port — don't print the internal port
-	if (!isDev) console.log(`⬡ Bosia server running at http://localhost:${PORT}`);
-	// Last line of startup on purpose — the cache identity contract is the one
-	// config mistake that leaks one user's page to another, so it stays visible.
-	if (CACHE_ENABLED) {
-		console.log(
-			`\n🔑 Response cache tells users apart ONLY by these cookies/headers: [${CACHE_KEYS.join(", ")}]\n` +
-				`   Using a different session cookie or auth header? Add its name to CACHE_KEYS,\n` +
-				`   or one user's personalised page can be served to another. Routes personalised\n` +
-				`   by anything else should set \`export const cache = false\`.\n` +
-				`   Note: the runtime auto-warns only on uncovered *cookie* reads — it CANNOT\n` +
-				`   detect header-based personalisation, so custom auth headers (X-Api-Key,\n` +
-				`   X-Auth-Token, …) must be added to CACHE_KEYS by hand.\n`,
-		);
-	}
-});
+try {
+	app.listen(PORT, () => {
+		// In dev mode the proxy owns the user-facing port — don't print the internal port
+		if (!isDev) console.log(`⬡ Bosia server running at http://localhost:${PORT}`);
+		// Last line of startup on purpose — the cache identity contract is the one
+		// config mistake that leaks one user's page to another, so it stays visible.
+		if (CACHE_ENABLED) {
+			console.log(
+				`\n🔑 Response cache tells users apart ONLY by these cookies/headers: [${CACHE_KEYS.join(", ")}]\n` +
+					`   Using a different session cookie or auth header? Add its name to CACHE_KEYS,\n` +
+					`   or one user's personalised page can be served to another. Routes personalised\n` +
+					`   by anything else should set \`export const cache = false\`.\n` +
+					`   Note: the runtime auto-warns only on uncovered *cookie* reads — it CANNOT\n` +
+					`   detect header-based personalisation, so custom auth headers (X-Api-Key,\n` +
+					`   X-Auth-Token, …) must be added to CACHE_KEYS by hand.\n`,
+			);
+		}
+	});
+} catch (err) {
+	// Bun.serve runs inline inside .listen(), so a failed bind lands here.
+	if ((err as { code?: string })?.code !== "EADDRINUSE") throw err;
+	const [pid] = await pidsOnPort(PORT);
+	console.error(
+		`\n❌ Port ${PORT} is already serving${pid ? ` (pid ${pid})` : ""}.\n` +
+			`   Stop it or set PORT to a free port.\n`,
+	);
+	process.exit(1);
+}
 
 async function shutdown() {
 	if (shuttingDown) {

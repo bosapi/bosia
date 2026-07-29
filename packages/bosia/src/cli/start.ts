@@ -26,5 +26,7 @@ export async function runStart() {
 	// mid-drain. The terminal delivers SIGINT to the whole process group,
 	// so the child already gets the signal — no forwarding needed.
 	for (const sig of ["SIGINT", "SIGTERM"] as const) process.on(sig, () => {});
-	await proc.exited;
+	// Propagate the child's code — a refused boot must not report success to CI,
+	// Docker restart policies or orchestrators.
+	process.exit(await proc.exited);
 }

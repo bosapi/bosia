@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.8] - 2026-07-30
+
+### Added
+
+- Docs for `BOSIA_REUSE_PORT` and why `bosia start` refuses a busy port.
+
 ## [0.8.7] - 2026-07-23
 
 ### Added

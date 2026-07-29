@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.15] - 2026-07-30
+
+### Fixed
+
+- A second server can no longer silently share a port and serve stale code.
+
 ## [0.8.14] - 2026-07-25
 
 ### Changed

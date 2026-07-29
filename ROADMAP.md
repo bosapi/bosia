@@ -1,7 +1,18 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.14**
+> Current version: **0.8.15**
+
+---
+
+## bosia 0.8.15 (2026-07-30) — One server per port
+
+> Found in Ujiku (2026-07-29): two `bun run start` processes sat on :9000 at once, no error. Elysia's Bun adapter defaults to `reusePort: true` (`elysia/dist/adapter/bun/index.js:163-190`), so `SO_REUSEPORT` let the second bind succeed and the kernel load-balanced between two different `dist/` builds — a save's side effect silently didn't happen, guarded routes 500'd on the old build only. Cost hours to spot.
+
+- [x] 🟠 A second server on a busy port fails loudly with the offender's pid and exits 1. Delivered as a catch on the failed bind, not a pre-probe: no TOCTOU race, smaller diff, and it covers every boot path (Docker, PM2, systemd), not just the CLI.
+- [x] 🟡 `reusePort` off in `server.ts`'s served config — the kernel is the source of truth. Applies to prod, the dev inner app server and the prerender build server. `bosia start` now propagates the child's exit code.
+- [x] 🟢 `BOSIA_REUSE_PORT=1` opts back in, for the N-workers-one-port case Elysia's default was meant for. Docs + skill + CLI reference updated.
+- [x] 🟢 `pidsOnPort()` extracted to `core/port.ts` from `dev.ts`'s inline `lsof`; shared by the reaper and the refusal message. One test.
 
 ---
 

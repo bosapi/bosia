@@ -3,6 +3,7 @@ import { readdirSync, statSync, watch, type Dirent } from "fs";
 import { join } from "path";
 import { loadEnv, resetDeclaredKeys } from "./env.ts";
 import { BOSIA_NODE_PATH } from "./paths.ts";
+import { pidsOnPort } from "./port.ts";
 import { affectsRouteManifest, shouldIgnoreForRebuild } from "./devWatch.ts";
 
 // Dev always writes to .bosia/dev so a parallel `bun run build` (writing to ./dist)
@@ -159,26 +160,16 @@ const APP_PORT = DEV_PORT + 1; // internal, hidden from user
 // disk → "ENOENT reading +page-<hash>.js" 500s. Reap whatever is listening on
 // APP_PORT before we spawn, so a stale child can never shadow the fresh build.
 async function reapStaleAppServer(port: number) {
-	try {
-		const proc = spawn(["lsof", "-ti", `tcp:${port}`, "-sTCP:LISTEN"], {
-			stdout: "pipe",
-			stderr: "ignore",
-		});
-		const out = await new Response(proc.stdout).text();
-		await proc.exited;
-		const pids = [...new Set(out.split("\n").map((s) => s.trim()))]
-			.map(Number)
-			.filter((pid) => Number.isInteger(pid) && pid > 0 && pid !== process.pid);
-		for (const pid of pids) {
-			try {
-				process.kill(pid, "SIGKILL");
-				console.log(`🧹 Reaped stale app server holding port ${port} (pid ${pid})`);
-			} catch {}
-		}
-		if (pids.length) await Bun.sleep(200); // let the port free before we bind
-	} catch {
-		// lsof unavailable or errored — fail open; a real conflict surfaces on bind.
+	// pidsOnPort fails open when lsof is unavailable — a real conflict then
+	// surfaces on bind instead.
+	const pids = (await pidsOnPort(port)).filter((pid) => pid !== process.pid);
+	for (const pid of pids) {
+		try {
+			process.kill(pid, "SIGKILL");
+			console.log(`🧹 Reaped stale app server holding port ${port} (pid ${pid})`);
+		} catch {}
 	}
+	if (pids.length) await Bun.sleep(200); // let the port free before we bind
 }
 
 async function startAppServer() {

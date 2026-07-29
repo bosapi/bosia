@@ -74,6 +74,10 @@ bosia start
 
 Runs the built server from `dist/`. Requires `bosia build` to have been run first.
 
+Refuses to start when something else already listens on `PORT` — it prints the offending pid and
+exits non-zero, instead of quietly sharing the port and serving a mix of two builds. Set
+`BOSIA_REUSE_PORT=1` if you really do want several processes on one port.
+
 ## bosia test
 
 Run tests with `bun test`, framework-aware.

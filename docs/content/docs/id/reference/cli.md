@@ -67,6 +67,10 @@ bosia start
 
 Menjalankan server yang sudah di-build dari `dist/`. Membutuhkan `bosia build` yang sudah dijalankan terlebih dahulu.
 
+Menolak start kalau ada proses lain yang sudah listen di `PORT` — menampilkan pid pelakunya dan
+keluar dengan exit code bukan nol, bukan diam-diam berbagi port dan menyajikan campuran dua build.
+Set `BOSIA_REUSE_PORT=1` kalau memang ingin beberapa proses di satu port.
+
 ## bosia test
 
 Jalankan tes dengan `bun test`, terintegrasi framework.

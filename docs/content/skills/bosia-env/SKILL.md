@@ -75,6 +75,7 @@ These are reserved by Bosia and live outside `$env`:
 | `NODE_ENV`                | —          | `development` / `production`                                 |
 | `BODY_SIZE_LIMIT`         | `512K`     | Max request body. `K`/`M`/`G`/`Infinity`                     |
 | `IDLE_TIMEOUT`            | `10`       | `Bun.serve` idle seconds. Raise for streaming                |
+| `BOSIA_REUSE_PORT`        | `0`        | `1` = let N processes share one port (`SO_REUSEPORT`)        |
 | `MAX_INFLIGHT`            | `Infinity` | Soft concurrency cap → fast `503` over the line              |
 | `LOAD_TIMEOUT`            | —          | `load()` timeout in ms                                       |
 | `METADATA_TIMEOUT`        | —          | `metadata()` timeout                                         |
