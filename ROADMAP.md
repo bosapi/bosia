@@ -5,6 +5,19 @@
 
 ---
 
+## docs 0.8.8 (2026-07-30) — Purge stale `ui/icon` refs
+
+> The `<Icon>` wrapper died in `2bdf95d` (2026-06-06) but its references outlived it. `bosia-dashboard` and `bosia-mobile-screen` still ran `bosia add … ui/icon` — a registry id that no longer exists, so the CLI fails mid-workflow.
+
+- [x] 🟠 `ui/icon` dropped from `bosia-dashboard` + `bosia-mobile-screen` (frontmatter `requires.components` and the `bosia add` line). No replacement dep — `@lucide/svelte` is npm, and registry components declare it in their own `npmDeps`.
+- [x] 🟡 `bosia-design-review` P1 item + `references/checklist.md` §11 rephrased around `@lucide/svelte`; noted it's a convention to check, not something a wrapper enforces.
+- [x] 🟡 Sidebar docs (EN + ID) taught the dead `<Icon name="home">` API for a snippet that wants a lucide component — now `<House size={16} />` with a real import.
+- [x] 🟢 "Migrating from the old `<Icon>` wrapper" section deleted from `components/ui/icon.md` (EN + ID); the `npmDeps` note folded into Install. Docs now have zero mentions of the old API.
+- [x] 🟢 `bosia-icon` added to the skills index table — it was on disk and served by the API, but absent from the human-facing list.
+- [x] 🟢 Drifted counts fixed against `registry/index.json`: 61 components, 162 blocks, 23 pages, 19 themes (both READMEs + `LandingPage.svelte`).
+
+---
+
 ## bosia 0.8.15 (2026-07-30) — One server per port
 
 > Found in Ujiku (2026-07-29): two `bun run start` processes sat on :9000 at once, no error. Elysia's Bun adapter defaults to `reusePort: true` (`elysia/dist/adapter/bun/index.js:163-190`), so `SO_REUSEPORT` let the second bind succeed and the kernel load-balanced between two different `dist/` builds — a save's side effect silently didn't happen, guarded routes 500'd on the old build only. Cost hours to spot.

@@ -75,6 +75,7 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 | `bosia-frontend-design` | Commit to a BOLD aesthetic direction before any UI emit. Distinctive type, dominant color + sharp accent, one memorable detail. Avoid AI defaults.                                                         |
 | `bosia-page-shell`      | Navbar/footer/sidebar live in `+layout.svelte`, not per page. `(private)` layout passes `user` to `ui/navbar` so the avatar dropdown is reachable. Lists use `ui/data-table`, never hand-rolled `<table>`. |
 | `bosia-image-external`  | Real stock photos via `image_external_search` tool (Unsplash/Pexels/Pixabay, cross-app DB cache). Mandatory attribution. Fallback: `picsum`. Use whenever the brief calls for real photos.                 |
+| `bosia-icon`            | Icons from `@lucide/svelte`, one import per icon (tree-shakes). Never `lucide-svelte` — deprecated. No custom `<Icon>` wrapper.                                                                            |
 
 ## Conventions — framework · — always-active code rules
 

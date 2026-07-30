@@ -104,12 +104,16 @@ Sidebar komposabel dengan header, konten yang bisa di-scroll, menu berkelompok, 
 
 ### Snippet Ikon
 
-Prop `icon` menerima sebuah snippet Svelte:
+Prop `icon` menerima sebuah snippet Svelte. Letakkan ikon [`@lucide/svelte`](/components/ui/icon/) di dalamnya:
 
 ```svelte
+<script lang="ts">
+	import { House } from "@lucide/svelte";
+</script>
+
 <SidebarMenuItem href="/" label="Home" active>
 	{#snippet icon()}
-		<Icon name="home" size={16} />
+		<House size={16} />
 	{/snippet}
 </SidebarMenuItem>
 ```
@@ -126,7 +130,7 @@ Setel `trigger="hover"` pada `SidebarMenuItem` untuk membuka popover collapsed-n
 
 ```svelte
 <SidebarMenuItem label="Models" trigger="hover">
-	{#snippet icon()}<Icon name="package" size={16} />{/snippet}
+	{#snippet icon()}<Package size={16} />{/snippet}
 	<SidebarMenuItem href="#" label="Genesis" />
 	<SidebarMenuItem href="#" label="Explorer" />
 </SidebarMenuItem>

@@ -104,12 +104,16 @@ A composable sidebar with header, scrollable content, grouped menus, collapsible
 
 ### Icon Snippet
 
-The `icon` prop accepts a Svelte snippet:
+The `icon` prop accepts a Svelte snippet. Put a [`@lucide/svelte`](/components/ui/icon/) icon inside it:
 
 ```svelte
+<script lang="ts">
+	import { House } from "@lucide/svelte";
+</script>
+
 <SidebarMenuItem href="/" label="Home" active>
 	{#snippet icon()}
-		<Icon name="home" size={16} />
+		<House size={16} />
 	{/snippet}
 </SidebarMenuItem>
 ```
@@ -126,7 +130,7 @@ Set `trigger="hover"` on a `SidebarMenuItem` to open its collapsed popover on ho
 
 ```svelte
 <SidebarMenuItem label="Models" trigger="hover">
-	{#snippet icon()}<Icon name="package" size={16} />{/snippet}
+	{#snippet icon()}<Package size={16} />{/snippet}
 	<SidebarMenuItem href="#" label="Genesis" />
 	<SidebarMenuItem href="#" label="Explorer" />
 </SidebarMenuItem>

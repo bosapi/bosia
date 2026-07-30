@@ -13,6 +13,8 @@ Bosia tidak menyertakan komponen `<Icon>` kustom. Tarik ikon langsung dari [`@lu
 bun add @lucide/svelte
 ```
 
+Komponen registry yang membutuhkan ikon (mis. `navbar`, `select`, `accordion`) mendeklarasikan `@lucide/svelte` di `npmDeps` mereka sendiri, jadi `bosia add` memasangnya untuk Anda.
+
 ## Penggunaan
 
 Impor ikon yang Anda butuhkan berdasarkan nama PascalCase-nya:
@@ -79,25 +81,3 @@ Saat nama ikon datang dari data, buatlah peta lookup kecil berisi komponen — j
 ## Menjelajahi katalog
 
 Semua ikon yang tersedia (dan namanya) ada di [lucide.dev/icons](https://lucide.dev/icons). Nama di situs memakai kebab-case (mis. `chevron-left`); komponen Svelte-nya PascalCase (`ChevronLeft`).
-
-## Migrasi dari wrapper `<Icon>` lama
-
-Komponen `<Icon name="...">` kustom telah dihapus. Ganti tiap penggunaan dengan impor lucide langsung.
-
-Sebelum:
-
-```svelte
-<Icon name="chevron-left" size={18} class="text-muted" />
-```
-
-Sesudah:
-
-```svelte
-<script lang="ts">
-	import { ChevronLeft } from "@lucide/svelte";
-</script>
-
-<ChevronLeft size={18} class="text-muted" />
-```
-
-Komponen registry Bosia yang membutuhkan ikon (mis. `navbar`, `select`, `accordion`) kini mendeklarasikan `@lucide/svelte` di `npmDeps` mereka sendiri dan mengimpor yang dibutuhkan langsung.

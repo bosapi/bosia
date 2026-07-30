@@ -60,7 +60,7 @@ Use `overflow-y-auto` on the _container_ of long content. Letting the whole page
 
 ### 11. Icon consistency
 
-One icon set, one stroke width, one size scale. `ui/icon` enforces this.
+One icon set, one stroke width, one size scale. Import every glyph from `@lucide/svelte` and keep `size`/`strokeWidth` uniform — nothing enforces this for you, so check it. See `bosia-icon`.
 
 ### 12. Empty / placeholder copy
 

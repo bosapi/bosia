@@ -15,7 +15,7 @@ bosia:
   requires:
     blocks: []
     themes: [neutral]
-    components: [ui/button, ui/input, ui/dialog, ui/icon, ui/typography]
+    components: [ui/button, ui/input, ui/dialog, ui/typography]
     feats: []
   targets:
     routes: ["src/routes/m/+page.svelte"]
@@ -69,7 +69,7 @@ Primary action goes at the bottom on mobile (thumb zone). For destructive flows,
 ## Workflow
 
 1. **Read `BRIEF.md § Aesthetic`.** Apply the locked `Direction` to the mobile composition WITHOUT abandoning it for "it doesn't fit at 375px" — redesign the mobile composition to carry the same stance (e.g. brutalist → still mono + visible grid + hairline borders, just stacked; playful → still bouncy easing + oversaturated primaries, just full-width). The named `Memorable detail` adapts to mobile (custom cursor → custom tap state; oversized footer wordmark → still oversized but stacked). Do not silently swap to "default mobile clean" — that is the AI default this whole pipeline exists to prevent.
-2. `bosia add theme/neutral ui/button ui/input ui/dialog ui/icon ui/typography`.
+2. `bosia add theme/neutral ui/button ui/input ui/dialog ui/typography`.
 3. Create `+page.svelte` at the chosen route.
 4. Apply the layout skeleton (header / scroll body / footer).
 5. Run `bosia-design-review` + `bosia-accessibility-review`.

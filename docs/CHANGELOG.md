@@ -11,6 +11,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Docs for `BOSIA_REUSE_PORT` and why `bosia start` refuses a busy port.
+- The icon rule now shows up in the skills index, so AI agents can find it.
+
+### Changed
+
+- Sidebar docs show icons the current way, with a real `@lucide/svelte` import.
+
+### Fixed
+
+- Guides and AI skills no longer ask to install the retired icon component.
+- Registry counts in the README and on the homepage now match what ships.
+
+### Removed
+
+- The old `<Icon>` migration note — the wrapper has been gone since June.
 
 ## [0.8.7] - 2026-07-23
 

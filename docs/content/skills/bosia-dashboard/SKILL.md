@@ -25,7 +25,6 @@ bosia:
         ui/separator,
         ui/dropdown-menu,
         ui/badge,
-        ui/icon,
         ui/skeleton,
         ui/empty,
       ]
@@ -59,7 +58,7 @@ The most complex page-scaffold. A private app shell + a dashboard page demonstra
 ## Workflow
 
 1. **Read `BRIEF.md § Aesthetic`.** Dashboards are usually where stance gets the most diluted ("it's an admin tool, just make it functional"). Resist. Apply the locked `Direction` to sidebar style, KPI card weight, and chart palette (e.g. industrial → tabular numerics + square corners + signal-red deltas, editorial → cream surfaces + serif KPI numbers, luxury → restrained chrome + single gold accent on recommended action). Chart series MUST use `chart-1`..`chart-5` semantic tokens; the stance defines those, you don't pick fresh hex per chart. Place the named `Memorable detail` on a high-frequency surface (sidebar wordmark, top-bar greeting, KPI card hover state).
-2. `bosia add theme/neutral ui/sidebar ui/data-table ui/card ui/chart ui/button ui/avatar ui/separator ui/dropdown-menu ui/badge ui/icon ui/skeleton ui/empty`.
+2. `bosia add theme/neutral ui/sidebar ui/data-table ui/card ui/chart ui/button ui/avatar ui/separator ui/dropdown-menu ui/badge ui/skeleton ui/empty`.
 3. Build `(private)/+layout.server.ts` — loads user + nav.
 4. Build `(private)/+layout.svelte` — sidebar (collapsible), top bar (user menu).
 5. Build `(private)/dashboard/+page.server.ts` — calls `parent()` for user, loads KPIs + rows. RBAC checks at top.

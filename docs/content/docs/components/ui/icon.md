@@ -13,6 +13,8 @@ Bosia does not ship a custom `<Icon>` component. Pull icons directly from [`@luc
 bun add @lucide/svelte
 ```
 
+Registry components that need icons (e.g. `navbar`, `select`, `accordion`) declare `@lucide/svelte` in their own `npmDeps`, so `bosia add` installs it for you.
+
 ## Usage
 
 Import the icons you need by their PascalCase name:
@@ -79,25 +81,3 @@ When the icon name comes from data, build a small lookup map of components — n
 ## Browse the catalog
 
 All available icons (and their names) are at [lucide.dev/icons](https://lucide.dev/icons). The site name is in kebab-case (e.g. `chevron-left`); the Svelte component is PascalCase (`ChevronLeft`).
-
-## Migrating from the old `<Icon>` wrapper
-
-The custom `<Icon name="...">` component has been removed. Replace each usage with a direct lucide import.
-
-Before:
-
-```svelte
-<Icon name="chevron-left" size={18} class="text-muted" />
-```
-
-After:
-
-```svelte
-<script lang="ts">
-	import { ChevronLeft } from "@lucide/svelte";
-</script>
-
-<ChevronLeft size={18} class="text-muted" />
-```
-
-Bosia registry components that needed icons (e.g. `navbar`, `select`, `accordion`) now declare `@lucide/svelte` in their own `npmDeps` and import what they need directly.

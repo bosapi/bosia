@@ -53,7 +53,7 @@ After drafting any UI — route, component, or block — and before declaring th
 - [ ] Buttons have hover + active + focus states (free if you used `ui/button`).
 - [ ] Forms use `ui/form` + `ui/field` + `ui/input`, not naked inputs.
 - [ ] Long content scrolls within its container, not the page.
-- [ ] Icons from `ui/icon` (consistent stroke + size).
+- [ ] Icons from `@lucide/svelte` (one set, consistent `size` + `strokeWidth`).
 - [ ] **Aesthetic stance honored.** Read `BRIEF.md § Aesthetic`. Verify: emit reflects the named `Direction`; the named `Memorable detail` is present on this surface (or already present on a sibling surface, if this view is secondary); display + body fonts inherited from `app.css @theme` (not silently swapped to `Inter`). This skill does NOT pick the stance — that's `bosia-frontend-design`'s job at intake; this check only confirms the emit didn't drift away from what was locked.
 
 ## References
