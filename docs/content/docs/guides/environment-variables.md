@@ -14,6 +14,12 @@ Bosia loads environment variables from `.env` files in order (later overrides ea
 
 System environment variables always take highest precedence — `.env` files never overwrite existing system vars.
 
+### Names vs values
+
+Those four files decide the **values** for the current mode. The **names** are collected from every `.env*` file in your project root — including `.env.production`, `.env.test` and `.env.example` — so `$env` exports the same list in dev, production and CI. A name declared only in a file the current mode doesn't load simply has an empty value until something supplies one.
+
+This makes `.env*` a manifest: a variable whose value comes from your host (Vercel, Docker, CI secrets) still has to be declared in some `.env*` file — usually `.env.example` — or it won't exist on `$env` and type-checking will fail.
+
 ## Prefix System
 
 Variable names control where and when they're available:

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
 
 // ─── Framework-reserved vars ─────────────────────────────
@@ -25,6 +25,9 @@ const FRAMEWORK_VARS = new Set([
 
 /** Valid JS/TS identifier: starts with letter/underscore, then alphanumeric/underscore. */
 const VALID_ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/** `.env`, `.env.production`, `.env.example`, … — but not `.envrc` or other `.env`-prefixed files. */
+const ENV_FILE_RE = /^\.env(\..+)?$/;
 
 /** Process escape sequences in double-quoted values. */
 function processEscapes(raw: string): string {
@@ -119,9 +122,13 @@ export function parseEnvFile(content: string, filename?: string): Record<string,
  *   3. .env.[mode]
  *   4. .env.[mode].local
  *
+ * Variable *names* additionally come from every other `.env*` file present
+ * (`.env.production`, `.env.example`, …) with an empty value, so the `$env`
+ * export surface is the same in dev, prod and CI.
+ *
  * @param mode   "development" | "production"
  * @param dir    directory to look in (defaults to cwd)
- * @returns merged env record (only vars from .env files, excluding framework vars)
+ * @returns merged env record (only vars declared in .env files, excluding framework vars)
  */
 export function loadEnv(mode: string, dir?: string): Record<string, string> {
 	const root = dir ?? process.cwd();
@@ -143,12 +150,24 @@ export function loadEnv(mode: string, dir?: string): Record<string, string> {
 		console.log(`✓ Loaded ${loaded.join(", ")}`);
 	}
 
+	// Names come from every `.env*` present, values only from the mode's files.
+	// Keeps the $env export surface identical in dev, prod and CI — mode decides
+	// only which names carry a value. A malformed off-mode file throws here
+	// rather than at deploy time.
+	const declaredNames = new Set(Object.keys(merged));
+	for (const entry of readdirSync(root, { withFileTypes: true })) {
+		if (!entry.isFile() || !ENV_FILE_RE.test(entry.name) || files.includes(entry.name)) continue;
+		const parsed = parseEnvFile(readFileSync(join(root, entry.name), "utf-8"), entry.name);
+		for (const key of Object.keys(parsed)) declaredNames.add(key);
+	}
+
 	// Track declared keys so html.ts only exposes .env-declared PUBLIC_* vars
-	for (const key of Object.keys(merged)) {
+	for (const key of declaredNames) {
 		_declaredKeys.add(key);
 	}
 
-	// Apply to process.env — system env wins (don't overwrite existing)
+	// Apply to process.env — system env wins (don't overwrite existing).
+	// Name-only keys stay absent so `process.env.X ?? default` still falls back.
 	for (const [key, value] of Object.entries(merged)) {
 		if (!(key in process.env)) {
 			process.env[key] = value;
@@ -157,9 +176,9 @@ export function loadEnv(mode: string, dir?: string): Record<string, string> {
 
 	// Return only non-framework vars
 	const result: Record<string, string> = {};
-	for (const [key, value] of Object.entries(merged)) {
+	for (const key of declaredNames) {
 		if (!FRAMEWORK_VARS.has(key)) {
-			result[key] = process.env[key] ?? value;
+			result[key] = process.env[key] ?? merged[key] ?? "";
 		}
 	}
 

@@ -1,7 +1,17 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.15**
+> Current version: **0.8.16**
+
+---
+
+## bosia 0.8.16 (2026-08-07) — `$env` export list shouldn't depend on the mode
+
+> Found in Ujiku CI (2026-08-07): `bun run check` failed with `Module '"$env"' has no exported member 'PUBLIC_GTM_ID'`. Runtime values already come from `process.env` as designed — but `envCodegen.ts` derives the _export names_ from whatever `loadEnv(mode)` found, so a runtime var vanishes from `$env` when its file isn't loaded. CI has only `.env.production`, and `bosia sync` runs dev mode unless `NODE_ENV=production`.
+
+- [x] 🟠 `loadEnv()` harvests names from every root file matching `/^\.env(\..+)?$/` (incl. `.env.example`, excl. `.envrc`); values still only from the mode's four files. Name-only keys stay out of `process.env` so `?? default` fallbacks survive.
+- [x] 🟡 Test: `.env.production` alone still yields the `PUBLIC_*` export (empty string), no `.env` needed. Plus mode-scoped values, `.env.example` names, `.envrc` ignored, shell env fills a name-only key, malformed off-mode file throws.
+- [x] 🟢 `guides/environment-variables` (EN+ID) "Names vs values" section + `bosia-env` R4/R5 — `.env*` is the name manifest; a host-supplied var still must be declared or `bun run check` fails.
 
 ---
 

@@ -107,9 +107,13 @@ Framework vars are **not** importable from `$env` — `$env` is for user app con
 
 System env (`process.env` at boot) beats all `.env*` files — `.env` never overwrites a key already in the process environment.
 
+That order decides **values**. **Names** come from every `.env*` file in the root (`.env.production`, `.env.test`, `.env.example` included), so `$env` exports the same list in dev, prod and CI — mode only decides which names carry a value.
+
 ### R5 — `.env.example` is the contract
 
 Every key the app reads must appear in `.env.example` with a placeholder. New contributors copy it to `.env.local`. No undocumented keys.
+
+Codegen enforces this: a var whose value comes from the host (CI secret, Vercel, Docker) but is declared in no `.env*` file is not on `$env`, and `bun run check` fails with `has no exported member`.
 
 ```bash
 # .env.example

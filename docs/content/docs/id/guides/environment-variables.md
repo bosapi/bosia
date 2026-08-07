@@ -14,6 +14,12 @@ Bosia memuat variabel lingkungan dari file `.env` secara berurutan (yang belakan
 
 Variabel lingkungan sistem selalu memiliki prioritas tertinggi — file `.env` tidak pernah menimpa variabel sistem yang sudah ada.
 
+### Nama vs nilai
+
+Keempat file itu menentukan **nilai** untuk mode saat ini. **Nama**-nya dikumpulkan dari setiap file `.env*` di root proyek — termasuk `.env.production`, `.env.test`, dan `.env.example` — sehingga `$env` mengekspor daftar yang sama di dev, production, dan CI. Nama yang hanya dideklarasikan di file yang tidak dimuat mode saat ini akan bernilai kosong sampai ada yang mengisinya.
+
+Artinya `.env*` berfungsi sebagai manifes: variabel yang nilainya berasal dari host Anda (Vercel, Docker, secret CI) tetap harus dideklarasikan di salah satu file `.env*` — biasanya `.env.example` — atau variabel itu tidak akan ada di `$env` dan type-check akan gagal.
+
 ## Sistem Prefix
 
 Nama variabel mengontrol di mana dan kapan variabel tersebut tersedia:

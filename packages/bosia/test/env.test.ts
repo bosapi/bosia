@@ -1,5 +1,14 @@
-import { describe, expect, test } from "bun:test";
-import { parseEnvFile, classifyEnvVars } from "../src/core/env.ts";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import {
+	parseEnvFile,
+	classifyEnvVars,
+	loadEnv,
+	getDeclaredEnvKeys,
+	resetDeclaredKeys,
+} from "../src/core/env.ts";
 
 describe("parseEnvFile", () => {
 	test("unquoted basic", () => {
@@ -60,5 +69,71 @@ describe("classifyEnvVars", () => {
 		expect(c.publicDynamic).toEqual({ PUBLIC_FLAG: "2" });
 		expect(c.privateStatic).toEqual({ STATIC_KEY: "3" });
 		expect(c.privateDynamic).toEqual({ SECRET: "4" });
+	});
+});
+
+describe("loadEnv", () => {
+	let tmpDir: string;
+	const touched = [
+		"PUBLIC_GTM_ID",
+		"TEST_MODE_VALUE",
+		"PUBLIC_FROM_EXAMPLE",
+		"TEST_NAME_ONLY",
+	] as const;
+
+	function write(name: string, content: string) {
+		writeFileSync(join(tmpDir, name), content);
+	}
+
+	beforeEach(() => {
+		tmpDir = mkdtempSync(join(tmpdir(), "bosia-loadenv-"));
+		resetDeclaredKeys();
+		for (const k of touched) delete process.env[k];
+	});
+
+	afterEach(() => {
+		rmSync(tmpDir, { recursive: true, force: true });
+		resetDeclaredKeys();
+		for (const k of touched) delete process.env[k];
+	});
+
+	test(".env.production alone still exports the name in development mode", () => {
+		write(".env.production", "PUBLIC_GTM_ID=GTM-XYZ");
+		const env = loadEnv("development", tmpDir);
+		expect(env.PUBLIC_GTM_ID).toBe("");
+		expect(getDeclaredEnvKeys().has("PUBLIC_GTM_ID")).toBe(true);
+	});
+
+	test("values stay mode-scoped", () => {
+		write(".env", "TEST_MODE_VALUE=dev");
+		write(".env.production", "TEST_MODE_VALUE=prod");
+		expect(loadEnv("development", tmpDir).TEST_MODE_VALUE).toBe("dev");
+	});
+
+	test(".env.example contributes names", () => {
+		write(".env.example", "PUBLIC_FROM_EXAMPLE=placeholder");
+		expect(loadEnv("development", tmpDir).PUBLIC_FROM_EXAMPLE).toBe("");
+	});
+
+	test("non-.env files are ignored", () => {
+		write(".envrc", "export A-B=1");
+		expect(() => loadEnv("development", tmpDir)).not.toThrow();
+	});
+
+	test("name-only keys are not applied to process.env", () => {
+		write(".env.production", "TEST_NAME_ONLY=x");
+		loadEnv("development", tmpDir);
+		expect(process.env.TEST_NAME_ONLY).toBeUndefined();
+	});
+
+	test("system env fills a name-only key", () => {
+		process.env.PUBLIC_GTM_ID = "from-shell";
+		write(".env.production", "PUBLIC_GTM_ID=GTM-XYZ");
+		expect(loadEnv("development", tmpDir).PUBLIC_GTM_ID).toBe("from-shell");
+	});
+
+	test("malformed off-mode file throws", () => {
+		write(".env.production", "FOO-BAR=x");
+		expect(() => loadEnv("development", tmpDir)).toThrow(/Invalid env variable name/);
 	});
 });

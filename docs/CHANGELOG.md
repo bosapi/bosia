@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.9] - 2026-08-07
+
+### Changed
+
+- Env docs explain that `.env*` files declare the variable names, values come per mode.
+
 ## [0.8.8] - 2026-07-30
 
 ### Added
