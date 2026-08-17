@@ -23,7 +23,8 @@ import type { CorsConfig } from "./cors.ts";
 import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } from "./csp.ts";
 import { isDev, compress, isStaticPath } from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
-import { OUT_DIR } from "./paths.ts";
+import { BASE_PATH, OUT_DIR } from "./paths.ts";
+import { stripBase } from "./basePath.ts";
 import { pidsOnPort } from "./port.ts";
 import { buildPrerenderManifest, buildStaticManifest, lookupStatic } from "./staticManifest.ts";
 import { dedup } from "./dedup.ts";
@@ -156,6 +157,10 @@ if (_corsAllowedOrigins?.length) {
 
 if (CSP_DIRECTIVES_TEMPLATE) {
 	console.log(`🔒 CSP: opt-in header active`);
+}
+
+if (BASE_PATH) {
+	console.log(`📍 Mounted under ${BASE_PATH} (BASE_PATH)`);
 }
 
 // ─── Core Request Resolver ────────────────────────────────
@@ -862,6 +867,16 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		if (fwdHost) url.host = fwdHost;
 		const fwdProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
 		if (fwdProto) url.protocol = `${fwdProto}:`;
+	}
+
+	// Mounted under BASE_PATH? Everything downstream — hooks, the router, the
+	// /_health and /__bosia tests below — works in app space, so the prefix comes
+	// off exactly once, here, before anything reads a pathname. A request that is
+	// not under the base was never this app's to answer.
+	if (BASE_PATH) {
+		const appPath = stripBase(BASE_PATH, url.pathname);
+		if (appPath === null) return new Response("Not Found", { status: 404 });
+		url.pathname = appPath;
 	}
 
 	// Reject new non-health requests during shutdown

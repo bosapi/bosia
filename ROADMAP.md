@@ -1,7 +1,42 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.16**
+> Current version: **0.8.17**
+
+---
+
+## bosia 0.8.17 (2026-08-17) — `BASE_PATH`: mount an app under a sub-path
+
+> Found in SSO Fisika: three apps share one origin (`fi.uinsgd.ac.id`, `/obe`, `/sso`) because no subdomain was available. Serving from a prefix was impossible — route paths are compiled root-absolute into the client bundle, every `redirect()` emits a root-absolute `Location`, and nothing in the framework rewrote a leading segment. An nginx-only attempt (strip + `proxy_redirect` + `sub_filter`) was verified in a real browser and fails two ways: app-authored `href="/daftar"` walks off to the neighbouring app, and `hydrate.ts` matches `location.pathname` against a route table that has no prefix, so the app mounts into a permanent "Loading…".
+
+- [x] 🔴 `BASE_PATH=/sso` — normalized in `core/basePath.ts` (pure, env-free, shared by both bundles so the two halves of the router cannot disagree). `server.ts` strips the prefix once, before anything reads a pathname; off-mount requests 404.
+- [x] 🔴 `clientRoutes` are generated **with** the prefix (`routeFile.ts`), so the route table, an anchor's href and the address bar are all the same strings. The client router does no conversion at all: a click pushes exactly the URL that was in the link. `serverRoutes` stay app-space, since the server strips at the edge and app code should never learn it is mounted.
+- [x] 🔴 Root-absolute literals in `.svelte` markup are rewritten at compile time (`svelteCompiler.ts`), `<script>` left alone. This is what makes the href in the DOM correct for a crawler, a middle-click and "copy link address" — an earlier version fixed only the server-rendered HTML and let the client re-render write the origin-root path back.
+- [x] 🟠 `Redirect` rebases in its constructor — one choke point, so every `redirect()` in every app needs no change. Validation runs first: a base must never launder a target the validator rejects.
+- [x] 🟠 Rendered markup rebased (`href`/`src`/`action`/`formaction` + CSS `url()`), never the JSON data islands — those are loader output and a path rewrite would corrupt them. Covers `src/app.html` via `interpolateSegment`.
+- [x] 🟠 Compiled Tailwind CSS rebased at build time (`twHash.ts`, before hashing). A `@font-face` src inside a `.css` file is out of reach of any markup rewrite, and the miss is silent — fallback font, blank icon, nothing in the console.
+- [x] 🟠 Cookie default path is the mount, resolved per-jar rather than at import. On a shared origin this is what stops two bosia apps from overwriting each other's `session`.
+- [x] 🟡 `base` exported from `bosia`, for URLs built in `<script>` — the compile-time rewrite only sees markup. Verified against the Fisika design system: `Icon.svelte` builds `url("/icons/…")` in a `$derived` and needs it.
+
+- [ ] 🟠 `goto()` now takes a real (prefixed) path, since the router no longer converts. Nothing warns when it is handed an app-space one — it silently falls through to a full page load onto whatever app owns the origin root. Worth a dev-mode check.
+- [ ] 🟡 Build and runtime must agree on `BASE_PATH`: both the CSS rebase and the route table are baked into the artifact. Nothing checks this — stamp it into `manifest.json` and warn on boot.
+- [ ] 🟡 Dev hot-reload still opens `EventSource("/__bosia/sse")` root-absolute (`hydrate.ts`). Dev rarely runs mounted, so it has not bitten; fix when it does.
+- [ ] 🟡 `srcset` is not rebased (comma-separated candidates with descriptors). Nothing in the framework emits one root-absolute; an app that does needs `base`.
+
+---
+
+## bosia (open) — success-only action data is wiped by the default `enhance`
+
+> Found in Ujiku (2026-08-07), building `/akun/profil`: the save worked and the row was written, but the "Perubahan tersimpan." message never rendered. A **successful** action that returns data for the `form` prop silently loses it under the default `use:enhance`.
+>
+> `client/enhance.ts:53` sets `appState.form = result.data`, then (with `invalidateAll` on, the default) bumps `appState.invalidationTick` at `:60`. That tick fires the nav effect in `client/App.svelte`, which does `appState.form = null` at `:144` before refetching the loader. The data is wiped between the assignment and the render — no error, no console warning, the UI just never shows it.
+>
+> Why it stays hidden: the `failure` branch (`enhance.ts:48-51`) sets `appState.form` and **returns early without invalidating**, so `fail()` messages always render fine. Only success-with-payload is affected — and most actions return `{ ok: true }` and redirect, so nobody looks.
+
+- [ ] 🟠 Don't null `appState.form` for an invalidation the form itself just triggered. The nav effect can't currently tell "loader refresh after my own action" from a real navigation; carrying the action's tick (or clearing on route change rather than on tick) would keep the payload alive across the refetch.
+- [ ] 🟡 Failing that, make it loud rather than silent: warn once in dev when a success result carries `data` and `invalidateAll` is about to discard it, naming `invalidateAll: false` as the fix.
+- [ ] 🟡 Document the pairing in the forms guide — an action whose whole point is its return value (preview, dry-run, computed quote) wants `await update({ invalidateAll: false })`; one that writes and needs fresh loader data wants the callback to latch what it needs before `update()`.
+- [ ] ⚪ App-side workaround in use today (Ujiku `akun/profil`, `akun/keamanan`): latch `result.type === "success"` into local `$state` inside the enhance callback, then `await update()` — keeps the invalidation _and_ the confirmation. `invalidateAll: false` alone is wrong here, since the page header reads the row that was just written.
 
 ---
 

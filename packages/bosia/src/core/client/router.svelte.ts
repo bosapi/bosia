@@ -6,6 +6,11 @@ import { findMatch, canonicalPathname } from "../matcher.ts";
 import { clientRoutes } from "bosia:routes";
 import { fireBeforeNavigate, type Navigation } from "./navListeners.ts";
 
+// Everything here is a real browser path, base and all. Under a BASE_PATH mount
+// the generated `clientRoutes` carry the prefix too, so an anchor's href, the
+// address bar and the route table are all already in the same space — a click
+// pushes exactly the URL that was in the link, untouched.
+
 export type NavType = "link" | "goto" | "popstate" | "form" | "enter";
 
 function buildTarget(path: string): { url: URL; params: Record<string, string> } | null {

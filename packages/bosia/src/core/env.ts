@@ -6,6 +6,7 @@ import { join } from "path";
 const FRAMEWORK_VARS = new Set([
 	"PORT",
 	"NODE_ENV",
+	"BASE_PATH",
 	"BODY_SIZE_LIMIT",
 	"CSRF_ALLOWED_ORIGINS",
 	"CSRF_EXEMPT_PATHS",

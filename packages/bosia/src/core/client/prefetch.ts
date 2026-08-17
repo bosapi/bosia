@@ -6,6 +6,7 @@ import { findMatch } from "../matcher.ts";
 import { clientRoutes } from "bosia:routes";
 import { appState } from "./appState.svelte.ts";
 import { liveContext, shouldRerun } from "./loaderCache.ts";
+import { base } from "./base.ts";
 
 /**
  * Build the `_invalidated` mask bits for a target path using the current
@@ -77,7 +78,12 @@ export function dataUrl(path: string, invalidatedBits?: string): string {
 		const sep = qs ? "&" : "?";
 		qs = `${qs}${sep}_invalidated=${invalidatedBits}`;
 	}
-	return `/__bosia/data${p || "/index"}.json${qs}`;
+	// The one place a path is still taken apart, and it is URL construction rather
+	// than navigation: the data endpoint is `<base>/__bosia/data` + the *app* path,
+	// so the mount prefix moves from the front of the route to the front of the
+	// endpoint. Nothing the user sees passes through here.
+	if (base && (p === base || p.startsWith(`${base}/`))) p = p.slice(base.length);
+	return `${base}/__bosia/data${p || "/index"}.json${qs}`;
 }
 
 export const prefetchCache = new Map<string, { data: any; ts: number }>();

@@ -1,5 +1,25 @@
 import { writeFileSync, mkdirSync } from "fs";
 import type { RouteManifest } from "./types.ts";
+import { currentBase } from "./appBase.ts";
+
+/**
+ * The pattern the *client* router matches against. It sees real browser URLs, so
+ * under a BASE_PATH mount the table has to carry the prefix — that is what lets
+ * `findMatch` take `location.pathname` and an anchor's href exactly as they are,
+ * with no conversion anywhere in the navigation path.
+ *
+ * `serverRoutes` deliberately does not get this: the server strips the prefix at
+ * the edge of the request, so hooks, `load()` and `event.url.pathname` keep
+ * seeing app-space paths and app code never has to know it is mounted.
+ *
+ * The root route maps to the bare base (`/sso`, not `/sso/`) so it agrees with
+ * the URL a browser actually lands on.
+ */
+function clientPattern(pattern: string): string {
+	const base = currentBase();
+	if (!base) return pattern;
+	return pattern === "/" ? base : base + pattern;
+}
 
 // ─── Route File Generator ─────────────────────────────────
 // Generates .bosia/routes.ts — ONE file with three exports:
@@ -69,7 +89,7 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 			.map((id) => (id === null ? "null" : JSON.stringify(id)))
 			.join(", ");
 		lines.push("  {");
-		lines.push(`    pattern: ${JSON.stringify(r.pattern)},`);
+		lines.push(`    pattern: ${JSON.stringify(clientPattern(r.pattern))},`);
 		lines.push(`    page: () => import(${JSON.stringify(toImportPath(r.page))}),`);
 		lines.push(`    layouts: [${layoutImports}],`);
 		lines.push(`    errorPages: [${errorPageImports}],`);
@@ -202,7 +222,7 @@ function generateClientRoutesFile(
 			.map((id) => (id === null ? "null" : JSON.stringify(id)))
 			.join(", ");
 		lines.push("  {");
-		lines.push(`    pattern: ${JSON.stringify(r.pattern)},`);
+		lines.push(`    pattern: ${JSON.stringify(clientPattern(r.pattern))},`);
 		lines.push(`    page: () => import(${JSON.stringify(toImportPath(r.page))}),`);
 		lines.push(`    layouts: [${layoutImports}],`);
 		lines.push(`    errorPages: [${errorPageImports}],`);

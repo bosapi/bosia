@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from "fs";
 import { getDeclaredEnvKeys } from "./env.ts";
 import { nonceAttr } from "./csp.ts";
-import { OUT_DIR } from "./paths.ts";
+import { BASE_PATH, OUT_DIR } from "./paths.ts";
+import { rebaseHtmlAttrs } from "./basePath.ts";
 import type { AppHtmlSegments } from "./appHtml.ts";
 import { interpolateSegment } from "./appHtml.ts";
 
@@ -19,12 +20,31 @@ export const distManifest: { js: string[]; css: string[]; entry: string; tw?: st
 export const isDev = process.env.NODE_ENV !== "production";
 const cacheBust = isDev ? `?v=${Date.now()}` : "";
 
+// Every URL the framework itself emits into the document, prefixed once here so
+// mounting under a BASE_PATH is not thirteen separate string edits. All four are
+// "" + the original path when no base is set.
+const DIST = `${BASE_PATH}/dist/client`;
+const TW_CSS = `${BASE_PATH}/bosia-tw.css`;
+const FAVICON = `${BASE_PATH}/favicon.svg`;
+const SSE = `${BASE_PATH}/__bosia/sse`;
+
+/**
+ * Handed to the client bundle so its router strips the same prefix the server
+ * added. Emitted before the module script, and omitted entirely at the origin
+ * root so a root-mounted app carries no extra bytes.
+ */
+export function baseScript(nonce?: string): string {
+	return BASE_PATH
+		? `\n  <script${nonceAttr(nonce)}>window.__BOSIA_BASE__=${JSON.stringify(BASE_PATH)};</script>`
+		: "";
+}
+
 /** Tailwind stylesheet link. Content-hashed name needs no cache buster — the
  *  hash IS the buster. Fallback keeps older dist/ artifacts (no `tw` field) styled. */
 function twCssLink(): string {
 	return distManifest.tw
-		? `<link rel="stylesheet" href="/dist/client/${distManifest.tw}">`
-		: `<link rel="stylesheet" href="/bosia-tw.css${cacheBust}">`;
+		? `<link rel="stylesheet" href="${DIST}/${distManifest.tw}">`
+		: `<link rel="stylesheet" href="${TW_CSS}${cacheBust}">`;
 }
 
 /** Inline theme bootstrap — runs before paint to avoid FOUC. theme ∈ light|dark|system (missing = system). */
@@ -116,8 +136,15 @@ export function buildHtml(
 	bodyEndExtras?: string[],
 	segments?: AppHtmlSegments,
 ): string {
+	// An app writes <a href="/masuk">; under a base the browser has to be handed
+	// /sso/masuk or it walks off this app entirely. Only the rendered markup is
+	// touched — never the JSON data islands below, whose strings are loader
+	// output and would be corrupted by a path rewrite.
+	body = rebaseHtmlAttrs(BASE_PATH, body);
+	head = rebaseHtmlAttrs(BASE_PATH, head);
+
 	const cssLinks = (distManifest.css ?? [])
-		.map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
+		.map((f: string) => `<link rel="stylesheet" href="${DIST}/${f}">`)
 		.join("\n  ");
 
 	const fallbackTitle = head.includes("<title>") ? "" : "<title>Bosia App</title>";
@@ -147,9 +174,9 @@ export function buildHtml(
 		: "";
 
 	const scripts = csr
-		? `${envScript}${dataIslands}${sysScript}\n  <script${n} type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`
+		? `${baseScript(nonce)}${envScript}${dataIslands}${sysScript}\n  <script${n} type="module" src="${DIST}/${distManifest.entry}${cacheBust}"></script>`
 		: isDev
-			? `\n  <script${n}>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
+			? `\n  <script${n}>!function r(){var e=new EventSource("${SSE}");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
 			: "";
 
 	const bodyEnd = bodyEndExtras?.length ? "\n  " + bodyEndExtras.join("\n  ") : "";
@@ -164,7 +191,7 @@ export function buildHtml(
 		const tailInterpolated = interpolateSegment(segments.tail, { nonce });
 		const faviconLine = segments.hasCustomFavicon
 			? ""
-			: `  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n`;
+			: `  <link rel="icon" type="image/svg+xml" href="${FAVICON}">\n`;
 
 		return (
 			headOpenInterpolated +
@@ -185,7 +212,7 @@ export function buildHtml(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   ${fallbackTitle}
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="${FAVICON}">
   ${head}
   ${cssLinks}
   ${twCssLink()}
@@ -210,20 +237,20 @@ export function buildHtmlShellOpen(
 	const key = safeLang(lang);
 	const n = nonceAttr(nonce);
 	const cssLinks = (distManifest.css ?? [])
-		.map((f: string) => `<link rel="stylesheet" href="/dist/client/${f}">`)
+		.map((f: string) => `<link rel="stylesheet" href="${DIST}/${f}">`)
 		.join("\n  ");
 
 	if (segments) {
 		const headOpenInterpolated = interpolateSegment(segments.headOpen, { lang: key, nonce });
 		const faviconLine = segments.hasCustomFavicon
 			? ""
-			: `  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n`;
+			: `  <link rel="icon" type="image/svg+xml" href="${FAVICON}">\n`;
 		return (
 			headOpenInterpolated +
 			`\n  ${faviconLine}${cssLinks}\n` +
 			`  ${twCssLink()}\n` +
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
-			`  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`
+			`  <link rel="modulepreload" href="${DIST}/${distManifest.entry}${cacheBust}">`
 		);
 	}
 
@@ -231,11 +258,11 @@ export function buildHtmlShellOpen(
 		`<!DOCTYPE html>\n<html lang="${key}">\n<head>\n` +
 		`  <meta charset="UTF-8">\n` +
 		`  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n` +
-		`  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n` +
+		`  <link rel="icon" type="image/svg+xml" href="${FAVICON}">\n` +
 		`  ${cssLinks}\n` +
 		`  ${twCssLink()}\n` +
 		`  <script${n}>${THEME_INIT_JS}</script>\n` +
-		`  <link rel="modulepreload" href="/dist/client/${distManifest.entry}${cacheBust}">`
+		`  <link rel="modulepreload" href="${DIST}/${distManifest.entry}${cacheBust}">`
 	);
 }
 
@@ -290,7 +317,9 @@ export function buildMetadataChunk(
 		out += `</head>\n<body>\n${SPINNER}`;
 	}
 
-	return out;
+	// All markup, no data islands — safe to rebase wholesale, which is what picks
+	// up an app's own headExtras (a canonical link, an og:image on a local file).
+	return rebaseHtmlAttrs(BASE_PATH, out);
 }
 
 export function escapeHtml(s: string): string {
@@ -319,12 +348,17 @@ export function buildHtmlTail(
 	layoutDeps: any[] | null = null,
 	segments?: AppHtmlSegments,
 ): string {
+	// Same rebase as buildHtml — the streamed tail carries the identical markup.
+	body = rebaseHtmlAttrs(BASE_PATH, body);
+	head = rebaseHtmlAttrs(BASE_PATH, head);
+
 	const n = nonceAttr(nonce);
 	let out = `<script${n}>document.getElementById('__bs__').remove()</script>`;
 	out += `\n<div id="app">${body}</div>`;
 	if (head)
 		out += `\n<script${n}>document.head.insertAdjacentHTML('beforeend',${safeJsonStringify(head)})</script>`;
 	if (csr) {
+		out += baseScript(nonce);
 		const publicEnv = getPublicDynamicEnv();
 		if (Object.keys(publicEnv).length > 0) {
 			out += `\n<script${n}>window.__BOSIA_ENV__=${safeJsonStringify(publicEnv)};</script>`;
@@ -342,9 +376,9 @@ export function buildHtmlTail(
 		if (ssrFlag || depsInject) {
 			out += `\n<script${n}>${ssrFlag}${depsInject}</script>`;
 		}
-		out += `\n<script${n} type="module" src="/dist/client/${distManifest.entry}${cacheBust}"></script>`;
+		out += `\n<script${n} type="module" src="${DIST}/${distManifest.entry}${cacheBust}"></script>`;
 	} else if (isDev) {
-		out += `\n<script${n}>!function r(){var e=new EventSource("/__bosia/sse");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;
+		out += `\n<script${n}>!function r(){var e=new EventSource("${SSE}");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;
 	}
 	if (bodyEndExtras?.length) {
 		for (const fragment of bodyEndExtras) {

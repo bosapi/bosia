@@ -2,6 +2,8 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 
 import { OUT_DIR } from "./paths.ts";
+import { rebaseHtmlAttrs } from "./basePath.ts";
+import { currentBase } from "./appBase.ts";
 
 // ─── Types ────────────────────────────────────────────────
 
@@ -128,5 +130,9 @@ export function interpolateSegment(
 		result = result.replaceAll("%bosia.nonce%", vars.nonce);
 	}
 
-	return result;
+	// src/app.html is app-authored markup like any other, so a font preload or a
+	// favicon written as href="/fonts/…" gets rebased here too. Without this it is
+	// the one URL that still escapes the mount, and it fails silently: the page
+	// renders, just with the fallback font.
+	return rebaseHtmlAttrs(currentBase(), result);
 }

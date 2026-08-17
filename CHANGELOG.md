@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.17] - 2026-08-17
+
+### Added
+
+- Apps can now live under a sub-path, e.g. `example.com/sso`, by setting `BASE_PATH`.
+- Links, assets, redirects and cookies all follow the sub-path without app changes.
+- Links point at the real address straight away, so sharing and search engines see the right URL.
+- New `base` export for the few URLs an app builds by hand in component code.
+
+### Fixed
+
+- Cookies are now scoped to the app's own sub-path, so neighbouring apps never receive them.
+
 ## [0.8.16] - 2026-08-07
 
 ### Fixed

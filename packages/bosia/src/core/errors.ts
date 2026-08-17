@@ -1,6 +1,9 @@
 // ─── Error / Redirect Helpers ────────────────────────────
 // Throw these from load() functions; the server catches and handles them.
 
+import { withBase } from "./basePath.ts";
+import { currentBase } from "./appBase.ts";
+
 export class HttpError extends Error {
 	constructor(
 		public status: number,
@@ -23,6 +26,12 @@ export class Redirect {
 		options?: RedirectOptions,
 	) {
 		validateRedirectLocation(location, options);
+		// Validate first, then rebase: the checks above are about what the app
+		// asked for, and a base prefix must never turn a rejected target into an
+		// accepted one. Every redirect() in every app funnels through here, which
+		// is the only reason mounting under a base needs no app change — an app
+		// writing redirect(303, "/masuk") gets /sso/masuk on the wire.
+		this.location = withBase(currentBase(), location);
 	}
 }
 

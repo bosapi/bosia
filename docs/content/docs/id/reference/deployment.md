@@ -86,6 +86,61 @@ agar pemeriksaan origin CSRF menghormati `X-Forwarded-Host` dan `X-Forwarded-Pro
 
 Lihat [Keamanan › Deployment di belakang reverse-proxy](/id/guides/security/#deployment-di-belakang-reverse-proxy-trust_proxy) untuk penjelasan lengkapnya.
 
+## Memasang di Sub-Path
+
+Untuk menyajikan aplikasi dari `example.com/sso`, bukan dari akar origin — beberapa aplikasi berbagi satu hostname, atau subdomain tidak tersedia — setel:
+
+```bash
+BASE_PATH=/sso
+```
+
+nginx lalu meneruskan path **apa adanya**. Tanpa stripping, tanpa `proxy_redirect`, tanpa `sub_filter`:
+
+```nginx
+location /sso/ {
+    proxy_pass http://127.0.0.1:9000;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Forwarded-Host  $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+}
+```
+
+Bosia melepas prefix sekali, di tepi permintaan, sehingga semua yang di belakangnya bekerja di "ruang aplikasi" — hooks, `load()`, actions, dan `event.url.pathname` tidak pernah melihat prefix, dan rute ditulis persis seperti di akar. Saat keluar, prefix dipasang kembali: redirect, URL aset framework, entri history router klien, dan permintaan datanya. Cookie memakai mount sebagai path bawaannya, jadi aplikasi tetangga di origin yang sama tidak pernah menerimanya.
+
+Permintaan di luar base menghasilkan 404.
+
+### Yang tidak tercakup
+
+**URL yang dibangun komponen Anda.** Bosia menulis ulang URL di HTML yang dirender server, tetapi klien merender ulang saat mount dan komponen menuliskan kembali path aslinya. Apa pun yang disusun komponen memerlukan ekspor `base`:
+
+```svelte
+<script>
+	import { base } from "bosia";
+</script>
+
+<img src="{base}/logo.png" alt="" />
+<span style="mask-image:url('{base}/icons/check.svg')"></span>
+```
+
+Ini mudah terlewat karena gagal tanpa suara — mask yang 404 tampak sebagai kotak kosong, bukan galat.
+
+Markup statis sudah ditangani: literal `<a href="/masuk">` di berkas `.svelte` ditulis ulang saat kompilasi, jadi href di DOM adalah URL sebenarnya. Tidak ada yang ditulis ulang setelah klik — tabel rute dibuat dengan prefix, jadi klik mendorong persis URL yang ada di tautan. Karena itu `goto()` menerima path sebenarnya:
+
+```ts
+goto(`${base}/beranda`); // bukan goto("/beranda")
+```
+
+`redirect()` **tidak** memerlukannya, baik di `load()` maupun di action — sudah ditulis ulang untuk Anda:
+
+```ts
+throw redirect(303, "/masuk"); // → /sso/masuk di kabel
+```
+
+Begitu pula `event.url.pathname`, yang sudah berada di ruang aplikasi saat Anda membacanya. Gunakan `base` hanya saat menyusun URL absolut secara manual, misalnya `${url.origin}${base}/reset?t=...` untuk tautan yang keluar dari aplikasi.
+
+**Build dan runtime harus sepakat.** CSS terkompilasi ditulis ulang saat build, jadi `BASE_PATH` harus disetel untuk `bosia build` maupun `bosia start`. Ketidakcocokan muncul sebagai font hilang atau ikon kosong.
+
 ## Graceful Shutdown
 
 Server produksi menangani sinyal `SIGTERM` dan `SIGINT`:

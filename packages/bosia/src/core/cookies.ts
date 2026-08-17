@@ -1,4 +1,5 @@
 import type { Cookies, CookieOptions } from "./hooks.ts";
+import { currentBase } from "./appBase.ts";
 
 // ─── Cookie Validation (RFC 6265) ────────────────────────
 /** Rejects characters that could inject into Set-Cookie headers. */
@@ -25,7 +26,9 @@ const VALID_COOKIE_NAME = /^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$/;
 // ─── Cookie Defaults ─────────────────────────────────────
 /** Secure defaults matching SvelteKit conventions. */
 const COOKIE_DEFAULTS: CookieOptions = {
-	path: "/",
+	// `path` is deliberately absent: it is resolved per-jar in the constructor,
+	// because the base has to be read after the env is in place rather than
+	// whenever this module happens to be imported.
 	httpOnly: true,
 	secure: true,
 	sameSite: "Lax",
@@ -69,7 +72,11 @@ export class CookieJar implements Cookies {
 		this._isHttps = isHttps;
 		// Browsers drop Secure cookies sent over HTTP — only default `secure` on
 		// when the current request actually arrived over HTTPS.
-		this._defaults = isHttps ? COOKIE_DEFAULTS : { ...COOKIE_DEFAULTS, secure: false };
+		// Scoped to the mount, not the origin. Under BASE_PATH this is what keeps a
+		// session cookie out of the sibling apps sharing the host — and stops two
+		// bosia apps on one origin from overwriting each other's `session`.
+		const path = currentBase() || "/";
+		this._defaults = { ...COOKIE_DEFAULTS, path, secure: isHttps };
 	}
 
 	private get _incoming(): Record<string, string> {

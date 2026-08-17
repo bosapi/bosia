@@ -1,5 +1,6 @@
 import { join, dirname } from "path";
 import { existsSync } from "fs";
+import { normalizeBase } from "./basePath.ts";
 
 // This file lives at src/core/paths.ts → package root is ../..
 const BOSIA_PKG_DIR = join(import.meta.dir, "..", "..");
@@ -32,6 +33,15 @@ export const BOSIA_NODE_PATH = ALL_NM.join(":");
 // only the on-disk location moves so dev (.bosia/dev) and a parallel
 // `bun run build` (./dist) don't clobber each other.
 export const OUT_DIR = process.env.BOSIA_OUT_DIR ?? "./dist";
+
+/**
+ * URL prefix the whole app is mounted under — `""` (origin root) unless
+ * `BASE_PATH` says otherwise. Read once here so every consumer agrees; the
+ * browser half gets the same value through `window.__BOSIA_BASE__`.
+ *
+ * Server-only: this module reaches for `fs`, so it never enters a client bundle.
+ */
+export const BASE_PATH = normalizeBase(process.env.BASE_PATH);
 
 /** Find a binary from bosia's dependencies (handles hoisting) */
 export function resolveBosiaBin(name: string): string {

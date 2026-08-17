@@ -86,6 +86,61 @@ so that CSRF origin checks honour `X-Forwarded-Host` and `X-Forwarded-Proto` and
 
 See [Security › Reverse-proxy deployments](/guides/security/#reverse-proxy-deployments-trust_proxy) for the full rationale.
 
+## Mounting Under a Sub-Path
+
+To serve an app from `example.com/sso` rather than the origin root — several apps sharing one hostname, or no subdomain available — set:
+
+```bash
+BASE_PATH=/sso
+```
+
+nginx then passes the path through **unchanged**. No stripping, no `proxy_redirect`, no `sub_filter`:
+
+```nginx
+location /sso/ {
+    proxy_pass http://127.0.0.1:9000;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Forwarded-Host  $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+}
+```
+
+Bosia strips the prefix once, at the edge of the request, so everything downstream works in "app space" — hooks, `load()`, actions and `event.url.pathname` never see the prefix, and routes are written exactly as they are at the root. On the way out it puts the prefix back on: redirects, framework asset URLs, the client router's history entries and its data fetches. Cookies default to the mount as their path, so a neighbouring app on the same origin never receives them.
+
+Requests outside the base get a 404.
+
+### What it does not cover
+
+**URLs your components build.** Bosia rebases the URLs in its server-rendered HTML, but the client re-renders on mount and a component writes its own path straight back. Anything a component constructs needs the `base` export:
+
+```svelte
+<script>
+	import { base } from "bosia";
+</script>
+
+<img src="{base}/logo.png" alt="" />
+<span style="mask-image:url('{base}/icons/check.svg')"></span>
+```
+
+This is easy to miss because it fails quietly — a mask that 404s is a blank square, not an error.
+
+Static markup is handled for you: a literal `<a href="/masuk">` in a `.svelte` file is rewritten at compile time, so the href in the DOM is the real URL. Nothing is rewritten after a click — the route table is generated with the prefix, so a click pushes exactly the URL that was in the link. That also means `goto()` takes a real path:
+
+```ts
+goto(`${base}/beranda`); // not goto("/beranda")
+```
+
+`redirect()` does **not** need it, in `load()` or in an action — it is rebased for you:
+
+```ts
+throw redirect(303, "/masuk"); // → /sso/masuk on the wire
+```
+
+Neither does `event.url.pathname`, which is already app space by the time you read it. Reach for `base` only when you are assembling an absolute URL by hand, e.g. `${url.origin}${base}/reset?t=...` for a link that leaves the app.
+
+**Build and runtime must agree.** The compiled CSS is rebased at build time, so `BASE_PATH` has to be set for `bosia build` as well as `bosia start`. A mismatch shows up as a missing font or a blank icon.
+
 ## Graceful Shutdown
 
 The production server handles `SIGTERM` and `SIGINT` signals:
