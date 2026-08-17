@@ -99,7 +99,7 @@ const handle: Handle = async ({ event, resolve }) => {
 	});
 
 	// Delete
-	event.cookies.delete("old_cookie", { path: "/" });
+	event.cookies.delete("old_cookie"); // matches the default path set() used
 
 	return resolve(event);
 };

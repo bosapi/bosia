@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [0.8.17] - 2026-08-17
+## [0.9.0] - 2026-08-17
 
 ### Added
 
@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Cookies are now scoped to the app's own sub-path, so neighbouring apps never receive them.
+- Addresses with a stray trailing slash no longer bounce visitors out of a sub-path app.
+- Pre-built pages are generated correctly for sub-path apps instead of being quietly skipped.
 
 ## [0.8.16] - 2026-08-07
 

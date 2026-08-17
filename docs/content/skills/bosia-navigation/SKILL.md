@@ -18,6 +18,10 @@ triggers:
   - navbar
   - menu item
   - navigation
+  - base path
+  - BASE_PATH
+  - sub-path
+  - mount under a prefix
 od:
   mode: convention
   category: framework
@@ -164,6 +168,28 @@ Symptoms that signal "use full reload":
 
 Otherwise: `goto()` is faster (no script re-parse, no re-hydration) and keeps loader caches warm.
 
+### R6b — Under `BASE_PATH`, `goto()` takes a prefixed path
+
+When the app is mounted under a sub-path (`BASE_PATH=/sso`), the client route table is generated **with** the prefix and the router converts nothing — a click pushes exactly the URL that was in the link. So:
+
+```ts
+import { base } from "bosia";
+import { goto } from "bosia/client";
+
+goto(`${base}/beranda`); // ✅
+goto("/beranda"); // ❌ no route matches → silent full page load onto the origin root
+```
+
+`base` is `""` when the app is at the origin root, so writing it is free and always correct.
+
+What does **not** need `base`:
+
+- `<a href="/beranda">` — literal markup is rewritten at compile time.
+- `redirect(303, "/masuk")` — rebased in the `Redirect` constructor.
+- `event.url.pathname` — already app-space by the time a `load()` or action reads it.
+
+What **does** need it: any URL built in `<script>` — `goto()`, a `fetch()` to your own endpoint, `url("/icons/x.svg")` in a `$derived`, and absolute URLs like `` `${url.origin}${base}/reset?t=…` ``.
+
 ## Workflow
 
 1. **Pick the pattern.** Link in UI → `<a href>`. JS event → `goto()`. After form submit → `redirect()` in the action. Auth teardown → `window.location.href`.
@@ -219,6 +245,7 @@ P0:
 - [ ] `beforeNavigate` / `afterNavigate` registered at top of `<script>`, not inside `$effect` or an event handler.
 - [ ] Code does not assume `nav.cancel()` blocks `popstate` or `willUnload` events.
 - [ ] Post-submit nav is a form-action `redirect(303, …)`, not a manual `fetch` + `goto`.
+- [ ] If `BASE_PATH` is set: every URL built in `<script>` is prefixed with `base` from `bosia`.
 
 P1:
 

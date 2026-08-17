@@ -50,6 +50,32 @@ describe("redirect() under a base", () => {
 	});
 });
 
+describe("trailing-slash canonicalization under a base", () => {
+	// The server strips the base before routing, so `canonicalPathname` works in
+	// app space — but its result goes out as a `Location:` header, which the
+	// browser resolves against the origin. Anything handed back has to be put
+	// back under the mount or the 308 walks off it. `trailingSlash: "always"`
+	// makes that every request, not just the ones with a stray slash.
+	test("the 308 target stays under the mount", async () => {
+		const { canonicalPathname } = await import("../src/core/matcher.ts");
+		const { stripBase, withBase } = await import("../src/core/basePath.ts");
+
+		const roundTrip = (incoming: string, mode: "never" | "always") => {
+			const appPath = stripBase("/sso", incoming);
+			if (appPath === null) return null;
+			const canonical = canonicalPathname(appPath, mode);
+			return canonical === null ? null : withBase("/sso", canonical);
+		};
+
+		expect(roundTrip("/sso/about/", "never")).toBe("/sso/about");
+		expect(roundTrip("/sso/about", "always")).toBe("/sso/about/");
+		expect(roundTrip("/sso/about", "never")).toBe(null);
+		// The mount root canonicalizes to nothing, so it never redirects to "/".
+		expect(roundTrip("/sso", "always")).toBe(null);
+		expect(roundTrip("/sso/", "never")).toBe(null);
+	});
+});
+
 describe("cookie defaults under a base", () => {
 	test("scoped to the mount, so siblings on the origin never receive it", async () => {
 		const { CookieJar } = await import("../src/core/cookies.ts");

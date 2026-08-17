@@ -146,13 +146,14 @@ Setel opsi cookie yang aman:
 
 ```ts
 event.cookies.set("session", token, {
-	path: "/",
 	httpOnly: true, // not accessible via JavaScript
 	secure: true, // HTTPS only
 	sameSite: "Lax", // protects against CSRF
 	maxAge: 60 * 60 * 24 * 7, // 7 days
 });
 ```
+
+`Path` bawaannya mengikuti mount — `/` pada umumnya, atau `BASE_PATH` saat aplikasi [dipasang di sub-path](/id/reference/deployment/#memasang-di-sub-path). Pelingkupan itulah yang menjaga sesi tidak bocor ke aplikasi tetangga di origin yang sama, jadi jangan menuliskan `path: "/"` untuk membatalkannya. `cookies.delete()` tanpa `path` mengikuti bawaan yang sama.
 
 ## Proteksi XSS
 

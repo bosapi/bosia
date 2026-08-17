@@ -3,7 +3,7 @@ import { createServer } from "net";
 import { join } from "path";
 import type { RouteManifest, TrailingSlash } from "./types.ts";
 
-import { BOSIA_NODE_PATH, OUT_DIR } from "./paths.ts";
+import { BASE_PATH, BOSIA_NODE_PATH, OUT_DIR } from "./paths.ts";
 
 /** Acquire an OS-assigned ephemeral port. Tiny TOCTOU race window; acceptable for build-time use. */
 export function getEphemeralPort(): Promise<number> {
@@ -184,7 +184,10 @@ export async function prerenderStaticRoutes(manifest: RouteManifest): Promise<vo
 	try {
 		// Poll /_health until ready (max 10s). Check first, sleep only on failure —
 		// avoids a guaranteed floor when the server is already up.
-		const base = `http://localhost:${port}`;
+		// The child inherits BASE_PATH, so it 404s anything outside the mount —
+		// including /_health. Prefix here and every fetch below follows; the files
+		// we write stay app-space, which is what the server looks them up by.
+		const base = `http://localhost:${port}${BASE_PATH}`;
 		let ready = false;
 		const deadline = Date.now() + 10_000;
 		while (Date.now() < deadline) {

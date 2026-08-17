@@ -43,6 +43,19 @@ await goto("/login", { replaceState: true, invalidateAll: true });
 
 Jika URL cocok dengan route saat ini, `goto()` resolve langsung tanpa menjalankan ulang loader. Opsi `invalidateAll: true` **tidak** dihormati pada panggilan ke path yang sama — panggil `invalidateAll()` langsung (diimpor dari `bosia/client`) untuk menyegarkan di tempat.
 
+### Di bawah `BASE_PATH`
+
+Jika aplikasi [dipasang di sub-path](/id/reference/deployment/#memasang-di-sub-path), `goto()` menerima path asli yang sudah berprefix. Tabel rute dihasilkan dengan prefix dan router tidak mengonversi apa pun, jadi path ruang-aplikasi tidak cocok dengan rute mana pun dan jatuh ke full page load ke akar origin:
+
+```ts
+import { base } from "bosia";
+
+await goto(`${base}/dashboard`); // ✅
+await goto("/dashboard"); // ❌ keluar dari aplikasi saat BASE_PATH disetel
+```
+
+`base` bernilai `""` saat aplikasi berjalan di akar origin, jadi menuliskannya selalu aman. Literal `<a href="/dashboard">` tidak perlu diubah — markup ditulis ulang untuk Anda.
+
 ## Perilaku scroll
 
 - **Navigasi maju** (link, `goto()`, redirect form) scroll ke atas — atau ke elemen `#hash` jika URL tujuan memilikinya. `goto(url, { noScroll: true })` melewatinya untuk satu navigasi.

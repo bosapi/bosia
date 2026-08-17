@@ -156,6 +156,8 @@ event.cookies.set("session", token, {
 // → Set-Cookie: session=...; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Lax
 ```
 
+`Path` defaults to the mount — `/` normally, or `BASE_PATH` when the app is [mounted under a sub-path](/reference/deployment/#mounting-under-a-sub-path). That scoping is what keeps a session out of a neighbouring app sharing the same origin, so don't hardcode `path: "/"` to undo it. `cookies.delete()` with no `path` matches the same default.
+
 To opt out of a default, pass it explicitly:
 
 ```ts

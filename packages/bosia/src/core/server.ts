@@ -24,7 +24,7 @@ import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } f
 import { isDev, compress, isStaticPath } from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
 import { BASE_PATH, OUT_DIR } from "./paths.ts";
-import { stripBase } from "./basePath.ts";
+import { stripBase, withBase } from "./basePath.ts";
 import { pidsOnPort } from "./port.ts";
 import { buildPrerenderManifest, buildStaticManifest, lookupStatic } from "./staticManifest.ts";
 import { dedup } from "./dedup.ts";
@@ -637,7 +637,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		if (canonical !== null) {
 			return new Response(null, {
 				status: 308,
-				headers: { Location: canonical + url.search + url.hash },
+				// `path` is app-space — the base came off at the top of handleRequest.
+				// This Location goes back to the browser, so it has to be put back on,
+				// or a `trailingSlash: "always"` route 308s every request off the mount.
+				headers: { Location: withBase(BASE_PATH, canonical) + url.search + url.hash },
 			});
 		}
 	}

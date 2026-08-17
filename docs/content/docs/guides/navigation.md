@@ -43,6 +43,19 @@ await goto("/login", { replaceState: true, invalidateAll: true });
 
 If the URL matches the current route, `goto()` resolves immediately without re-running loaders. The `invalidateAll: true` option is **not** honored on same-path calls — call `invalidateAll()` directly (imported from `bosia/client`) to refresh in place.
 
+### Under a `BASE_PATH`
+
+If the app is [mounted under a sub-path](/reference/deployment/#mounting-under-a-sub-path), `goto()` takes the real, prefixed path. The route table is generated with the prefix and the router converts nothing, so an app-space path matches no route and falls through to a full page load onto the origin root:
+
+```ts
+import { base } from "bosia";
+
+await goto(`${base}/dashboard`); // ✅
+await goto("/dashboard"); // ❌ leaves the app when BASE_PATH is set
+```
+
+`base` is `""` when the app runs at the origin root, so writing it is always safe. A literal `<a href="/dashboard">` needs no change — markup is rewritten for you.
+
 ## Scroll behavior
 
 - **Forward navigation** (link, `goto()`, form redirect) scrolls to the top — or to the `#hash` element if the destination URL has one. `goto(url, { noScroll: true })` skips this for one navigation.

@@ -40,6 +40,10 @@ Set `PUBLIC_BASE_URL` (e.g. `https://example.com`) in `.env` so crawlers get you
 origin; when empty, the routes fall back to the request origin. Outside production
 (`NODE_ENV !== "production"`), `robots.txt` disallows everything so staging never gets indexed.
 
+If the app is [mounted under a sub-path](/reference/deployment/#mounting-under-a-sub-path), the
+paths in `config.ts` and the URLs written into `sitemap.xml` / `robots.txt` need the prefix —
+`import { base } from "bosia"` and write `` `${base}/blog` ``. `base` is `""` at the origin root.
+
 ## Feeding the RSS feed
 
 `rssItems` is a static list of `{ title, link, description?, pubDate? }`. If you installed the

@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.10] - 2026-08-17
+
+### Added
+
+- Guide for running an app from a sub-path like `example.com/sso`, with a ready nginx block.
+- Navigation docs now show the one call that needs the sub-path written in by hand.
+
+### Changed
+
+- Cookie examples stop hardcoding the path, so sessions stay scoped to their own app.
+- SEO docs note that sitemap and canonical URLs need the sub-path added.
+
 ## [0.8.9] - 2026-08-07
 
 ### Changed

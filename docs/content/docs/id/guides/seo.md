@@ -42,6 +42,10 @@ kanonismu; saat kosong, route memakai origin request. Di luar production
 (`NODE_ENV !== "production"`), `robots.txt` melarang semuanya sehingga staging tidak pernah
 terindeks.
 
+Jika aplikasi [dipasang di sub-path](/id/reference/deployment/#memasang-di-sub-path), path di
+`config.ts` dan URL yang ditulis ke `sitemap.xml` / `robots.txt` perlu prefix —
+`import { base } from "bosia"` lalu tulis `` `${base}/blog` ``. `base` bernilai `""` di akar origin.
+
 ## Mengisi feed RSS
 
 `rssItems` adalah daftar statis `{ title, link, description?, pubDate? }`. Jika kamu memasang

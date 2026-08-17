@@ -286,6 +286,8 @@ Per-page JSON-LD (Tier 3) still goes in that page's `<svelte:head>` (Googlebot r
 
 The request host (`event.url.origin` in a loader, `page.url.origin` in a component) reflects the **incoming request host**. In production behind a reverse proxy with multiple hostnames (apex, staging, preview deploy), this leaks the wrong canonical to Google and splits your link equity. Always pin canonical + `og:url` to a build-time origin constant — `SITE.origin` from `$env` (above). `metadata()` builds the absolute URL as `${SITE.origin}${url.pathname}`: real pathname from the event, fixed host from env.
 
+**Under `BASE_PATH`, add `base`.** When the app is mounted under a sub-path, `url.pathname` is app-space — the prefix has already been stripped — so `${SITE.origin}${url.pathname}` emits a canonical that points outside the app. Build it as `` `${SITE.origin}${base}${url.pathname}` `` with `import { base } from "bosia"`; `base` is `""` at the origin root, so it costs nothing to always write. The same applies to absolute `og:image` / `og:url` and to any URL you emit into `robots.txt`, `sitemap.xml` or JSON-LD.
+
 Use the **`PUBLIC_STATIC_*`** tier so the value is inlined at build (it never changes at runtime) and is available on both the SSR pass and the client bundle:
 
 ```bash

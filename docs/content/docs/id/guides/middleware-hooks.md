@@ -101,7 +101,7 @@ const handle: Handle = async ({ event, resolve }) => {
 	});
 
 	// Delete
-	event.cookies.delete("old_cookie", { path: "/" });
+	event.cookies.delete("old_cookie"); // mengikuti path bawaan yang dipakai set()
 
 	return resolve(event);
 };

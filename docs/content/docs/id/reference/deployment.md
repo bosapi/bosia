@@ -97,7 +97,7 @@ BASE_PATH=/sso
 nginx lalu meneruskan path **apa adanya**. Tanpa stripping, tanpa `proxy_redirect`, tanpa `sub_filter`:
 
 ```nginx
-location /sso/ {
+location /sso {
     proxy_pass http://127.0.0.1:9000;
     proxy_set_header Host              $host;
     proxy_set_header X-Forwarded-Host  $host;
@@ -106,9 +106,11 @@ location /sso/ {
 }
 ```
 
-Bosia melepas prefix sekali, di tepi permintaan, sehingga semua yang di belakangnya bekerja di "ruang aplikasi" — hooks, `load()`, actions, dan `event.url.pathname` tidak pernah melihat prefix, dan rute ditulis persis seperti di akar. Saat keluar, prefix dipasang kembali: redirect, URL aset framework, entri history router klien, dan permintaan datanya. Cookie memakai mount sebagai path bawaannya, jadi aplikasi tetangga di origin yang sama tidak pernah menerimanya.
+Perhatikan `location /sso` tanpa garis miring di akhir. `location /sso/` tidak akan cocok dengan `example.com/sso` polos, yang oleh Bosia disajikan sebagai halaman akar aplikasi.
 
-Permintaan di luar base menghasilkan 404.
+Bosia melepas prefix sekali, di tepi permintaan, sehingga semua yang di belakangnya bekerja di "ruang aplikasi" — hooks, `load()`, actions, dan `event.url.pathname` tidak pernah melihat prefix, dan rute ditulis persis seperti di akar. Saat keluar, prefix dipasang kembali: redirect, kanonikalisasi garis miring akhir, URL aset framework, entri history router klien, dan permintaan datanya. Cookie memakai mount sebagai path bawaannya, jadi aplikasi tetangga di origin yang sama tidak pernah menerimanya.
+
+Permintaan di luar base menghasilkan 404 — termasuk health check, yang pindah ke `/sso/_health`. Perbarui load balancer, `HEALTHCHECK` Docker, atau probe Kubernetes agar sesuai.
 
 ### Yang tidak tercakup
 
@@ -139,7 +141,7 @@ throw redirect(303, "/masuk"); // → /sso/masuk di kabel
 
 Begitu pula `event.url.pathname`, yang sudah berada di ruang aplikasi saat Anda membacanya. Gunakan `base` hanya saat menyusun URL absolut secara manual, misalnya `${url.origin}${base}/reset?t=...` untuk tautan yang keluar dari aplikasi.
 
-**Build dan runtime harus sepakat.** CSS terkompilasi ditulis ulang saat build, jadi `BASE_PATH` harus disetel untuk `bosia build` maupun `bosia start`. Ketidakcocokan muncul sebagai font hilang atau ikon kosong.
+**Build dan runtime harus sepakat.** CSS terkompilasi, tabel rute klien, dan markup di berkas `.svelte` Anda semuanya ditulis ulang saat build, jadi `BASE_PATH` harus disetel untuk `bosia build` maupun `bosia start`. Belum ada yang memeriksa ini, dan ketidakcocokannya senyap — font hilang, ikon kosong, atau tautan yang keluar dari aplikasi.
 
 ## Graceful Shutdown
 

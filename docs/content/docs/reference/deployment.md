@@ -97,7 +97,7 @@ BASE_PATH=/sso
 nginx then passes the path through **unchanged**. No stripping, no `proxy_redirect`, no `sub_filter`:
 
 ```nginx
-location /sso/ {
+location /sso {
     proxy_pass http://127.0.0.1:9000;
     proxy_set_header Host              $host;
     proxy_set_header X-Forwarded-Host  $host;
@@ -106,9 +106,11 @@ location /sso/ {
 }
 ```
 
-Bosia strips the prefix once, at the edge of the request, so everything downstream works in "app space" — hooks, `load()`, actions and `event.url.pathname` never see the prefix, and routes are written exactly as they are at the root. On the way out it puts the prefix back on: redirects, framework asset URLs, the client router's history entries and its data fetches. Cookies default to the mount as their path, so a neighbouring app on the same origin never receives them.
+Note the `location /sso` without a trailing slash. `location /sso/` would not match a bare `example.com/sso`, which Bosia serves as the app's root page.
 
-Requests outside the base get a 404.
+Bosia strips the prefix once, at the edge of the request, so everything downstream works in "app space" — hooks, `load()`, actions and `event.url.pathname` never see the prefix, and routes are written exactly as they are at the root. On the way out it puts the prefix back on: redirects, trailing-slash canonicalization, framework asset URLs, the client router's history entries and its data fetches. Cookies default to the mount as their path, so a neighbouring app on the same origin never receives them.
+
+Requests outside the base get a 404 — including the health check, which moves to `/sso/_health`. Update your load balancer, Docker `HEALTHCHECK` or Kubernetes probe to match.
 
 ### What it does not cover
 
@@ -139,7 +141,7 @@ throw redirect(303, "/masuk"); // → /sso/masuk on the wire
 
 Neither does `event.url.pathname`, which is already app space by the time you read it. Reach for `base` only when you are assembling an absolute URL by hand, e.g. `${url.origin}${base}/reset?t=...` for a link that leaves the app.
 
-**Build and runtime must agree.** The compiled CSS is rebased at build time, so `BASE_PATH` has to be set for `bosia build` as well as `bosia start`. A mismatch shows up as a missing font or a blank icon.
+**Build and runtime must agree.** The compiled CSS, the client route table and the markup in your `.svelte` files are all rebased at build time, so `BASE_PATH` has to be set for `bosia build` as well as `bosia start`. Nothing checks this yet, and a mismatch is quiet — a missing font, a blank icon, or links that leave the app.
 
 ## Graceful Shutdown
 

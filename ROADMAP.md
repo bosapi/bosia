@@ -1,11 +1,11 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.8.17**
+> Current version: **0.9.0**
 
 ---
 
-## bosia 0.8.17 (2026-08-17) — `BASE_PATH`: mount an app under a sub-path
+## bosia 0.9.0 (2026-08-17) — `BASE_PATH`: mount an app under a sub-path
 
 > Found in SSO Fisika: three apps share one origin (`fi.uinsgd.ac.id`, `/obe`, `/sso`) because no subdomain was available. Serving from a prefix was impossible — route paths are compiled root-absolute into the client bundle, every `redirect()` emits a root-absolute `Location`, and nothing in the framework rewrote a leading segment. An nginx-only attempt (strip + `proxy_redirect` + `sub_filter`) was verified in a real browser and fails two ways: app-authored `href="/daftar"` walks off to the neighbouring app, and `hydrate.ts` matches `location.pathname` against a route table that has no prefix, so the app mounts into a permanent "Loading…".
 
@@ -17,11 +17,16 @@
 - [x] 🟠 Compiled Tailwind CSS rebased at build time (`twHash.ts`, before hashing). A `@font-face` src inside a `.css` file is out of reach of any markup rewrite, and the miss is silent — fallback font, blank icon, nothing in the console.
 - [x] 🟠 Cookie default path is the mount, resolved per-jar rather than at import. On a shared origin this is what stops two bosia apps from overwriting each other's `session`.
 - [x] 🟡 `base` exported from `bosia`, for URLs built in `<script>` — the compile-time rewrite only sees markup. Verified against the Fisika design system: `Icon.svelte` builds `url("/icons/…")` in a `$derived` and needs it.
+- [x] 🔴 Trailing-slash 308 was emitting an app-space `Location` (`server.ts`), so `/sso/about/` bounced the visitor to `/about`. A `trailingSlash: "always"` route did it on **every** request. Rebased — it was the one `Location` not coming from `Redirect`.
+- [x] 🔴 Prerendering never ran under a base: `prerender.ts` fetched the spawned server at the origin root, which now 404s, so `/_health` never answered and the step bailed with "server failed to start" — without failing the build. Prefixed the fetch base; the files written stay app-space, which is what the server looks them up by.
+- [x] ⚪ `svelteCompiler.ts` masked `<script>` blocks with literal NUL sentinels, which made git treat the whole module as binary — no diffs, no blame. Swapped for an HTML comment.
 
 - [ ] 🟠 `goto()` now takes a real (prefixed) path, since the router no longer converts. Nothing warns when it is handed an app-space one — it silently falls through to a full page load onto whatever app owns the origin root. Worth a dev-mode check.
 - [ ] 🟡 Build and runtime must agree on `BASE_PATH`: both the CSS rebase and the route table are baked into the artifact. Nothing checks this — stamp it into `manifest.json` and warn on boot.
 - [ ] 🟡 Dev hot-reload still opens `EventSource("/__bosia/sse")` root-absolute (`hydrate.ts`). Dev rarely runs mounted, so it has not bitten; fix when it does.
 - [ ] 🟡 `srcset` is not rebased (comma-separated candidates with descriptors). Nothing in the framework emits one root-absolute; an app that does needs `base`.
+- [ ] 🟠 Nothing boots the server in a test, so the strip → route → `Location` path is only covered by a round-trip over the pure helpers. Both base bugs above shipped straight through that gap.
+- [ ] 🟡 Two sources for one value: `paths.BASE_PATH` freezes at import, `appBase.currentBase()` memoizes on first call, `client/base.ts` is a third read. They agree today only because Bun loads `.env` before any module runs. Collapse to one.
 
 ---
 
