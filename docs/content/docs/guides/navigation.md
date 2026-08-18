@@ -56,6 +56,12 @@ await goto("/dashboard"); // ❌ leaves the app when BASE_PATH is set
 
 `base` is `""` when the app runs at the origin root, so writing it is always safe. A literal `<a href="/dashboard">` needs no change — markup is rewritten for you.
 
+In development, a navigation that would have matched **with** the prefix logs a warning naming the path to use, instead of quietly leaving the app:
+
+```
+[bosia] "/dashboard" matched no route and is leaving the app — it is mounted at "/sso". Use "/sso/dashboard".
+```
+
 ## Scroll behavior
 
 - **Forward navigation** (link, `goto()`, form redirect) scrolls to the top — or to the `#hash` element if the destination URL has one. `goto(url, { noScroll: true })` skips this for one navigation.

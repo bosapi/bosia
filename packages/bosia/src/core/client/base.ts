@@ -1,4 +1,4 @@
-import { normalizeBase } from "../basePath.ts";
+import { currentBase } from "../appBase.ts";
 
 /**
  * The prefix this app is mounted under, handed over by the inline script
@@ -9,11 +9,7 @@ import { normalizeBase } from "../basePath.ts";
  * table are all the same strings — a click pushes exactly the URL that was in
  * the link, and nothing rewrites a path after the user acts on it.
  *
- * It is needed only to build the `/__bosia/data` endpoint URL, where the mount
- * prefix sits in front of the endpoint rather than in front of the route.
+ * It is needed only to build the `/__bosia/data` and `/__bosia/sse` URLs, where
+ * the mount prefix sits in front of the endpoint rather than in front of the route.
  */
-export const base: string = normalizeBase(
-	typeof window !== "undefined"
-		? (window as unknown as { __BOSIA_BASE__?: string }).__BOSIA_BASE__
-		: "",
-);
+export const base: string = currentBase();

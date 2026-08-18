@@ -1,7 +1,7 @@
 import { readFileSync, renameSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { rebaseCssUrls } from "./basePath.ts";
-import { BASE_PATH } from "./paths.ts";
+import { currentBase } from "./appBase.ts";
 
 /** Temp filename Tailwind CLI writes to before the content-hash rename. */
 export const TW_TEMP_BASENAME = ".bosia-tw.build.css";
@@ -16,8 +16,13 @@ export function finalizeTailwindCss(tempPath: string): string {
 	// @font-face src or mask-image written as url(/fonts/…) resolves against the
 	// origin and would land outside the mount — silently, as a fallback font or a
 	// blank icon rather than an error.
-	if (BASE_PATH) {
-		const rebased = rebaseCssUrls(BASE_PATH, readFileSync(tempPath, "utf-8"));
+	//
+	// Read here, not at import: build.ts calls loadEnv() after its imports, so a
+	// BASE_PATH that lives in .env.production is not in process.env yet when this
+	// module loads.
+	const base = currentBase();
+	if (base) {
+		const rebased = rebaseCssUrls(base, readFileSync(tempPath, "utf-8"));
 		writeFileSync(tempPath, rebased);
 	}
 

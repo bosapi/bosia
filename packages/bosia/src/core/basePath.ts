@@ -52,27 +52,61 @@ const ROOT_ABSOLUTE_ATTR = /\b(href|src|action|formaction)=("|')(\/(?!\/)[^"']*)
 // error, so this one is easy to miss.
 const CSS_URL_ROOT = /(url\(\s*(?:&quot;|&#39;|&apos;|["'])?)(\/(?!\/)[^)"'&\s]*)/gi;
 
+// Responsive image candidates. Each is "url" plus an optional `2x` / `640w`
+// descriptor, comma-separated, so the value needs splitting before `withBase`
+// can see a path.
+const SRCSET_ATTR = /\b(srcset|imagesrcset)=("|')([^"']*)\2/gi;
+
+// Leading whitespace + the url token of one candidate; the descriptor that may
+// follow is left exactly as written.
+const SRCSET_CANDIDATE = /^(\s*)(\S+)/;
+
 /**
- * Rewrite root-absolute `href`/`src`/`action` in rendered markup so an app that
- * writes `<a href="/masuk">` keeps working under a base with no code change.
+ * Rebase every candidate url in one `srcset` value.
+ *
+ * A `data:` URI can contain commas of its own (base64 padding aside, any
+ * `text/plain,a,b` does), and splitting on those would shred it. Nothing
+ * root-absolute can live inside a data URI anyway, so the whole value is left
+ * alone when one appears — split on top-level commas only if an app ever mixes
+ * a data URI with a root-absolute candidate in the same attribute.
+ */
+function rebaseSrcset(base: string, value: string): string {
+	if (value.includes("data:")) return value;
+	return value
+		.split(",")
+		.map((candidate) =>
+			candidate.replace(
+				SRCSET_CANDIDATE,
+				(_m, space: string, url: string) => space + withBase(base, url),
+			),
+		)
+		.join(",");
+}
+
+/**
+ * Rewrite root-absolute `href`/`src`/`action`/`srcset` in rendered markup so an
+ * app that writes `<a href="/masuk">` keeps working under a base with no code
+ * change.
  *
  * Only ever called on the SSR'd body and head, never on the JSON data islands —
  * those carry loader output, and a blind rewrite there would corrupt any string
  * that merely looked like a path.
- *
- * Does not touch `srcset` — comma-separated candidates with descriptors, and
- * nothing in the framework emits one root-absolute. An app that does needs
- * `base` from "bosia".
  */
 export function rebaseHtmlAttrs(base: string, html: string): string {
 	if (!base) return html;
 	return rebaseCssUrls(
 		base,
-		html.replace(
-			ROOT_ABSOLUTE_ATTR,
-			(_match, attr: string, quote: string, path: string) =>
-				`${attr}=${quote}${withBase(base, path)}${quote}`,
-		),
+		html
+			.replace(
+				ROOT_ABSOLUTE_ATTR,
+				(_match, attr: string, quote: string, path: string) =>
+					`${attr}=${quote}${withBase(base, path)}${quote}`,
+			)
+			.replace(
+				SRCSET_ATTR,
+				(_match, attr: string, quote: string, value: string) =>
+					`${attr}=${quote}${rebaseSrcset(base, value)}${quote}`,
+			),
 	);
 }
 

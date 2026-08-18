@@ -56,6 +56,12 @@ await goto("/dashboard"); // ❌ keluar dari aplikasi saat BASE_PATH disetel
 
 `base` bernilai `""` saat aplikasi berjalan di akar origin, jadi menuliskannya selalu aman. Literal `<a href="/dashboard">` tidak perlu diubah — markup ditulis ulang untuk Anda.
 
+Saat development, navigasi yang seharusnya cocok **dengan** prefix akan mencatat peringatan berisi path yang benar, alih-alih diam-diam keluar dari aplikasi:
+
+```
+[bosia] "/dashboard" matched no route and is leaving the app — it is mounted at "/sso". Use "/sso/dashboard".
+```
+
 ## Perilaku scroll
 
 - **Navigasi maju** (link, `goto()`, redirect form) scroll ke atas — atau ke elemen `#hash` jika URL tujuan memilikinya. `goto(url, { noScroll: true })` melewatinya untuk satu navigasi.

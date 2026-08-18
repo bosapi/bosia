@@ -21,10 +21,11 @@ import type { CsrfConfig } from "./csrf.ts";
 import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
 import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } from "./csp.ts";
-import { isDev, compress, isStaticPath } from "./html.ts";
+import { isDev, compress, isStaticPath, distManifest } from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
-import { BASE_PATH, OUT_DIR } from "./paths.ts";
+import { OUT_DIR } from "./paths.ts";
 import { stripBase, withBase } from "./basePath.ts";
+import { currentBase } from "./appBase.ts";
 import { pidsOnPort } from "./port.ts";
 import { buildPrerenderManifest, buildStaticManifest, lookupStatic } from "./staticManifest.ts";
 import { dedup } from "./dedup.ts";
@@ -159,8 +160,17 @@ if (CSP_DIRECTIVES_TEMPLATE) {
 	console.log(`🔒 CSP: opt-in header active`);
 }
 
-if (BASE_PATH) {
-	console.log(`📍 Mounted under ${BASE_PATH} (BASE_PATH)`);
+if (currentBase()) {
+	console.log(`📍 Mounted under ${currentBase()} (BASE_PATH)`);
+}
+
+// The CSS urls and the client route table are baked in at build time, so a
+// build and the server running it have to agree. Older dist/ artifacts carry no
+// `basePath` field — stay quiet for those rather than warn about nothing.
+if (distManifest.basePath !== undefined && distManifest.basePath !== currentBase()) {
+	console.warn(
+		`⚠️  Built for BASE_PATH="${distManifest.basePath}" but running with "${currentBase()}" — CSS urls and the client route table are baked in and will not match.`,
+	);
 }
 
 // ─── Core Request Resolver ────────────────────────────────
@@ -640,7 +650,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				// `path` is app-space — the base came off at the top of handleRequest.
 				// This Location goes back to the browser, so it has to be put back on,
 				// or a `trailingSlash: "always"` route 308s every request off the mount.
-				headers: { Location: withBase(BASE_PATH, canonical) + url.search + url.hash },
+				headers: { Location: withBase(currentBase(), canonical) + url.search + url.hash },
 			});
 		}
 	}
@@ -876,8 +886,9 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 	// /_health and /__bosia tests below — works in app space, so the prefix comes
 	// off exactly once, here, before anything reads a pathname. A request that is
 	// not under the base was never this app's to answer.
-	if (BASE_PATH) {
-		const appPath = stripBase(BASE_PATH, url.pathname);
+	const base = currentBase();
+	if (base) {
+		const appPath = stripBase(base, url.pathname);
 		if (appPath === null) return new Response("Not Found", { status: 404 });
 		url.pathname = appPath;
 	}

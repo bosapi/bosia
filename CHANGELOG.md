@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.9.1] - 2026-08-18
+
+### Fixed
+
+- Sub-path apps now style correctly when `BASE_PATH` is set in an `.env` file.
+- Responsive images (`srcset`) now load under a sub-path instead of silently missing.
+- Hot reload during development now works while an app is served from a sub-path.
+
+### Added
+
+- The server warns on start when it runs under a different sub-path than it was built for.
+- `goto()` with a sub-path-less address now warns in development instead of failing quietly.
+
 ## [0.9.0] - 2026-08-17
 
 ### Added

@@ -153,6 +153,36 @@ describe("rebaseHtmlAttrs()", () => {
 		}
 	});
 
+	test("rebases every srcset candidate, descriptors and spacing intact", () => {
+		expect(rebaseHtmlAttrs(B, `<img srcset="/a.png 1x, /a@2x.png 2x">`)).toBe(
+			`<img srcset="/sso/a.png 1x, /sso/a@2x.png 2x">`,
+		);
+		expect(rebaseHtmlAttrs(B, `<img srcset="/a-640.png 640w,/a-1280.png 1280w">`)).toBe(
+			`<img srcset="/sso/a-640.png 640w,/sso/a-1280.png 1280w">`,
+		);
+		// No descriptor at all is a legal single candidate.
+		expect(rebaseHtmlAttrs(B, `<img srcset="/a.png">`)).toBe(`<img srcset="/sso/a.png">`);
+		expect(rebaseHtmlAttrs(B, `<link rel=preload imagesrcset="/hero.avif 1x">`)).toBe(
+			`<link rel=preload imagesrcset="/sso/hero.avif 1x">`,
+		);
+	});
+
+	test("leaves external and relative srcset candidates alone", () => {
+		const html = `<img srcset="https://cdn.test/a.png 1x, //cdn.test/b.png 2x, c.png 3x">`;
+		expect(rebaseHtmlAttrs(B, html)).toBe(html);
+	});
+
+	test("leaves a srcset containing a data: URI untouched", () => {
+		// Its commas are not candidate separators — splitting on them would shred it.
+		const html = `<img srcset="data:image/svg+xml;utf8,<svg/> 1x, /a.png 2x">`;
+		expect(rebaseHtmlAttrs(B, html)).toBe(html);
+	});
+
+	test("srcset rewriting is idempotent", () => {
+		const once = rebaseHtmlAttrs(B, `<img srcset="/a.png 1x, /b.png 2x">`);
+		expect(rebaseHtmlAttrs(B, once)).toBe(once);
+	});
+
 	test("url() rewriting is idempotent too", () => {
 		const once = rebaseHtmlAttrs(B, `<i style="mask-image:url(&quot;/icons/eye.svg&quot;)">`);
 		expect(rebaseHtmlAttrs(B, once)).toBe(once);

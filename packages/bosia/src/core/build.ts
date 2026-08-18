@@ -11,6 +11,7 @@ import { prerenderStaticRoutes, generateStaticSite } from "./prerender.ts";
 import { loadEnv, classifyEnvVars } from "./env.ts";
 import { generateEnvModules } from "./envCodegen.ts";
 import { BOSIA_NODE_PATH, OUT_DIR, resolveBosiaBin } from "./paths.ts";
+import { currentBase } from "./appBase.ts";
 import { finalizeTailwindCss, TW_TEMP_BASENAME } from "./twHash.ts";
 import { loadPlugins } from "./config.ts";
 import type { BuildContext } from "./types/plugin.ts";
@@ -276,6 +277,9 @@ const distManifest = {
 		"hydrate.js",
 	serverEntry,
 	tw: twFile,
+	// The CSS urls and the client route table are baked in with this prefix.
+	// Stamped so the server can warn when it boots with a different one.
+	basePath: currentBase(),
 };
 writeFileSync(`${OUT_DIR}/manifest.json`, JSON.stringify(distManifest, null, 2));
 console.log(`✅ Client bundle: ${jsFiles.join(", ")}`);

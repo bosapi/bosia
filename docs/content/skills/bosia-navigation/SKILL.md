@@ -177,10 +177,12 @@ import { base } from "bosia";
 import { goto } from "bosia/client";
 
 goto(`${base}/beranda`); // ✅
-goto("/beranda"); // ❌ no route matches → silent full page load onto the origin root
+goto("/beranda"); // ❌ no route matches → full page load onto the origin root
 ```
 
 `base` is `""` when the app is at the origin root, so writing it is free and always correct.
+
+In dev the second line logs `[bosia] "/beranda" matched no route and is leaving the app — it is mounted at "/sso". Use "/sso/beranda".` — a warning only; the router still rewrites nothing. In production it is silent, so do not rely on it.
 
 What does **not** need `base`:
 

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.11] - 2026-08-18
+
+### Changed
+
+- Deployment docs describe the start-up warning when a build and its server disagree on the sub-path.
+- Navigation docs and skill show the dev warning for a `goto()` missing the sub-path.
+
 ## [0.8.10] - 2026-08-17
 
 ### Added

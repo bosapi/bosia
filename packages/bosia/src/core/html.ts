@@ -1,8 +1,9 @@
 import { existsSync, readFileSync } from "fs";
 import { getDeclaredEnvKeys } from "./env.ts";
 import { nonceAttr } from "./csp.ts";
-import { BASE_PATH, OUT_DIR } from "./paths.ts";
+import { OUT_DIR } from "./paths.ts";
 import { rebaseHtmlAttrs } from "./basePath.ts";
+import { currentBase } from "./appBase.ts";
 import type { AppHtmlSegments } from "./appHtml.ts";
 import { interpolateSegment } from "./appHtml.ts";
 
@@ -10,7 +11,13 @@ import { interpolateSegment } from "./appHtml.ts";
 // Maps hashed filenames → script/link tags.
 // Cached at startup; server restarts on rebuild in dev anyway.
 
-export const distManifest: { js: string[]; css: string[]; entry: string; tw?: string } = (() => {
+export const distManifest: {
+	js: string[];
+	css: string[];
+	entry: string;
+	tw?: string;
+	basePath?: string;
+} = (() => {
 	const p = `${OUT_DIR}/manifest.json`;
 	return existsSync(p)
 		? JSON.parse(readFileSync(p, "utf-8"))
@@ -23,10 +30,11 @@ const cacheBust = isDev ? `?v=${Date.now()}` : "";
 // Every URL the framework itself emits into the document, prefixed once here so
 // mounting under a BASE_PATH is not thirteen separate string edits. All four are
 // "" + the original path when no base is set.
-const DIST = `${BASE_PATH}/dist/client`;
-const TW_CSS = `${BASE_PATH}/bosia-tw.css`;
-const FAVICON = `${BASE_PATH}/favicon.svg`;
-const SSE = `${BASE_PATH}/__bosia/sse`;
+const B = currentBase();
+const DIST = `${B}/dist/client`;
+const TW_CSS = `${B}/bosia-tw.css`;
+const FAVICON = `${B}/favicon.svg`;
+const SSE = `${B}/__bosia/sse`;
 
 /**
  * Handed to the client bundle so its router strips the same prefix the server
@@ -34,8 +42,8 @@ const SSE = `${BASE_PATH}/__bosia/sse`;
  * root so a root-mounted app carries no extra bytes.
  */
 export function baseScript(nonce?: string): string {
-	return BASE_PATH
-		? `\n  <script${nonceAttr(nonce)}>window.__BOSIA_BASE__=${JSON.stringify(BASE_PATH)};</script>`
+	return B
+		? `\n  <script${nonceAttr(nonce)}>window.__BOSIA_BASE__=${JSON.stringify(B)};</script>`
 		: "";
 }
 
@@ -140,8 +148,8 @@ export function buildHtml(
 	// /sso/masuk or it walks off this app entirely. Only the rendered markup is
 	// touched — never the JSON data islands below, whose strings are loader
 	// output and would be corrupted by a path rewrite.
-	body = rebaseHtmlAttrs(BASE_PATH, body);
-	head = rebaseHtmlAttrs(BASE_PATH, head);
+	body = rebaseHtmlAttrs(B, body);
+	head = rebaseHtmlAttrs(B, head);
 
 	const cssLinks = (distManifest.css ?? [])
 		.map((f: string) => `<link rel="stylesheet" href="${DIST}/${f}">`)
@@ -319,7 +327,7 @@ export function buildMetadataChunk(
 
 	// All markup, no data islands — safe to rebase wholesale, which is what picks
 	// up an app's own headExtras (a canonical link, an og:image on a local file).
-	return rebaseHtmlAttrs(BASE_PATH, out);
+	return rebaseHtmlAttrs(B, out);
 }
 
 export function escapeHtml(s: string): string {
@@ -349,8 +357,8 @@ export function buildHtmlTail(
 	segments?: AppHtmlSegments,
 ): string {
 	// Same rebase as buildHtml — the streamed tail carries the identical markup.
-	body = rebaseHtmlAttrs(BASE_PATH, body);
-	head = rebaseHtmlAttrs(BASE_PATH, head);
+	body = rebaseHtmlAttrs(B, body);
+	head = rebaseHtmlAttrs(B, head);
 
 	const n = nonceAttr(nonce);
 	let out = `<script${n}>document.getElementById('__bs__').remove()</script>`;

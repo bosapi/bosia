@@ -7,6 +7,7 @@ import { clientRoutes } from "bosia:routes";
 import { appState } from "./appState.svelte.ts";
 import { captureSnapshot, liveContext, type CacheEntry } from "./loaderCache.ts";
 import type { LoaderDeps } from "../hooks.ts";
+import { base } from "./base.ts";
 
 // Pre-compile route patterns into RegExp at startup (shared by App.svelte and router via module reference)
 compileRoutes(clientRoutes);
@@ -182,7 +183,7 @@ if (process.env.NODE_ENV !== "production") {
 	let retryDelay = 1000;
 
 	function connectSSE() {
-		const es = new EventSource("/__bosia/sse");
+		const es = new EventSource(`${base}/__bosia/sse`);
 
 		es.addEventListener("reload", () => {
 			console.log("[Bosia] Reloading...");

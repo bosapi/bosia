@@ -5,6 +5,8 @@
 import { findMatch, canonicalPathname } from "../matcher.ts";
 import { clientRoutes } from "bosia:routes";
 import { fireBeforeNavigate, type Navigation } from "./navListeners.ts";
+import { base } from "./base.ts";
+import { withBase } from "../basePath.ts";
 
 // Everything here is a real browser path, base and all. Under a BASE_PATH mount
 // the generated `clientRoutes` carry the prefix too, so an anchor's href, the
@@ -98,6 +100,19 @@ export const router = new (class Router {
 		const pathname = path.split("?")[0].split("#")[0];
 		const match = findMatch(clientRoutes, pathname);
 		if (!match) {
+			// Every nav — goto, link, form — falls through here before leaving the
+			// app. Under a mount, a path that would have matched *with* the prefix is
+			// an app-space path handed to goto(); warn instead of rewriting, since the
+			// shipped design is that the router converts nothing.
+			if (
+				process.env.NODE_ENV !== "production" &&
+				base &&
+				findMatch(clientRoutes, withBase(base, pathname))
+			) {
+				console.warn(
+					`[bosia] "${path}" matched no route and is leaving the app — it is mounted at "${base}". Use "${withBase(base, path)}".`,
+				);
+			}
 			window.location.href = path;
 			return;
 		}

@@ -141,7 +141,13 @@ throw redirect(303, "/masuk"); // → /sso/masuk di kabel
 
 Begitu pula `event.url.pathname`, yang sudah berada di ruang aplikasi saat Anda membacanya. Gunakan `base` hanya saat menyusun URL absolut secara manual, misalnya `${url.origin}${base}/reset?t=...` untuk tautan yang keluar dari aplikasi.
 
-**Build dan runtime harus sepakat.** CSS terkompilasi, tabel rute klien, dan markup di berkas `.svelte` Anda semuanya ditulis ulang saat build, jadi `BASE_PATH` harus disetel untuk `bosia build` maupun `bosia start`. Belum ada yang memeriksa ini, dan ketidakcocokannya senyap — font hilang, ikon kosong, atau tautan yang keluar dari aplikasi.
+**Build dan runtime harus sepakat.** CSS terkompilasi, tabel rute klien, dan markup di berkas `.svelte` Anda semuanya ditulis ulang saat build, jadi `BASE_PATH` harus disetel untuk `bosia build` maupun `bosia start`. Build mencatat nilainya ke `dist/manifest.json` dan server memperingatkan saat start jika berbeda:
+
+```
+⚠️  Built for BASE_PATH="/sso" but running with "" — CSS urls and the client route table are baked in and will not match.
+```
+
+Tanggapi peringatan itu dengan serius: ketidakcocokannya sendiri senyap — font hilang, ikon kosong, atau tautan yang keluar dari aplikasi. Jika `BASE_PATH` berada di `.env.production`, ingat bahwa hanya `bosia build` dan `bosia start` yang memuatnya; menjalankan server langsung dengan `bun run` tidak.
 
 ## Graceful Shutdown
 

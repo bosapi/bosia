@@ -1,9 +1,20 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.9.0**
+> Current version: **0.9.1**
 
 ---
+
+## bosia 0.9.1 (2026-08-18) — closing out `BASE_PATH`
+
+> The six items 0.9.0 left open. One was a live bug: with `BASE_PATH` in `.env.production`, `build.ts` calls `loadEnv()` after its imports, so the import-time `paths.BASE_PATH` was `""` while the lazy `currentBase()` was `/sso` — CSS silently kept origin-root `url()`s.
+
+- [x] 🟡 One base source. `paths.BASE_PATH` deleted; `twHash.ts`, `html.ts`, `server.ts`, `prerender.ts` and `client/base.ts` all read `currentBase()`. Fixes the `.env.production` divergence: `twHash.ts` now reads post-`loadEnv`.
+- [x] 🟡 `basePath` stamped into `manifest.json` at build; the server warns on boot when it disagrees. `!== undefined` so older `dist/` artifacts stay silent.
+- [x] 🟠 `navigate()` warns in dev when a path matched no route but _would_ have with the prefix — the one choke point every goto/link/form falls through. Warn only; the router still converts nothing.
+- [x] 🟡 Dev SSE opens `${base}/__bosia/sse` (`hydrate.ts`) — the last hardcoded root among the injected copies.
+- [x] 🟡 `srcset`/`imagesrcset` rebased per candidate, descriptors and spacing intact. A value containing `data:` is skipped whole — its commas are not separators.
+- [x] 🟠 `test/basePath-server.test.ts` boots a real built server under `/sso`: off-mount 404, `__BOSIA_BASE__`, trailing-slash 308, `redirect()` Location, prerender output. The gap both 🔴s shipped through.
 
 ## bosia 0.9.0 (2026-08-17) — `BASE_PATH`: mount an app under a sub-path
 
@@ -21,12 +32,7 @@
 - [x] 🔴 Prerendering never ran under a base: `prerender.ts` fetched the spawned server at the origin root, which now 404s, so `/_health` never answered and the step bailed with "server failed to start" — without failing the build. Prefixed the fetch base; the files written stay app-space, which is what the server looks them up by.
 - [x] ⚪ `svelteCompiler.ts` masked `<script>` blocks with literal NUL sentinels, which made git treat the whole module as binary — no diffs, no blame. Swapped for an HTML comment.
 
-- [ ] 🟠 `goto()` now takes a real (prefixed) path, since the router no longer converts. Nothing warns when it is handed an app-space one — it silently falls through to a full page load onto whatever app owns the origin root. Worth a dev-mode check.
-- [ ] 🟡 Build and runtime must agree on `BASE_PATH`: both the CSS rebase and the route table are baked into the artifact. Nothing checks this — stamp it into `manifest.json` and warn on boot.
-- [ ] 🟡 Dev hot-reload still opens `EventSource("/__bosia/sse")` root-absolute (`hydrate.ts`). Dev rarely runs mounted, so it has not bitten; fix when it does.
-- [ ] 🟡 `srcset` is not rebased (comma-separated candidates with descriptors). Nothing in the framework emits one root-absolute; an app that does needs `base`.
-- [ ] 🟠 Nothing boots the server in a test, so the strip → route → `Location` path is only covered by a round-trip over the pure helpers. Both base bugs above shipped straight through that gap.
-- [ ] 🟡 Two sources for one value: `paths.BASE_PATH` freezes at import, `appBase.currentBase()` memoizes on first call, `client/base.ts` is a third read. They agree today only because Bun loads `.env` before any module runs. Collapse to one.
+> The six items left open here were closed in 0.9.1 above.
 
 ---
 

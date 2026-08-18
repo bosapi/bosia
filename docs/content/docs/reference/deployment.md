@@ -141,7 +141,13 @@ throw redirect(303, "/masuk"); // → /sso/masuk on the wire
 
 Neither does `event.url.pathname`, which is already app space by the time you read it. Reach for `base` only when you are assembling an absolute URL by hand, e.g. `${url.origin}${base}/reset?t=...` for a link that leaves the app.
 
-**Build and runtime must agree.** The compiled CSS, the client route table and the markup in your `.svelte` files are all rebased at build time, so `BASE_PATH` has to be set for `bosia build` as well as `bosia start`. Nothing checks this yet, and a mismatch is quiet — a missing font, a blank icon, or links that leave the app.
+**Build and runtime must agree.** The compiled CSS, the client route table and the markup in your `.svelte` files are all rebased at build time, so `BASE_PATH` has to be set for `bosia build` as well as `bosia start`. The build stamps the value into `dist/manifest.json` and the server warns on start if it disagrees:
+
+```
+⚠️  Built for BASE_PATH="/sso" but running with "" — CSS urls and the client route table are baked in and will not match.
+```
+
+Take that warning seriously: the mismatch itself is quiet — a missing font, a blank icon, or links that leave the app. If `BASE_PATH` lives in `.env.production`, note that only `bosia build` and `bosia start` load it; a bare `bun run` of the server does not.
 
 ## Graceful Shutdown
 
