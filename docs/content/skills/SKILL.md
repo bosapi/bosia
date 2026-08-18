@@ -98,6 +98,7 @@ Design skills carry a `references/design-principles.md` file tracing rules back 
 | `bosia-env`                    | Four-tier prefix (`PUBLIC_STATIC_`/`PUBLIC_`/`STATIC_`/none). User vars via `$env`, framework vars via `process.env`. `.env.example` is the contract.                                                 |
 | `bosia-cors`                   | CORS env recipe (`CORS_ALLOWED_ORIGINS` + friends) and CSRF-vs-CORS triage. Preview-proxy apps usually need `TRUST_PROXY=true`, not CORS.                                                             |
 | `bosia-seo`                    | SEO baseline — title/description/canonical, Open Graph, Twitter card, favicons, web manifest, robots.txt, sitemap.xml, JSON-LD. Tier 1 required for every app, including auth-gated (share previews). |
+| `bosia-testing`                | Bun's built-in runner only — `bun test`, `bunfig.toml` preload, `.env.test`. Never vitest/jest/playwright. A real `_test` database over a mocked `db`; every security boundary leaves a test behind.  |
 
 ## Quality gates — design ✦ — run before emitting any UI
 
@@ -144,6 +145,7 @@ When emitting code:
 4. Pick a **page scaffold** or **flow** matching the user request.
 5. Compose with helpers (`bosia-empty-states`).
 6. Run **quality gates** before finalizing: design gates for UI, `bosia-security-review` for auth/data.
+7. Leave a test behind (`bosia-testing`) for anything with a branch worth defending — auth guards, validators, token lifecycles, and every boundary the security review just named. Bun's runner only; adding a test dependency is itself the anti-pattern.
 
 ## Registry install rule (applies to every skill)
 
