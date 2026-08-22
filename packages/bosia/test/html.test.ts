@@ -10,9 +10,11 @@ import {
 	buildHtmlTail,
 	buildHtmlShellOpen,
 	buildMetadataChunk,
+	metadataTags,
 	distManifest,
 } from "../src/core/html.ts";
 import type { AppHtmlSegments } from "../src/core/appHtml.ts";
+import type { Metadata } from "../src/core/hooks.ts";
 
 describe("safeJsonStringify", () => {
 	test("escapes <, >, & for script-context safety", () => {
@@ -185,6 +187,99 @@ describe("buildHtmlTail — JSON-island loader payloads", () => {
 		expect(layoutIdx).toBeGreaterThan(pageIdx);
 		expect(formIdx).toBeGreaterThan(layoutIdx);
 		expect(moduleIdx).toBeGreaterThan(formIdx);
+	});
+});
+
+describe("metadataTags", () => {
+	const full: Metadata = {
+		title: "Judul & <b>",
+		description: 'Ringkasan "kutip"',
+		meta: [
+			{ name: "twitter:card", content: "summary" },
+			{ property: "og:title", content: "OG <judul>" },
+		],
+		link: [
+			{ rel: "canonical", href: "https://x.test/a?a=1&b=2" },
+			{ rel: "alternate", href: "https://x.test/en", hreflang: "en" },
+		],
+	};
+
+	test("null metadata emits nothing — the fallback belongs to the callers", () => {
+		expect(metadataTags(null)).toBe("");
+	});
+
+	test("emits title, description, both meta forms and link, all escaped", () => {
+		const out = metadataTags(full);
+		expect(out).toContain("<title>Judul &amp; &lt;b&gt;</title>");
+		expect(out).toContain(`<meta name="description" content="Ringkasan &quot;kutip&quot;">`);
+		expect(out).toContain(`<meta name="twitter:card" content="summary">`);
+		expect(out).toContain(`<meta property="og:title" content="OG &lt;judul&gt;">`);
+		expect(out).toContain(`<link rel="canonical" href="https://x.test/a?a=1&amp;b=2">`);
+		expect(out).toContain(`<link rel="alternate" href="https://x.test/en" hreflang="en">`);
+	});
+
+	test("buildMetadataChunk output is unchanged by the extraction", () => {
+		expect(buildMetadataChunk(null).startsWith("\n  <title>Bosia App</title>\n</head>")).toBe(true);
+		expect(buildMetadataChunk(full).startsWith("\n" + metadataTags(full))).toBe(true);
+	});
+});
+
+describe("buildHtml — metadata argument", () => {
+	const meta: Metadata = { title: "Kontak", description: "Hubungi kami" };
+
+	test("emits the metadata title and drops the Bosia App fallback", () => {
+		const html = buildHtml(
+			"",
+			"",
+			{},
+			[],
+			true,
+			null,
+			"id",
+			true,
+			undefined,
+			null,
+			null,
+			undefined,
+			undefined,
+			meta,
+		);
+		expect(html).toContain("<title>Kontak</title>");
+		expect(html).toContain(`<meta name="description" content="Hubungi kami">`);
+		expect(html).not.toContain("Bosia App");
+		expect(html).toContain('lang="id"');
+	});
+
+	test("metadata title precedes a <svelte:head> title — first one wins", () => {
+		const html = buildHtml(
+			"",
+			"<title>Dari svelte:head</title>",
+			{},
+			[],
+			true,
+			null,
+			"en",
+			true,
+			undefined,
+			null,
+			null,
+			undefined,
+			undefined,
+			meta,
+		);
+		expect(html.indexOf("<title>Kontak</title>")).toBeLessThan(
+			html.indexOf("<title>Dari svelte:head</title>"),
+		);
+		expect(html).not.toContain("Bosia App");
+	});
+
+	test("null metadata with a <title> in head keeps the existing no-fallback behavior", () => {
+		const html = buildHtml("", "<title>Head</title>", {}, [], true, null, "en", true);
+		expect(html).not.toContain("Bosia App");
+	});
+
+	test("neither metadata nor a head title still falls back", () => {
+		expect(buildHtml("", "", {}, [], true, null, "en", true)).toContain("<title>Bosia App</title>");
 	});
 });
 

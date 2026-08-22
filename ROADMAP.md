@@ -1,9 +1,19 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.9.1**
+> Current version: **0.9.2**
 
 ---
+
+## bosia 0.9.2 (2026-08-22) — `metadata()` was skipped on form-action re-renders
+
+> Reported from Fisika: after a plain (non-`enhance`) form POST the tab title flipped to `Bosia App` on two unrelated routes. `renderPageWithFormData` never called `loadMetadata()` and rendered through a `buildHtml` that had no metadata parameter at all — so the title was only the visible part of the loss.
+
+- [x] 🔴 Form-action re-renders resolve `metadata()` like GET does. `metadataTags()` extracted from `buildMetadataChunk` and shared with `buildHtml`, so the streaming and non-streaming renderers can't drift on this again. Metadata sits ahead of `<svelte:head>` on both paths — first `<title>` wins.
+- [x] 🟠 `metadata.data` reaches `load()` on POST. It was hardcoded `null`, so a loader consuming it silently returned different **content** after a submit — the one part of this that was never cosmetic. `metadata.lang` and plugin `head`/`bodyEnd` fragments restored on the same path.
+- [x] 🟠 `redirect()` / `error()` thrown inside `metadata()` work. `loadMetadata` caught everything, so every caller's `Redirect`/`HttpError` branch was unreachable dead code; both are now re-thrown ahead of the catch-all log.
+- [x] 🟡 Error pages title themselves `404 — Not Found` instead of `Bosia App`. Synthesized only when the error component set no `<title>`, so a custom `+error.svelte` still wins. The route's own `metadata()` is deliberately not run — the route may be what failed.
+- [x] 🟠 `test/formAction-metadata.test.ts` boots a real built server and submits a real form: title, description, og tag, `lang`, `metadata.data`, GET parity, `redirect()` from `metadata()`, and the 404 title. A unit test on `buildHtml` would have passed the whole time the bug shipped — the missing piece was the call site.
 
 ## bosia 0.9.1 (2026-08-18) — closing out `BASE_PATH`
 

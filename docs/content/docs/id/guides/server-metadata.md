@@ -111,6 +111,26 @@ Objek `data` dari `metadata()` menjadi `event.metadata` di `load()`. Jika tidak 
 
 Semua properti opsional.
 
+## Form Actions
+
+`metadata()` juga berjalan saat submit `<form method="POST">` merender ulang halaman, jadi title, meta tag, `lang`, dan `data` yang dioper ke `load()` sama persis dengan GET biasa.
+
+## Redirect & Error
+
+Kamu bisa melempar `redirect()` atau `error()` dari dalam `metadata()` — perilakunya sama seperti di `load()`:
+
+```ts
+import { redirect } from "bosia";
+import type { MetadataEvent } from "bosia";
+
+export function metadata({ locals }: MetadataEvent) {
+	if (!locals.user) redirect(303, "/masuk");
+	return { title: "Dashboard" };
+}
+```
+
+Error lain di dalam `metadata()` dicatat ke log dan halaman dirender tanpa metadata, bukan menggagalkan request.
+
 ## Navigasi Sisi-Klien
 
 Selama navigasi sisi-klien, Bosia mengirim `title` dan `description` dari `metadata()` dalam respons data. Router klien otomatis memperbarui judul dokumen dan meta tag description tanpa reload halaman penuh.

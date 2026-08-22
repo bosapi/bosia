@@ -142,6 +142,10 @@ Three Bosia facts that rule out the old "site-wide meta in the layout + per-page
 - **`page.url` is stubbed to `http://localhost/` during SSR** (`page.svelte.ts`). A canonical/og:url derived from `page.url` in a layout is wrong on the server pass. `metadata({ url })` gets the real URL.
 - **`<svelte:head>` is client-injected** (above) — wrong channel for scrapers.
 
+`metadata()` runs on every server render of the route: GET, and the re-render that follows a plain (non-`enhance`) `<form method="POST">` submit. A route with form actions keeps its title, OG tags, `lang` and `metadata().data` after a submit — nothing extra to wire. (Before 0.9.2 the POST path skipped `metadata()` entirely; if you are on an older bosia, that is the bug, not your code.)
+
+You may also throw `redirect()` or `error()` from inside `metadata()` — same semantics as in `load()`, useful for auth-gating a route before any head tag is computed.
+
 ✅ The pattern: a `buildPageMeta()` helper + one `metadata()` per route.
 
 ```ts

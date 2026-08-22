@@ -6,6 +6,7 @@ import { rebaseHtmlAttrs } from "./basePath.ts";
 import { currentBase } from "./appBase.ts";
 import type { AppHtmlSegments } from "./appHtml.ts";
 import { interpolateSegment } from "./appHtml.ts";
+import type { Metadata } from "./hooks.ts";
 
 // ─── Dist Manifest ───────────────────────────────────────
 // Maps hashed filenames → script/link tags.
@@ -143,6 +144,7 @@ export function buildHtml(
 	layoutDeps: any[] | null = null,
 	bodyEndExtras?: string[],
 	segments?: AppHtmlSegments,
+	metadata?: Metadata | null,
 ): string {
 	// An app writes <a href="/masuk">; under a base the browser has to be handed
 	// /sso/masuk or it walks off this app entirely. Only the rendered markup is
@@ -155,7 +157,12 @@ export function buildHtml(
 		.map((f: string) => `<link rel="stylesheet" href="${DIST}/${f}">`)
 		.join("\n  ");
 
-	const fallbackTitle = head.includes("<title>") ? "" : "<title>Bosia App</title>";
+	// Metadata goes in before `head`: the first <title> in the document wins, and
+	// the streaming path already puts metadata() ahead of <svelte:head> content
+	// (which arrives later via buildHtmlTail). Same order = same winner on both paths.
+	const metaTags = rebaseHtmlAttrs(B, metadataTags(metadata ?? null));
+	const fallbackTitle =
+		metaTags.includes("<title>") || head.includes("<title>") ? "" : "<title>Bosia App</title>";
 
 	const n = nonceAttr(nonce);
 	const publicEnv = getPublicDynamicEnv();
@@ -206,7 +213,7 @@ export function buildHtml(
 			`\n  ${faviconLine}${cssLinks}\n` +
 			`  ${twCssLink()}\n` +
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
-			`  ${fallbackTitle}${head}` +
+			`  ${fallbackTitle}${metaTags}${head}` +
 			headCloseInterpolated +
 			(body ? "" : `\n${SPINNER}`) +
 			`\n  <div id="app">${body}</div>${scripts}${bodyEnd}` +
@@ -221,7 +228,7 @@ export function buildHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   ${fallbackTitle}
   <link rel="icon" type="image/svg+xml" href="${FAVICON}">
-  ${head}
+${metaTags}  ${head}
   ${cssLinks}
   ${twCssLink()}
   <script${n}>${THEME_INIT_JS}</script>
@@ -233,8 +240,6 @@ export function buildHtml(
 }
 
 // ─── Streaming HTML Helpers ──────────────────────────────
-
-import type { Metadata } from "./hooks.ts";
 
 /** Chunk 1: everything from <!DOCTYPE> through CSS/modulepreload links (head still open) */
 export function buildHtmlShellOpen(
@@ -282,6 +287,34 @@ const SPINNER =
 	`border-radius:50%;animation:__bs__ .8s linear infinite}` +
 	`@keyframes __bs__{to{transform:rotate(360deg)}}</style><i></i></div>`;
 
+/** The `metadata()` tags themselves, indented head-ready. Shared by the streaming
+ *  path (buildMetadataChunk) and the non-streaming one (buildHtml) so the two
+ *  renderers cannot drift on what `metadata()` emits. */
+export function metadataTags(metadata: Metadata | null): string {
+	if (!metadata) return "";
+	let out = "";
+	if (metadata.title) out += `  <title>${escapeHtml(metadata.title)}</title>\n`;
+	if (metadata.description) {
+		out += `  <meta name="description" content="${escapeAttr(metadata.description)}">\n`;
+	}
+	if (metadata.meta) {
+		for (const m of metadata.meta) {
+			const attrs = m.name
+				? `name="${escapeAttr(m.name)}"`
+				: `property="${escapeAttr(m.property ?? "")}"`;
+			out += `  <meta ${attrs} content="${escapeAttr(m.content)}">\n`;
+		}
+	}
+	if (metadata.link) {
+		for (const l of metadata.link) {
+			let attrs = `rel="${escapeAttr(l.rel)}" href="${escapeAttr(l.href)}"`;
+			if (l.hreflang) attrs += ` hreflang="${escapeAttr(l.hreflang)}"`;
+			out += `  <link ${attrs}>\n`;
+		}
+	}
+	return out;
+}
+
 /** Chunk 2: metadata tags + close </head> + open <body> + spinner */
 export function buildMetadataChunk(
 	metadata: Metadata | null,
@@ -289,29 +322,7 @@ export function buildMetadataChunk(
 	segments?: AppHtmlSegments,
 ): string {
 	let out = "\n";
-	if (metadata) {
-		if (metadata.title) out += `  <title>${escapeHtml(metadata.title)}</title>\n`;
-		if (metadata.description) {
-			out += `  <meta name="description" content="${escapeAttr(metadata.description)}">\n`;
-		}
-		if (metadata.meta) {
-			for (const m of metadata.meta) {
-				const attrs = m.name
-					? `name="${escapeAttr(m.name)}"`
-					: `property="${escapeAttr(m.property ?? "")}"`;
-				out += `  <meta ${attrs} content="${escapeAttr(m.content)}">\n`;
-			}
-		}
-		if (metadata.link) {
-			for (const l of metadata.link) {
-				let attrs = `rel="${escapeAttr(l.rel)}" href="${escapeAttr(l.href)}"`;
-				if (l.hreflang) attrs += ` hreflang="${escapeAttr(l.hreflang)}"`;
-				out += `  <link ${attrs}>\n`;
-			}
-		}
-	} else {
-		out += `  <title>Bosia App</title>\n`;
-	}
+	out += metadata ? metadataTags(metadata) : `  <title>Bosia App</title>\n`;
 	if (headExtras?.length) {
 		for (const fragment of headExtras) {
 			if (fragment) out += `  ${fragment}\n`;

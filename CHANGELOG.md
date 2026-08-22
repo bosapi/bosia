@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.9.2] - 2026-08-22
+
+### Fixed
+
+- Page titles and social preview tags now survive a form submit.
+- Data shared from `metadata()` now reaches `load()` after a form submit too.
+- Error pages now show their status instead of the framework's default title.
+- `redirect()` and `error()` inside `metadata()` now work instead of being ignored.
+
 ## [0.9.1] - 2026-08-18
 
 ### Fixed

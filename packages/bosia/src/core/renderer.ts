@@ -509,6 +509,9 @@ export async function loadMetadata(
 			);
 		}
 	} catch (err) {
+		// Control flow thrown from metadata() is intent, not failure — swallowing it
+		// here made every caller's Redirect/HttpError branch dead code.
+		if (err instanceof Redirect || err instanceof HttpError) throw err;
 		if (isDev) console.error("Metadata load error:", err);
 		else console.error("Metadata load error:", (err as Error).message ?? err);
 		if (isDev) reportDevErrorFromCatch(err);
@@ -845,7 +848,9 @@ export async function renderSSRStream(
 
 // ─── Form Action Page Renderer ───────────────────────────
 // Re-runs load functions after a form action, renders with form data.
-// Uses non-streaming buildHtml so we can control the status code.
+// Uses non-streaming buildHtml so we can control the status code. Resolves
+// metadata() here too — the GET path's title, meta/link tags, lang and
+// metadata.data must survive a submit, or the page changes under the user.
 
 export async function renderPageWithFormData(
 	url: URL,
@@ -871,11 +876,36 @@ export async function renderPageWithFormData(
 			nonce,
 		);
 
-	const { route } = match;
+	const { route, params } = match;
+
+	// Serial, not parallel: metadata.data feeds the loader below.
+	let metadata: Metadata | null = null;
+	try {
+		metadata = await loadMetadata(route, params, url, locals, cookies, req);
+	} catch (err) {
+		if (err instanceof Redirect) return Response.redirect(err.location, err.status);
+		if (err instanceof HttpError) {
+			return renderErrorPage(
+				err.status,
+				err.message,
+				url,
+				req,
+				route,
+				undefined,
+				undefined,
+				undefined,
+				nonce,
+			);
+		}
+		if (isDev) console.error("Metadata load error:", err);
+		else console.error("Metadata load error:", (err as Error).message ?? err);
+		if (isDev) reportDevErrorFromCatch(err);
+		// Continue with null metadata — don't break the page for a metadata failure
+	}
 
 	// Load components + data in parallel
 	const [data, pageMod, layoutMods] = await Promise.all([
-		loadRouteData(url, locals, req, cookies, null, match),
+		loadRouteData(url, locals, req, cookies, metadata?.data ?? null, match),
 		route.pageModule(),
 		Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
 	]);
@@ -893,6 +923,23 @@ export async function renderPageWithFormData(
 			nonce,
 		);
 
+	const renderCtx: RenderContext = {
+		request: req,
+		url,
+		route: { pattern: route.pattern },
+		metadata,
+	};
+	const [headExtras, bodyEndExtras] = await Promise.all([
+		pluginRenderFragments("head", renderCtx),
+		pluginRenderFragments("bodyEnd", renderCtx),
+	]);
+	// buildHtml has no headExtras slot; fold them in ahead of the SSR head, which
+	// is where buildMetadataChunk puts them on the streaming path.
+	const headWithExtras = (ssrHead: string) => {
+		const extras = headExtras.filter(Boolean);
+		return extras.length ? `${extras.join("\n  ")}\n  ${ssrHead}` : ssrHead;
+	};
+
 	// Form-action re-render always runs every loader (no client mask).
 	const layoutDataFull = (data.layoutData as Record<string, any>[]).map((d) => d ?? {});
 	const pageDataFull = data.pageData ?? {};
@@ -905,18 +952,19 @@ export async function renderPageWithFormData(
 		}
 		const html = buildHtml(
 			"",
-			"",
+			headWithExtras(""),
 			pageDataFull,
 			layoutDataFull,
 			true,
 			formData,
-			undefined,
+			metadata?.lang,
 			false,
 			nonce,
 			data.pageDeps,
 			data.layoutDeps,
-			undefined,
+			bodyEndExtras,
 			appHtmlSegments,
+			metadata,
 		);
 		return compress(html, "text/html; charset=utf-8", req, status, data.loaderHeaders);
 	}
@@ -934,18 +982,19 @@ export async function renderPageWithFormData(
 
 	const html = buildHtml(
 		body,
-		head,
+		headWithExtras(head),
 		pageDataFull,
 		layoutDataFull,
 		data.csr,
 		formData,
-		undefined,
+		metadata?.lang,
 		true,
 		nonce,
 		data.pageDeps,
 		data.layoutDeps,
-		undefined,
+		bodyEndExtras,
 		appHtmlSegments,
+		metadata,
 	);
 	return compress(html, "text/html; charset=utf-8", req, status, data.loaderHeaders);
 }
@@ -971,6 +1020,13 @@ export async function renderErrorPage(
 	// is dead bytes without a matching policy header.
 	if (!CSP_ENABLED) nonce = undefined;
 
+	// The route's own metadata() is deliberately NOT run here — the route may be
+	// what failed, and a 404 has no route at all. Synthesize a status title only
+	// when the error component didn't set one, so <svelte:head><title> in a custom
+	// +error.svelte still wins.
+	const errMeta = (head: string): Metadata | null =>
+		head.includes("<title>") ? null : { title: `${status} — ${message}` };
+
 	// Inspector overlay and other plugin bodyEnd fragments must be injected
 	// on error pages too — otherwise SSE never connects and runtime errors
 	// from the failing render are invisible in the UI.
@@ -978,7 +1034,7 @@ export async function renderErrorPage(
 		request: req,
 		url,
 		route: route ? { pattern: route.pattern } : { pattern: "" },
-		metadata: null,
+		metadata: errMeta(""),
 	};
 	const bodyEndExtras = await pluginRenderFragments("bodyEnd", renderCtx);
 
@@ -1024,6 +1080,7 @@ export async function renderErrorPage(
 					null,
 					bodyEndExtras,
 					appHtmlSegments,
+					errMeta(head),
 				);
 				return compress(html, "text/html; charset=utf-8", req, status);
 			} catch (err) {
@@ -1059,6 +1116,7 @@ export async function renderErrorPage(
 				null,
 				bodyEndExtras,
 				appHtmlSegments,
+				errMeta(head),
 			);
 			return compress(html, "text/html; charset=utf-8", req, status);
 		} catch (err) {

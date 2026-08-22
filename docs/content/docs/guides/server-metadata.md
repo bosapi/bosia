@@ -111,6 +111,26 @@ The `data` object from `metadata()` becomes `event.metadata` in `load()`. If no 
 
 All properties are optional.
 
+## Form Actions
+
+`metadata()` also runs when a `<form method="POST">` submit re-renders the page, so titles, meta tags, `lang` and the `data` handed to `load()` are the same as on a plain GET.
+
+## Redirects & Errors
+
+You can throw `redirect()` or `error()` from inside `metadata()` — they behave exactly as they do in `load()`:
+
+```ts
+import { redirect } from "bosia";
+import type { MetadataEvent } from "bosia";
+
+export function metadata({ locals }: MetadataEvent) {
+	if (!locals.user) redirect(303, "/login");
+	return { title: "Dashboard" };
+}
+```
+
+Any other error inside `metadata()` is logged and the page renders without metadata, rather than failing the request.
+
 ## Client-Side Navigation
 
 During client-side navigation, Bosia sends `title` and `description` from `metadata()` in the data response. The client router automatically updates the document title and description meta tag without a full page reload.
