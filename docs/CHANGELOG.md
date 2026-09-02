@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Metadata docs now list every head field sent during in-app navigation.
 - SEO skill notes that og and canonical tags stay correct after clicking a link.
+- New guidance: set a page title in `metadata()` or `<svelte:head>`, never both.
 
 ## [0.8.12] - 2026-08-22
 

@@ -7,10 +7,6 @@
 	const slug = $derived(params.slug);
 </script>
 
-<svelte:head>
-	<title>{post ? post.title : "Post Not Found"} | Bosia Demo</title>
-</svelte:head>
-
 {#if post}
 	<article class="space-y-6 max-w-2xl">
 		<a href="/blog" class="text-sm text-muted-foreground hover:text-foreground transition-colors"

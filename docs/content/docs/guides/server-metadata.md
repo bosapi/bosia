@@ -131,6 +131,14 @@ export function metadata({ locals }: MetadataEvent) {
 
 Any other error inside `metadata()` is logged and the page renders without metadata, rather than failing the request.
 
+## Title vs `<svelte:head>`
+
+Never set `<title>` in both `metadata()` and a `<svelte:head>` on the same route — they do not merge, and the winner differs by audience.
+
+`metadata()`'s title is what ships in the SSR HTML, so scrapers, `curl` and non-JS crawlers read it. Svelte compiles `<svelte:head><title>` to a `document.title` write that runs on mount and on every reactive update, so the browser tab ends up showing that one instead. A route declaring both advertises one title and displays another.
+
+Pick `metadata()` for anything share-critical and delete the competing `<svelte:head><title>`.
+
 ## Client-Side Navigation
 
 During client-side navigation, Bosia sends `title`, `description`, `meta`, `link` and `lang` from `metadata()` in the data response. The client router rebuilds the `<head>` from them without a full page reload, so `og:*`, `twitter:*`, `canonical` and `robots` match what a hard load of the same URL would render.

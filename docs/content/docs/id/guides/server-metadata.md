@@ -131,6 +131,14 @@ export function metadata({ locals }: MetadataEvent) {
 
 Error lain di dalam `metadata()` dicatat ke log dan halaman dirender tanpa metadata, bukan menggagalkan request.
 
+## Title vs `<svelte:head>`
+
+Jangan pernah menetapkan `<title>` di `metadata()` dan `<svelte:head>` sekaligus pada rute yang sama — keduanya tidak digabung, dan pemenangnya berbeda tergantung siapa yang membaca.
+
+Title dari `metadata()` yang dikirim di HTML SSR, jadi itu yang dibaca scraper, `curl`, dan crawler tanpa JS. Svelte mengompilasi `<svelte:head><title>` menjadi penulisan `document.title` yang jalan saat mount dan setiap kali nilainya berubah, jadi tab browser menampilkan yang itu. Rute yang mendeklarasikan keduanya mengiklankan satu judul tapi menampilkan judul lain.
+
+Pilih `metadata()` untuk apa pun yang penting bagi tautan berbagi, lalu hapus `<svelte:head><title>` yang bersaing.
+
 ## Navigasi Sisi-Klien
 
 Selama navigasi sisi-klien, Bosia mengirim `title`, `description`, `meta`, `link`, dan `lang` dari `metadata()` dalam respons data. Router klien menyusun ulang `<head>` dari data itu tanpa reload halaman penuh, jadi `og:*`, `twitter:*`, `canonical`, dan `robots` sama dengan hasil muat-ulang penuh URL yang sama.
