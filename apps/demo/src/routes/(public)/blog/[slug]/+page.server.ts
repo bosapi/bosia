@@ -34,13 +34,17 @@ The route matcher uses 3-pass priority: exact matches first, then dynamic segmen
 	},
 };
 
-export const metadata: PageMetadataLoad = ({ params }) => {
+export const metadata: PageMetadataLoad = ({ params, url }) => {
 	// In production this would be a DB query for the post
 	const post = posts[params.slug] ?? null;
 	return {
 		title: post ? `${post.title} — Bosia Blog` : `Post not found`,
 		description: post ? `A blog post about ${params.slug}` : undefined,
 		meta: post ? [{ property: "og:title", content: post.title }] : [],
+		// canonical and lang travel to the client router too, not just SSR — so an
+		// in-app link between two posts leaves the head correct, not frozen.
+		link: [{ rel: "canonical", href: url.href }],
+		lang: "en",
 		// Pass fetched post to load() — avoids duplicate query
 		data: { post },
 	};

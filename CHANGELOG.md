@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.9.3] - 2026-09-02
+
+### Fixed
+
+- Social preview and canonical tags now update when you click a link, not just on reload.
+
 ## [0.9.2] - 2026-08-22
 
 ### Fixed

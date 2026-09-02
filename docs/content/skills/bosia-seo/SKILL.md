@@ -131,7 +131,7 @@ Pull these — do not invent:
 
 In Bosia there are **two different head channels with different visibility**:
 
-1. **`metadata()`** exported from `+page.server.ts` → bosia renders its return as **raw `<head>` tags during SSR** (`renderer.ts` → `buildMetadataChunk`) and re-applies title/description on client nav (`App.svelte`). This is what non-JS crawlers and share scrapers actually read.
+1. **`metadata()`** exported from `+page.server.ts` → bosia renders its return as **raw `<head>` tags during SSR** (`renderer.ts` → `buildMetadataChunk`) and rebuilds the whole `<head>` from it on client nav (`App.svelte`). This is what non-JS crawlers and share scrapers actually read.
 2. **`<svelte:head>`** in a `+layout.svelte` / `+page.svelte` → bosia ships it as a **client-side hydration script** (`html.ts`: `document.head.insertAdjacentHTML(...)`). It only materializes once JS runs. **WhatsApp, Facebook, Slack, Twitter/X, and other link-preview scrapers do NOT run JS — so any OG/Twitter tag placed in `<svelte:head>` is invisible to them.** Googlebot does render JS, so JSON-LD survives there.
 
 Therefore every **share-critical** tag — `<title>`, `description`, `canonical`, all `og:*`, all `twitter:*`, per-page `robots` — must come from `metadata()`. The root layout `<svelte:head>` keeps only browser/PWA chrome (`theme-color`, `apple-*`, manifest, favicon) and JSON-LD.
@@ -143,6 +143,8 @@ Three Bosia facts that rule out the old "site-wide meta in the layout + per-page
 - **`<svelte:head>` is client-injected** (above) — wrong channel for scrapers.
 
 `metadata()` runs on every server render of the route: GET, and the re-render that follows a plain (non-`enhance`) `<form method="POST">` submit. A route with form actions keeps its title, OG tags, `lang` and `metadata().data` after a submit — nothing extra to wire. (Before 0.9.2 the POST path skipped `metadata()` entirely; if you are on an older bosia, that is the bug, not your code.)
+
+On client-side navigation the router replaces every tag `metadata()` produced — `title`, `description`, `meta`, `link` and `lang`, not just the first two — so `canonical` and `og:*` are correct in the live DOM after an in-app link too. (Before 0.9.3 only title/description were synced; everything else stayed frozen at the first-loaded page. Scrapers were never affected, since they read the SSR HTML.)
 
 You may also throw `redirect()` or `error()` from inside `metadata()` — same semantics as in `load()`, useful for auth-gating a route before any head tag is computed.
 

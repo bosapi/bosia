@@ -133,7 +133,13 @@ Any other error inside `metadata()` is logged and the page renders without metad
 
 ## Client-Side Navigation
 
-During client-side navigation, Bosia sends `title` and `description` from `metadata()` in the data response. The client router automatically updates the document title and description meta tag without a full page reload.
+During client-side navigation, Bosia sends `title`, `description`, `meta`, `link` and `lang` from `metadata()` in the data response. The client router rebuilds the `<head>` from them without a full page reload, so `og:*`, `twitter:*`, `canonical` and `robots` match what a hard load of the same URL would render.
+
+`metadata.data` is deliberately **not** sent — it feeds `load()` on the server and may hold values the browser should never see.
+
+The router only replaces the tags `metadata()` produced (marked `data-bosia-meta` in the HTML). Tags you add through `<svelte:head>` or a plugin's `head` fragment are left alone.
+
+A page whose `metadata()` returns no `title` keeps the previous page's title rather than flashing the `Bosia App` fallback. Give every route a `title` if that matters to you.
 
 ## Timeouts
 

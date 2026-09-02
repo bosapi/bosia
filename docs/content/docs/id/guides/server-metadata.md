@@ -133,7 +133,13 @@ Error lain di dalam `metadata()` dicatat ke log dan halaman dirender tanpa metad
 
 ## Navigasi Sisi-Klien
 
-Selama navigasi sisi-klien, Bosia mengirim `title` dan `description` dari `metadata()` dalam respons data. Router klien otomatis memperbarui judul dokumen dan meta tag description tanpa reload halaman penuh.
+Selama navigasi sisi-klien, Bosia mengirim `title`, `description`, `meta`, `link`, dan `lang` dari `metadata()` dalam respons data. Router klien menyusun ulang `<head>` dari data itu tanpa reload halaman penuh, jadi `og:*`, `twitter:*`, `canonical`, dan `robots` sama dengan hasil muat-ulang penuh URL yang sama.
+
+`metadata.data` sengaja **tidak** dikirim — ia dipakai `load()` di server dan bisa berisi nilai yang tidak boleh dilihat browser.
+
+Router hanya mengganti tag yang dihasilkan `metadata()` (ditandai `data-bosia-meta` di HTML). Tag yang kamu tambahkan lewat `<svelte:head>` atau fragmen `head` sebuah plugin tidak disentuh.
+
+Halaman yang `metadata()`-nya tidak mengembalikan `title` akan mempertahankan judul halaman sebelumnya, bukan berkedip ke fallback `Bosia App`. Beri setiap rute sebuah `title` kalau itu penting buatmu.
 
 ## Timeout
 

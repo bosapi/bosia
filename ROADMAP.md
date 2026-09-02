@@ -1,9 +1,18 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.9.2**
+> Current version: **0.9.3**
 
 ---
+
+## bosia 0.9.3 (2026-09-02) — client nav only synced half the head
+
+> Reported from Fisika: after an in-app link, `canonical` and `og:title` still held the homepage's values. Two defects — the data endpoint dropped the fields, and the router applied only the two that survived.
+
+- [x] 🟠 `/__bosia/data/*.json` sends `meta`, `link` and `lang` alongside `title`/`description`. Explicit whitelist, not a spread: `metadata.data` feeds `load()` server-side and may hold secrets, so it stays off the wire.
+- [x] 🟠 The router rebuilds the head from that payload instead of poking `document.title` and one description tag. `metadataTags()` stamps `data-bosia-meta` on what it owns, so `headExtras` and `<svelte:head>` output are never touched.
+- [x] 🟡 A route with no `metadata()` clears the previous page's tags rather than inheriting them — matches what a hard load of that URL renders. A failed fetch still leaves the head alone; no title means the old title stays, not `Bosia App`.
+- [x] 🟠 `test/formAction-metadata.test.ts` asserts the data endpoint carries every head field and omits `metadata.data`. Verified failing on the old server before the fix — the DOM half is straight-line `createElement`, the wire was the root cause.
 
 ## bosia 0.9.2 (2026-08-22) — `metadata()` was skipped on form-action re-renders
 
