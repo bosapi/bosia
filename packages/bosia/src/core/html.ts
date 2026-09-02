@@ -287,6 +287,11 @@ const SPINNER =
 	`border-radius:50%;animation:__bs__ .8s linear infinite}` +
 	`@keyframes __bs__{to{transform:rotate(360deg)}}</style><i></i></div>`;
 
+/** Marks the tags `metadata()` owns, so the client router can replace exactly
+ *  these on navigation and leave `headExtras`, the framework's own static tags
+ *  and `<svelte:head>` output alone. Read by `client/App.svelte`. */
+export const OWNED = "data-bosia-meta";
+
 /** The `metadata()` tags themselves, indented head-ready. Shared by the streaming
  *  path (buildMetadataChunk) and the non-streaming one (buildHtml) so the two
  *  renderers cannot drift on what `metadata()` emits. */
@@ -295,21 +300,21 @@ export function metadataTags(metadata: Metadata | null): string {
 	let out = "";
 	if (metadata.title) out += `  <title>${escapeHtml(metadata.title)}</title>\n`;
 	if (metadata.description) {
-		out += `  <meta name="description" content="${escapeAttr(metadata.description)}">\n`;
+		out += `  <meta name="description" content="${escapeAttr(metadata.description)}" ${OWNED}>\n`;
 	}
 	if (metadata.meta) {
 		for (const m of metadata.meta) {
 			const attrs = m.name
 				? `name="${escapeAttr(m.name)}"`
 				: `property="${escapeAttr(m.property ?? "")}"`;
-			out += `  <meta ${attrs} content="${escapeAttr(m.content)}">\n`;
+			out += `  <meta ${attrs} content="${escapeAttr(m.content)}" ${OWNED}>\n`;
 		}
 	}
 	if (metadata.link) {
 		for (const l of metadata.link) {
 			let attrs = `rel="${escapeAttr(l.rel)}" href="${escapeAttr(l.href)}"`;
 			if (l.hreflang) attrs += ` hreflang="${escapeAttr(l.hreflang)}"`;
-			out += `  <link ${attrs}>\n`;
+			out += `  <link ${attrs} ${OWNED}>\n`;
 		}
 	}
 	return out;

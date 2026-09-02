@@ -394,18 +394,29 @@
 
 			settleScroll();
 
-			// Update document title and meta description from server metadata
-			if (result?.metadata) {
-				if (result.metadata.title) document.title = result.metadata.title;
-				if (result.metadata.description) {
-					let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
-					if (!meta) {
-						meta = document.createElement("meta");
-						meta.name = "description";
-						document.head.appendChild(meta);
-					}
-					meta.content = result.metadata.description;
-				}
+			// Re-emit the head from server metadata. `data-bosia-meta` (html.ts `OWNED`)
+			// marks exactly the tags metadata() owns, so headExtras, the framework's own
+			// static tags and <svelte:head> output are never touched. `result === null`
+			// with server data means the fetch failed — leave the head as it is; without
+			// server data there is no metadata() at all, so clearing matches SSR.
+			if (result || !match.route.hasServerData) {
+				const md = result?.metadata;
+				document.querySelectorAll("[data-bosia-meta]").forEach((el) => el.remove());
+				// A page that declares no title keeps the previous one rather than flashing
+				// the "Bosia App" fallback. Give metadata() a title if that matters.
+				if (md?.title) document.title = md.title;
+				if (md?.lang) document.documentElement.lang = md.lang;
+				const emit = (tag: "meta" | "link", attrs: Record<string, string | undefined>) => {
+					const el = document.createElement(tag);
+					for (const [k, v] of Object.entries(attrs)) if (v != null) el.setAttribute(k, v);
+					el.setAttribute("data-bosia-meta", "");
+					document.head.appendChild(el);
+				};
+				if (md?.description) emit("meta", { name: "description", content: md.description });
+				for (const m of md?.meta ?? [])
+					emit("meta", { name: m.name, property: m.property, content: m.content });
+				for (const l of md?.link ?? [])
+					emit("link", { rel: l.rel, href: l.href, hreflang: l.hreflang });
 			}
 
 			settle({ url, params: match.params });

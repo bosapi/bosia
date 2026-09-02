@@ -211,11 +211,26 @@ describe("metadataTags", () => {
 	test("emits title, description, both meta forms and link, all escaped", () => {
 		const out = metadataTags(full);
 		expect(out).toContain("<title>Judul &amp; &lt;b&gt;</title>");
-		expect(out).toContain(`<meta name="description" content="Ringkasan &quot;kutip&quot;">`);
-		expect(out).toContain(`<meta name="twitter:card" content="summary">`);
-		expect(out).toContain(`<meta property="og:title" content="OG &lt;judul&gt;">`);
-		expect(out).toContain(`<link rel="canonical" href="https://x.test/a?a=1&amp;b=2">`);
-		expect(out).toContain(`<link rel="alternate" href="https://x.test/en" hreflang="en">`);
+		expect(out).toContain(
+			`<meta name="description" content="Ringkasan &quot;kutip&quot;" data-bosia-meta>`,
+		);
+		expect(out).toContain(`<meta name="twitter:card" content="summary" data-bosia-meta>`);
+		expect(out).toContain(`<meta property="og:title" content="OG &lt;judul&gt;" data-bosia-meta>`);
+		expect(out).toContain(
+			`<link rel="canonical" href="https://x.test/a?a=1&amp;b=2" data-bosia-meta>`,
+		);
+		expect(out).toContain(
+			`<link rel="alternate" href="https://x.test/en" hreflang="en" data-bosia-meta>`,
+		);
+	});
+
+	test("every metadata()-owned tag carries the stamp the client router replaces on", () => {
+		const lines = metadataTags(full).trim().split("\n");
+		const tagged = lines.filter((l) => l.includes("<meta ") || l.includes("<link "));
+		expect(tagged).toHaveLength(5); // description + 2 meta + 2 link
+		for (const l of tagged) expect(l).toContain("data-bosia-meta");
+		// The title is synced via document.title, so it is deliberately unstamped.
+		expect(lines.find((l) => l.includes("<title>"))).not.toContain("data-bosia-meta");
 	});
 
 	test("buildMetadataChunk output is unchanged by the extraction", () => {
@@ -245,7 +260,7 @@ describe("buildHtml — metadata argument", () => {
 			meta,
 		);
 		expect(html).toContain("<title>Kontak</title>");
-		expect(html).toContain(`<meta name="description" content="Hubungi kami">`);
+		expect(html).toContain(`<meta name="description" content="Hubungi kami" data-bosia-meta>`);
 		expect(html).not.toContain("Bosia App");
 		expect(html).toContain('lang="id"');
 	});

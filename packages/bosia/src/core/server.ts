@@ -303,7 +303,16 @@ async function resolve(event: RequestEvent): Promise<Response> {
 							cookies,
 							request,
 						);
-						if (meta) metadata = { title: meta.title, description: meta.description };
+						// Explicit whitelist, not a spread: `metadata.data` feeds load() on the
+						// server and may hold secrets — it must not reach the client.
+						if (meta)
+							metadata = {
+								title: meta.title,
+								description: meta.description,
+								meta: meta.meta,
+								link: meta.link,
+								lang: meta.lang,
+							};
 					} catch {
 						/* non-fatal */
 					}

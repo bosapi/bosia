@@ -22,8 +22,11 @@ let origin: string;
  *  splits `{expr}` in a text node with comment markers, attributes it doesn't. */
 function assertMetadataApplied(html: string) {
 	expect(html).toContain("<title>Kontak — Fisika</title>");
-	expect(html).toContain(`<meta name="description" content="Hubungi kami">`);
-	expect(html).toContain(`<meta property="og:title" content="Kontak">`);
+	expect(html).toContain(`<meta name="description" content="Hubungi kami" data-bosia-meta>`);
+	expect(html).toContain(`<meta property="og:title" content="Kontak" data-bosia-meta>`);
+	expect(html).toContain(
+		`<link rel="canonical" href="https://fisika.test/kontak" data-bosia-meta>`,
+	);
 	expect(html).toContain('lang="id"');
 	expect(html).not.toContain("Bosia App");
 	// Proves metadata.data reached load() instead of the hardcoded null.
@@ -62,6 +65,7 @@ beforeAll(async () => {
 			`\t\tdescription: "Hubungi kami",\n` +
 			`\t\tlang: "id",\n` +
 			`\t\tmeta: [{ property: "og:title", content: "Kontak" }],\n` +
+			`\t\tlink: [{ rel: "canonical", href: "https://fisika.test/kontak" }],\n` +
 			`\t\tdata: { echo: "dari-metadata" },\n` +
 			`\t};\n` +
 			`}\n\n` +
@@ -147,6 +151,23 @@ describe("metadata() on a form-action re-render", () => {
 		assertMetadataApplied(html);
 		// Sanity: the action really ran, so this is the form-action path.
 		expect(html).toContain(`data-sent="ya"`);
+	});
+});
+
+describe("the client router's data endpoint", () => {
+	// The router only ever saw `title` and `description` here, so og:/canonical/lang
+	// stayed frozen at the first-loaded page across every client-side navigation.
+	test("carries every head field metadata() can set — never metadata.data", async () => {
+		const res = await fetch(`${origin}/__bosia/data/kontak.json`);
+		expect(res.status).toBe(200);
+		const { metadata } = await res.json();
+		expect(metadata.title).toBe("Kontak — Fisika");
+		expect(metadata.description).toBe("Hubungi kami");
+		expect(metadata.lang).toBe("id");
+		expect(metadata.meta).toEqual([{ property: "og:title", content: "Kontak" }]);
+		expect(metadata.link).toEqual([{ rel: "canonical", href: "https://fisika.test/kontak" }]);
+		// metadata.data feeds load() server-side and may hold secrets — it stays there.
+		expect(metadata.data).toBeUndefined();
 	});
 });
 
