@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.14] - 2026-09-05
+
+### Changed
+
+- SEO skill: the page address now works during server rendering, so the old warning is gone.
+- SEO checklist uses the same environment variable name as the rest of the skill.
+
 ## [0.8.13] - 2026-09-02
 
 ### Changed

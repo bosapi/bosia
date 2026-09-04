@@ -59,7 +59,6 @@ async function main() {
 		]);
 		ssrPageComponent = pageMod.default;
 		ssrLayoutComponents = layoutMods.map((m) => m.default);
-		router.params = match.params;
 	}
 
 	const ssrPageData = readJsonScript<Record<string, any>>("__bosia-page-data__") ?? {};

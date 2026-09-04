@@ -17,10 +17,11 @@ import { router } from "./router.svelte.ts";
 let paramsWarned = false;
 
 class Page {
-	#url = $derived.by(() => {
-		if (typeof window === "undefined") return new URL("http://localhost/");
-		return new URL(router.currentRoute, window.location.origin);
-	});
+	// Real on the server too: the renderer seeds `router.currentRoute`/`.origin`
+	// from the request immediately before each render (see `renderWithPageContext`
+	// in core/renderer.ts). The `localhost` fallback is now reachable only from a
+	// render that seeded nothing at all — a bare unit test, never a served request.
+	#url = $derived.by(() => new URL(router.currentRoute, router.origin || "http://localhost/"));
 
 	get url() {
 		return this.#url;

@@ -22,6 +22,10 @@ import type { CookieJar } from "./cookies.ts";
 import { HttpError, Redirect } from "./errors.ts";
 import { pickErrorPage, type ErrorOrigin } from "./errorMatch.ts";
 import App from "./client/App.svelte";
+import { router } from "./client/router.svelte.ts";
+import { appState } from "./client/appState.svelte.ts";
+import { withBase } from "./basePath.ts";
+import { currentBase } from "./appBase.ts";
 import {
 	buildHtml,
 	buildHtmlShellOpen,
@@ -40,6 +44,64 @@ import type { AppHtmlSegments } from "./appHtml.ts";
 
 // Shared, stateless — one instance instead of a fresh allocation per stream.
 const enc = new TextEncoder();
+
+// ─── Per-request seed for `page` ──────────────────────────
+// `page` (bosia/client) is imported directly by user components, so per-request
+// values cannot reach it as props the way pageData/layoutData do — see the rule
+// stated in App.svelte and appState.svelte.ts. The singletons it reads from are
+// therefore seeded per request, which is a deliberate exception to that rule.
+//
+// This is safe only because bosia consumes render() synchronously: every call
+// site destructures `{ body, head }` straight off the return value. That is
+// bosia's own commitment, not svelte's guarantee — the declared type is
+// `SyncRenderOutput & PromiseLike<SyncRenderOutput>` and svelte's server
+// renderer has an await path. If async SSR is ever enabled, the existing
+// destructuring and this seeding break together, and must be fixed together.
+// Seeding lives in this wrapper so that stays true by construction: nothing can
+// assign here and then await before rendering, which would make two concurrent
+// requests render each other's URLs — a bug that reads as a flaky cache.
+//
+// `url` is app-space (server.ts strips BASE_PATH exactly once, at the top of
+// handleRequest), but every value the client half writes to these fields is
+// browser-space: hydrate.ts assigns raw window.location.pathname, and
+// clientRoutes are generated with the prefix already in them. So the base goes
+// back on before seeding, or a mounted app server-renders `/admin/audit` and
+// hydration flips it to `/sso/admin/audit`.
+//
+// Assigning unconditionally is the point. Seeding only the success paths would
+// let an error render inherit the previous request's URL — real cross-request
+// leakage, strictly worse than a wrong-but-deterministic default.
+//
+// Two limits worth knowing before leaning on this:
+//
+// 1. The seed lands here, at render time — after every `load()` and
+//    `metadata()` has already run. `page` still holds the previous request's
+//    values throughout those, and the only reason that is not a live bug is
+//    that they live in `+page.server.ts` / `+layout.server.ts`, where
+//    `bosia/client` is not importable (see the header of lib/client.ts). Server
+//    loaders get the real URL as the `url` argument; they must never read
+//    `page`.
+// 2. `url.origin` is the public origin only when TRUST_PROXY=true —
+//    server.ts rebuilds host/proto from X-Forwarded-* under that flag alone,
+//    because the headers are client-spoofable otherwise. Behind an untrusted
+//    proxy the seeded origin is the inner hop (http://localhost:PORT) while the
+//    browser hydrates with the public https:// origin, so `page.url.origin`
+//    disagrees across the boundary. `page.url.pathname` is unaffected.
+//
+// `render`'s own signature is conditional on the component's prop type, so it
+// collapses to `never` behind a generic wrapper — hence `any` on both, matching
+// how the call sites already type `pageMod.default` / `layoutMods`.
+function renderWithPageContext(
+	component: any,
+	options: { props?: Record<string, any> },
+	url: URL,
+	params: Record<string, string> = {},
+) {
+	router.origin = url.origin;
+	router.currentRoute = withBase(currentBase(), url.pathname) + url.search + url.hash;
+	appState.routeParams = params;
+	return render(component, options as any);
+}
 
 // Plugins are loaded once per process at module init via top-level await elsewhere
 // (server.ts), but renderer is also reachable from build/prerender contexts where
@@ -725,15 +787,20 @@ export async function renderSSRStream(
 		// with correct status code, instead of a bare <p> mixed into an already-flushed shell.
 		let body: string, head: string;
 		try {
-			({ body, head } = render(App, {
-				props: {
-					ssrMode: true,
-					ssrPageComponent: pageMod.default,
-					ssrLayoutComponents: layoutMods.map((m: any) => m.default),
-					ssrPageData: pageDataFull,
-					ssrLayoutData: layoutDataFull,
+			({ body, head } = renderWithPageContext(
+				App,
+				{
+					props: {
+						ssrMode: true,
+						ssrPageComponent: pageMod.default,
+						ssrLayoutComponents: layoutMods.map((m: any) => m.default),
+						ssrPageData: pageDataFull,
+						ssrLayoutData: layoutDataFull,
+					},
 				},
-			}));
+				url,
+				params,
+			));
 		} catch (err) {
 			if (isDev) console.error("SSR render error:", err);
 			else console.error("SSR render error:", (err as Error).message ?? err);
@@ -969,16 +1036,21 @@ export async function renderPageWithFormData(
 		return compress(html, "text/html; charset=utf-8", req, status, data.loaderHeaders);
 	}
 
-	const { body, head } = render(App, {
-		props: {
-			ssrMode: true,
-			ssrPageComponent: pageMod.default,
-			ssrLayoutComponents: layoutMods.map((m: any) => m.default),
-			ssrPageData: pageDataFull,
-			ssrLayoutData: layoutDataFull,
-			ssrFormData: formData,
+	const { body, head } = renderWithPageContext(
+		App,
+		{
+			props: {
+				ssrMode: true,
+				ssrPageComponent: pageMod.default,
+				ssrLayoutComponents: layoutMods.map((m: any) => m.default),
+				ssrPageData: pageDataFull,
+				ssrLayoutData: layoutDataFull,
+				ssrFormData: formData,
+			},
 		},
-	});
+		url,
+		params,
+	);
 
 	const html = buildHtml(
 		body,
@@ -1038,6 +1110,12 @@ export async function renderErrorPage(
 	};
 	const bodyEndExtras = await pluginRenderFragments("bodyEnd", renderCtx);
 
+	// The failing route's own params, so a nested +error.svelte under
+	// /blog/[slug] still sees its `slug`. A 404 matches nothing and yields {},
+	// which is also what has to be seeded rather than left holding the previous
+	// request's values.
+	const errorParams = findMatch(serverRoutes, url.pathname)?.params ?? {};
+
 	// 1. Nested boundary
 	if (route && errorDepth !== undefined && route.errorPages?.length) {
 		const origin = errorOrigin ?? "page";
@@ -1055,16 +1133,21 @@ export async function renderErrorPage(
 				]);
 				const layoutData: Record<string, any>[] = [];
 				for (let i = 0; i < K; i++) layoutData.push(partialLayoutData?.[i] ?? {});
-				const { body, head } = render(App, {
-					props: {
-						ssrMode: true,
-						ssrLayoutComponents: layoutMods.map((m: any) => m.default),
-						ssrLayoutData: layoutData,
-						ssrErrorComponent: errorMod.default,
-						ssrErrorProps: { error: { status, message } },
-						ssrErrorDepth: K,
+				const { body, head } = renderWithPageContext(
+					App,
+					{
+						props: {
+							ssrMode: true,
+							ssrLayoutComponents: layoutMods.map((m: any) => m.default),
+							ssrLayoutData: layoutData,
+							ssrErrorComponent: errorMod.default,
+							ssrErrorProps: { error: { status, message } },
+							ssrErrorDepth: K,
+						},
 					},
-				});
+					url,
+					errorParams,
+				);
 				// csr=false: no client hydration on the error page itself.
 				const html = buildHtml(
 					body,
@@ -1099,9 +1182,12 @@ export async function renderErrorPage(
 			// Render the error component directly — NOT through App.svelte.
 			// App.svelte remaps ssrPageData to a `data` prop, but +error.svelte
 			// expects `error` as a direct prop: `let { error } = $props()`.
-			const { body, head } = render(mod.default, {
-				props: { error: { status, message } },
-			});
+			const { body, head } = renderWithPageContext(
+				mod.default,
+				{ props: { error: { status, message } } },
+				url,
+				errorParams,
+			);
 			const html = buildHtml(
 				body,
 				head,

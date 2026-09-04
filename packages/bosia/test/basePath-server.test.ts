@@ -52,6 +52,21 @@ beforeAll(async () => {
 	mkdirSync(join(routes, "daftar"), { recursive: true });
 	writeFileSync(join(routes, "daftar", "+page.svelte"), page("Daftar"));
 
+	// `page.url` is seeded per request by the renderer, but the `url` it seeds
+	// from is app-space — server.ts strips the base once, at the top of
+	// handleRequest. The client half is browser-space (hydrate.ts assigns raw
+	// window.location.pathname, and clientRoutes carry the prefix), so seeding
+	// the stripped path would server-render "/profil" and let hydration flip it
+	// to "/sso/profil" — the same hydration jump, inverted.
+	mkdirSync(join(routes, "profil"), { recursive: true });
+	writeFileSync(
+		join(routes, "profil", "+page.svelte"),
+		`<script>\n` +
+			`\timport { page } from "bosia/client";\n` +
+			`</script>\n\n` +
+			`<p data-path={page.url.pathname} data-href={page.url.href}>Profil</p>\n`,
+	);
+
 	const build = Bun.spawn(["bun", "run", join(import.meta.dir, "..", "src", "core", "build.ts")], {
 		cwd: tmpDir,
 		env: {
@@ -134,5 +149,16 @@ describe("a built server mounted under BASE_PATH", () => {
 	test("the build stamps the base it was built for", () => {
 		const manifest = JSON.parse(readFileSync(join(tmpDir, "dist", "manifest.json"), "utf-8"));
 		expect(manifest.basePath).toBe(BASE);
+	});
+
+	test("page.url is browser-space, matching what hydration computes", async () => {
+		const res = await fetch(`${origin}${BASE}/profil`);
+		expect(res.status).toBe(200);
+		const html = await res.text();
+		// The prefixed path — the exact string hydrate.ts assigns from
+		// window.location.pathname. App-space "/profil" here means the fix seeded
+		// the stripped path and the app will jump on hydration.
+		expect(html).toMatch(/data-path="\/sso\/profil"/);
+		expect(html).toMatch(new RegExp(`data-href="${origin}${BASE}/profil"`));
 	});
 });

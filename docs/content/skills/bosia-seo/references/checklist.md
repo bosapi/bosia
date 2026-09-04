@@ -9,7 +9,7 @@
 
 - [ ] `<title>` ≤ 60 chars on every public route.
 - [ ] `<meta name="description">` ≤ 160 chars on every public route (layout default + overrides).
-- [ ] `<link rel="canonical">` present on every route; href derived from `PUBLIC_SITE_ORIGIN`, NOT `page.url.origin`.
+- [ ] `<link rel="canonical">` present on every route; href derived from `PUBLIC_STATIC_SITE_ORIGIN`, NOT `page.url.origin`.
 - [ ] `<meta name="viewport" content="width=device-width, initial-scale=1">` in `app.html`.
 - [ ] `<meta name="theme-color">` matches `theme_color` in `site.webmanifest`.
 - [ ] `<html lang="…">` populated (via Bosia's `%bosia.lang%`) matches BRIEF.md language.
@@ -52,11 +52,11 @@
 ### Crawler files (7)
 
 - [ ] `src/routes/robots.txt/+server.ts` exists (or static `public/robots.txt`).
-- [ ] `robots.txt` lists `Sitemap:` line pointing to `${PUBLIC_SITE_ORIGIN}/sitemap.xml`.
+- [ ] `robots.txt` lists `Sitemap:` line pointing to `${PUBLIC_STATIC_SITE_ORIGIN}/sitemap.xml`.
 - [ ] Every private route prefix appears under `Disallow:` in `robots.txt`.
 - [ ] `src/routes/sitemap.xml/+server.ts` exists (or static `public/sitemap.xml`).
 - [ ] `sitemap.xml` lists ONLY public routes; no private deep links.
-- [ ] `sitemap.xml` URLs use `PUBLIC_SITE_ORIGIN`, no hardcoded host.
+- [ ] `sitemap.xml` URLs use `PUBLIC_STATIC_SITE_ORIGIN`, no hardcoded host.
 - [ ] `sitemap.xml` includes `<lastmod>` on each entry (or accept that Google uses crawl date).
 
 ### Structured data — minimum (5)
@@ -69,7 +69,7 @@
 
 ### Environment gate (3)
 
-- [ ] `PUBLIC_SITE_ORIGIN` declared in `.env.example`.
+- [ ] `PUBLIC_STATIC_SITE_ORIGIN` declared in `.env.example`.
 - [ ] Prod-vs-dev gate uses `process.env.NODE_ENV` (auto-set by Bosia + inlined into the client bundle) — NOT a hand-rolled `PUBLIC_ENV` user var.
 - [ ] Non-prod emits both `<meta name="robots" content="noindex,nofollow">` AND `robots.txt` returning `Disallow: /`.
 

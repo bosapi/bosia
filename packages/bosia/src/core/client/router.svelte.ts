@@ -77,7 +77,9 @@ export const router = new (class Router {
 			? window.location.pathname + window.location.search + window.location.hash
 			: "/",
 	);
-	params = $state<Record<string, string>>({});
+	/** Origin half of `page.url`. Empty on the server until the renderer seeds it
+	 *  per request — see `renderWithPageContext` in core/renderer.ts. */
+	origin = $state(typeof window !== "undefined" ? window.location.origin : "");
 	/** True when navigation was triggered by a link click / navigate() call, false on popstate (back/forward). */
 	isPush = $state(true);
 	/** Source of the most recent navigation — feeds the Navigation object passed to lifecycle hooks. */

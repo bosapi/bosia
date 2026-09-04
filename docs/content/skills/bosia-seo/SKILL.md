@@ -141,7 +141,7 @@ Therefore every **share-critical** tag — `<title>`, `description`, `canonical`
 Three Bosia facts that rule out the old "site-wide meta in the layout + per-page `data.seo`" pattern:
 
 - **Layouts never receive a child page's data.** `App.svelte` renders each layout with `data = layoutData[index]` — its OWN depth only. A page `load()` returning `{ seo }` never reaches the root layout. (`$page.data` doesn't exist in Bosia either — `page` exposes only `url` + deprecated `params`.)
-- **`page.url` is stubbed to `http://localhost/` during SSR** (`page.svelte.ts`). A canonical/og:url derived from `page.url` in a layout is wrong on the server pass. `metadata({ url })` gets the real URL.
+- **`page.url` is real during SSR as of 0.9.4** — pathname, query and origin all reflect the request (before that it was stubbed to `http://localhost/`). It is still the wrong source for a canonical: `page.url.origin` is the incoming request host (see R2), and on a **prerendered** page it is the build-time prerender server's origin — `http://localhost:<port>`. Build canonicals from `SITE.origin` + `url.pathname` in `metadata()`, never from `page.url`.
 - **`<svelte:head>` is client-injected** (above) — wrong channel for scrapers.
 
 `metadata()` runs on every server render of the route: GET, and the re-render that follows a plain (non-`enhance`) `<form method="POST">` submit. A route with form actions keeps its title, OG tags, `lang` and `metadata().data` after a submit — nothing extra to wire. (Before 0.9.2 the POST path skipped `metadata()` entirely; if you are on an older bosia, that is the bug, not your code.)

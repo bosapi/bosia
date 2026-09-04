@@ -1,7 +1,26 @@
 <script lang="ts">
+	import { page } from "bosia/client";
 	import type { LayoutData } from "../$types";
 
 	let { children, data }: { children: any; data: LayoutData } = $props();
+
+	// Active-link state sourced from `page.url.pathname`, per bosia-page-shell R6.
+	// This is server-rendered: the correct item is already highlighted in the SSR
+	// HTML, so there is no flash of "Home" before hydration.
+	const links = [
+		{ href: "/", label: "Home" },
+		{ href: "/about", label: "About" },
+		{ href: "/blog", label: "Blog" },
+		{ href: "/all/foo/bar", label: "Catch-all" },
+		{ href: "/ssr-off", label: "SSR off" },
+		{ href: "/dedup-demo", label: "Dedup" },
+		{ href: "/loading-test", label: "Loading" },
+		{ href: "/set-headers-demo", label: "Headers" },
+		{ href: "/page-url-test", label: "page.url" },
+	];
+
+	const isActive = (href: string, current: string) =>
+		href === "/" ? current === "/" : current === href || current.startsWith(`${href}/`);
 </script>
 
 <div class="flex min-h-screen flex-col bg-background text-foreground">
@@ -10,35 +29,18 @@
 			<a href="/" class="font-bold tracking-tight flex items-center gap-2"
 				><img src="/favicon.svg" alt="" class="size-5" /> Bosia</a
 			>
-			<a href="/" class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-				>Home</a
-			>
-			<a href="/about" class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-				>About</a
-			>
-			<a href="/blog" class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-				>Blog</a
-			>
-			<a
-				href="/all/foo/bar"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors">Catch-all</a
-			>
-			<a
-				href="/ssr-off"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors">SSR off</a
-			>
-			<a
-				href="/dedup-demo"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors">Dedup</a
-			>
-			<a
-				href="/loading-test"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors">Loading</a
-			>
-			<a
-				href="/set-headers-demo"
-				class="text-sm text-muted-foreground hover:text-foreground transition-colors">Headers</a
-			>
+			{#each links as link (link.href)}
+				{@const active = isActive(link.href, page.url.pathname)}
+				<a
+					href={link.href}
+					data-nav={link.href}
+					data-active={active}
+					aria-current={active ? "page" : undefined}
+					class="text-sm transition-colors hover:text-foreground {active
+						? 'font-semibold text-foreground underline underline-offset-4'
+						: 'text-muted-foreground'}">{link.label}</a
+				>
+			{/each}
 			<a
 				href="/api/hello"
 				target="_blank"

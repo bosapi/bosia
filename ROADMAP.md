@@ -1,9 +1,22 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.9.3**
+> Current version: **0.9.4**
 
 ---
+
+## bosia 0.9.4 (2026-09-05) — `page.url` was invented during SSR
+
+> Every server-rendered page reported pathname `/`. `bosia-page-shell` and `bosia-sidebar` both teach active-nav state from `page.url.pathname`, so each page shipped with the homepage highlighted until hydration corrected it.
+
+- [x] 🟠 Two hardcoded fallbacks stood in for data the renderer already had: `page.svelte.ts` returned `http://localhost/` with no `window`, and `router.currentRoute` initialised to `"/"`. `renderer.ts` has the real `url` and already passes it to every `load()` and `metadata()`.
+- [x] 🟠 One `renderWithPageContext()` wrapper seeds `router.currentRoute`/`.origin` and `appState.routeParams`, then renders — at all **four** `render()` sites, the two error paths included. Partial seeding would leave an error render holding the previous request's URL: real cross-request leakage, worse than a wrong-but-fixed default.
+- [x] 🔴 The seed is browser-space, not app-space. `server.ts` strips `BASE_PATH` once at the top of `handleRequest`, but `hydrate.ts` assigns raw `window.location.pathname` and `clientRoutes` carry the prefix. Seeding the stripped path would render `/profil` and let hydration flip it to `/sso/profil` — the same jump, inverted. `withBase(currentBase(), …)` puts it back.
+- [x] 🟡 A deliberate exception to the rule in `App.svelte` and `appState.svelte.ts` (server singletons hold no per-request state): `page` is imported directly by user components, so props cannot reach it. Safe only because bosia destructures `render()` synchronously — svelte's `RenderOutput` is `PromiseLike`, so this is bosia's commitment, not svelte's. The wrapper makes it structural.
+- [x] 🟡 `page.params` was `{}` on the server for the same reason — `appState.routeParams` is never written during SSR. Seeded from `pageDataFull.params`, the source `App.svelte` already reads. Dropped the write-only `router.params` cell (`router` is not public API).
+- [x] 🟠 `test/ssr-page-url.test.ts` boots a built server: pathname, full href, active-nav state, params, sequential and concurrent requests, and both error paths. Verified 8 of 9 failing before the fix with `Received: "/"`. A client-side test would agree with both the broken and fixed code — the fallback never fires in a browser.
+- [x] 🟠 `test/basePath-server.test.ts` gained the mounted case, asserting the prefixed path. Verified failing with an app-space seed (`data-path="/profil"`). `BASE_PATH` must be set at build time too, so it extends the existing fixture rather than standing up a second build.
+- [x] 🟡 `apps/demo` nav now sources active state from `page.url.pathname` per bosia-page-shell R6, plus a `/page-url-test` route printing the server-rendered values. Verified in Chrome against the built server: SSR HTML and post-hydration DOM agree, no console warnings, no flash of "Home".
 
 ## bosia 0.9.3 (2026-09-02) — client nav only synced half the head
 

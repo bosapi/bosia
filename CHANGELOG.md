@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.9.4] - 2026-09-05
+
+### Fixed
+
+- Active nav links now highlight the right page on first load instead of flashing the homepage.
+- The page address is correct during server rendering, including apps mounted under a subpath.
+- Route params now reach `page.params` on the server, not just after the page loads.
+
 ## [0.9.3] - 2026-09-02
 
 ### Fixed
