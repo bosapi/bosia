@@ -4,6 +4,17 @@
 import { withBase } from "./basePath.ts";
 import { currentBase } from "./appBase.ts";
 
+// Identity across bundle boundaries. `dist/hooks.server.js` keeps "bosia"
+// external (build.ts BOSIA_RUNTIME_EXTERNALS), so a hook's `redirect()` builds
+// its Redirect from the app's node_modules while the server bundle carries its
+// own copy of this file. Two class objects, one `instanceof` — always false, so
+// a hook throwing redirect() or error() fell through to a 500 no matter how many
+// catch branches were added. `Symbol.for` lives in a process-wide registry, so
+// the brand is the same value in both copies. Use isRedirect()/isHttpError()
+// rather than `instanceof` for anything that can cross that boundary.
+export const REDIRECT_BRAND = Symbol.for("bosia.Redirect");
+export const HTTP_ERROR_BRAND = Symbol.for("bosia.HttpError");
+
 export class HttpError extends Error {
 	constructor(
 		public status: number,
@@ -12,6 +23,14 @@ export class HttpError extends Error {
 		super(message);
 		this.name = "HttpError";
 	}
+}
+
+export function isHttpError(err: unknown): err is HttpError {
+	return typeof err === "object" && err !== null && (err as any)[HTTP_ERROR_BRAND] === true;
+}
+
+export function isRedirect(err: unknown): err is Redirect {
+	return typeof err === "object" && err !== null && (err as any)[REDIRECT_BRAND] === true;
 }
 
 export interface RedirectOptions {
@@ -34,6 +53,11 @@ export class Redirect {
 		this.location = withBase(currentBase(), location);
 	}
 }
+
+// Stamped on the prototypes rather than declared as class fields: a plain
+// assignment needs no `unique symbol` gymnastics and covers subclasses too.
+(HttpError.prototype as any)[HTTP_ERROR_BRAND] = true;
+(Redirect.prototype as any)[REDIRECT_BRAND] = true;
 
 const DANGEROUS_SCHEMES = /^(javascript|data|vbscript):/i;
 

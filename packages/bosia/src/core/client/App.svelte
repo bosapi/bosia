@@ -3,7 +3,13 @@
 	import { router, scrollToHash } from "./router.svelte.ts";
 	import { findMatch } from "../matcher.ts";
 	import { clientRoutes } from "bosia:routes";
-	import { consumePrefetch, prefetchCache, dataUrl, buildParentSnapshots } from "./prefetch.ts";
+	import {
+		consumePrefetch,
+		prefetchCache,
+		dataUrl,
+		buildParentSnapshots,
+		readDataResponse,
+	} from "./prefetch.ts";
 	import { appState, clearDirty } from "./appState.svelte.ts";
 	import { captureSnapshot, liveContext, shouldRerun, type CacheEntry } from "./loaderCache.ts";
 	import { pickErrorPage } from "../errorMatch.ts";
@@ -226,7 +232,9 @@
 			? Promise.resolve(cached)
 			: match.route.hasServerData
 				? fetch(dataUrl(path, maskBits), dataInit)
-						.then((r) => r.json())
+						.then(readDataResponse)
+						// Only a failed request reaches here now — offline, DNS, aborted.
+						// A response that arrived is read for what it says, not discarded.
 						.catch(() => null)
 				: Promise.resolve(null);
 

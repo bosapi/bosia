@@ -46,6 +46,16 @@ export type RequestEvent = {
 	locals: Record<string, any> & { nonce?: string };
 	params: Record<string, string>;
 	cookies: Cookies;
+	/**
+	 * True when the client router is fetching this page's loader data for a
+	 * client-side navigation instead of the browser loading the page itself.
+	 *
+	 * `url` is the page URL either way — a guard never has to know which kind of
+	 * request it is looking at. This is here for the cases that genuinely differ
+	 * (skipping work that only matters for a full document render), not for
+	 * authorization: a check that runs on one kind and not the other is a hole.
+	 */
+	isDataRequest: boolean;
 };
 
 export type LoadEvent = {
@@ -117,6 +127,16 @@ export type LoaderDeps = {
 
 export type ResolveFunction = (event: RequestEvent) => MaybePromise<Response>;
 
+/**
+ * Middleware wrapping every request. Mutate `event.locals`, short-circuit with
+ * a `Response` / `throw redirect()` / `throw error()`, or call `resolve(event)`
+ * to continue.
+ *
+ * Pass on the `event.request` you were given. The framework keys per-request
+ * state off that exact `Request` instance, so handing `resolve()` an event
+ * carrying a freshly constructed `Request` detaches it from that state and a
+ * client-navigation data fetch comes back as page HTML.
+ */
 export type Handle = (input: {
 	event: RequestEvent;
 	resolve: ResolveFunction;

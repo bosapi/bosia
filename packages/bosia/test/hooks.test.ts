@@ -7,6 +7,7 @@ function makeEvent(): RequestEvent {
 		url: new URL("http://localhost/"),
 		locals: {},
 		params: {},
+		isDataRequest: false,
 		cookies: {
 			get: () => undefined,
 			getAll: () => ({}),

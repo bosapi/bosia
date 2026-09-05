@@ -133,10 +133,32 @@ const logger: Handle = async ({ event, resolve }) => {
 ### Route Protection
 
 ```ts
+import { redirect } from "bosia";
+
 const guard: Handle = async ({ event, resolve }) => {
 	if (event.url.pathname.startsWith("/admin") && !event.locals.user) {
-		return Response.redirect("/login", 303);
+		throw redirect(303, "/login");
 	}
 	return resolve(event);
 };
 ```
+
+One check covers both ways of reaching a page. When the client router navigates it
+fetches the page's loader data instead of the document, but `event.url` is the page
+URL either way — `/admin`, never the internal transport path. `event.isDataRequest`
+tells the two apart when you need to know; authorization should not care.
+
+> **⚠️ Before 0.9.5 this check did not run on client navigations.** A guard reading
+> `event.url.pathname` saw the internal transport path on a link click, never
+> `/admin`, so a route protected this way still returned its loader data to a
+> signed-out visitor. If you copied the earlier version of this example, upgrade —
+> there is nothing to patch on your side.
+
+`throw redirect()` is preferred over returning `Response.redirect(...)`: it is
+turned into the right thing for both request kinds, and it applies your
+[`BASE_PATH`](/docs/reference/deployment) for you. A returned `Response.redirect`
+also works, but its `Location` is passed through untouched — under a base path you
+have to write the prefix yourself.
+
+`throw error(404, "…")` works the same way: an error page for a document request,
+the router's error boundary for a navigation.

@@ -135,10 +135,32 @@ const logger: Handle = async ({ event, resolve }) => {
 ### Proteksi Route
 
 ```ts
+import { redirect } from "bosia";
+
 const guard: Handle = async ({ event, resolve }) => {
 	if (event.url.pathname.startsWith("/admin") && !event.locals.user) {
-		return Response.redirect("/login", 303);
+		throw redirect(303, "/login");
 	}
 	return resolve(event);
 };
 ```
+
+Satu pengecekan menutup kedua cara halaman diakses. Saat router klien bernavigasi,
+yang diambil adalah data loader halaman, bukan dokumennya — tapi `event.url` tetap
+URL halaman: `/admin`, bukan path transport internal. `event.isDataRequest`
+membedakan keduanya kalau kamu memang perlu tahu; otorisasi seharusnya tidak peduli.
+
+> **⚠️ Sebelum 0.9.5 pengecekan ini tidak berjalan pada navigasi klien.** Guard yang
+> membaca `event.url.pathname` melihat path transport internal saat sebuah link
+> diklik, bukan `/admin` — jadi route yang "diproteksi" begini tetap mengirim data
+> loader-nya ke pengunjung yang belum login. Kalau kamu menyalin contoh versi lama,
+> naikkan versinya — tidak ada yang perlu ditambal di sisi aplikasimu.
+
+`throw redirect()` lebih disarankan daripada mengembalikan `Response.redirect(...)`:
+bosia mengubahnya menjadi bentuk yang tepat untuk kedua jenis permintaan, dan
+[`BASE_PATH`](/docs/id/reference/deployment) diterapkan otomatis. `Response.redirect`
+yang di-`return` tetap bekerja, tapi `Location`-nya diteruskan apa adanya — di bawah
+base path, prefiksnya harus kamu tulis sendiri.
+
+`throw error(404, "…")` bekerja dengan pola yang sama: halaman error untuk permintaan
+dokumen, error boundary router untuk navigasi klien.

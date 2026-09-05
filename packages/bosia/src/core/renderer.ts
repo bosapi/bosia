@@ -19,7 +19,7 @@ import {
 	serveCached,
 } from "./cache.ts";
 import type { CookieJar } from "./cookies.ts";
-import { HttpError, Redirect } from "./errors.ts";
+import { HttpError, Redirect, isHttpError, isRedirect } from "./errors.ts";
 import { pickErrorPage, type ErrorOrigin } from "./errorMatch.ts";
 import App from "./client/App.svelte";
 import { router } from "./client/router.svelte.ts";
@@ -449,8 +449,8 @@ export async function loadRouteData(
 				layoutDeps[ls.depth] = emptyDeps();
 			}
 		} catch (err) {
-			if (err instanceof Redirect) throw err;
-			if (err instanceof HttpError) {
+			if (isRedirect(err)) throw err;
+			if (isHttpError(err)) {
 				stampErrorContext(
 					err,
 					ls.depth,
@@ -513,8 +513,8 @@ export async function loadRouteData(
 				pageDeps = emptyDeps();
 			}
 		} catch (err) {
-			if (err instanceof Redirect) throw err;
-			if (err instanceof HttpError) {
+			if (isRedirect(err)) throw err;
+			if (isHttpError(err)) {
 				stampErrorContext(
 					err,
 					route.layoutModules.length,
@@ -573,7 +573,7 @@ export async function loadMetadata(
 	} catch (err) {
 		// Control flow thrown from metadata() is intent, not failure — swallowing it
 		// here made every caller's Redirect/HttpError branch dead code.
-		if (err instanceof Redirect || err instanceof HttpError) throw err;
+		if (isRedirect(err) || isHttpError(err)) throw err;
 		if (isDev) console.error("Metadata load error:", err);
 		else console.error("Metadata load error:", (err as Error).message ?? err);
 		if (isDev) reportDevErrorFromCatch(err);
@@ -651,10 +651,10 @@ export async function renderSSRStream(
 		try {
 			metadata = await loadMetadata(route, params, url, locals, cookies, req);
 		} catch (err) {
-			if (err instanceof Redirect) {
+			if (isRedirect(err)) {
 				return Response.redirect(err.location, err.status);
 			}
-			if (err instanceof HttpError) {
+			if (isHttpError(err)) {
 				return renderErrorPage(
 					err.status,
 					err.message,
@@ -690,8 +690,8 @@ export async function renderSSRStream(
 			]);
 			pageMod = pm;
 		} catch (err) {
-			if (err instanceof Redirect) return Response.redirect(err.location, err.status);
-			if (err instanceof HttpError) {
+			if (isRedirect(err)) return Response.redirect(err.location, err.status);
+			if (isHttpError(err)) {
 				const e = err as HttpError & {
 					errorDepth?: number;
 					errorOrigin?: ErrorOrigin;
@@ -950,8 +950,8 @@ export async function renderPageWithFormData(
 	try {
 		metadata = await loadMetadata(route, params, url, locals, cookies, req);
 	} catch (err) {
-		if (err instanceof Redirect) return Response.redirect(err.location, err.status);
-		if (err instanceof HttpError) {
+		if (isRedirect(err)) return Response.redirect(err.location, err.status);
+		if (isHttpError(err)) {
 			return renderErrorPage(
 				err.status,
 				err.message,

@@ -86,6 +86,52 @@ export function dataUrl(path: string, invalidatedBits?: string): string {
 	return `${base}/__bosia/data${p || "/index"}.json${qs}`;
 }
 
+/** True when the body is JSON we can parse — not a redirect target's HTML. */
+function isJsonResponse(res: Response): boolean {
+	return (res.headers.get("content-type") ?? "").includes("application/json");
+}
+
+/**
+ * Read a `/__bosia/data/…` response into the payload the router consumes.
+ *
+ * Anything that is not JSON used to collapse to `null`, and `null` means "the
+ * loader crashed" one branch later — so a hook redirecting an unauthenticated
+ * visitor to /login rendered a 500 that no server ever sent. The response says
+ * exactly what happened; this reads it instead of discarding it.
+ */
+export async function readDataResponse(res: Response): Promise<any> {
+	// `fetch` follows redirects, so a hook's 303 arrives as the login page's HTML
+	// at status 200. `redirected` is the only surviving trace of the redirect.
+	if (res.redirected) {
+		const target = new URL(res.url, window.location.origin);
+		return {
+			redirect:
+				target.origin === window.location.origin
+					? target.pathname + target.search + target.hash
+					: target.href,
+		};
+	}
+	if (isJsonResponse(res)) {
+		try {
+			return await res.json();
+		} catch {
+			// Claimed JSON, wasn't — a truncated or proxy-mangled body.
+			return { error: { status: errorStatus(res), message: errorMessage(res) } };
+		}
+	}
+	// A non-JSON body the router can't use: a hook answering with text/plain 404,
+	// an HTML error page from a proxy. Report the status the server actually sent.
+	return { error: { status: errorStatus(res), message: errorMessage(res) } };
+}
+
+function errorStatus(res: Response): number {
+	return res.status >= 400 ? res.status : 500;
+}
+
+function errorMessage(res: Response): string {
+	return res.statusText || "Internal Server Error";
+}
+
 export const prefetchCache = new Map<string, { data: any; ts: number }>();
 const MAX_PREFETCH_ENTRIES = 50;
 
@@ -132,7 +178,9 @@ export async function prefetchPath(path: string): Promise<void> {
 					}
 				: {};
 		const res = await fetch(dataUrl(path, maskBits), init);
-		if (res.ok) {
+		// `ok` alone would cache a guard's login page (200 after the redirect was
+		// followed) as if it were this route's data.
+		if (res.ok && !res.redirected && isJsonResponse(res)) {
 			if (prefetchCache.size >= MAX_PREFETCH_ENTRIES) {
 				const oldest = prefetchCache.keys().next().value;
 				if (oldest !== undefined) prefetchCache.delete(oldest);

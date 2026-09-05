@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.9.5] - 2026-09-05
+
+### Security
+
+- Protected pages could hand their data to signed-out visitors. Upgrade if you guard routes.
+
+### Fixed
+
+- Clicking a link into a protected page now goes to login instead of a fake 500 error.
+- A hook can now redirect or block a page; before, doing so returned a server error.
+- A hook that answers with something other than page data no longer looks like a crash.
+
+### Added
+
+- `event.isDataRequest` tells a hook whether the client router asked, or the browser did.
+
 ## [0.9.4] - 2026-09-05
 
 ### Fixed

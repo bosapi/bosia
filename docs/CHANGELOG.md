@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Route protection guide now shows the guard that actually blocks link clicks, with an upgrade note.
+- Hooks skill documents `isDataRequest` and the route-protection pattern to copy.
 - SEO skill: the page address now works during server rendering, so the old warning is gone.
 - SEO checklist uses the same environment variable name as the rest of the skill.
 

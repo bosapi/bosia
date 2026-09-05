@@ -13,7 +13,7 @@ import type { RouteManifest } from "./types.ts";
 compileRoutes(apiRoutes);
 compileRoutes(serverRoutes);
 import { NO_FRAME_GUARD_HEADER, type Handle, type RequestEvent } from "./hooks.ts";
-import { HttpError, Redirect, ActionFailure } from "./errors.ts";
+import { HttpError, Redirect, ActionFailure, isHttpError, isRedirect } from "./errors.ts";
 import { CookieJar } from "./cookies.ts";
 import { safePath } from "./safePath.ts";
 import { checkCsrf } from "./csrf.ts";
@@ -184,6 +184,54 @@ function isValidRoutePath(path: string, origin: string): boolean {
 	}
 }
 
+type DataRequest = { routeUrl: URL; invalidatedBits: string | null };
+
+/**
+ * Decode `/__bosia/data/<route>.json` into the page URL it stands for.
+ * `null` = not a data request, `"invalid"` = 400.
+ *
+ * Called before the hooks run, not inside `resolve()`, so `event.url` is the
+ * page the visitor asked for no matter how the request arrived. A guard reading
+ * `event.url.pathname` sees `/admin` for a link click and for an address-bar
+ * load alike; when it only saw the transport path on one of them, the loaders
+ * ran unguarded for every client navigation.
+ */
+function parseDataRequest(url: URL): DataRequest | "invalid" | null {
+	if (!url.pathname.startsWith("/__bosia/data/")) return null;
+
+	const routePathStr =
+		url.pathname
+			.slice("/__bosia/data".length)
+			.replace(/\.json$/, "")
+			.replace(/^\/index$/, "/") || "/";
+
+	if (!isValidRoutePath(routePathStr, url.origin)) return "invalid";
+
+	const routeUrl = new URL(routePathStr, url.origin);
+	let invalidatedBits: string | null = null;
+	for (const [key, val] of url.searchParams.entries()) {
+		if (key === "_invalidated") {
+			invalidatedBits = val;
+			continue;
+		}
+		routeUrl.searchParams.append(key, val);
+	}
+	return { routeUrl, invalidatedBits };
+}
+
+/**
+ * Per-request parse, parked here because `resolve()` can no longer recover it:
+ * `event.url` is the page URL by then, and hooks call `resolve(event)`
+ * themselves so there is no parameter to thread it through. `event.locals` is
+ * user scratch space and off limits for framework state.
+ *
+ * Keyed on the incoming `Request`, which is the one object that stays identical
+ * across the whole chain. A hook that swaps in a fabricated `Request` detaches
+ * its event from this record — documented on `Handle`, pinned by
+ * `test/hooks-redirect.test.ts`.
+ */
+const dataRequests = new WeakMap<Request, DataRequest>();
+
 /**
  * Decode an `_invalidated` bitmask string. Char 0 = page, char i+1 = layout
  * depth i, '1' = run, '0' = skip. Missing/extra chars default to run.
@@ -230,28 +278,12 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		return Response.json({ status: "ok", timestamp, timezone });
 	}
 
-	// Data endpoint — returns server loader data as JSON for client-side navigation
-	if (path.startsWith("/__bosia/data/")) {
-		const routePathStr =
-			path
-				.slice("/__bosia/data".length)
-				.replace(/\.json$/, "")
-				.replace(/^\/index$/, "/") || "/";
-
-		if (!isValidRoutePath(routePathStr, url.origin)) {
-			return Response.json({ error: "Invalid path", status: 400 }, { status: 400 });
-		}
-		const routeUrl = new URL(routePathStr, url.origin);
-		let invalidatedBits: string | null = null;
-		for (const [key, val] of url.searchParams.entries()) {
-			if (key === "_invalidated") {
-				invalidatedBits = val;
-				continue;
-			}
-			routeUrl.searchParams.append(key, val);
-		}
-		// Rewrite event.url so logging middleware sees the real page path, not /__bosia/data
-		event.url = routeUrl;
+	// Data endpoint — returns server loader data as JSON for client-side navigation.
+	// The URL no longer says so (it is the page URL, for the hooks' benefit), so
+	// the parse handleRequest parked before the hooks ran is what identifies it.
+	const dataReq = dataRequests.get(request);
+	if (dataReq) {
+		const { routeUrl, invalidatedBits } = dataReq;
 		try {
 			const pageMatch = findMatch(serverRoutes, routeUrl.pathname);
 			// Build mask from `?_invalidated=<bits>` where char 0 = page,
@@ -360,14 +392,14 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				extra,
 			);
 		} catch (err) {
-			if (err instanceof Redirect) {
+			if (isRedirect(err)) {
 				return compress(
 					JSON.stringify({ redirect: err.location, status: err.status }),
 					"application/json",
 					request,
 				);
 			}
-			if (err instanceof HttpError) {
+			if (isHttpError(err)) {
 				const e = err as HttpError & {
 					errorDepth?: number;
 					errorOrigin?: "page" | "layout";
@@ -471,10 +503,13 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				url,
 				locals,
 				cookies,
+				// An API route is reached through its own URL, never through the
+				// client router's data endpoint.
+				isDataRequest: false,
 			});
 
 			// Redirect returned (not thrown) — convert to a 303 Response.
-			if (handlerResult instanceof Redirect) {
+			if (isRedirect(handlerResult)) {
 				return new Response(null, {
 					status: handlerResult.status,
 					headers: { Location: handlerResult.location },
@@ -546,13 +581,13 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		} catch (err) {
 			// `throw redirect(303, "/")` from a +server.ts handler — turn it into
 			// a real 303 instead of a 500. Mirrors the page-action handler below.
-			if (err instanceof Redirect) {
+			if (isRedirect(err)) {
 				return new Response(null, {
 					status: err.status,
 					headers: { Location: err.location },
 				});
 			}
-			if (err instanceof HttpError) {
+			if (isHttpError(err)) {
 				return Response.json({ error: err.message }, { status: err.status });
 			}
 			if (isDev) console.error("API route error:", err);
@@ -704,7 +739,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 					try {
 						result = await action(event);
 					} catch (err) {
-						if (err instanceof Redirect) {
+						if (isRedirect(err)) {
 							if (isEnhanced) {
 								return Response.json({
 									type: "redirect",
@@ -717,7 +752,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 								headers: { Location: err.location },
 							});
 						}
-						if (err instanceof HttpError) {
+						if (isHttpError(err)) {
 							if (isEnhanced) {
 								return Response.json(
 									{ type: "error", status: err.status, message: err.message },
@@ -740,7 +775,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 					}
 
 					// Redirect returned (not thrown)
-					if (result instanceof Redirect) {
+					if (isRedirect(result)) {
 						if (isEnhanced) {
 							return Response.json({
 								type: "redirect",
@@ -792,7 +827,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 					);
 				}
 			} catch (err) {
-				if (err instanceof Redirect) {
+				if (isRedirect(err)) {
 					if (isEnhanced) {
 						return Response.json({
 							type: "redirect",
@@ -805,7 +840,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 						headers: { Location: err.location },
 					});
 				}
-				if (err instanceof HttpError) {
+				if (isHttpError(err)) {
 					if (isEnhanced) {
 						return Response.json(
 							{ type: "error", status: err.status, message: err.message },
@@ -921,6 +956,11 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 	}
 
 	inFlight++;
+	// Hoisted so the catch below can tell a data request from a page request and
+	// reuse the same nonce when it renders an error page.
+	let dataReq: DataRequest | null = null;
+	let nonce = "";
+	let cookieJar: CookieJar | null = null;
 	try {
 		// Handle CORS preflight before CSRF check (OPTIONS is CSRF-exempt)
 		if (CORS_CONFIG && request.method === "OPTIONS") {
@@ -937,16 +977,50 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		const isHttps =
 			(TRUST_PROXY && request.headers.get("x-forwarded-proto") === "https") ||
 			url.protocol === "https:";
-		const cookieJar = new CookieJar(request.headers.get("cookie") ?? "", isHttps);
-		const nonce = CSP_ENABLED ? generateNonce() : "";
+		cookieJar = new CookieJar(request.headers.get("cookie") ?? "", isHttps);
+		nonce = CSP_ENABLED ? generateNonce() : "";
+
+		// Decode the data endpoint before the hooks, not inside resolve(): a guard
+		// runs *before* `await resolve(event)`, so a rewrite in there reaches
+		// logging middleware and never reaches the check that gates the route.
+		const parsed = parseDataRequest(url);
+		if (parsed === "invalid") {
+			return Response.json({ error: "Invalid path", status: 400 }, { status: 400 });
+		}
+		dataReq = parsed;
+		if (dataReq) dataRequests.set(request, dataReq);
+
 		const event: RequestEvent = {
 			request,
-			url,
+			url: dataReq ? dataReq.routeUrl : url,
 			locals: { nonce },
 			params: {},
 			cookies: cookieJar,
+			isDataRequest: dataReq !== null,
 		};
-		const response = userHandle ? await userHandle({ event, resolve }) : await resolve(event);
+		let response = userHandle ? await userHandle({ event, resolve }) : await resolve(event);
+
+		// A hook that short-circuits a data request with a redirect is answering
+		// the client router, which speaks JSON — an unconverted 3xx is followed by
+		// `fetch` and the router receives the redirect target's HTML instead.
+		// `Location` is copied verbatim: `redirect()` already rebased it through
+		// `withBase()`, and a raw `Response.redirect` under a BASE_PATH carries the
+		// base by hand, so rebasing here would double the prefix on both.
+		if (dataReq && response.status >= 300 && response.status < 400) {
+			const location = response.headers.get("location");
+			if (location) {
+				const carried = new Headers(response.headers);
+				carried.delete("location");
+				carried.delete("content-type");
+				carried.delete("content-length");
+				carried.delete("content-encoding");
+				carried.set("content-type", "application/json");
+				response = new Response(JSON.stringify({ redirect: location, status: response.status }), {
+					status: 200,
+					headers: carried,
+				});
+			}
+		}
 
 		const headers = new Headers(response.headers);
 		// A handle can mark a response (e.g. a proxied embeddable preview) to opt
@@ -979,6 +1053,45 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 			headers,
 		});
 	} catch (err) {
+		// `throw redirect()` / `throw error()` from a hook lands here — the same
+		// escape hatch loaders have always had. Without these branches both fall
+		// through to the 500 below, which is why the docs could only ever suggest
+		// returning a raw `Response.redirect`.
+		if (isRedirect(err) || isHttpError(err)) {
+			const out = isRedirect(err)
+				? dataReq
+					? // Shape-identical to the loader conversion below, so the
+						// router has one payload contract regardless of who redirected.
+						Response.json({ redirect: err.location, status: err.status })
+					: Response.redirect(err.location, err.status)
+				: dataReq
+					? Response.json(
+							{
+								error: { status: err.status, message: err.message },
+								errorDepth: null,
+								errorOrigin: null,
+							},
+							{ status: err.status },
+						)
+					: await renderErrorPage(
+							err.status,
+							err.message,
+							url,
+							request,
+							undefined,
+							undefined,
+							undefined,
+							undefined,
+							nonce,
+						);
+			// A hook that expires the session before throwing must not lose the
+			// Set-Cookie that does it — `Response.redirect` builds a fresh Response,
+			// so the jar is re-applied by hand here.
+			if (cookieJar) {
+				for (const cookie of cookieJar.outgoing) out.headers.append("Set-Cookie", cookie);
+			}
+			return out;
+		}
 		if (isDev) console.error("Unhandled request error:", err);
 		else console.error("Unhandled request error:", (err as Error).message ?? err);
 		if (isDev) reportDevErrorFromCatch(err);

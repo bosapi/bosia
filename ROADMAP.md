@@ -1,9 +1,22 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.9.4**
+> Current version: **0.9.5**
 
 ---
+
+## bosia 0.9.5 (2026-09-05) — a guard that never ran on a click
+
+> Reported from pay as a fake "500 Internal Server Error" when a signed-out visitor clicked into `/admin`. The server never errored. Underneath the 500 sat a leak: the guard the docs teach did not run on client navigations at all, so the route returned its loader data to a caller with no session.
+
+- [x] 🔴 `event.url` is the page URL before the hooks run, not after. The `/__bosia/data/<route>.json` → `/admin` rewrite sat inside `resolve()` (`server.ts:253`), so a guard — which runs _before_ `await resolve(event)` — saw the transport path and its `startsWith("/admin")` was false. `curl /__bosia/data/admin.json` was the whole exploit.
+- [x] 🔴 `throw redirect()` / `throw error()` from a hook could never work: `dist/hooks.server.js` keeps `bosia` external (`build.ts:24`), so the hook's `Redirect` came from the app's `node_modules` while the server bundle carried its own class. `instanceof` compared two different objects and was always false → real 500. Branded both classes with `Symbol.for` and swapped all 23 `instanceof` sites for `isRedirect()`/`isHttpError()`.
+- [x] 🟠 A hook's raw 3xx on a data request becomes `{redirect, status}` JSON. `fetch` follows a 303 silently, so the router used to receive the login page's HTML at 200. `Location` ships verbatim — `redirect()` already rebased it through `withBase()`, so rebasing again would double a `BASE_PATH` prefix.
+- [x] 🟠 The router stopped reading "not JSON" as "the loader crashed". `readDataResponse()` reads `redirected`, the status and the content-type that were sitting on the response all along and were thrown away by `.catch(() => null)`. A hook's `text/plain` 404 now renders a 404, not a 500.
+- [x] 🟡 `event.isDataRequest` (SvelteKit parity) tells a hook which kind of request it has, for the cases that genuinely differ. Authorization is not one of them — `url` is the same either way on purpose.
+- [x] 🟡 The parse is keyed on the incoming `Request` in a `WeakMap`, since `event.url` no longer carries the marker and hooks call `resolve(event)` themselves. Handing `resolve()` a fabricated `Request` detaches it — documented on `Handle`, pinned by a test rather than papered over with a path sniff that could not fire anyway.
+- [x] 🟠 `test/hooks-redirect.test.ts` boots a built server whose fixture guard is verbatim the one the docs teach — a normalising guard would have dodged the leak and passed against the broken build. 11 of its 13 assertions verified red beforehand, the security one included.
+- [x] 🟡 `apps/demo` gained `/guard-test`. Verified in Chrome against both builds: unfixed, the click renders the panel and its `rahasia` sentinel to a signed-out visitor; fixed, both the click and the hard load land on login with a clean console.
 
 ## bosia 0.9.4 (2026-09-05) — `page.url` was invented during SSR
 

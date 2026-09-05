@@ -42,7 +42,24 @@ Import `redirect`/`error`/`fail`/`sequence`/`Handle` from `"bosia"`, never `"@sv
 
 ## `event`
 
-`{ request: Request, url: URL, locals: Record<string, any> & { nonce? }, params: Record<string, string>, cookies: Cookies }`. `locals` is per-request scratch (write `event.locals.user`; loaders read it). `params` is empty at root-hook time. `cookies` → [[bosia-cookies]].
+`{ request: Request, url: URL, locals: Record<string, any> & { nonce? }, params: Record<string, string>, cookies: Cookies, isDataRequest: boolean }`. `locals` is per-request scratch (write `event.locals.user`; loaders read it). `params` is empty at root-hook time. `cookies` → [[bosia-cookies]].
+
+`url` is ALWAYS the page URL — the same value whether the browser loaded the document or the client router fetched that page's loader data. `isDataRequest` distinguishes the two (bosia ≥ 0.9.5); never branch authorization on it.
+
+## Route protection
+
+```ts
+import { redirect, type Handle } from "bosia";
+
+const guard: Handle = async ({ event, resolve }) => {
+	if (event.url.pathname.startsWith("/admin") && !event.locals.user) {
+		throw redirect(303, "/login");
+	}
+	return resolve(event);
+};
+```
+
+Prefer `throw redirect(303, …)` over `return Response.redirect(…)`: it is converted correctly for both request kinds and rebases `BASE_PATH` for you. A returned `Response.redirect` works too, but its `Location` ships verbatim — under a base path you write the prefix yourself. Pass on the `event.request` you were given; a fabricated `Request` detaches the event from its per-request state.
 
 ## `sequence()` — compose hooks
 
