@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.9.6] - 2026-09-10
+
+### Fixed
+
+- Pages no longer flash unstyled before snapping into place on first load.
+- Component `<style>` blocks now arrive as a real stylesheet, not inside the JS bundle.
+
+### Changed
+
+- One `+loading.svelte` now covers a whole section — child routes inherit it.
+
 ## [0.9.5] - 2026-09-05
 
 ### Security

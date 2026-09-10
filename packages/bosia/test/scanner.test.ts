@@ -63,6 +63,28 @@ describe("scanRoutes()", () => {
 		expect(m.pages.find((p) => p.pattern === "/without-loading")!.loading).toBe(null);
 	});
 
+	test("+loading.svelte cascades to child routes, nearest ancestor wins", () => {
+		write("shop/+loading.svelte");
+		write("shop/+page.svelte");
+		write("shop/cart/+page.svelte");
+		write("shop/cart/item/[id]/+page.svelte");
+		write("shop/admin/+loading.svelte");
+		write("shop/admin/+page.svelte");
+		write("shop/admin/deep/+page.svelte");
+		write("elsewhere/+page.svelte");
+		const m = scanRoutes();
+		const loadingOf = (pattern: string) => m.pages.find((p) => p.pattern === pattern)!.loading;
+
+		expect(loadingOf("/shop")).toBe("shop/+loading.svelte");
+		expect(loadingOf("/shop/cart")).toBe("shop/+loading.svelte");
+		expect(loadingOf("/shop/cart/item/[id]")).toBe("shop/+loading.svelte");
+		// A nearer +loading.svelte overrides the inherited one, for itself and below.
+		expect(loadingOf("/shop/admin")).toBe("shop/admin/+loading.svelte");
+		expect(loadingOf("/shop/admin/deep")).toBe("shop/admin/+loading.svelte");
+		// A sibling subtree inherits nothing.
+		expect(loadingOf("/elsewhere")).toBe(null);
+	});
+
 	test("discovers +server.ts as API route", () => {
 		write("api/hello/+server.ts", "export const GET = () => new Response('hi')");
 		const m = scanRoutes();

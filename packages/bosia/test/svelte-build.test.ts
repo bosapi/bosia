@@ -1,9 +1,10 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-import { mkdirSync, writeFileSync, rmSync } from "fs";
+import { mkdirSync, writeFileSync, rmSync, readFileSync } from "fs";
 import { join } from "path";
 
 import { makeBosiaPlugin } from "../src/core/plugin.ts";
 import { makeBosiaSvelteCompiler } from "../src/core/svelteCompiler.ts";
+import { finalizeComponentCss } from "../src/core/componentCss.ts";
 import { createInspectorBunPlugin } from "../src/core/plugins/inspector/bun-plugin.ts";
 
 // Regression: production builds with `splitting: true` and many .svelte routes
@@ -105,10 +106,10 @@ describe("svelte build CSS collision regression", () => {
 });
 
 // The dev inspector plugin does its own .svelte compile (to inject data-bosia-loc).
-// It used to compile with css:"external" and hand-inject styles at runtime to dodge
-// Bun's splitting CSS-chunk collision. It now uses css:"injected" (client), matching
-// the prod compiler: Svelte embeds scoped CSS in the JS, so no CSS chunk is emitted
-// and the collision class can't arise.
+// Both it and the prod compiler use css:"external" and hand the scoped CSS to
+// `componentCss.ts`, which writes ONE stylesheet the head links — so an SSR'd page
+// no longer paints before its own layout rules exist. Bun itself still emits zero
+// CSS chunks, which is what keeps the splitting collision class out of reach.
 describe("dev inspector styled-component CSS injection", () => {
 	let styledDir: string;
 
@@ -145,7 +146,7 @@ describe("dev inspector styled-component CSS injection", () => {
 		rmSync(styledDir, { recursive: true, force: true });
 	});
 
-	test("client build injects scoped CSS into JS, emits no CSS chunk, no collision", async () => {
+	test("client build harvests scoped CSS to a stylesheet, emits no CSS chunk, no collision", async () => {
 		const result = await Bun.build({
 			entrypoints: [join(styledDir, "src", "hydrate.ts")],
 			outdir: join(styledDir, "dist", "client"),
@@ -166,14 +167,25 @@ describe("dev inspector styled-component CSS injection", () => {
 		}
 		expect(result.success).toBe(true);
 
-		// css:"injected" → styles live in JS, no standalone CSS chunk.
+		// We collect the CSS ourselves, so Bun emits no standalone CSS chunk and
+		// the "Multiple files share the same output path" failure cannot arise.
 		const cssOutputs = result.outputs.filter((o) => o.path.endsWith(".css"));
 		expect(cssOutputs.length).toBe(0);
 
-		// The scoped keyframe must actually ship — inside a JS chunk.
+		// The scoped keyframe must ship as a real stylesheet, NOT inside a JS
+		// chunk — a rule that arrives with the bundle arrives after first paint.
+		const clientDir = join(styledDir, "dist", "client");
+		const cssFile = finalizeComponentCss(clientDir);
+		expect(cssFile).toMatch(/^bosia-css-[a-f0-9]{10}\.css$/);
+		expect(readFileSync(join(clientDir, cssFile!), "utf-8")).toContain("probe-blink");
+
 		const js = await Promise.all(
 			result.outputs.filter((o) => o.path.endsWith(".js")).map((o) => o.text()),
 		);
-		expect(js.some((code) => code.includes("probe-blink"))).toBe(true);
+		expect(js.some((code) => code.includes("probe-blink"))).toBe(false);
+
+		// One shared component imported by 12 routes contributes its rules once.
+		const css = readFileSync(join(clientDir, cssFile!), "utf-8");
+		expect(css.split("probe-blink").length - 1).toBe(2); // animation + @keyframes
 	});
 });

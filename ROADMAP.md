@@ -1,9 +1,25 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.9.5**
+> Current version: **0.9.6**
 
 ---
+
+## bosia 0.9.6 (2026-09-10) — every SSR'd page painted before its own CSS existed
+
+> Reported from Fisika with a screenshot of the OBE landing: correct type, no layout. `dist/manifest.json` held `"css": []` and `.landing__title` lived in a `+page-*.js` chunk. Every scoped `<style>` in every app arrived with the JS bundle, so the streamed SSR markup painted first and hydration moved it.
+
+- [x] 🔴 `svelteCompiler.ts` compiled the browser target with `css: "injected"`, which is why. Not a first-paint tradeoff anyone took: 0.4.3 adopted it to fix a build failure, and 0.4.4's "Multiple files share the same output path" is what kept it. **0.8.6 already proved that collision gone on Bun 1.3.14** — the blocker had expired and nothing was watching.
+- [x] 🟠 `core/componentCss.ts` collects `result.css.code` in the `onLoad` hook and writes ONE `bosia-css-<hash>.css`, rather than letting Bun emit per-chunk sidecars. Keeps `splitting: true` at zero CSS outputs, so the collision class stays out of reach whether or not Bun regresses. Mirrors `twHash.ts`: rebase `url(…)` before hashing, or a `BASE_PATH` mount serves a component's background image off the origin.
+- [x] 🔴 The inspector plugin does its own `.svelte` compile and registers first, so its `onLoad` wins in dev. Changing only `svelteCompiler.ts` would have fixed production and left `bosia dev` flashing — the exact split that hides a bug until deploy. Both compile `external` now; both hand off to the same collector.
+- [x] 🟠 Collected from the **browser** instance only. The two compiler instances share module state and the client and server builds run concurrently, so a target-blind collector doubles every rule.
+- [x] 🟠 `distManifest.css` was already rendered as `<link>` at four sites in `html.ts` — but ahead of `twCssLink()`. Scoped rules used to be appended to `document.head` at hydration, i.e. last, and the stylesheets `app.css` `@import`s land unlayered in Tailwind's output, so linking first would silently flip which side wins a tie. Moved after, on all four.
+- [x] 🟡 `scanner.ts` threads `+loading.svelte` down the walk the way `layoutChain` already is. It was per-folder only, so Fisika's OBE needed 44 identical files to cover one section; one now covers 50 of its 51 routes. `App.svelte` needed nothing — `loadingDepth` reads the shared-layout prefix, not the file's location.
+- [x] 🟠 `test/svelte-build.test.ts` kept its `cssOutputs.length === 0` assertion (still true, and it is the invariant that matters) and flipped the other way round: the scoped keyframe must be in the stylesheet and **absent** from every JS chunk. `test/html.test.ts` gained the ordering assertion that never existed, `test/scanner.test.ts` the cascade with a nearer file overriding.
+- [x] 🟠 `apps/demo` gained `/fouc-test`, whose layout lives **only** in its own `<style>` block — no utility does any of it, so the page is a pass/fail readout rather than something to squint at. Verified A/B in Chrome against a real scripts-stripped page served from the origin: fixed renders the card, reverted reproduces the reported screenshot exactly. A fixture that is not first seen failing is not a fixture.
+- [x] 🟡 Its `url(/favicon.svg)` covers the rebase. Built under `BASE_PATH=/demo` it becomes `url(/demo/favicon.svg)` and the seal loads — the failure mode this guards is a silent 404, not an error.
+- [x] 🟡 `/loading-test/nested` carries no `+loading.svelte` and inherits its parent's. Watched live: skeleton up, header and footer still mounted, URL already changed.
+- [x] 🟡 Verified against all four Fisika apps and `apps/demo`, dev and prod. In Chrome: two linked stylesheets, **zero** injected `<style>` tags, `.landing` resolving to `bosia-css-*.css`. Dev SSR class names match the dev stylesheet — the inspector uses `fnv` on both targets, so they agree. Swept all 16 demo routes plus 404, 500 and the prerendered page: every one links both sheets in the right order.
 
 ## bosia 0.9.5 (2026-09-05) — a guard that never ran on a click
 

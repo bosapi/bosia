@@ -311,6 +311,34 @@ describe("tailwind stylesheet link", () => {
 		}
 	});
 
+	test("component stylesheet is linked AFTER tailwind on both render paths", () => {
+		distManifest.tw = "bosia-tw-abcdef1234.css";
+		distManifest.css = ["bosia-css-0123456789.css"];
+		try {
+			// Scoped rules used to be appended to document.head at hydration, i.e.
+			// last. The app stylesheets Tailwind inlines are unlayered, so linking
+			// the component sheet first would flip which side wins a tie.
+			for (const html of [
+				buildHtml("", "", {}, [], true, null, "en", true),
+				buildHtmlShellOpen("en"),
+			]) {
+				expect(html).toContain("bosia-css-0123456789.css");
+				expect(html.indexOf("bosia-css-0123456789.css")).toBeGreaterThan(
+					html.indexOf("bosia-tw-abcdef1234.css"),
+				);
+			}
+		} finally {
+			delete distManifest.tw;
+			distManifest.css = [];
+		}
+	});
+
+	test("an app with no scoped styles links no component stylesheet", () => {
+		expect(distManifest.css).toEqual([]);
+		expect(buildHtml("", "", {}, [], true, null, "en", true)).not.toContain("bosia-css-");
+		expect(buildHtmlShellOpen("en")).not.toContain("bosia-css-");
+	});
+
 	test("falls back to /bosia-tw.css when manifest.tw is absent", () => {
 		expect(buildHtml("", "", {}, [], true, null, "en", true)).toContain(`href="/bosia-tw.css`);
 		expect(buildHtmlShellOpen("en")).toContain(`href="/bosia-tw.css`);

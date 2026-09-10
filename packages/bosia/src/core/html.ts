@@ -56,6 +56,19 @@ function twCssLink(): string {
 		: `<link rel="stylesheet" href="${TW_CSS}${cacheBust}">`;
 }
 
+/** The build-time component stylesheet (scoped `<style>` blocks, concatenated).
+ *  Emitted AFTER `twCssLink()` on every path: these rules used to be appended to
+ *  `document.head` at hydration, i.e. last, and the app stylesheets Tailwind
+ *  inlines (`tokens.css`, `components.css`) are unlayered, so a tie between them
+ *  is settled on source order. Linking before Tailwind would silently flip
+ *  which one wins. Each entry carries its own indent and newline, so an app with
+ *  no scoped styles at all contributes nothing rather than a blank line. */
+function componentCssLinks(): string {
+	return (distManifest.css ?? [])
+		.map((f: string) => `  <link rel="stylesheet" href="${DIST}/${f}">\n`)
+		.join("");
+}
+
 /** Inline theme bootstrap — runs before paint to avoid FOUC. theme ∈ light|dark|system (missing = system). */
 const THEME_INIT_JS =
 	"try{var t=localStorage.getItem('theme');" +
@@ -153,10 +166,6 @@ export function buildHtml(
 	body = rebaseHtmlAttrs(B, body);
 	head = rebaseHtmlAttrs(B, head);
 
-	const cssLinks = (distManifest.css ?? [])
-		.map((f: string) => `<link rel="stylesheet" href="${DIST}/${f}">`)
-		.join("\n  ");
-
 	// Metadata goes in before `head`: the first <title> in the document wins, and
 	// the streaming path already puts metadata() ahead of <svelte:head> content
 	// (which arrives later via buildHtmlTail). Same order = same winner on both paths.
@@ -210,8 +219,8 @@ export function buildHtml(
 
 		return (
 			headOpenInterpolated +
-			`\n  ${faviconLine}${cssLinks}\n` +
-			`  ${twCssLink()}\n` +
+			`\n  ${faviconLine}${twCssLink()}\n` +
+			componentCssLinks() +
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
 			`  ${fallbackTitle}${metaTags}${head}` +
 			headCloseInterpolated +
@@ -229,9 +238,8 @@ export function buildHtml(
   ${fallbackTitle}
   <link rel="icon" type="image/svg+xml" href="${FAVICON}">
 ${metaTags}  ${head}
-  ${cssLinks}
   ${twCssLink()}
-  <script${n}>${THEME_INIT_JS}</script>
+${componentCssLinks()}  <script${n}>${THEME_INIT_JS}</script>
 </head>
 <body>
   <div id="app">${body}</div>${scripts}${bodyEnd}
@@ -249,10 +257,6 @@ export function buildHtmlShellOpen(
 ): string {
 	const key = safeLang(lang);
 	const n = nonceAttr(nonce);
-	const cssLinks = (distManifest.css ?? [])
-		.map((f: string) => `<link rel="stylesheet" href="${DIST}/${f}">`)
-		.join("\n  ");
-
 	if (segments) {
 		const headOpenInterpolated = interpolateSegment(segments.headOpen, { lang: key, nonce });
 		const faviconLine = segments.hasCustomFavicon
@@ -260,8 +264,8 @@ export function buildHtmlShellOpen(
 			: `  <link rel="icon" type="image/svg+xml" href="${FAVICON}">\n`;
 		return (
 			headOpenInterpolated +
-			`\n  ${faviconLine}${cssLinks}\n` +
-			`  ${twCssLink()}\n` +
+			`\n  ${faviconLine}${twCssLink()}\n` +
+			componentCssLinks() +
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
 			`  <link rel="modulepreload" href="${DIST}/${distManifest.entry}${cacheBust}">`
 		);
@@ -272,8 +276,8 @@ export function buildHtmlShellOpen(
 		`  <meta charset="UTF-8">\n` +
 		`  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n` +
 		`  <link rel="icon" type="image/svg+xml" href="${FAVICON}">\n` +
-		`  ${cssLinks}\n` +
 		`  ${twCssLink()}\n` +
+		componentCssLinks() +
 		`  <script${n}>${THEME_INIT_JS}</script>\n` +
 		`  <link rel="modulepreload" href="${DIST}/${distManifest.entry}${cacheBust}">`
 	);

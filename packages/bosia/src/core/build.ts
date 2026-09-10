@@ -7,6 +7,7 @@ import { generateRoutesFile } from "./routeFile.ts";
 import { generateRouteTypes, ensureRootDirs } from "./routeTypes.ts";
 import { makeBosiaPlugin } from "./plugin.ts";
 import { makeBosiaSvelteCompiler, svelteMapCache } from "./svelteCompiler.ts";
+import { finalizeComponentCss } from "./componentCss.ts";
 import { prerenderStaticRoutes, generateStaticSite } from "./prerender.ts";
 import { loadEnv, classifyEnvVars } from "./env.ts";
 import { generateEnvModules } from "./envCodegen.ts";
@@ -256,6 +257,17 @@ for (const output of clientResult.outputs) {
 	if ((output as { kind?: string }).kind === "entry-point" && output.path.endsWith(".js")) {
 		clientEntry = rel;
 	}
+}
+
+// Scoped component `<style>` blocks, harvested during the client compile and
+// written as one stylesheet the head can link. Before this they rode inside the
+// JS bundle, so every SSR'd page painted unstyled until hydration. Must land
+// before the manifest write below: prerenderStaticRoutes() boots the built
+// server, which reads manifest.json once at startup.
+const componentCssFile = finalizeComponentCss(`${OUT_DIR}/client`);
+if (componentCssFile) {
+	cssFiles.push(componentCssFile);
+	console.log(`✅ Component CSS built: ${OUT_DIR}/client/${componentCssFile}`);
 }
 
 // Entry is always "index.js" due to naming: { entry: "index.[ext]" }

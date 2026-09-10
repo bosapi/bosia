@@ -2,6 +2,7 @@ import { compile, compileModule } from "svelte/compiler";
 import type { BunPlugin } from "bun";
 
 import { auditSvelteSource } from "./svelteAudit.ts";
+import { collectComponentCss } from "./componentCss.ts";
 import { rebaseHtmlAttrs } from "./basePath.ts";
 import { currentBase } from "./appBase.ts";
 import { loadBosiaConfig } from "./config.ts";
@@ -110,7 +111,12 @@ export function makeBosiaSvelteCompiler(target: "browser" | "bun"): BunPlugin {
 				const source = await Bun.file(args.path).text();
 				const result = compile(rebaseSvelteMarkup(source), {
 					generate,
-					css: target === "browser" ? "injected" : "external",
+					// External on both targets. The browser used to get "injected",
+					// which put every scoped rule inside the JS bundle — so an
+					// SSR'd page painted before its own layout CSS existed and
+					// snapped into place at hydration. `collectComponentCss` below
+					// gathers the rules into one stylesheet the head can link.
+					css: "external",
 					dev,
 					hmr: false,
 					cssHash: ({ css }) => `svelte-${svelteHash(css)}`,
@@ -119,6 +125,12 @@ export function makeBosiaSvelteCompiler(target: "browser" | "bun"): BunPlugin {
 					// rather than the legacy `html`. The audit walker assumes modern.
 					modernAst: true,
 				});
+				// Browser only: both plugin instances share module state and the
+				// client and server builds run concurrently, so collecting from
+				// each would emit every rule twice.
+				if (target === "browser" && result.css?.code) {
+					collectComponentCss(args.path, result.css.code);
+				}
 				const existing = auditInflight.get(args.path);
 				if (existing) {
 					await existing;

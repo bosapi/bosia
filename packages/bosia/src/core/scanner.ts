@@ -65,6 +65,7 @@ export function scanRoutes(): RouteManifest {
 		layoutServerChain: { path: string; depth: number }[],
 		errorPageChain: { path: string; depth: number }[],
 		inheritedTrailingSlash: TrailingSlash,
+		inheritedLoading: string | null,
 	) {
 		const fullDir = join(ROUTES_DIR, dir);
 		if (!existsSync(fullDir)) return;
@@ -76,6 +77,12 @@ export function scanRoutes(): RouteManifest {
 		const currentLayoutServers = [...layoutServerChain];
 		const currentErrorPages = [...errorPageChain];
 		let currentTrailingSlash = inheritedTrailingSlash;
+		// Cascades to every page below, nearest ancestor winning — the same shape
+		// as the layout chain. Without this a section with 40 routes needed 40
+		// identical +loading.svelte files to cover its navigations.
+		const currentLoading = items.some((i) => i.isFile() && i.name === "+loading.svelte")
+			? join(dir, "+loading.svelte")
+			: inheritedLoading;
 
 		if (items.some((i) => i.isFile() && i.name === "+layout.svelte")) {
 			currentLayouts.push(join(dir, "+layout.svelte"));
@@ -112,10 +119,6 @@ export function scanRoutes(): RouteManifest {
 				? join(dir, "+page.server.ts")
 				: null;
 
-			const loadingFile = items.some((i) => i.isFile() && i.name === "+loading.svelte")
-				? join(dir, "+loading.svelte")
-				: null;
-
 			const pageTs = pageServerFile ? readTrailingSlash(join(ROUTES_DIR, pageServerFile)) : null;
 			const effectiveTs: TrailingSlash = pageTs ?? currentTrailingSlash;
 
@@ -125,7 +128,7 @@ export function scanRoutes(): RouteManifest {
 				page: pageFile,
 				layouts: [...currentLayouts],
 				pageServer: pageServerFile,
-				loading: loadingFile,
+				loading: currentLoading,
 				layoutServers: [...currentLayoutServers],
 				errorPages: [...currentErrorPages],
 				trailingSlash: effectiveTs,
@@ -149,11 +152,12 @@ export function scanRoutes(): RouteManifest {
 				currentLayoutServers,
 				currentErrorPages,
 				currentTrailingSlash,
+				currentLoading,
 			);
 		}
 	}
 
-	walk("", [], [], [], [], "never");
+	walk("", [], [], [], [], "never", null);
 
 	// Warn when a catch-all exists but no exact route covers its prefix.
 	// e.g. "/[...slug]" matches everything EXCEPT "/" (which needs its own +page.svelte).

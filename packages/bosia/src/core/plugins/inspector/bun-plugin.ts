@@ -4,6 +4,7 @@ import { relative } from "node:path";
 import type { BunPlugin } from "bun";
 import { svelteMapCache } from "../../svelteCompiler.ts";
 import { lineColFromOffset } from "../../sourceLoc.ts";
+import { collectComponentCss } from "../../componentCss.ts";
 
 type AnyNode = {
 	type?: string;
@@ -136,11 +137,12 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 					generate,
 					dev,
 					hmr: dev,
-					// Mirror the prod compiler (svelteCompiler.ts): client injects scoped
-					// CSS into the JS via `append_styles`, server discards it. No CSS
-					// chunks means Bun's `splitting:true` output-path collisions can't
-					// arise, so no runtime-injection workaround is needed.
-					css: generate === "client" ? "injected" : "external",
+					// Mirror the prod compiler (svelteCompiler.ts): external on both
+					// targets, with the client's rules harvested into one stylesheet
+					// that the head links. This plugin registers ahead of the main
+					// compiler and its onLoad wins in dev, so letting the two drift
+					// here is how dev and prod stop agreeing about first paint.
+					css: "external",
 					preserveWhitespace: dev,
 					preserveComments: dev,
 					cssHash: ({ css }) => `svelte-${fnv(css)}`,
@@ -163,6 +165,11 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 				if (dev && generate === "client" && result.js.map) {
 					const m = typeof result.js.map === "string" ? JSON.parse(result.js.map) : result.js.map;
 					svelteMapCache.set(args.path, m);
+				}
+
+				// Client only — see the same guard in svelteCompiler.ts.
+				if (generate === "client" && result.css?.code) {
+					collectComponentCss(args.path, result.css.code);
 				}
 
 				const js = dev ? fixBindShadow(result.js.code) : result.js.code;
