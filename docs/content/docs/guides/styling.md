@@ -60,6 +60,21 @@ Dark mode is activated by adding the `.dark` class to `<html>`. All design token
 }
 ```
 
+## Component styles
+
+A `<style>` block inside a `.svelte` file is scoped by Svelte as usual. At build time Bosia harvests
+every one of them into a single content-hashed `dist/client/bosia-css-<hash>.css`, linked in the
+document head right after the Tailwind stylesheet.
+
+That link is render-blocking, which is the point: a server-rendered page arrives with its own layout
+rules already applied, instead of painting unstyled and snapping into place once the JS bundle
+hydrates. Nothing is required of you — write `<style>` blocks normally.
+
+Ordering is fixed: Tailwind first, component styles second. Scoped rules carry a `.svelte-<hash>`
+class so they outrank utilities on specificity anyway, but against unlayered CSS your `app.css`
+pulls in via `@import`, source order decides — and component styles get the last word, matching
+where they used to land when they were appended to `<head>` at hydration.
+
 ### Three modes: Light, Dark, System
 
 The theme is stored in `localStorage` under the `theme` key with one of three values:

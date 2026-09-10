@@ -180,7 +180,7 @@ Rules:
 
 - Shown only on real URL changes — not on `invalidate()` or same-path reruns.
 - No `+loading.svelte` ⇒ unchanged behavior (old page stays until the swap).
-- **Per route folder only.** A parent `+loading.svelte` does not yet cover child routes; add one per page directory that needs it.
+- **Cascades to child routes**, nearest ancestor winning — one `+loading.svelte` at the top of a section covers every page beneath it. Drop another one further down to give a subtree its own skeleton.
 
 ## Page Options
 

@@ -145,7 +145,7 @@ Aturan:
 
 - Hanya muncul saat URL benar-benar berubah — bukan saat `invalidate()` atau rerun path yang sama.
 - Tanpa `+loading.svelte` ⇒ perilaku tidak berubah (halaman lama tetap sampai pertukaran).
-- **Per folder route saja.** `+loading.svelte` induk belum mencakup route anak; tambahkan satu per folder halaman yang membutuhkannya.
+- **Menurun ke route anak**, yang terdekat menang — satu `+loading.svelte` di puncak sebuah section mencakup semua halaman di bawahnya. Tambahkan satu lagi lebih dalam untuk memberi subtree-nya kerangka sendiri.
 
 ## Opsi Halaman
 

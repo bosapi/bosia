@@ -18,6 +18,7 @@
 		{ href: "/set-headers-demo", label: "Headers" },
 		{ href: "/page-url-test", label: "page.url" },
 		{ href: "/guard-test", label: "Guard" },
+		{ href: "/fouc-test", label: "FOUC" },
 	];
 
 	const isActive = (href: string, current: string) =>

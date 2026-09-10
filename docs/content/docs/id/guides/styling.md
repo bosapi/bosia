@@ -73,6 +73,21 @@ Aktifkan di layout Anda:
 </div>
 ```
 
+## Style Komponen
+
+Blok `<style>` di dalam file `.svelte` di-scope oleh Svelte seperti biasa. Saat build, Bosia
+mengumpulkan semuanya ke dalam satu file `dist/client/bosia-css-<hash>.css` ber-hash, yang di-link
+di head dokumen tepat setelah stylesheet Tailwind.
+
+Link itu render-blocking, dan itu memang tujuannya: halaman yang dirender di server tiba dengan
+aturan layout-nya sendiri sudah diterapkan, bukan tampil polos lalu melompat ke tempatnya begitu
+bundel JS ter-hydrate. Tidak ada yang perlu Anda lakukan — tulis blok `<style>` seperti biasa.
+
+Urutannya tetap: Tailwind dulu, style komponen kemudian. Aturan ber-scope membawa kelas
+`.svelte-<hash>` sehingga sudah unggul secara specificity atas utility, tetapi terhadap CSS tanpa
+layer yang ditarik `app.css` lewat `@import`, urutan sumber yang menentukan — dan style komponen
+mendapat kata terakhir, sama seperti posisinya dulu saat ditambahkan ke `<head>` waktu hydration.
+
 ## Utilitas cn()
 
 Fungsi `cn()` menggunakan penggabungan class bawaan dan [tailwind-merge](https://github.com/dcastil/tailwind-merge) untuk menggabungkan kelas Tailwind secara aman:

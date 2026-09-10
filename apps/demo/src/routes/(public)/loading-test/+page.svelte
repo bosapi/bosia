@@ -15,5 +15,10 @@
 		so the header and footer stay mounted and only this content area shows the skeleton.
 	</p>
 	<p>Navigate here from <a href="/" class="underline">Home</a> or the nav bar to see it.</p>
+	<p>
+		The skeleton cascades: <a href="/loading-test/nested" class="underline">this child route</a> has
+		no
+		<code>+loading.svelte</code> of its own and still shows this one, nearest ancestor winning.
+	</p>
 	<p class="font-mono text-xs opacity-40">loaded at {data.loadedAt}</p>
 </div>
