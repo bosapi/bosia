@@ -1,6 +1,6 @@
 ---
 title: Deployment
-description: Build, run, and deploy Bosia apps in production.
+description: Build, run, and deploy Bosia apps in production — on Bun or Cloudflare Workers.
 ---
 
 ## Production Build
@@ -187,6 +187,76 @@ EXPOSE 9000
 
 CMD ["bun", "dist/server/index.js"]
 ```
+
+## Cloudflare Workers
+
+Bosia can also build for [Cloudflare Workers](https://developers.cloudflare.com/workers/), including the free tier. Pick the target on the command line:
+
+```bash
+bosia build --target=workers
+```
+
+or once, in `bosia.config.ts`:
+
+```ts
+import { defineConfig } from "bosia";
+
+export default defineConfig({ target: "workers" });
+```
+
+On top of the usual `dist/`, a Workers build writes:
+
+- `dist/worker/index.js` — the worker. Static files and prerendered pages in `dist/static/` are served by Cloudflare before it runs.
+- `wrangler.jsonc` — only when you don't have one yet. It's yours from then on: add bindings (D1, KV, R2) and `vars` there. A rebuild never overwrites it.
+
+Try it locally with `bosia start` — for a Workers build it runs `wrangler dev` (Wrangler is fetched on first use). Deploy with:
+
+```bash
+bunx wrangler deploy
+```
+
+### Bindings — `event.platform.env`
+
+Cloudflare hands bindings to the worker, not to a global. Bosia passes them to your server code as `event.platform.env` — in hooks, `+server.ts`, `load()` and `metadata()`:
+
+```ts
+// src/routes/posts/+page.server.ts
+import type { LoadEvent } from "bosia";
+
+export async function load({ platform }: LoadEvent) {
+	const { results } = await platform!.env.DB.prepare("SELECT * FROM posts").all();
+	return { posts: results };
+}
+```
+
+`platform` is `undefined` when the same app runs on Bun. To type your bindings, run `bunx wrangler types` and extend Bosia's `PlatformEnv` with the generated `Env`:
+
+```ts
+// src/platform.d.ts — its own file: the `export {}` makes this extend "bosia" instead of replacing it
+export {};
+
+declare module "bosia" {
+	interface PlatformEnv extends Env {}
+}
+```
+
+### Environment variables
+
+`.env` files are not deployed. Runtime values come from Cloudflare instead: `vars` in `wrangler.jsonc`, `wrangler secret put` for secrets, and a `.dev.vars` file for local `wrangler dev`. They reach `$env` and `process.env` as usual. Names still come from your `.env*` files, and `STATIC_*` / `PUBLIC_STATIC_*` are still baked in at build time.
+
+Framework variables work the same (`BODY_SIZE_LIMIT`, `CSRF_*`, `CORS_*`, `CACHE_*`). The ones about running a process — `PORT`, `IDLE_TIMEOUT`, `BOSIA_REUSE_PORT` — do nothing on Workers.
+
+### Bun-only code
+
+A worker has no `Bun` global and no filesystem. The build stops early if your server code — routes, `hooks.server.ts` and `src/lib/server/` — uses `Bun.*` or imports `fs`, `bun` or `bun:*`, and prints each file and line. Swap in Web APIs (`fetch`, `crypto.subtle`) or bindings (D1 instead of `bun:sqlite`, R2 instead of `Bun.s3`). `node:crypto`, `node:zlib` and friends work through Cloudflare's Node compatibility.
+
+A `typeof Bun` check on the same line is allowed, so code shared between targets can branch. The check reads files by path, so a `Bun` call in a plain `src/lib/*.ts` helper slips past it — and fails at request time instead. Set `BOSIA_WORKERS_GUARD=0` to turn the error into a warning.
+
+### Limits
+
+- **Response cache is per isolate.** It still helps on busy routes, but Cloudflare runs many isolates and evicts them freely, so `invalidate()` only clears the copy in the isolate that ran it. Keep cached pages short-lived, or opt routes out with `export const cache = false`.
+- **Bundle size.** The free tier allows 3 MB gzipped. The demo app is about 410 KB; plugins imported by `bosia.config.ts` are bundled even when they only act in dev.
+- **No graceful shutdown** — Cloudflare manages the lifecycle. `/_health` still answers.
 
 ## Sandboxed / Multi-Tenant Hosting
 

@@ -64,6 +64,8 @@ This runs:
 
 Output goes to `dist/`.
 
+`--target=workers` also builds a Cloudflare Worker (`dist/worker/index.js`) and, if missing, a `wrangler.jsonc`. It overrides `target` in `bosia.config.ts`. See [Deployment › Cloudflare Workers](/reference/deployment/#cloudflare-workers).
+
 ## bosia start
 
 Run the production server.
@@ -72,7 +74,7 @@ Run the production server.
 bosia start
 ```
 
-Runs the built server from `dist/`. Requires `bosia build` to have been run first.
+Runs the built server from `dist/`. Requires `bosia build` to have been run first. For a Workers build it runs `wrangler dev` instead.
 
 Refuses to start when something else already listens on `PORT` — it prints the offending pid and
 exits non-zero, instead of quietly sharing the port and serving a mix of two builds. Set

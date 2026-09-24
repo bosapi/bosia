@@ -57,6 +57,8 @@ Perintah ini menjalankan:
 
 Output disimpan ke `dist/`.
 
+`--target=workers` juga mem-build Cloudflare Worker (`dist/worker/index.js`) dan, jika belum ada, `wrangler.jsonc`. Flag ini mengalahkan `target` di `bosia.config.ts`. Lihat [Deployment › Cloudflare Workers](/id/reference/deployment/#cloudflare-workers).
+
 ## bosia start
 
 Jalankan server produksi.
@@ -65,7 +67,7 @@ Jalankan server produksi.
 bosia start
 ```
 
-Menjalankan server yang sudah di-build dari `dist/`. Membutuhkan `bosia build` yang sudah dijalankan terlebih dahulu.
+Menjalankan server yang sudah di-build dari `dist/`. Membutuhkan `bosia build` yang sudah dijalankan terlebih dahulu. Untuk build Workers, perintah ini menjalankan `wrangler dev`.
 
 Menolak start kalau ada proses lain yang sudah listen di `PORT` — menampilkan pid pelakunya dan
 keluar dengan exit code bukan nol, bukan diam-diam berbagi port dan menyajikan campuran dua build.

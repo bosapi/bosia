@@ -1,6 +1,6 @@
 ---
 title: Deployment
-description: Build, jalankan, dan deploy aplikasi Bosia di produksi.
+description: Build, jalankan, dan deploy aplikasi Bosia di produksi — di Bun atau Cloudflare Workers.
 ---
 
 ## Build Produksi
@@ -187,6 +187,76 @@ EXPOSE 9000
 
 CMD ["bun", "dist/server/index.js"]
 ```
+
+## Cloudflare Workers
+
+Bosia juga bisa di-build untuk [Cloudflare Workers](https://developers.cloudflare.com/workers/), termasuk paket gratisnya. Pilih target lewat command line:
+
+```bash
+bosia build --target=workers
+```
+
+atau sekali saja, di `bosia.config.ts`:
+
+```ts
+import { defineConfig } from "bosia";
+
+export default defineConfig({ target: "workers" });
+```
+
+Selain `dist/` seperti biasa, build Workers menulis:
+
+- `dist/worker/index.js` — worker-nya. File statis dan halaman prerender di `dist/static/` dilayani Cloudflare sebelum worker berjalan.
+- `wrangler.jsonc` — hanya jika kamu belum punya. Setelah itu file ini milikmu: tambahkan binding (D1, KV, R2) dan `vars` di sana. Build ulang tidak pernah menimpanya.
+
+Coba secara lokal dengan `bosia start` — untuk build Workers perintah ini menjalankan `wrangler dev` (Wrangler diunduh saat pertama dipakai). Deploy dengan:
+
+```bash
+bunx wrangler deploy
+```
+
+### Binding — `event.platform.env`
+
+Cloudflare memberikan binding ke worker, bukan ke variabel global. Bosia meneruskannya ke kode server sebagai `event.platform.env` — di hooks, `+server.ts`, `load()` dan `metadata()`:
+
+```ts
+// src/routes/posts/+page.server.ts
+import type { LoadEvent } from "bosia";
+
+export async function load({ platform }: LoadEvent) {
+	const { results } = await platform!.env.DB.prepare("SELECT * FROM posts").all();
+	return { posts: results };
+}
+```
+
+`platform` bernilai `undefined` saat app yang sama berjalan di Bun. Untuk memberi tipe pada binding, jalankan `bunx wrangler types` lalu perluas `PlatformEnv` milik Bosia dengan `Env` yang dihasilkan:
+
+```ts
+// src/platform.d.ts — file tersendiri: `export {}` membuat ini memperluas "bosia", bukan menggantinya
+export {};
+
+declare module "bosia" {
+	interface PlatformEnv extends Env {}
+}
+```
+
+### Variabel lingkungan
+
+File `.env` tidak ikut di-deploy. Nilai runtime datang dari Cloudflare: `vars` di `wrangler.jsonc`, `wrangler secret put` untuk rahasia, dan file `.dev.vars` untuk `wrangler dev` lokal. Nilainya sampai ke `$env` dan `process.env` seperti biasa. Nama variabel tetap berasal dari file `.env*`, dan `STATIC_*` / `PUBLIC_STATIC_*` tetap ditanam saat build.
+
+Variabel framework bekerja sama (`BODY_SIZE_LIMIT`, `CSRF_*`, `CORS_*`, `CACHE_*`). Yang berkaitan dengan menjalankan proses — `PORT`, `IDLE_TIMEOUT`, `BOSIA_REUSE_PORT` — tidak berpengaruh di Workers.
+
+### Kode khusus Bun
+
+Worker tidak punya global `Bun` dan tidak punya filesystem. Build berhenti lebih awal jika kode server — routes, `hooks.server.ts` dan `src/lib/server/` — memakai `Bun.*` atau meng-import `fs`, `bun` atau `bun:*`, lalu menampilkan tiap file dan barisnya. Ganti dengan Web API (`fetch`, `crypto.subtle`) atau binding (D1 alih-alih `bun:sqlite`, R2 alih-alih `Bun.s3`). `node:crypto`, `node:zlib` dan sejenisnya berjalan lewat kompatibilitas Node milik Cloudflare.
+
+Pengecekan `typeof Bun` di baris yang sama diizinkan, jadi kode yang dipakai bersama kedua target bisa bercabang. Pemeriksaan ini membaca file berdasarkan path, jadi panggilan `Bun` di helper biasa `src/lib/*.ts` lolos — dan baru gagal saat request. Set `BOSIA_WORKERS_GUARD=0` untuk mengubah error menjadi peringatan.
+
+### Batasan
+
+- **Response cache per isolate.** Tetap membantu di route yang ramai, tapi Cloudflare menjalankan banyak isolate dan membuangnya sesukanya, jadi `invalidate()` hanya membersihkan salinan di isolate yang menjalankannya. Buat halaman ter-cache berumur pendek, atau keluarkan route dengan `export const cache = false`.
+- **Ukuran bundle.** Paket gratis mengizinkan 3 MB setelah gzip. Aplikasi demo sekitar 410 KB; plugin yang di-import `bosia.config.ts` ikut di-bundle meski hanya aktif di dev.
+- **Tanpa graceful shutdown** — siklus hidup diatur Cloudflare. `/_health` tetap menjawab.
 
 ## Hosting Sandbox / Multi-Tenant
 

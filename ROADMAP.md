@@ -5,9 +5,9 @@
 
 ---
 
-## bosia 0.9.8 (2026-09-25) — Cloudflare Workers target (in progress)
+## bosia 0.9.8 (2026-09-25) — Cloudflare Workers target
 
-> Deploy Bosia to Workers free tier via `adapter-workers` + `adapter-bun`. Spike: demo SSR renders in workerd, 172KB gzipped; sync `node:crypto`/`node:zlib` work there.
+> Deploy Bosia to Workers free tier via `target: "workers"` — two runtime entries, no general adapter API. Spike: demo SSR renders in workerd, 172KB gzipped; sync `node:crypto`/`node:zlib` work there.
 
 - [x] 🟠 Phase 0 spike: `target: "browser"` + `external: ["node:*"]`; Elysia `CloudflareAdapter` handles `"*"` routes + `onError`; a global `Bun` shim breaks Elysia's runtime detection.
 - [x] 🔴 Phase 1: `config.ts` rebuilt config as `{ plugins }`, dropping `strictImports` (and any future `target`). Now keeps every field; tests cover source + prebuilt paths.
@@ -22,10 +22,11 @@
 - [ ] 🟢 Dev-only plugins imported by `bosia.config.ts` (inspector ≈234KB gz) land in the worker bundle. Demo is 410KB gz — fine under 3MB; revisit if apps get close.
 - [x] 🟡 Phase 5: `target` config + `--target=workers` (`BOSIA_TARGET`) → `dist/worker/index.js`, manifest `target`, `wrangler.jsonc` (written once), `bosia start` → `wrangler dev`; client chunks `chunk-[hash]`.
 - [x] 🟠 `event.platform.env` verified reaching `load()` — end-to-end build test imports the worker and calls `fetch(req, env)`.
-- [ ] 🟢 Runtime vars on Workers come from `wrangler.jsonc` `vars` / secrets / `.dev.vars`, not `.env` like `bosia start` — document in Phase 7.
+- [x] 🟢 Runtime vars on Workers come from `wrangler.jsonc` `vars` / secrets / `.dev.vars`, not `.env` — documented in deployment.md + `bosia-env`.
 - [x] 🟡 Phase 6: `workersGuard.ts` fails workers builds on `Bun.*`, `fs`/`node:fs`, `bun`/`bun:*` in server files (routes, hooks, `lib/server`). `BOSIA_WORKERS_GUARD=0` warns instead.
 - [ ] 🟢 Guard scans server files by path — a Bun call in a plain `src/lib/*.ts` a loader imports is missed. Upgrade: check in the workers plugin's `onLoad`.
-- [ ] 🟡 Phase 7: docs, skills (`bosia-cloudflare`), un-"Not Planned" adapters, drop "no adapters" from package description.
+- [x] 🟡 Phase 7: deployment/cli/api docs (+ id), `bosia-cloudflare` skill, `bosia-bun-runtime` + `bosia-env` Workers notes; package description no longer says "no adapters".
+- [ ] 🟡 Deploy demo to a real Workers account: confirm CPU stays under the free tier's 10ms and cache identity holds across session cookies.
 
 ## bosia 0.9.7 (2026-09-24) — native Windows support
 
@@ -1811,5 +1812,5 @@ Intentional omissions — out of scope for the framework:
 - Image optimization (infrastructure concern)
 - i18n (user's responsibility)
 - Rate limiting (reverse proxy concern)
-- Adapter system (intentionally tied to Bun + Elysia)
+- General adapter API (Bun + Cloudflare Workers only; Deno/Vercel/Node not designed for)
 - Service worker tooling (out of scope)

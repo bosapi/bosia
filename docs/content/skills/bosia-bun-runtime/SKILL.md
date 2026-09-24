@@ -27,7 +27,9 @@ bosia:
 
 # bosia-bun-runtime
 
-Bosia runs on Bun, not Node. Several popular Node packages ship NAPI native bindings that crash at import under Bun. Use Bun-native APIs instead. (The AI repeatedly generates apps that import `@node-rs/argon2`, which crashes at server startup before any handler runs — use `Bun.password` from the start.)
+Bosia runs on Bun, not Node. Several popular Node packages ship NAPI native bindings that crash at import under Bun. Use Bun-native APIs instead.
+
+**Exception — Cloudflare Workers target** (`target: "workers"` in `bosia.config.ts`): there is no `Bun` global and no filesystem, and the build rejects `Bun.*` / `bun:*` / `fs` in server code. Use [[bosia-cloudflare]] instead of this skill. (The AI repeatedly generates apps that import `@node-rs/argon2`, which crashes at server startup before any handler runs — use `Bun.password` from the start.)
 
 ## Password hashing — `Bun.password` (built in, no install)
 
@@ -105,4 +107,4 @@ Env: `DATABASE_URL=postgres://user:pass@host:5432/db`.
 
 Preferred over `child_process.spawn`; `child_process` still works for libs that need it.
 
-Related: [[bosia-auth-flow]] (Bun.password), [[bosia-hooks]] (`event.cookies`), [[bosia-file-upload]] (Bun.Image, Bun.s3).
+Related: [[bosia-cloudflare]] (Workers target — none of the above), [[bosia-auth-flow]] (Bun.password), [[bosia-hooks]] (`event.cookies`), [[bosia-file-upload]] (Bun.Image, Bun.s3).

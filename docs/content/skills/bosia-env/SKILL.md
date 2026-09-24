@@ -110,6 +110,10 @@ System env (`process.env` at boot) beats all `.env*` files — `.env` never over
 
 That order decides **values**. **Names** come from every `.env*` file in the root (`.env.production`, `.env.test`, `.env.example` included), so `$env` exports the same list in dev, prod and CI — mode only decides which names carry a value.
 
+### R4b — Cloudflare Workers: values come from Cloudflare
+
+With `target: "workers"`, `.env` files are not deployed. Values come from `vars` in `wrangler.jsonc`, `wrangler secret put` (secrets), and `.dev.vars` (local `wrangler dev`). Reading doesn't change — `$env` / `process.env` — and names still come from `.env*` files. `STATIC_*` / `PUBLIC_STATIC_*` are still inlined at build. `PORT`, `IDLE_TIMEOUT`, `BOSIA_REUSE_PORT` do nothing there. See [[bosia-cloudflare]].
+
 ### R5 — `.env.example` is the contract
 
 Every key the app reads must appear in `.env.example` with a placeholder. New contributors copy it to `.env.local`. No undocumented keys.
@@ -165,3 +169,4 @@ P1:
 - [[bosia-cors]] — CORS recipe + how to tell CSRF errors apart from CORS errors.
 - [[bosia-security-review]] — checks no secrets leak to the client bundle.
 - [[bosia-elysia-routes]] — handlers reading env at request time.
+- [[bosia-cloudflare]] — where values come from on Workers.

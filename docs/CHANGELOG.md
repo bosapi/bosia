@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.16] - 2026-09-25
+
+### Added
+
+- Deployment guide explains how to run your app on Cloudflare Workers.
+- New AI skill for building and deploying apps on Cloudflare Workers.
+
+### Changed
+
+- CLI and API reference cover the Workers build option and `event.platform`.
+
 ## [0.8.15] - 2026-09-24
 
 ### Changed

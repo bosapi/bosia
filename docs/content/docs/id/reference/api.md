@@ -68,8 +68,11 @@ type RequestEvent = {
 	locals: Record<string, any>;
 	params: Record<string, string>;
 	cookies: Cookies;
+	platform?: { env: PlatformEnv };
 };
 ```
+
+`platform` hanya terisi di Cloudflare Workers: `platform.env` berisi binding. Lihat [Deployment › Cloudflare Workers](/id/reference/deployment/#cloudflare-workers).
 
 ### LoadEvent
 
@@ -81,6 +84,7 @@ type LoadEvent = {
 	params: Record<string, string>;
 	locals: Record<string, any>;
 	cookies: Cookies;
+	platform?: { env: PlatformEnv };
 	fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 	parent: () => Promise<Record<string, any>>;
 	metadata: Record<string, any> | null;
@@ -97,6 +101,7 @@ type MetadataEvent = {
 	url: URL;
 	locals: Record<string, any>;
 	cookies: Cookies;
+	platform?: { env: PlatformEnv };
 	fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 };
 ```
