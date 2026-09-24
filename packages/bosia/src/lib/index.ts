@@ -43,4 +43,5 @@ export type {
 	DevContext,
 	RenderContext,
 	BuildTarget,
+	RuntimeTarget,
 } from "../core/types/plugin.ts";

@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { basename, join } from "path";
 
 import { readArtifact } from "./artifacts.ts";
 import { findConfigPath } from "./config.ts";
@@ -63,4 +63,48 @@ export function generateWorkersRuntime(cwd = process.cwd()): string {
 		lines.push("export const config = {};");
 	}
 	return writeBosiaFile(cwd, "runtime.workers.ts", lines.join("\n") + "\n");
+}
+
+/**
+ * Write `wrangler.jsonc` at the app root, unless one exists — it's where the
+ * user adds bindings (D1, KV, vars), so a rebuild must never overwrite it.
+ * Returns the path when written, null when left alone.
+ */
+export function generateWranglerConfig(
+	cwd = process.cwd(),
+	outDir: string = OUT_DIR,
+): string | null {
+	const target = join(cwd, "wrangler.jsonc");
+	if (
+		existsSync(target) ||
+		existsSync(join(cwd, "wrangler.json")) ||
+		existsSync(join(cwd, "wrangler.toml"))
+	)
+		return null;
+	let name = basename(cwd);
+	try {
+		name = JSON.parse(readFileSync(join(cwd, "package.json"), "utf-8")).name || name;
+	} catch {}
+	// Worker names: lowercase letters, digits and dashes. Drops an npm @scope/.
+	name =
+		name
+			.replace(/^@[^/]+\//, "")
+			.toLowerCase()
+			.replace(/[^a-z0-9-]+/g, "-") || "bosia-app";
+	const dir = toPosix(outDir).replace(/^\.\//, "");
+	const config = {
+		name,
+		main: `./${dir}/worker/index.js`,
+		compatibility_date: "2025-09-01",
+		compatibility_flags: ["nodejs_compat"],
+		// Served before the worker runs; misses fall through to it.
+		assets: { directory: `./${dir}/static` },
+	};
+	writeFileSync(
+		target,
+		"// Generated once by `bosia build --target=workers`. Yours to edit — add bindings here.\n" +
+			JSON.stringify(config, null, "\t") +
+			"\n",
+	);
+	return target;
 }

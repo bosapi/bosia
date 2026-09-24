@@ -2,6 +2,7 @@ node_modules/
 dist/
 docs/.astro/
 .bosia/
+.wrangler/
 **/public/bosia-tw.css
 **/public/llms.txt
 **/public/search-index.json

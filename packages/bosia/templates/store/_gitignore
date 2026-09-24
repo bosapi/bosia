@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .bosia/
+.wrangler/
 .DS_Store
 *.log
 
@@ -10,6 +11,7 @@ public/bosia-tw.css
 # Local env overrides — never commit secrets
 .env*.local
 .env
+.dev.vars*
 
 # SQLite database artifacts
 data/*.db*

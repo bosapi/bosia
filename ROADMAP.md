@@ -13,14 +13,16 @@
 - [x] 🔴 Phase 1: `config.ts` rebuilt config as `{ plugins }`, dropping `strictImports` (and any future `target`). Now keeps every field; tests cover source + prebuilt paths.
 - [x] 🟠 Phase 2: build artifacts read via `core/artifacts.ts` `readArtifact()`; build writes `.bosia/artifacts.ts` (inlined JSON), swapped in by `makeBosiaPlugin(_, "workers")`.
 - [x] 🔴 `window.__BOSIA_ENV__` was always empty: declared `PUBLIC_*` names lived in the CLI process, not the spawned server. Build now stamps `publicEnv` into manifest.json.
-- [ ] 🟡 Phase 5: write `.bosia/artifacts.ts` only for workers target (dev + build share it today).
+- [x] 🟡 `.bosia/artifacts.ts` + `runtime.workers.ts` are now generated only for the workers target.
 - [x] 🟠 Phase 3: `Bun.CryptoHasher`/`Bun.gzipSync` → `node:crypto`/`node:zlib` in cache.ts + html.ts; identity hash pinned by test. No `bosia:platform`: lifecycle code lives in the Bun-only `listen()` tail.
 - [x] 🔴 Phase 4: `server.ts` → `createApp()`; entries `server.bun.ts` (hooks off disk, listen, signals) + `server.workers.ts` (static hooks/config via `bosia:workers-runtime`, `fetch(req, env)` → `event.platform.env`).
 - [x] 🔴 `Response.redirect(relative)` throws in workerd → hook/metadata/load redirects 500'd. 4 sites (server.ts, renderer.ts ×3) now build the 3xx by hand.
 - [x] 🟡 `BODY_SIZE_LIMIT` also checked from `Content-Length` in `handleRequest` — Workers has no `maxRequestBodySize`. Chunked uploads fall back to Cloudflare's cap.
 - [x] 🟡 Workers plugin keeps bare node builtins external — a browser-target build silently swapped `fs` for `{}`. `paths.ts` tolerates `import.meta.dir` being undefined.
 - [ ] 🟢 Dev-only plugins imported by `bosia.config.ts` (inspector ≈234KB gz) land in the worker bundle. Demo is 410KB gz — fine under 3MB; revisit if apps get close.
-- [ ] 🟡 Phase 5: `target` config + `--target=workers`, `wrangler.jsonc`, `bosia start` → `wrangler dev`; drop `+` from chunk names (CF assets 307 `+` → `%2B`).
+- [x] 🟡 Phase 5: `target` config + `--target=workers` (`BOSIA_TARGET`) → `dist/worker/index.js`, manifest `target`, `wrangler.jsonc` (written once), `bosia start` → `wrangler dev`; client chunks `chunk-[hash]`.
+- [x] 🟠 `event.platform.env` verified reaching `load()` — end-to-end build test imports the worker and calls `fetch(req, env)`.
+- [ ] 🟢 Runtime vars on Workers come from `wrangler.jsonc` `vars` / secrets / `.dev.vars`, not `.env` like `bosia start` — document in Phase 7.
 - [ ] 🟡 Phase 6: build guard for `Bun.*` / `node:fs` in user server code when targeting Workers.
 - [ ] 🟡 Phase 7: docs, skills (`bosia-cloudflare`), un-"Not Planned" adapters, drop "no adapters" from package description.
 

@@ -6,12 +6,20 @@ export async function runStart() {
 	loadEnv("production");
 
 	let serverEntry = "index.js";
+	let target = "bun";
 	try {
 		const manifest = await Bun.file(`${OUT_DIR}/manifest.json`).json();
 		serverEntry = manifest.serverEntry ?? "index.js";
+		target = manifest.target ?? "bun";
 	} catch {}
 
-	const proc = spawn(["bun", "run", `${OUT_DIR}/server/${serverEntry}`], {
+	// A Workers build runs in workerd, locally via wrangler (fetched on first use).
+	const cmd =
+		target === "workers"
+			? ["bunx", "wrangler", "dev", ...(process.env.PORT ? ["--port", process.env.PORT] : [])]
+			: ["bun", "run", `${OUT_DIR}/server/${serverEntry}`];
+
+	const proc = spawn(cmd, {
 		stdout: "inherit",
 		stderr: "inherit",
 		cwd: process.cwd(),

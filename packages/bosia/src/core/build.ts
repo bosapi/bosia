@@ -14,10 +14,14 @@ import { generateEnvModules } from "./envCodegen.ts";
 import { BOSIA_NODE_PATH, OUT_DIR, resolveBosiaBin, toPosix } from "./paths.ts";
 import { currentBase } from "./appBase.ts";
 import { finalizeTailwindCss, TW_TEMP_BASENAME } from "./twHash.ts";
-import { loadPlugins } from "./config.ts";
-import type { BuildContext } from "./types/plugin.ts";
+import { loadBosiaConfig, loadPlugins } from "./config.ts";
+import type { BuildContext, RuntimeTarget } from "./types/plugin.ts";
 import { loadAppHtmlTemplate, writeAppHtmlSegments } from "./appHtml.ts";
-import { generateArtifactsModule } from "./workersCodegen.ts";
+import {
+	generateArtifactsModule,
+	generateWorkersRuntime,
+	generateWranglerConfig,
+} from "./workersCodegen.ts";
 
 // Resolved from this file's location inside the bosia package
 const CORE_DIR = import.meta.dir;
@@ -42,6 +46,16 @@ const buildCtx: BuildContext = {
 	mode: isProduction ? "production" : "development",
 	cwd: process.cwd(),
 };
+
+// 0-bis. Runtime target: `bosia build --target=` (BOSIA_TARGET) beats bosia.config.
+const target = (process.env.BOSIA_TARGET ||
+	(await loadBosiaConfig()).target ||
+	"bun") as RuntimeTarget;
+if (target !== "bun" && target !== "workers") {
+	console.error(`❌ Unknown target "${target}". Use "bun" or "workers".`);
+	process.exit(1);
+}
+if (target !== "bun") console.log(`🎯 Target: ${target}`);
 
 for (const p of userPlugins) {
 	if (p.build?.preBuild) {
@@ -79,6 +93,7 @@ for (const p of [
 	".bosia/env.server.ts",
 	".bosia/env.client.ts",
 	".bosia/artifacts.ts",
+	".bosia/runtime.workers.ts",
 	".bosia/types",
 ]) {
 	try {
@@ -182,7 +197,9 @@ const clientPromise = Bun.build({
 	target: "browser",
 	conditions: ["svelte"],
 	splitting: true,
-	naming: { entry: "[name]-[hash].[ext]", chunk: "[name]-[hash].[ext]" },
+	// Chunks are named after their source, which for routes is `+page` — and
+	// Cloudflare's asset server answers a `+` in the path with a redirect.
+	naming: { entry: "[name]-[hash].[ext]", chunk: "chunk-[hash].[ext]" },
 	minify: isProduction,
 	sourcemap: isProduction ? "none" : "linked",
 	define: {
@@ -287,6 +304,7 @@ const distManifest = {
 		jsFiles.find((f) => f.startsWith("hydrate")) ??
 		"hydrate.js",
 	serverEntry,
+	target,
 	tw: twFile,
 	// The CSS urls and the client route table are baked in with this prefix.
 	// Stamped so the server can warn when it boots with a different one.
@@ -307,10 +325,6 @@ writeFileSync(`${OUT_DIR}/route-manifest.json`, JSON.stringify(manifest, null, 2
 // falls back to parsing `src/app.html` for dev.
 writeAppHtmlSegments(appHtml);
 
-// 8c-bis. Inline the artifacts above into .bosia/artifacts.ts for runtimes
-// without a filesystem (Cloudflare Workers). Unused by the Bun server.
-generateArtifactsModule();
-
 // 8d. Bundle user `src/hooks.server.ts` and `bosia.config.{ts,js,mjs}` into
 // `dist/` so production images can copy only `dist/` + `node_modules/` —
 // `src/` is never required at runtime. The runtime (server.ts, config.ts)
@@ -324,6 +338,10 @@ await prerenderStaticRoutes(manifest);
 // 10. Generate static site output (HTML + client assets + public → dist/static/)
 generateStaticSite();
 
+// 11. Workers target: a second server bundle for Cloudflare. The Bun one above
+// still exists — prerender just booted it to crawl static routes.
+if (target === "workers") await buildWorker();
+
 for (const p of userPlugins) {
 	if (p.build?.postBuild) {
 		await p.build.postBuild(buildCtx);
@@ -333,6 +351,39 @@ for (const p of userPlugins) {
 console.log(`\n🎉 Build complete in ${Math.round(performance.now() - buildStart)}ms!`);
 
 // ─── Helpers ─────────────────────────────────────────────
+
+async function buildWorker(): Promise<void> {
+	// The isolate has no filesystem: inline the artifacts and static-import the
+	// user's hooks + config instead of reading them off disk at boot.
+	generateArtifactsModule();
+	generateWorkersRuntime();
+	// target "node" would emit createRequire(import.meta.url), and import.meta.url
+	// is undefined in workerd. Node builtins stay `node:` imports (nodejs_compat).
+	const result = await Bun.build({
+		entrypoints: [join(CORE_DIR, "server.workers.ts")],
+		outdir: `${OUT_DIR}/worker`,
+		target: "browser",
+		format: "esm",
+		conditions: ["workerd", "worker", "svelte"],
+		naming: { entry: "index.[ext]" },
+		minify: isProduction,
+		external: ["node:*"],
+		define: { "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "development") },
+		plugins: [
+			makeBosiaPlugin("bun", "workers"),
+			...userServerBunPlugins,
+			makeBosiaSvelteCompiler("bun"),
+		],
+	});
+	if (!result.success) {
+		console.error("❌ Worker build failed:");
+		for (const msg of result.logs) console.error(msg);
+		process.exit(1);
+	}
+	const kb = Math.round((result.outputs[0]?.size ?? 0) / 1024);
+	console.log(`✅ Worker entry:  ${OUT_DIR}/worker/index.js (${kb}KB)`);
+	if (generateWranglerConfig()) console.log("☁️  Wrote wrangler.jsonc");
+}
 
 async function readUserDependencyNames(cwd: string): Promise<string[]> {
 	try {

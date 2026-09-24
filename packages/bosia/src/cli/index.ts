@@ -2,7 +2,7 @@
 // ─── Bosia CLI ────────────────────────────────────────────
 //   bun x bosia@latest create <name>   scaffold a new project
 //   bun x bosia dev                       start the development server
-//   bun x bosia build                     build for production
+//   bun x bosia build [--target=workers]  build for production (Bun or Cloudflare Workers)
 //   bun x bosia start                     run the production server
 //   bun x bosia@latest add <name>         add a UI component from the registry
 //   bun x bosia@latest feat <name>        add a feature scaffold from the registry
@@ -40,7 +40,7 @@ async function main() {
 		}
 		case "build": {
 			const { runBuild } = await import("./build.ts");
-			await runBuild();
+			await runBuild(args);
 			break;
 		}
 		case "sync": {
@@ -114,7 +114,7 @@ Usage:
 Commands:
   create <name> [--template <t>]  Scaffold a new Bosia project
   dev                 Start the development server
-  build               Build for production
+  build               Build for production (--target=workers for Cloudflare)
   sync                Generate .bosia/ codegen (routes, $types, env) without building
   start               Run the production server
   test [args]         Run tests with bun test (auto-loads .env.test, sets BOSIA_ENV=test)

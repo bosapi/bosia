@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.9.8] - 2026-09-25
 
+### Added
+
+- Deploy to Cloudflare Workers: `bosia build --target=workers`, then `wrangler deploy`.
+- Pages and APIs can read Cloudflare bindings (databases, secrets) via `event.platform.env`.
+
 ### Fixed
 
 - `strictImports` in `bosia.config.ts` now takes effect; it was silently ignored before.

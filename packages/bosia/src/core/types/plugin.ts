@@ -10,6 +10,9 @@ type MaybePromise<T> = T | Promise<T>;
 
 export type BuildTarget = "browser" | "bun";
 
+/** Where the production server runs. Not a BuildTarget — that one means client vs server bundle. */
+export type RuntimeTarget = "bun" | "workers";
+
 export interface BuildContext {
 	mode: "production" | "development";
 	cwd: string;
@@ -92,6 +95,8 @@ export type StrictImportsOption =
 export interface BosiaConfig {
 	plugins?: (BosiaPlugin | false | null | undefined)[];
 	strictImports?: StrictImportsOption;
+	/** Production runtime. `"workers"` also emits a Cloudflare Worker + wrangler.jsonc. Default: `"bun"`. */
+	target?: RuntimeTarget;
 }
 
 /** Identity helper for type inference in `bosia.config.ts`. */
