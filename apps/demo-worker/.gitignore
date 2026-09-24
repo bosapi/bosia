@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.bosia/
+.wrangler/
+.DS_Store
+*.log
+
+# Local env overrides — never commit secrets
+.env*.local
+.env
+.dev.vars*

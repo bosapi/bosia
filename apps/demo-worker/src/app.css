@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@source "../src";
+@source "../../../registry/components";
+@source "../../../registry/blocks";
+
+/* bosia-theme */
+@import "./lib/themes/neutral.css";
+
+/* ─── Base Styles ────────────────────────────────────────── */
+
+@layer base {
+	* {
+		border-color: theme(--color-border);
+	}
+
+	body {
+		background-color: theme(--color-background);
+		color: theme(--color-foreground);
+		font-family: var(--font-body);
+	}
+}

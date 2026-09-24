@@ -1,0 +1,11 @@
+// Cloudflare Workers config for the demo-worker app. Deploy: `bun run deploy`.
+{
+	"name": "demo-worker",
+	"main": "./dist/worker/index.js",
+	"compatibility_date": "2025-09-01",
+	"compatibility_flags": ["nodejs_compat"],
+	// Served before the worker runs; misses fall through to it.
+	"assets": { "directory": "./dist/static" },
+	// Read by src/routes/(public)/platform through event.platform.env.
+	"vars": { "GREETING": "Halo dari Cloudflare Workers" },
+}

@@ -26,7 +26,8 @@
 - [x] 🟡 Phase 6: `workersGuard.ts` fails workers builds on `Bun.*`, `fs`/`node:fs`, `bun`/`bun:*` in server files (routes, hooks, `lib/server`). `BOSIA_WORKERS_GUARD=0` warns instead.
 - [ ] 🟢 Guard scans server files by path — a Bun call in a plain `src/lib/*.ts` a loader imports is missed. Upgrade: check in the workers plugin's `onLoad`.
 - [x] 🟡 Phase 7: deployment/cli/api docs (+ id), `bosia-cloudflare` skill, `bosia-bun-runtime` + `bosia-env` Workers notes; package description no longer says "no adapters".
-- [x] 🔴 Live deploy: cache hits came back as brotli-inside-gzip — workerd re-encodes bodies with `Content-Encoding`. `encodeBody: "manual"` on precompressed responses.
+- [x] 🔴 Live deploy: cache hits came back as brotli-inside-gzip — workerd re-encodes bodies with `Content-Encoding`. `encodeBody: "manual"` on precompressed responses, kept through `handleRequest`'s rebuild.
+- [x] 🟡 `apps/demo-worker`: Workers mirror of `apps/demo` (no uploads routes, `/platform` reads a wrangler var). `apps/demo` stays Bun-only.
 - [x] 🟡 Live deploy: all routes OK, 413 OK, no identity leak in 50 alice/bob requests (29 hits). CPU warm 1–4ms; first `/` per isolate 9–16ms.
 - [ ] 🟢 First SSR of `/` per isolate costs 9–16ms CPU, over the free tier's nominal 10ms. Profile cold render (svelte module init?) if it trips limits.
 
