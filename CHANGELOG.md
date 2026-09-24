@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `strictImports` in `bosia.config.ts` now takes effect; it was silently ignored before.
 - Runtime `PUBLIC_*` env vars now reach the browser; before they were always empty there.
+- Cached pages on Cloudflare Workers no longer arrive as unreadable bytes.
 
 ## [0.9.7] - 2026-09-24
 

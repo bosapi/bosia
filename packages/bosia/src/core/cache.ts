@@ -12,6 +12,7 @@ import { brotliCompressSync, gzipSync, constants as zlibConstants } from "node:z
 import type { Cookies, LoaderDeps } from "./hooks.ts";
 import type { CookieJar } from "./cookies.ts";
 import { dedupKey } from "./dedup.ts";
+import { PRECOMPRESSED } from "./html.ts";
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -363,11 +364,11 @@ export function serveCached(entry: CacheEntry, req: Request): Response {
 	};
 	if (entry.brotli && accept.includes("br")) {
 		headers["content-encoding"] = "br";
-		return new Response(entry.brotli, { status: entry.status, headers });
+		return new Response(entry.brotli, { ...PRECOMPRESSED, status: entry.status, headers });
 	}
 	if (entry.gzip && accept.includes("gzip")) {
 		headers["content-encoding"] = "gzip";
-		return new Response(entry.gzip, { status: entry.status, headers });
+		return new Response(entry.gzip, { ...PRECOMPRESSED, status: entry.status, headers });
 	}
 	return new Response(entry.raw, { status: entry.status, headers });
 }

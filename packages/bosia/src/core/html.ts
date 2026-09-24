@@ -8,6 +8,10 @@ import type { AppHtmlSegments } from "./appHtml.ts";
 import { interpolateSegment } from "./appHtml.ts";
 import type { Metadata } from "./hooks.ts";
 
+// Workers compresses any body sent with a Content-Encoding header — again, if it
+// already is — unless told the bytes are final. Bun ignores the key.
+export const PRECOMPRESSED = { encodeBody: "manual" } as ResponseInit;
+
 // ─── Dist Manifest ───────────────────────────────────────
 // Maps hashed filenames → script/link tags.
 // Cached at startup; server restarts on rebuild in dev anyway.
@@ -444,6 +448,7 @@ export function compress(
 	// responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
 	if (!isDev && bytes.length > GZIP_MIN_BYTES && accept.includes("gzip")) {
 		return new Response(gzipSync(bytes), {
+			...PRECOMPRESSED,
 			status,
 			headers: { ...headers, "content-encoding": "gzip" },
 		});

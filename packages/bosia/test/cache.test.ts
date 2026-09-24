@@ -440,6 +440,42 @@ describe("buildCompressedVariants", () => {
 	});
 });
 
+// Workers re-compresses a body sent with Content-Encoding unless the init says
+// `encodeBody: "manual"` — a cache hit came back as brotli-inside-gzip. Bun
+// ignores the key, so assert it's passed rather than the bytes.
+describe("precompressed responses opt out of runtime re-encoding", () => {
+	function captureInits(run: () => void): ResponseInit[] {
+		const inits: ResponseInit[] = [];
+		const Real = globalThis.Response;
+		globalThis.Response = class extends Real {
+			constructor(body?: BodyInit | null, init?: ResponseInit) {
+				super(body, init);
+				if (init) inits.push(init);
+			}
+		} as typeof Response;
+		try {
+			run();
+		} finally {
+			globalThis.Response = Real;
+		}
+		return inits;
+	}
+	const big = new Uint8Array(new ArrayBuffer(8192)) as Uint8Array<ArrayBuffer>;
+	for (let i = 0; i < big.length; i++) big[i] = i % 251;
+
+	test("cache hits, br and gzip", () => {
+		const entry = mkEntry({ raw: big, ...buildCompressedVariants(big) });
+		const inits = captureInits(() => {
+			serveCached(entry, mkRequest("http://x/", { "Accept-Encoding": "br" }));
+			serveCached(entry, mkRequest("http://x/", { "Accept-Encoding": "gzip" }));
+		});
+		expect(inits.map((i) => (i as { encodeBody?: string }).encodeBody)).toEqual([
+			"manual",
+			"manual",
+		]);
+	});
+});
+
 // ─── concatChunks ────────────────────────────────────────
 
 describe("concatChunks", () => {
