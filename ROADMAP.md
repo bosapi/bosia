@@ -1,11 +1,11 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.9.7**
+> Current version: **0.9.8**
 
 ---
 
-## Cloudflare Workers target (in progress)
+## bosia 0.9.8 (2026-09-25) — Cloudflare Workers target (in progress)
 
 > Deploy Bosia to Workers free tier via `adapter-workers` + `adapter-bun`. Spike: demo SSR renders in workerd, 172KB gzipped; sync `node:crypto`/`node:zlib` work there.
 
