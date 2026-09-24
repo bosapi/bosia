@@ -62,6 +62,11 @@ describe("computeIdentityHash", () => {
 		expect(computeIdentityHash(req, mkCookies())).toBe("0");
 	});
 
+	test("digest is stable sha256 (cache keys survive the Bun.CryptoHasher → node:crypto swap)", () => {
+		const req = mkRequest("http://localhost/");
+		expect(computeIdentityHash(req, mkCookies({ session: "alice" }))).toBe("e473be40962b70f8");
+	});
+
 	test("differs when a CACHE_KEYS cookie differs", () => {
 		const req = mkRequest("http://localhost/");
 		const a = computeIdentityHash(req, mkCookies({ session: "alice" }));
@@ -412,6 +417,13 @@ describe("buildCompressedVariants", () => {
 		expect(gzip!.length).toBeGreaterThan(0);
 		expect(brotli).toBeInstanceOf(Uint8Array);
 		expect(brotli!.length).toBeGreaterThan(0);
+	});
+
+	test("gzip variant decompresses back to the body", async () => {
+		const big = new Uint8Array(new ArrayBuffer(8192)) as Uint8Array<ArrayBuffer>;
+		for (let i = 0; i < big.length; i++) big[i] = i % 251;
+		const { gunzipSync } = await import("node:zlib");
+		expect(new Uint8Array(gunzipSync(buildCompressedVariants(big).gzip!))).toEqual(big);
 	});
 
 	test("brotli variant round-trips through serveCached with Accept-Encoding: br", async () => {

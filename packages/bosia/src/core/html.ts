@@ -1,3 +1,5 @@
+import { gzipSync } from "node:zlib";
+
 import { readArtifact } from "./artifacts.ts";
 import { nonceAttr } from "./csp.ts";
 import { rebaseHtmlAttrs } from "./basePath.ts";
@@ -441,7 +443,7 @@ export function compress(
 	// Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
 	// responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
 	if (!isDev && bytes.length > GZIP_MIN_BYTES && accept.includes("gzip")) {
-		return new Response(Bun.gzipSync(bytes), {
+		return new Response(gzipSync(bytes), {
 			status,
 			headers: { ...headers, "content-encoding": "gzip" },
 		});

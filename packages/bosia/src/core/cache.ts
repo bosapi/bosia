@@ -5,7 +5,10 @@
 //
 // See docs/guides/response-cache.md.
 
-import { brotliCompressSync, constants as zlibConstants } from "node:zlib";
+// node:crypto / node:zlib rather than Bun.* — the same code runs on Bun and on
+// Cloudflare Workers (nodejs_compat), and both stay sync there.
+import { createHash } from "node:crypto";
+import { brotliCompressSync, gzipSync, constants as zlibConstants } from "node:zlib";
 import type { Cookies, LoaderDeps } from "./hooks.ts";
 import type { CookieJar } from "./cookies.ts";
 import { dedupKey } from "./dedup.ts";
@@ -125,7 +128,7 @@ const pathIndex = new Map<string, Set<string>>(); // pathname → cacheKeys
 
 /** SHA-256 truncated to 64 bits — identity buckets must not collide across users. */
 function identityDigest(s: string): string {
-	return new Bun.CryptoHasher("sha256").update(s).digest("hex").slice(0, 16);
+	return createHash("sha256").update(s).digest("hex").slice(0, 16);
 }
 
 export function computeIdentityHash(req: Request, cookies: Pick<CookieJar, "peek">): string {
@@ -286,7 +289,7 @@ export function buildCompressedVariants(body: Bytes): {
 	let gzip: Bytes | null = null;
 	let brotli: Bytes | null = null;
 	try {
-		gzip = Bun.gzipSync(body) as Bytes;
+		gzip = new Uint8Array(gzipSync(body)) as Bytes;
 	} catch {
 		gzip = null;
 	}
