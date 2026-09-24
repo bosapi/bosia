@@ -39,9 +39,7 @@ export async function loadBosiaConfig(cwd: string = process.cwd()): Promise<Bosi
 				`${prebuiltPath} must export a default object (use \`export default defineConfig({...})\`).`,
 			);
 		}
-		const rawPlugins = Array.isArray(config.plugins) ? config.plugins : [];
-		const plugins = rawPlugins.filter((p): p is BosiaPlugin => Boolean(p));
-		cached = { plugins };
+		cached = normalizeConfig(config);
 		cachedFromPath = cwd;
 		return cached;
 	}
@@ -89,13 +87,16 @@ export async function loadBosiaConfig(cwd: string = process.cwd()): Promise<Bosi
 		);
 	}
 
-	const rawPlugins = Array.isArray(config.plugins) ? config.plugins : [];
-	const plugins = rawPlugins.filter((p): p is BosiaPlugin => Boolean(p));
-	const normalized: BosiaConfig = { plugins };
-
-	cached = normalized;
+	cached = normalizeConfig(config);
 	cachedFromPath = cwd;
-	return normalized;
+	return cached;
+}
+
+// Keep every field — only `plugins` needs cleaning. Rebuilding the object as
+// `{ plugins }` silently dropped `strictImports` and anything added later.
+function normalizeConfig(config: BosiaConfig): BosiaConfig {
+	const rawPlugins = Array.isArray(config.plugins) ? config.plugins : [];
+	return { ...config, plugins: rawPlugins.filter((p): p is BosiaPlugin => Boolean(p)) };
 }
 
 /** Test-only — drops the in-memory cache so tests can reload fresh config files. */

@@ -5,6 +5,19 @@
 
 ---
 
+## Cloudflare Workers target (in progress)
+
+> Deploy Bosia to Workers free tier via `adapter-workers` + `adapter-bun`. Spike: demo SSR renders in workerd, 172KB gzipped; sync `node:crypto`/`node:zlib` work there.
+
+- [x] 🟠 Phase 0 spike: `target: "browser"` + `external: ["node:*"]`; Elysia `CloudflareAdapter` handles `"*"` routes + `onError`; a global `Bun` shim breaks Elysia's runtime detection.
+- [x] 🔴 Phase 1: `config.ts` rebuilt config as `{ plugins }`, dropping `strictImports` (and any future `target`). Now keeps every field; tests cover source + prebuilt paths.
+- [ ] 🟠 Phase 2: inline boot-time build artifacts (manifest, app-html, route-manifest, declared env keys) as `bosia:manifests`.
+- [ ] 🟠 Phase 3: swap `Bun.CryptoHasher`/`Bun.gzipSync` for `node:crypto`/`node:zlib` (both runtimes); `bosia:platform` only for process lifecycle.
+- [ ] 🔴 Phase 4: Workers entry via `createApp()`; `event.platform`; `Response.redirect(relative)` throws in workerd → hook redirects 500 (server.ts, renderer.ts ×2).
+- [ ] 🟡 Phase 5: `target` config + `--target=workers`, `wrangler.jsonc`, `bosia start` → `wrangler dev`; drop `+` from chunk names (CF assets 307 `+` → `%2B`).
+- [ ] 🟡 Phase 6: build guard for `Bun.*` / `node:fs` in user server code when targeting Workers.
+- [ ] 🟡 Phase 7: docs, skills (`bosia-cloudflare`), un-"Not Planned" adapters, drop "no adapters" from package description.
+
 ## bosia 0.9.7 (2026-09-24) — native Windows support
 
 > Asked whether Bosia runs on Windows. It had never been tried: CI was Linux-only, and the code assumed `/` paths, `:` in NODE_PATH, extensionless `.bin` shims and `lsof`.

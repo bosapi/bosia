@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { loadBosiaConfig, resetConfigCache } from "../src/core/config.ts";
@@ -35,6 +35,27 @@ describe("loadBosiaConfig", () => {
 		writeFileSync(join(workdir, "bosia.config.ts"), `export default {};\n`);
 		const cfg = await loadBosiaConfig(workdir);
 		expect(cfg.plugins).toEqual([]);
+	});
+
+	test("keeps non-plugin fields like strictImports (source config)", async () => {
+		writeFileSync(
+			join(workdir, "bosia.config.ts"),
+			`export default { plugins: [false, { name: "a" }], strictImports: false };\n`,
+		);
+		const cfg = await loadBosiaConfig(workdir);
+		expect(cfg.strictImports).toBe(false);
+		expect(cfg.plugins?.map((p) => p.name)).toEqual(["a"]);
+	});
+
+	test("keeps non-plugin fields like strictImports (prebuilt dist config)", async () => {
+		mkdirSync(join(workdir, "dist"), { recursive: true });
+		writeFileSync(
+			join(workdir, "dist", "bosia.config.js"),
+			`export default { plugins: [null, { name: "b" }], strictImports: { unbound: false } };\n`,
+		);
+		const cfg = await loadBosiaConfig(workdir);
+		expect(cfg.strictImports).toEqual({ unbound: false });
+		expect(cfg.plugins?.map((p) => p.name)).toEqual(["b"]);
 	});
 
 	test("throws when default export is not an object", async () => {
