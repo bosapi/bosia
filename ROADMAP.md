@@ -28,8 +28,8 @@
 - [x] 🟡 Phase 7: deployment/cli/api docs (+ id), `bosia-cloudflare` skill, `bosia-bun-runtime` + `bosia-env` Workers notes; package description no longer says "no adapters".
 - [x] 🔴 Live deploy: cache hits came back as brotli-inside-gzip — workerd re-encodes bodies with `Content-Encoding`. `encodeBody: "manual"` on precompressed responses, kept through `handleRequest`'s rebuild.
 - [x] 🟡 `apps/demo-worker`: Workers mirror of `apps/demo` (no uploads routes, `/platform` reads a wrangler var). `apps/demo` stays Bun-only.
-- [x] 🟡 Live deploy: all routes OK, 413 OK, no identity leak in 50 alice/bob requests (29 hits). CPU warm 1–4ms; first `/` per isolate 9–16ms.
-- [ ] 🟢 First SSR of `/` per isolate costs 9–16ms CPU, over the free tier's nominal 10ms. Profile cold render (svelte module init?) if it trips limits.
+- [x] 🟡 Live `demo-worker`: routes, actions, CSRF, guard, 413, `platform.env` OK. 60 alice/bob requests × gzip/br/none: no leak, all readable. CPU warm 0–5ms.
+- [ ] 🟡 First SSR of `/` per isolate costs 11–23ms CPU, over the free tier's 10ms. Profile the cold render (module init, first Svelte compile of the route).
 
 ## bosia 0.9.7 (2026-09-24) — native Windows support
 
