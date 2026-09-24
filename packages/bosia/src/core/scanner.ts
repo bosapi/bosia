@@ -70,6 +70,10 @@ export function scanRoutes(): RouteManifest {
 		const fullDir = join(ROUTES_DIR, dir);
 		if (!existsSync(fullDir)) return;
 
+		// Manifest paths are always "/"-separated (they become import specifiers),
+		// so build them by hand — path.join would emit "\" on Windows.
+		const rel = (name: string) => (dir ? `${dir}/${name}` : name);
+
 		const items = readdirSync(fullDir, { withFileTypes: true });
 
 		// Accumulate layouts for this level
@@ -81,14 +85,14 @@ export function scanRoutes(): RouteManifest {
 		// as the layout chain. Without this a section with 40 routes needed 40
 		// identical +loading.svelte files to cover its navigations.
 		const currentLoading = items.some((i) => i.isFile() && i.name === "+loading.svelte")
-			? join(dir, "+loading.svelte")
+			? rel("+loading.svelte")
 			: inheritedLoading;
 
 		if (items.some((i) => i.isFile() && i.name === "+layout.svelte")) {
-			currentLayouts.push(join(dir, "+layout.svelte"));
+			currentLayouts.push(rel("+layout.svelte"));
 		}
 		if (items.some((i) => i.isFile() && i.name === "+layout.server.ts")) {
-			const layoutServerPath = join(dir, "+layout.server.ts");
+			const layoutServerPath = rel("+layout.server.ts");
 			currentLayoutServers.push({
 				path: layoutServerPath,
 				depth: currentLayouts.length - 1,
@@ -100,7 +104,7 @@ export function scanRoutes(): RouteManifest {
 			// depth = number of layouts wrapping this dir (this dir's layout included).
 			// An error page at depth K renders inside layouts[0..K-1].
 			currentErrorPages.push({
-				path: join(dir, "+error.svelte"),
+				path: rel("+error.svelte"),
 				depth: currentLayouts.length,
 			});
 		}
@@ -109,20 +113,20 @@ export function scanRoutes(): RouteManifest {
 		if (items.some((i) => i.isFile() && i.name === "+server.ts")) {
 			apis.push({
 				pattern: toUrlPath(urlSegments),
-				server: join(dir, "+server.ts"),
+				server: rel("+server.ts"),
 			});
 		}
 
 		// Page route (+page.svelte)
 		if (items.some((i) => i.isFile() && i.name === "+page.svelte")) {
 			const pageServerFile = items.some((i) => i.isFile() && i.name === "+page.server.ts")
-				? join(dir, "+page.server.ts")
+				? rel("+page.server.ts")
 				: null;
 
 			const pageTs = pageServerFile ? readTrailingSlash(join(ROUTES_DIR, pageServerFile)) : null;
 			const effectiveTs: TrailingSlash = pageTs ?? currentTrailingSlash;
 
-			const pageFile = join(dir, "+page.svelte");
+			const pageFile = rel("+page.svelte");
 			pages.push({
 				pattern: toUrlPath(urlSegments),
 				page: pageFile,
@@ -146,7 +150,7 @@ export function scanRoutes(): RouteManifest {
 			const isGroup = /^\(.*\)$/.test(dirName);
 
 			walk(
-				dir ? join(dir, dirName) : dirName,
+				rel(dirName),
 				isGroup ? [...urlSegments] : [...urlSegments, dirName],
 				currentLayouts,
 				currentLayoutServers,

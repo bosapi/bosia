@@ -4,6 +4,7 @@ import { relative } from "node:path";
 import type { BunPlugin } from "bun";
 import { svelteMapCache } from "../../svelteCompiler.ts";
 import { lineColFromOffset } from "../../sourceLoc.ts";
+import { toPosix } from "../../paths.ts";
 import { collectComponentCss } from "../../componentCss.ts";
 
 type AnyNode = {
@@ -129,7 +130,7 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 		setup(build) {
 			build.onLoad({ filter: /\.svelte$/ }, async (args) => {
 				const source = await Bun.file(args.path).text();
-				const rel = relative(cwd, args.path);
+				const rel = toPosix(relative(cwd, args.path));
 				const transformed = injectLocs(source, rel);
 
 				const result = compile(transformed, {

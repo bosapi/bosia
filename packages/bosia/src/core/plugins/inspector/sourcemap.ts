@@ -1,7 +1,7 @@
 import { TraceMap, originalPositionFor, GREATEST_LOWER_BOUND } from "@jridgewell/trace-mapping";
 import { readFileSync, existsSync } from "node:fs";
-import { dirname, resolve as pathResolve } from "node:path";
-import { OUT_DIR } from "../../paths.ts";
+import { dirname, isAbsolute, relative, resolve as pathResolve } from "node:path";
+import { OUT_DIR, toPosix } from "../../paths.ts";
 
 const cache = new Map<string, TraceMap | null>();
 
@@ -64,7 +64,7 @@ function mapPathFor(file: string): string | null {
 			? OUT_DIR + pathname.slice("/dist".length)
 			: "." + pathname;
 		fsPath = pathResolve(process.cwd(), relFromCwd);
-	} else if (file.startsWith("/")) {
+	} else if (isAbsolute(file)) {
 		fsPath = file;
 	} else {
 		fsPath = pathResolve(process.cwd(), file);
@@ -109,16 +109,18 @@ export function resolveFrame(
 			}
 			if (refined.source && refined.line != null) {
 				const refinedAbs = pathResolve(dirname(abs), refined.source);
-				const rel = refinedAbs.startsWith(process.cwd() + "/")
-					? refinedAbs.slice(process.cwd().length + 1)
-					: refinedAbs;
-				return { file: rel, line: refined.line, col: refined.column ?? 1 };
+				return { file: relToCwd(refinedAbs), line: refined.line, col: refined.column ?? 1 };
 			}
 		}
 	}
 
-	const rel = abs.startsWith(process.cwd() + "/") ? abs.slice(process.cwd().length + 1) : abs;
-	return { file: rel, line: pos.line, col: pos.column ?? 1 };
+	return { file: relToCwd(abs), line: pos.line, col: pos.column ?? 1 };
+}
+
+// cwd-relative "/"-separated path when `abs` is inside cwd, else `abs` unchanged.
+function relToCwd(abs: string): string {
+	const rel = relative(process.cwd(), abs);
+	return rel && !rel.startsWith("..") && !isAbsolute(rel) ? toPosix(rel) : abs;
 }
 
 // Rewrite frames in stack strings: "(url:L:C)", "at url:L:C", "@url:L:C".

@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.9.7] - 2026-09-24
+
+### Fixed
+
+- Bosia now builds and runs on native Windows, not only macOS and Linux.
+- Static files and page assets load correctly on Windows servers.
+
+### Added
+
+- Every change is now tested on both Linux and Windows before it can be published.
+
 ## [0.9.6] - 2026-09-10
 
 ### Fixed

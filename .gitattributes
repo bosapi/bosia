@@ -1,0 +1,3 @@
+# Keep LF on every OS. Windows checkouts would otherwise get CRLF, which
+# breaks `prettier --check` and byte-exact test fixtures.
+* text=auto eol=lf

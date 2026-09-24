@@ -1,6 +1,7 @@
 import { writeFileSync, mkdirSync } from "fs";
 import type { RouteManifest } from "./types.ts";
 import { currentBase } from "./appBase.ts";
+import { toPosix } from "./paths.ts";
 
 /**
  * The pattern the *client* router matches against. It sees real browser URLs, so
@@ -250,5 +251,5 @@ function generateClientRoutesFile(
 
 // Import path from .bosia/routes.ts to src/routes/<routePath>
 function toImportPath(routePath: string): string {
-	return "../src/routes/" + routePath.replace(/\\/g, "/");
+	return "../src/routes/" + toPosix(routePath);
 }

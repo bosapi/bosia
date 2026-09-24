@@ -9,7 +9,15 @@ name: Publish & prebuilt templates
 #     (--clobber) onto the EXISTING release. Never touches npm, so the
 #     "version already exists" error can't happen.
 #
-# build:templates runs exactly once per push either way.
+# Job graph:
+#
+#   decide ─────────────────────────┐
+#   test (ci.yml: linux + windows) ─┴─ build-templates ─┬─ publish-npm ── release
+#                                                       └─ refresh-assets
+#
+# Nothing is published unless tests pass on both OSes. build:templates runs
+# exactly once per push; its tarballs travel between jobs as the "prebuilt"
+# artifact.
 
 on:
   push:
@@ -27,11 +35,17 @@ concurrency:
   group: prebuilt-release
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
-  release:
+  decide:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    outputs:
+      version: ${{ steps.decide.outputs.version }}
+      pkg_changed: ${{ steps.decide.outputs.pkg_changed }}
+      published: ${{ steps.decide.outputs.published }}
+      tag: ${{ steps.decide.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -72,48 +86,93 @@ jobs:
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
 
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  build-templates:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
       - uses: oven-sh/setup-bun@v2
 
       - name: Build prebuilt template artifacts
         run: bun run build:templates
         working-directory: packages/bosia
 
-      # ── Publish path: package.json changed AND not yet on npm ──
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prebuilt
+          path: packages/bosia/dist/prebuilt/*.tar.gz
+          if-no-files-found: error
+
+  # ── Publish path: package.json changed AND not yet on npm ──
+  publish-npm:
+    needs: [decide, build-templates]
+    if: needs.decide.outputs.pkg_changed == 'true' && needs.decide.outputs.published == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Setup npm auth
-        if: steps.decide.outputs.pkg_changed == 'true' && steps.decide.outputs.published == 'false'
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
       - name: Publish to npm
-        if: steps.decide.outputs.pkg_changed == 'true' && steps.decide.outputs.published == 'false'
         run: |
-          echo "Publishing bosia@${{ steps.decide.outputs.version }} with tag ${{ steps.decide.outputs.tag }}"
-          npm publish --tag "${{ steps.decide.outputs.tag }}" --access public
+          echo "Publishing bosia@${{ needs.decide.outputs.version }} with tag ${{ needs.decide.outputs.tag }}"
+          npm publish --tag "${{ needs.decide.outputs.tag }}" --access public
         working-directory: packages/bosia
 
+  release:
+    needs: [decide, publish-npm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4 # gh release create needs the repo context
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: prebuilt
+          path: prebuilt
+
       - name: Create GitHub Release
-        if: steps.decide.outputs.pkg_changed == 'true' && steps.decide.outputs.published == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="v${{ steps.decide.outputs.version }}"
-          ASSETS=(packages/bosia/dist/prebuilt/*.tar.gz)
-          if [ "${{ steps.decide.outputs.tag }}" = "next" ]; then
+          VERSION="v${{ needs.decide.outputs.version }}"
+          ASSETS=(prebuilt/*.tar.gz)
+          if [ "${{ needs.decide.outputs.tag }}" = "next" ]; then
             gh release create "$VERSION" --title "$VERSION" --generate-notes --prerelease "${ASSETS[@]}"
           else
             gh release create "$VERSION" --title "$VERSION" --generate-notes "${ASSETS[@]}"
           fi
 
-      # ── Refresh path: registry/template-only change ──
+  # ── Refresh path: registry/template-only change ──
+  refresh-assets:
+    needs: [decide, build-templates]
+    if: needs.decide.outputs.pkg_changed == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: prebuilt
+          path: prebuilt
+
       - name: Refresh release assets
-        if: steps.decide.outputs.pkg_changed == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="v${{ steps.decide.outputs.version }}"
+          VERSION="v${{ needs.decide.outputs.version }}"
           # The release is created by the publish path on version bump. If the
           # current version isn't released yet, there's nothing to clobber.
           if ! gh release view "$VERSION" >/dev/null 2>&1; then
             echo "Release $VERSION not published yet — nothing to refresh."
             exit 0
           fi
-          gh release upload "$VERSION" packages/bosia/dist/prebuilt/*.tar.gz --clobber
+          gh release upload "$VERSION" prebuilt/*.tar.gz --clobber

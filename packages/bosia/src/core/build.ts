@@ -1,5 +1,5 @@
 import { writeFileSync, readFileSync, rmSync, mkdirSync, existsSync } from "fs";
-import { join, relative } from "path";
+import { basename, join, relative } from "path";
 import type { RouteManifest } from "./types.ts";
 
 import { scanRoutes } from "./scanner.ts";
@@ -11,7 +11,7 @@ import { finalizeComponentCss } from "./componentCss.ts";
 import { prerenderStaticRoutes, generateStaticSite } from "./prerender.ts";
 import { loadEnv, classifyEnvVars } from "./env.ts";
 import { generateEnvModules } from "./envCodegen.ts";
-import { BOSIA_NODE_PATH, OUT_DIR, resolveBosiaBin } from "./paths.ts";
+import { BOSIA_NODE_PATH, OUT_DIR, resolveBosiaBin, toPosix } from "./paths.ts";
 import { currentBase } from "./appBase.ts";
 import { finalizeTailwindCss, TW_TEMP_BASENAME } from "./twHash.ts";
 import { loadPlugins } from "./config.ts";
@@ -251,7 +251,7 @@ const cssFiles: string[] = [];
 // `output.kind === "entry-point"` instead so we pin the actual entry.
 let clientEntry: string | null = null;
 for (const output of clientResult.outputs) {
-	const rel = relative(`${OUT_DIR}/client`, output.path);
+	const rel = toPosix(relative(`${OUT_DIR}/client`, output.path)); // URL path, not fs path
 	if (output.path.endsWith(".js")) jsFiles.push(rel);
 	if (output.path.endsWith(".css")) cssFiles.push(rel);
 	if ((output as { kind?: string }).kind === "entry-point" && output.path.endsWith(".js")) {
@@ -271,11 +271,8 @@ if (componentCssFile) {
 }
 
 // Entry is always "index.js" due to naming: { entry: "index.[ext]" }
-const serverEntry =
-	serverResult.outputs
-		.find((o) => o.path.endsWith("index.js"))
-		?.path.split("/")
-		.pop() ?? "index.js";
+const serverEntryOutput = serverResult.outputs.find((o) => o.path.endsWith("index.js"));
+const serverEntry = serverEntryOutput ? basename(serverEntryOutput.path) : "index.js";
 
 // 8. Write dist/manifest.json
 mkdirSync(OUT_DIR, { recursive: true });

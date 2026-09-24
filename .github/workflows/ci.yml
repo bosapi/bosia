@@ -1,0 +1,88 @@
+name: CI
+
+# Tests + a scaffold/build/start smoke run on Linux and Windows.
+# Runs on every push / PR, and is reused by publish.yml (workflow_call) so
+# nothing reaches npm unless both OSes are green.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Type check + format check
+        working-directory: packages/bosia
+        run: bun run check
+
+      - name: Test
+        working-directory: packages/bosia
+        run: bun test
+
+  smoke:
+    name: smoke (${{ matrix.os }})
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash # Git Bash on windows-latest — one script for both OSes
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # Outside the repo so the monorepo workspace globs don't pick it up.
+      - name: Scaffold app from local template
+        working-directory: ..
+        run: bun "$GITHUB_WORKSPACE/packages/bosia/src/cli/index.ts" create smoke --template default --local
+
+      - name: Build
+        working-directory: ../smoke
+        run: bun run build
+
+      - name: Start and probe
+        working-directory: ../smoke
+        run: |
+          PORT=4817 bun run start > start.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:4817/_health > /dev/null && break
+            sleep 1
+          done
+          curl -sf -o /dev/null -w "/_health %{http_code}\n" http://127.0.0.1:4817/_health
+          curl -sf -o /dev/null -w "/ %{http_code}\n" http://127.0.0.1:4817/
+          # Every client asset listed in the manifest must be served (catches "\" in URLs).
+          for f in $(bun -e 'const m = await Bun.file("dist/manifest.json").json(); console.log([...m.js, ...m.css].join("\n"))'); do
+            curl -sf -o /dev/null "http://127.0.0.1:4817/dist/client/$f" || { echo "missing asset: $f"; exit 1; }
+          done
+          echo "all manifest assets served"
+
+      - name: Server log
+        if: always()
+        working-directory: ../smoke
+        run: cat start.log 2>/dev/null || true

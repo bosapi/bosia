@@ -1,6 +1,7 @@
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import type { RouteManifest } from "./types.ts";
+import { toPosix } from "./paths.ts";
 
 // ─── Route Types Generator ────────────────────────────────
 // Generates .bosia/types/src/routes/**/$types.d.ts for each
@@ -9,7 +10,7 @@ import type { RouteManifest } from "./types.ts";
 // work in +page.svelte files — identical to SvelteKit's API.
 
 function routeDirOf(filePath: string): string {
-	const parts = filePath.replace(/\\/g, "/").split("/");
+	const parts = toPosix(filePath).split("/");
 	parts.pop();
 	return parts.join("/") || ".";
 }

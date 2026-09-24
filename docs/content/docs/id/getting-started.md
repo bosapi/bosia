@@ -8,6 +8,7 @@ description: Buat proyek Bosia pertama Anda dalam waktu kurang dari satu menit.
 ## Prasyarat
 
 - [Bun](https://bun.sh) >= 1.x — Bosia berjalan sepenuhnya di atas Bun. Tidak memerlukan Node.js.
+- macOS, Linux, atau Windows. Windows didukung langsung (PowerShell atau Git Bash); WSL2 juga bisa.
 
 ## Membuat Proyek Baru
 

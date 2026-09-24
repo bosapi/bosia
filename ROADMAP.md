@@ -1,9 +1,22 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.9.6**
+> Current version: **0.9.7**
 
 ---
+
+## bosia 0.9.7 (2026-09-24) — native Windows support
+
+> Asked whether Bosia runs on Windows. It had never been tried: CI was Linux-only, and the code assumed `/` paths, `:` in NODE_PATH, extensionless `.bin` shims and `lsof`.
+
+- [x] 🔴 `build.ts` wrote `\`-separated client assets into `manifest.json` and picked the server entry via `split("/")` → broken asset URLs and `bosia start` pointing at a full path. Now `toPosix(relative())` + `basename()`.
+- [x] 🔴 `safePath.ts` checked `root + "/"`, so on Windows every public/dist/static file resolved as "outside" and 404'd. Uses `sep` now.
+- [x] 🟠 `paths.ts`: `BOSIA_NODE_PATH` joins with `path.delimiter` (`C:` split the old `:` list); `resolveBosiaBin` tries `.exe`/`.cmd`/`.bunx` on win32 so Tailwind is found. New shared `toPosix()`.
+- [x] 🟠 `scanner.ts` builds manifest paths with `/` by hand instead of `join`; inspector `data-loc`, sourcemap cwd-relative paths and `create --local` `file:` paths also normalized.
+- [x] 🟡 `port.ts` falls back to `netstat -ano` on Windows (listener = foreign `:0`, since the state column is localized). Parsers `parseLsof`/`parseNetstat` unit-tested.
+- [x] 🟠 New `ci.yml`: tests + scaffold/build/start/asset-probe smoke on ubuntu + windows. `publish.yml` split into decide/test/build-templates/publish-npm/release/refresh-assets; publishing now waits on both OSes.
+- [x] 🟡 `.gitattributes` forces LF so Windows checkouts don't fail `prettier --check`. Getting Started lists Windows (native or WSL2).
+- [ ] 🟡 Verify the first `windows-latest` CI run and a manual `bosia dev` session on a real Windows machine (watcher, HMR, route add).
 
 ## bosia 0.9.6 (2026-09-10) — every SSR'd page painted before its own CSS existed
 

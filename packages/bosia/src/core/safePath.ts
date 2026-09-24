@@ -1,4 +1,4 @@
-import { join, resolve as resolvePath } from "path";
+import { join, resolve as resolvePath, sep } from "path";
 
 /**
  * Resolve `untrusted` relative to `base` and verify the result stays inside
@@ -10,5 +10,5 @@ import { join, resolve as resolvePath } from "path";
 export function safePath(base: string, untrusted: string): string | null {
 	const root = resolvePath(base);
 	const full = resolvePath(join(base, untrusted));
-	return full.startsWith(root + "/") || full === root ? full : null;
+	return full.startsWith(root + sep) || full === root ? full : null;
 }

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.15] - 2026-09-24
+
+### Changed
+
+- Getting Started now says Bosia works on Windows, natively or through WSL2.
+
 ## [0.8.14] - 2026-09-05
 
 ### Changed

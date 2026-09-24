@@ -5,6 +5,7 @@ import { spawn } from "bun";
 import * as p from "@clack/prompts";
 import { installFeature, initFeatRegistry, resolveLocalRegistry } from "./feat.ts";
 import { initAddRegistry } from "./add.ts";
+import { toPosix } from "../core/paths.ts";
 
 // ─── bun x bosia@latest create <name> [--template <name>] ─
 
@@ -283,7 +284,7 @@ function copyDir(src: string, dest: string, projectName: string, isLocal: boolea
 
 			if (entry.name === "package.json" && isLocal) {
 				const bosiaPath = resolve(import.meta.dir, "../../");
-				const relPath = relative(dest, bosiaPath);
+				const relPath = toPosix(relative(dest, bosiaPath));
 				content = content.replaceAll('"^{{BOSIA_VERSION}}"', `"file:${relPath}"`);
 			} else {
 				content = content.replaceAll("{{BOSIA_VERSION}}", BOSIA_VERSION);
