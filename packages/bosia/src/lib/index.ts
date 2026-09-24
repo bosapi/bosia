@@ -30,6 +30,8 @@ export type {
 	ResolveFunction,
 	Cookies,
 	CookieOptions,
+	Platform,
+	PlatformEnv,
 } from "../core/hooks.ts";
 export type { CsrfConfig } from "../core/csrf.ts";
 export type { CorsConfig } from "../core/cors.ts";

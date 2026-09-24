@@ -2,7 +2,9 @@ import { join, dirname, delimiter } from "path";
 import { existsSync } from "fs";
 
 // This file lives at src/core/paths.ts → package root is ../..
-const BOSIA_PKG_DIR = join(import.meta.dir, "..", "..");
+// `import.meta.dir` is undefined on Workers — no package dir and no
+// node_modules there, so every lookup below just comes back empty.
+const BOSIA_PKG_DIR = import.meta.dir ? join(import.meta.dir, "..", "..") : "";
 
 const NESTED_NM = join(BOSIA_PKG_DIR, "node_modules");
 
@@ -22,7 +24,7 @@ function collectAncestorNodeModules(start: string): string[] {
 	return out;
 }
 
-const ANCESTOR_NM = collectAncestorNodeModules(dirname(BOSIA_PKG_DIR));
+const ANCESTOR_NM = BOSIA_PKG_DIR ? collectAncestorNodeModules(dirname(BOSIA_PKG_DIR)) : [];
 const ALL_NM = [NESTED_NM, ...ANCESTOR_NM];
 
 /** NODE_PATH value covering nested and every ancestor node_modules */

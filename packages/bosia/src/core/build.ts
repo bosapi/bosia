@@ -17,7 +17,7 @@ import { finalizeTailwindCss, TW_TEMP_BASENAME } from "./twHash.ts";
 import { loadPlugins } from "./config.ts";
 import type { BuildContext } from "./types/plugin.ts";
 import { loadAppHtmlTemplate, writeAppHtmlSegments } from "./appHtml.ts";
-import { generateArtifactsModule } from "./artifactCodegen.ts";
+import { generateArtifactsModule } from "./workersCodegen.ts";
 
 // Resolved from this file's location inside the bosia package
 const CORE_DIR = import.meta.dir;
@@ -193,7 +193,7 @@ const clientPromise = Bun.build({
 });
 
 const serverPromise = Bun.build({
-	entrypoints: [join(CORE_DIR, "server.ts")],
+	entrypoints: [join(CORE_DIR, "server.bun.ts")],
 	outdir: `${OUT_DIR}/server`,
 	target: "bun",
 	conditions: ["svelte"],

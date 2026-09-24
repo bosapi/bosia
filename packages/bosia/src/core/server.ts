@@ -1,13 +1,11 @@
-import { Elysia } from "elysia";
-
-import { existsSync } from "fs";
-import { join } from "path";
+import { Elysia, type ElysiaAdapter } from "elysia";
 
 import { findMatch, compileRoutes, canonicalPathname } from "./matcher.ts";
 import { resolveApiMatch } from "./apiResolver.ts";
 import { apiRoutes, serverRoutes } from "bosia:routes";
 import { loadPlugins } from "./config.ts";
 import { readArtifact } from "./artifacts.ts";
+import { getPlatform } from "./platform.ts";
 import type { RouteManifest } from "./types.ts";
 
 // Pre-compile route patterns into RegExp at startup (shared by renderer.ts via module reference)
@@ -27,12 +25,10 @@ import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
 import { stripBase, withBase } from "./basePath.ts";
 import { currentBase } from "./appBase.ts";
-import { pidsOnPort } from "./port.ts";
 import { buildPrerenderManifest, buildStaticManifest, lookupStatic } from "./staticManifest.ts";
 import { dedup } from "./dedup.ts";
 import {
 	CACHE_ENABLED,
-	CACHE_KEYS,
 	CACHE_MAX_BODY_BYTES,
 	buildCompressedVariants,
 	cacheGet,
@@ -53,34 +49,10 @@ import {
 import { getServerTime } from "../lib/utils.ts";
 
 // ─── User Hooks ──────────────────────────────────────────
-// Load user hooks. Production prefers the pre-bundled `${OUT_DIR}/hooks.server.js`
-// emitted by the build (single-file, all relative imports inlined, npm deps left
-// external) so production images can ship only `dist/` + `node_modules/` without
-// the `src/` tree. Dev (and any environment lacking the artifact) falls back to
-// importing `src/hooks.server.ts` directly so edits hot-reload without a build.
+// Set by createApp(). Each runtime entry finds `src/hooks.server.ts` its own
+// way: server.bun.ts imports it off disk, server.workers.ts statically.
 
 let userHandle: Handle | null = null;
-
-const prebuiltHooksPath = join(process.cwd(), OUT_DIR, "hooks.server.js");
-const srcHooksPath = join(process.cwd(), "src", "hooks.server.ts");
-const hooksPath = existsSync(prebuiltHooksPath)
-	? prebuiltHooksPath
-	: existsSync(srcHooksPath)
-		? srcHooksPath
-		: null;
-if (hooksPath) {
-	try {
-		const mod = await import(hooksPath);
-		if (typeof mod.handle === "function") {
-			userHandle = mod.handle as Handle;
-			console.log(
-				`🪝 Loaded ${hooksPath === prebuiltHooksPath ? "dist/hooks.server.js" : "src/hooks.server.ts"}`,
-			);
-		}
-	} catch (err) {
-		console.warn("⚠️  Failed to load hooks.server:", err);
-	}
-}
 
 // ─── Env Helpers ─────────────────────────────────────────
 
@@ -507,6 +479,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				// An API route is reached through its own URL, never through the
 				// client router's data endpoint.
 				isDataRequest: false,
+				platform: event.platform,
 			});
 
 			// Redirect returned (not thrown) — convert to a 303 Response.
@@ -938,6 +911,13 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		url.pathname = appPath;
 	}
 
+	// Bun.serve enforces maxRequestBodySize itself; Workers has no such knob, so
+	// check the declared length here. A chunked upload without Content-Length
+	// falls back to the host's own request cap (Cloudflare: 100MB on free).
+	if (BODY_SIZE_LIMIT > 0 && Number(request.headers.get("content-length")) > BODY_SIZE_LIMIT) {
+		return new Response("Payload Too Large", { status: 413 });
+	}
+
 	// Reject new non-health requests during shutdown
 	if (shuttingDown && url.pathname !== "/_health") {
 		return new Response("Service Unavailable", {
@@ -998,6 +978,7 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 			params: {},
 			cookies: cookieJar,
 			isDataRequest: dataReq !== null,
+			platform: getPlatform(),
 		};
 		let response = userHandle ? await userHandle({ event, resolve }) : await resolve(event);
 
@@ -1064,7 +1045,8 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 					? // Shape-identical to the loader conversion below, so the
 						// router has one payload contract regardless of who redirected.
 						Response.json({ redirect: err.location, status: err.status })
-					: Response.redirect(err.location, err.status)
+					: // Not Response.redirect(): it rejects relative URLs on Workers.
+						new Response(null, { status: err.status, headers: { Location: err.location } })
 				: dataReq
 					? Response.json(
 							{
@@ -1086,7 +1068,7 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 							nonce,
 						);
 			// A hook that expires the session before throwing must not lose the
-			// Set-Cookie that does it — `Response.redirect` builds a fresh Response,
+			// Set-Cookie that does it — the redirect above is a fresh Response,
 			// so the jar is re-applied by hand here.
 			if (cookieJar) {
 				for (const cookie of cookieJar.outgoing) out.headers.append("Set-Cookie", cookie);
@@ -1197,18 +1179,27 @@ if (Number.isFinite(MAX_INFLIGHT)) {
 }
 
 // ─── Graceful Shutdown State ──────────────────────────────
+// Drained by the Bun entry on SIGTERM/SIGINT. Never set on Workers, where an
+// isolate has no shutdown to announce.
 
 let shuttingDown = false;
-let firstSignalAt = 0;
 let inFlight = 0;
 let drainResolve: (() => void) | null = null;
 
-// ─── Plugin Loading ───────────────────────────────────────
-
-const plugins = await loadPlugins(process.cwd());
-if (plugins.length > 0) {
-	console.log(`🔌 Loaded ${plugins.length} plugin(s): ${plugins.map((p) => p.name).join(", ")}`);
+/** Stop taking new requests; resolves once in-flight ones have finished. */
+export function beginShutdown(): Promise<void> {
+	shuttingDown = true;
+	if (inFlight === 0) return Promise.resolve();
+	return new Promise<void>((r) => {
+		drainResolve = r;
+	});
 }
+
+export function inFlightCount(): number {
+	return inFlight;
+}
+
+// ─── Elysia App ───────────────────────────────────────────
 
 // Read the build-time route manifest so plugins.backend.after can introspect routes.
 function loadBuiltManifest(): RouteManifest {
@@ -1232,170 +1223,101 @@ function loadBuiltManifest(): RouteManifest {
 	};
 }
 
-const routeManifest = loadBuiltManifest();
+export type CreateAppOptions = {
+	/** `handle` from the user's `src/hooks.server.ts`. */
+	handle?: Handle | null;
+	/** Elysia adapter. Omitted → Bun (`Bun.serve`). */
+	adapter?: ElysiaAdapter;
+};
 
-// ─── Elysia App ───────────────────────────────────────────
+/** Build the Elysia app: plugins, the framework's catch-all routes, error handling. */
+export async function createApp(options: CreateAppOptions = {}): Promise<Elysia> {
+	userHandle = options.handle ?? null;
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : isDev ? 9001 : 9000;
+	const plugins = await loadPlugins(process.cwd());
+	if (plugins.length > 0) {
+		console.log(`🔌 Loaded ${plugins.length} plugin(s): ${plugins.map((p) => p.name).join(", ")}`);
+	}
 
-// Elysia's chained generics drift when plugins add routes — track the app as a
-// loose `Elysia` so plugin-extended types stay assignable.
-let app: Elysia = new Elysia({
-	serve: {
-		maxRequestBodySize: BODY_SIZE_LIMIT,
-		idleTimeout: IDLE_TIMEOUT,
-		// Elysia's Bun adapter defaults reusePort:true — SO_REUSEPORT lets a second
-		// server silently join the port and the kernel splits traffic between two
-		// different builds. Opt in only for deliberate N-worker clustering.
-		reusePort: process.env.BOSIA_REUSE_PORT === "1",
-	},
-}) as unknown as Elysia;
+	// Elysia's chained generics drift when plugins add routes — track the app as a
+	// loose `Elysia` so plugin-extended types stay assignable.
+	let app: Elysia = (options.adapter
+		? new Elysia({ adapter: options.adapter })
+		: new Elysia({
+				serve: {
+					maxRequestBodySize: BODY_SIZE_LIMIT,
+					idleTimeout: IDLE_TIMEOUT,
+					// Elysia's Bun adapter defaults reusePort:true — SO_REUSEPORT lets a second
+					// server silently join the port and the kernel splits traffic between two
+					// different builds. Opt in only for deliberate N-worker clustering.
+					reusePort: process.env.BOSIA_REUSE_PORT === "1",
+				},
+			})) as unknown as Elysia;
 
-// Plugins.backend.before — runs before framework middleware/routes.
-// Plugin-registered routes here BYPASS the framework (CSRF, hooks, etc.).
-// Plugins register their own `.onError()` handlers here. Elysia fires onError
-// handlers in registration order; plugin handlers run first and (when they
-// return undefined) fall through to the base 500 responder chained after this
-// loop. Registering the base responder before the loop would short-circuit
-// every plugin handler.
-for (const plugin of plugins) {
-	if (plugin.backend?.before) {
-		try {
-			app = (await plugin.backend.before(app)) ?? app;
-		} catch (err) {
-			console.error(`❌ Plugin "${plugin.name}" backend.before failed:`, err);
-			throw err;
+	// Plugins.backend.before — runs before framework middleware/routes.
+	// Plugin-registered routes here BYPASS the framework (CSRF, hooks, etc.).
+	// Plugins register their own `.onError()` handlers here. Elysia fires onError
+	// handlers in registration order; plugin handlers run first and (when they
+	// return undefined) fall through to the base 500 responder chained after this
+	// loop. Registering the base responder before the loop would short-circuit
+	// every plugin handler.
+	for (const plugin of plugins) {
+		if (plugin.backend?.before) {
+			try {
+				app = (await plugin.backend.before(app)) ?? app;
+			} catch (err) {
+				console.error(`❌ Plugin "${plugin.name}" backend.before failed:`, err);
+				throw err;
+			}
 		}
 	}
-}
 
-app = app.onError(({ error }) => {
-	if (isDev) console.error("Uncaught server error:", error);
-	else console.error("Uncaught server error:", (error as Error)?.message ?? error);
-	return Response.json({ error: "Internal Server Error" }, { status: 500 });
-}) as unknown as Elysia;
-
-app = app
-	// Static files are served by resolve() with path traversal protection and security headers
-	// SSR pages
-	.get("*", ({ request }: { request: Request }) => {
-		const url = new URL(request.url);
-		return handleRequest(request, url);
-	})
-	// Non-GET catch-alls route every method through handleRequest()
-	.post("*", ({ request }: { request: Request }) => {
-		const url = new URL(request.url);
-		return handleRequest(request, url);
-	})
-	.put("*", ({ request }: { request: Request }) => {
-		const url = new URL(request.url);
-		return handleRequest(request, url);
-	})
-	.patch("*", ({ request }: { request: Request }) => {
-		const url = new URL(request.url);
-		return handleRequest(request, url);
-	})
-	.delete("*", ({ request }: { request: Request }) => {
-		const url = new URL(request.url);
-		return handleRequest(request, url);
-	})
-	.options("*", ({ request }: { request: Request }) => {
-		const url = new URL(request.url);
-		return handleRequest(request, url);
+	app = app.onError(({ error }) => {
+		if (isDev) console.error("Uncaught server error:", error);
+		else console.error("Uncaught server error:", (error as Error)?.message ?? error);
+		return Response.json({ error: "Internal Server Error" }, { status: 500 });
 	}) as unknown as Elysia;
 
-// Plugins.backend.after — runs after framework routes; receives the route manifest.
-for (const plugin of plugins) {
-	if (plugin.backend?.after) {
-		try {
-			app = (await plugin.backend.after(app, { manifest: routeManifest })) ?? app;
-		} catch (err) {
-			console.error(`❌ Plugin "${plugin.name}" backend.after failed:`, err);
-			throw err;
+	app = app
+		// Static files are served by resolve() with path traversal protection and security headers
+		// SSR pages
+		.get("*", ({ request }: { request: Request }) => {
+			const url = new URL(request.url);
+			return handleRequest(request, url);
+		})
+		// Non-GET catch-alls route every method through handleRequest()
+		.post("*", ({ request }: { request: Request }) => {
+			const url = new URL(request.url);
+			return handleRequest(request, url);
+		})
+		.put("*", ({ request }: { request: Request }) => {
+			const url = new URL(request.url);
+			return handleRequest(request, url);
+		})
+		.patch("*", ({ request }: { request: Request }) => {
+			const url = new URL(request.url);
+			return handleRequest(request, url);
+		})
+		.delete("*", ({ request }: { request: Request }) => {
+			const url = new URL(request.url);
+			return handleRequest(request, url);
+		})
+		.options("*", ({ request }: { request: Request }) => {
+			const url = new URL(request.url);
+			return handleRequest(request, url);
+		}) as unknown as Elysia;
+
+	// Plugins.backend.after — runs after framework routes; receives the route manifest.
+	for (const plugin of plugins) {
+		if (plugin.backend?.after) {
+			try {
+				app = (await plugin.backend.after(app, { manifest: loadBuiltManifest() })) ?? app;
+			} catch (err) {
+				console.error(`❌ Plugin "${plugin.name}" backend.after failed:`, err);
+				throw err;
+			}
 		}
 	}
+
+	return app;
 }
-
-try {
-	app.listen(PORT, () => {
-		// In dev mode the proxy owns the user-facing port — don't print the internal port
-		if (!isDev) console.log(`⬡ Bosia server running at http://localhost:${PORT}`);
-		// Last line of startup on purpose — the cache identity contract is the one
-		// config mistake that leaks one user's page to another, so it stays visible.
-		if (CACHE_ENABLED) {
-			console.log(
-				`\n🔑 Response cache tells users apart ONLY by these cookies/headers: [${CACHE_KEYS.join(", ")}]\n` +
-					`   Using a different session cookie or auth header? Add its name to CACHE_KEYS,\n` +
-					`   or one user's personalised page can be served to another. Routes personalised\n` +
-					`   by anything else should set \`export const cache = false\`.\n` +
-					`   Note: the runtime auto-warns only on uncovered *cookie* reads — it CANNOT\n` +
-					`   detect header-based personalisation, so custom auth headers (X-Api-Key,\n` +
-					`   X-Auth-Token, …) must be added to CACHE_KEYS by hand.\n`,
-			);
-		}
-	});
-} catch (err) {
-	// Bun.serve runs inline inside .listen(), so a failed bind lands here.
-	if ((err as { code?: string })?.code !== "EADDRINUSE") throw err;
-	const [pid] = await pidsOnPort(PORT);
-	console.error(
-		`\n❌ Port ${PORT} is already serving${pid ? ` (pid ${pid})` : ""}.\n` +
-			`   Stop it or set PORT to a free port.\n`,
-	);
-	process.exit(1);
-}
-
-async function shutdown() {
-	if (shuttingDown) {
-		// One ^C arrives multiple times (process group + `bun run` forwarding
-		// to its child) — only a genuinely later signal is a second ^C.
-		if (Date.now() - firstSignalAt > 200) process.exit(130); // second ^C = force quit
-		return;
-	}
-	shuttingDown = true;
-	firstSignalAt = Date.now();
-	// Dev: nothing worth draining — exit instantly so ^C feels immediate.
-	if (isDev) process.exit(0);
-	console.log("⏳ Shutting down — draining in-flight requests...");
-
-	if (inFlight > 0) {
-		await Promise.race([
-			new Promise<void>((r) => {
-				drainResolve = r;
-			}),
-			Bun.sleep(10_000),
-		]);
-	}
-
-	if (inFlight > 0) {
-		console.warn(`⚠️  Force shutdown with ${inFlight} request(s) still in flight`);
-	} else {
-		console.log("✅ All requests drained");
-	}
-
-	app.stop(true).then(() => process.exit(0));
-	setTimeout(() => process.exit(1), 2_000);
-}
-
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
-
-// Prod-only fatal handlers. The dev inspector plugin installs its own
-// uncaughtException/unhandledRejection listeners that route errors into the
-// overlay and let the dev runner's crash-backoff restart the process. In prod
-// there's no inspector — without these handlers an unhandled rejection from a
-// background timer or plugin hook orphans the process with no log context.
-// Log + exit(1) lets the orchestrator (Podman/k8s) restart cleanly.
-if (!isDev) {
-	process.on("uncaughtException", (err: Error) => {
-		console.error("[FATAL] uncaughtException:", err?.stack ?? err);
-		process.exit(1);
-	});
-	process.on("unhandledRejection", (reason: unknown) => {
-		const e = reason as Error | undefined;
-		console.error("[FATAL] unhandledRejection:", e?.stack ?? reason);
-		process.exit(1);
-	});
-}
-
-export { app };

@@ -31,6 +31,19 @@ export interface Cookies {
 
 // ─── Event Types ──────────────────────────────────────────
 
+/**
+ * Runtime bindings (Cloudflare Workers: D1, KV, R2, vars). Augment to type them:
+ * `declare module "bosia" { interface PlatformEnv { DB: D1Database } }`
+ */
+export interface PlatformEnv {
+	[key: string]: any;
+}
+
+/** What the host runtime hands the app. */
+export interface Platform {
+	env: PlatformEnv;
+}
+
 export type RequestEvent = {
 	request: Request;
 	url: URL;
@@ -56,6 +69,11 @@ export type RequestEvent = {
 	 * authorization: a check that runs on one kind and not the other is a hole.
 	 */
 	isDataRequest: boolean;
+	/**
+	 * Runtime platform context. On Cloudflare Workers, `platform.env` holds the
+	 * bindings (D1, KV, R2, …). `undefined` on Bun.
+	 */
+	platform?: Platform;
 };
 
 export type LoadEvent = {
@@ -73,6 +91,11 @@ export type LoadEvent = {
 	 * namespaced (e.g. `"app:user"`).
 	 */
 	depends: (...keys: string[]) => void;
+	/**
+	 * Runtime platform context. On Cloudflare Workers, `platform.env` holds the
+	 * bindings (D1, KV, R2, …). `undefined` on Bun.
+	 */
+	platform?: Platform;
 	/**
 	 * Set response headers for this request. Headers accumulate across
 	 * layout and page loaders and land on both the SSR HTML response and
@@ -150,6 +173,11 @@ export type MetadataEvent = {
 	locals: Record<string, any>;
 	cookies: Cookies;
 	fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+	/**
+	 * Runtime platform context. On Cloudflare Workers, `platform.env` holds the
+	 * bindings (D1, KV, R2, …). `undefined` on Bun.
+	 */
+	platform?: Platform;
 };
 
 export type Metadata = {

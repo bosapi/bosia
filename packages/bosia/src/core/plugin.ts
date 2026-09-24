@@ -1,3 +1,4 @@
+import { builtinModules } from "module";
 import { join, dirname } from "path";
 
 import { resolveImportPath } from "./resolveImport.ts";
@@ -8,6 +9,7 @@ import { resolveImportPath } from "./resolveImport.ts";
 //   $env           → .bosia/env.server.ts (bun) or .bosia/env.client.ts (browser)
 //   $*             → resolved dynamically via tsconfig.json compilerOptions.paths
 //   ./artifacts.ts → .bosia/artifacts.ts (workers runtime — no filesystem)
+//   bosia:workers-runtime → .bosia/runtime.workers.ts (workers runtime)
 
 export function makeBosiaPlugin(
 	target: "browser" | "bun" = "bun",
@@ -34,6 +36,15 @@ export function makeBosiaPlugin(
 					args.importer.startsWith(import.meta.dir)
 						? { path: join(process.cwd(), ".bosia", "artifacts.ts") }
 						: undefined,
+				);
+				build.onResolve({ filter: /^bosia:workers-runtime$/ }, () => ({
+					path: join(process.cwd(), ".bosia", "runtime.workers.ts"),
+				}));
+				// workerd provides Node builtins under nodejs_compat. Keep them external
+				// as `node:*`: a browser-target build would swap a bare `fs` for `{}`.
+				const builtins = new Set(builtinModules);
+				build.onResolve({ filter: /^[a-z_]+(\/[a-z_]+)?$/ }, (args) =>
+					builtins.has(args.path) ? { path: `node:${args.path}`, external: true } : undefined,
 				);
 			}
 

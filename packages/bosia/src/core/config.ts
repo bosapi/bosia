@@ -9,7 +9,7 @@ let cachedFromPath: string | null = null;
 
 const CONFIG_NAMES = ["bosia.config.ts", "bosia.config.js", "bosia.config.mjs"];
 
-function findConfigPath(cwd: string): string | null {
+export function findConfigPath(cwd: string): string | null {
 	for (const name of CONFIG_NAMES) {
 		const p = join(cwd, name);
 		if (existsSync(p)) return p;
@@ -97,6 +97,16 @@ export async function loadBosiaConfig(cwd: string = process.cwd()): Promise<Bosi
 function normalizeConfig(config: BosiaConfig): BosiaConfig {
 	const rawPlugins = Array.isArray(config.plugins) ? config.plugins : [];
 	return { ...config, plugins: rawPlugins.filter((p): p is BosiaPlugin => Boolean(p)) };
+}
+
+/**
+ * Hand over an already-imported config. For runtimes that can't load
+ * `bosia.config.ts` off disk (Workers bundles it statically); call before
+ * anything reads the config.
+ */
+export function setBosiaConfig(config: BosiaConfig, cwd: string = process.cwd()): void {
+	cached = normalizeConfig(config);
+	cachedFromPath = cwd;
 }
 
 /** Test-only — drops the in-memory cache so tests can reload fresh config files. */

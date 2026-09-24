@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { readArtifact } from "../src/core/artifacts.ts";
-import { generateArtifactsModule } from "../src/core/artifactCodegen.ts";
+import { generateArtifactsModule, generateWorkersRuntime } from "../src/core/workersCodegen.ts";
 import { makeBosiaPlugin } from "../src/core/plugin.ts";
 
 let workdir: string;
@@ -59,5 +59,38 @@ describe("generateArtifactsModule", () => {
 		expect(workers).toContain("hydrate-abc.js");
 		expect(workers).not.toContain("JSON.parse(readFileSync");
 		expect(await build("bun")).toContain("JSON.parse(readFileSync");
+	});
+});
+
+describe("generateWorkersRuntime", () => {
+	test("statically re-exports the app's hooks handle and config", async () => {
+		mkdirSync(join(workdir, "src"));
+		writeFileSync(
+			join(workdir, "src", "hooks.server.ts"),
+			`export const handle = () => "hooked";\n`,
+		);
+		writeFileSync(join(workdir, "bosia.config.ts"), `export default { strictImports: false };\n`);
+		const mod = await import(generateWorkersRuntime(workdir));
+		expect(mod.handle()).toBe("hooked");
+		expect(mod.config).toEqual({ strictImports: false });
+	});
+
+	test("no hooks, no config → null handle, empty config", async () => {
+		const mod = await import(generateWorkersRuntime(workdir));
+		expect(mod.handle).toBeNull();
+		expect(mod.config).toEqual({});
+	});
+});
+
+describe("workers runtime plugin", () => {
+	test("keeps bare node builtins as real imports instead of browser stubs", async () => {
+		const entry = join(workdir, "entry.ts");
+		writeFileSync(entry, `import { existsSync } from "fs";\nexport const x = existsSync("/");\n`);
+		const out = await Bun.build({
+			entrypoints: [entry],
+			target: "browser",
+			plugins: [makeBosiaPlugin("bun", "workers")],
+		}).then((r) => r.outputs[0].text());
+		expect(out).toMatch(/from "(node:)?fs"/);
 	});
 });

@@ -36,6 +36,7 @@ import {
 } from "./html.ts";
 import type { Metadata } from "./hooks.ts";
 import { loadPlugins } from "./config.ts";
+import { getPlatform } from "./platform.ts";
 import { reportDevErrorFromCatch } from "./devErrorReport.ts";
 import { dev500Response } from "./dev-500.ts";
 import type { BosiaPlugin, RenderContext } from "./types/plugin.ts";
@@ -436,6 +437,7 @@ export async function loadRouteData(
 							fetch: trackedFetch(fetch, origin, deps),
 							metadata: null,
 							depends: makeDepends(deps),
+							platform: getPlatform(),
 							setHeaders,
 						}),
 						LOAD_TIMEOUT,
@@ -502,6 +504,7 @@ export async function loadRouteData(
 							fetch: trackedFetch(fetch, origin, deps),
 							metadata: metadataData,
 							depends: makeDepends(deps),
+							platform: getPlatform(),
 							setHeaders,
 						}),
 						LOAD_TIMEOUT,
@@ -564,7 +567,7 @@ export async function loadMetadata(
 			const fetch = makeFetch(req, url);
 			return (
 				(await withTimeout(
-					mod.metadata({ params, url, locals, cookies, fetch }),
+					mod.metadata({ params, url, locals, cookies, fetch, platform: getPlatform() }),
 					METADATA_TIMEOUT,
 					`metadata (${url.pathname})`,
 				)) ?? null
@@ -652,7 +655,8 @@ export async function renderSSRStream(
 			metadata = await loadMetadata(route, params, url, locals, cookies, req);
 		} catch (err) {
 			if (isRedirect(err)) {
-				return Response.redirect(err.location, err.status);
+				// Not Response.redirect(): it rejects relative URLs on Workers.
+				return new Response(null, { status: err.status, headers: { Location: err.location } });
 			}
 			if (isHttpError(err)) {
 				return renderErrorPage(
@@ -690,7 +694,8 @@ export async function renderSSRStream(
 			]);
 			pageMod = pm;
 		} catch (err) {
-			if (isRedirect(err)) return Response.redirect(err.location, err.status);
+			if (isRedirect(err))
+				return new Response(null, { status: err.status, headers: { Location: err.location } });
 			if (isHttpError(err)) {
 				const e = err as HttpError & {
 					errorDepth?: number;
@@ -950,7 +955,8 @@ export async function renderPageWithFormData(
 	try {
 		metadata = await loadMetadata(route, params, url, locals, cookies, req);
 	} catch (err) {
-		if (isRedirect(err)) return Response.redirect(err.location, err.status);
+		if (isRedirect(err))
+			return new Response(null, { status: err.status, headers: { Location: err.location } });
 		if (isHttpError(err)) {
 			return renderErrorPage(
 				err.status,

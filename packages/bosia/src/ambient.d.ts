@@ -29,3 +29,9 @@ declare module "bosia:routes" {
 
 	export const errorPage: Loader | null;
 }
+
+// Workers only — backed by .bosia/runtime.workers.ts (see core/workersCodegen.ts).
+declare module "bosia:workers-runtime" {
+	export const handle: import("./core/hooks.ts").Handle | null;
+	export const config: import("./core/types/plugin.ts").BosiaConfig;
+}
