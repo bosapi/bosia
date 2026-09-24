@@ -22,6 +22,7 @@ import {
 	generateWorkersRuntime,
 	generateWranglerConfig,
 } from "./workersCodegen.ts";
+import { workersGuardReport } from "./workersGuard.ts";
 
 // Resolved from this file's location inside the bosia package
 const CORE_DIR = import.meta.dir;
@@ -56,6 +57,13 @@ if (target !== "bun" && target !== "workers") {
 	process.exit(1);
 }
 if (target !== "bun") console.log(`🎯 Target: ${target}`);
+if (target === "workers") {
+	const guard = workersGuardReport();
+	if (guard) {
+		console.error(`❌ ${guard}`);
+		process.exit(1);
+	}
+}
 
 for (const p of userPlugins) {
 	if (p.build?.preBuild) {

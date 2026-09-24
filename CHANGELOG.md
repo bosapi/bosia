@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Deploy to Cloudflare Workers: `bosia build --target=workers`, then `wrangler deploy`.
 - Pages and APIs can read Cloudflare bindings (databases, secrets) via `event.platform.env`.
+- Workers builds stop early, with file and line, when server code uses Bun-only features.
 
 ### Fixed
 

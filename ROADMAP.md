@@ -23,7 +23,8 @@
 - [x] 🟡 Phase 5: `target` config + `--target=workers` (`BOSIA_TARGET`) → `dist/worker/index.js`, manifest `target`, `wrangler.jsonc` (written once), `bosia start` → `wrangler dev`; client chunks `chunk-[hash]`.
 - [x] 🟠 `event.platform.env` verified reaching `load()` — end-to-end build test imports the worker and calls `fetch(req, env)`.
 - [ ] 🟢 Runtime vars on Workers come from `wrangler.jsonc` `vars` / secrets / `.dev.vars`, not `.env` like `bosia start` — document in Phase 7.
-- [ ] 🟡 Phase 6: build guard for `Bun.*` / `node:fs` in user server code when targeting Workers.
+- [x] 🟡 Phase 6: `workersGuard.ts` fails workers builds on `Bun.*`, `fs`/`node:fs`, `bun`/`bun:*` in server files (routes, hooks, `lib/server`). `BOSIA_WORKERS_GUARD=0` warns instead.
+- [ ] 🟢 Guard scans server files by path — a Bun call in a plain `src/lib/*.ts` a loader imports is missed. Upgrade: check in the workers plugin's `onLoad`.
 - [ ] 🟡 Phase 7: docs, skills (`bosia-cloudflare`), un-"Not Planned" adapters, drop "no adapters" from package description.
 
 ## bosia 0.9.7 (2026-09-24) — native Windows support
