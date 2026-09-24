@@ -39,6 +39,12 @@ beforeAll(async () => {
 		`<!doctype html>\n<html lang="%bosia.lang%">\n<head>%bosia.head%</head>\n<body>%bosia.body%</body>\n</html>\n`,
 	);
 	writeFileSync(join(routes, "+page.svelte"), `<h1>Beranda</h1>\n`);
+	// Big enough to be stored compressed, so a repeat request is a compressed cache hit.
+	mkdirSync(join(routes, "big"), { recursive: true });
+	writeFileSync(
+		join(routes, "big", "+page.svelte"),
+		`<p>${"Bosia di Workers. ".repeat(400)}</p>\n`,
+	);
 	writeFileSync(
 		join(routes, "hello", "+page.server.ts"),
 		`export function load({ platform }) {\n\treturn { greeting: platform?.env?.GREETING ?? "none" };\n}\n`,
@@ -98,6 +104,34 @@ describe("workers target build", () => {
 
 		const missing = await worker.fetch(new Request("http://x/nope"), env);
 		expect(missing.status).toBe(404);
+	});
+
+	// Workers compresses a body sent with Content-Encoding again unless the
+	// Response says encodeBody: "manual". handleRequest rebuilds every response,
+	// which once dropped the flag and shipped brotli-inside-gzip. Bun ignores the
+	// key, so check the flag on the Response the worker builds last.
+	test("compressed responses keep encodeBody: manual through handleRequest", async () => {
+		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
+		const req = () => new Request("http://x/big", { headers: { "Accept-Encoding": "gzip" } });
+		await worker.fetch(req(), {});
+
+		const inits: ResponseInit[] = [];
+		const Real = globalThis.Response;
+		globalThis.Response = class extends Real {
+			constructor(body?: BodyInit | null, init?: ResponseInit) {
+				super(body, init);
+				if (init) inits.push(init);
+			}
+		} as typeof Response;
+		let res: Response;
+		try {
+			res = await worker.fetch(req(), {});
+		} finally {
+			globalThis.Response = Real;
+		}
+		expect(res.headers.get("x-bosia-cache")).toBe("HIT");
+		expect(res.headers.get("content-encoding")).toBe("gzip");
+		expect((inits.at(-1) as { encodeBody?: string }).encodeBody).toBe("manual");
 	});
 
 	test("a user-edited wrangler.jsonc survives a rebuild; --target overrides config", async () => {

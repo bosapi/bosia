@@ -20,7 +20,7 @@ import type { CsrfConfig } from "./csrf.ts";
 import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
 import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } from "./csp.ts";
-import { isDev, compress, isStaticPath, distManifest } from "./html.ts";
+import { isDev, compress, isStaticPath, distManifest, PRECOMPRESSED } from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
 import { stripBase, withBase } from "./basePath.ts";
@@ -1030,6 +1030,10 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		// Apply any Set-Cookie headers accumulated during the request
 		for (const cookie of cookieJar.outgoing) headers.append("Set-Cookie", cookie);
 		return new Response(response.body, {
+			// A Content-Encoding here means the body is already compressed (cache
+			// hit, compress()); rebuilding drops that flag and Workers would
+			// compress it again.
+			...(headers.has("content-encoding") ? PRECOMPRESSED : {}),
 			status: response.status,
 			statusText: response.statusText,
 			headers,
