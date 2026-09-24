@@ -2,13 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import {
-	parseEnvFile,
-	classifyEnvVars,
-	loadEnv,
-	getDeclaredEnvKeys,
-	resetDeclaredKeys,
-} from "../src/core/env.ts";
+import { parseEnvFile, classifyEnvVars, loadEnv } from "../src/core/env.ts";
 
 describe("parseEnvFile", () => {
 	test("unquoted basic", () => {
@@ -87,13 +81,11 @@ describe("loadEnv", () => {
 
 	beforeEach(() => {
 		tmpDir = mkdtempSync(join(tmpdir(), "bosia-loadenv-"));
-		resetDeclaredKeys();
 		for (const k of touched) delete process.env[k];
 	});
 
 	afterEach(() => {
 		rmSync(tmpDir, { recursive: true, force: true });
-		resetDeclaredKeys();
 		for (const k of touched) delete process.env[k];
 	});
 
@@ -101,7 +93,6 @@ describe("loadEnv", () => {
 		write(".env.production", "PUBLIC_GTM_ID=GTM-XYZ");
 		const env = loadEnv("development", tmpDir);
 		expect(env.PUBLIC_GTM_ID).toBe("");
-		expect(getDeclaredEnvKeys().has("PUBLIC_GTM_ID")).toBe(true);
 	});
 
 	test("values stay mode-scoped", () => {

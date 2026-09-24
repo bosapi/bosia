@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Bosia now builds and runs on native Windows, not only macOS and Linux.
 - Static files and page assets load correctly on Windows servers.
 - `strictImports` in `bosia.config.ts` now takes effect; it was silently ignored before.
+- Runtime `PUBLIC_*` env vars now reach the browser; before they were always empty there.
 
 ### Added
 

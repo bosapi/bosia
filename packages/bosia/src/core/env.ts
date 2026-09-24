@@ -162,11 +162,6 @@ export function loadEnv(mode: string, dir?: string): Record<string, string> {
 		for (const key of Object.keys(parsed)) declaredNames.add(key);
 	}
 
-	// Track declared keys so html.ts only exposes .env-declared PUBLIC_* vars
-	for (const key of declaredNames) {
-		_declaredKeys.add(key);
-	}
-
 	// Apply to process.env — system env wins (don't overwrite existing).
 	// Name-only keys stay absent so `process.env.X ?? default` still falls back.
 	for (const [key, value] of Object.entries(merged)) {
@@ -184,21 +179,6 @@ export function loadEnv(mode: string, dir?: string): Record<string, string> {
 	}
 
 	return result;
-}
-
-// ─── Declared Key Tracking ───────────────────────────
-// Track which keys were declared in .env files so html.ts only exposes those to the client.
-
-const _declaredKeys = new Set<string>();
-
-/** Returns the set of env var keys that were declared in .env files. */
-export function getDeclaredEnvKeys(): ReadonlySet<string> {
-	return _declaredKeys;
-}
-
-/** Clear the declared-keys set. Call before re-running `loadEnv` on hot-reload so removed PUBLIC_* keys stop leaking to the client. */
-export function resetDeclaredKeys(): void {
-	_declaredKeys.clear();
 }
 
 // ─── Classifier ──────────────────────────────────────────

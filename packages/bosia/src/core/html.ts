@@ -1,7 +1,5 @@
-import { existsSync, readFileSync } from "fs";
-import { getDeclaredEnvKeys } from "./env.ts";
+import { readArtifact } from "./artifacts.ts";
 import { nonceAttr } from "./csp.ts";
-import { OUT_DIR } from "./paths.ts";
 import { rebaseHtmlAttrs } from "./basePath.ts";
 import { currentBase } from "./appBase.ts";
 import type { AppHtmlSegments } from "./appHtml.ts";
@@ -18,12 +16,9 @@ export const distManifest: {
 	entry: string;
 	tw?: string;
 	basePath?: string;
-} = (() => {
-	const p = `${OUT_DIR}/manifest.json`;
-	return existsSync(p)
-		? JSON.parse(readFileSync(p, "utf-8"))
-		: { js: [], css: [], entry: "hydrate.js" };
-})();
+	/** PUBLIC_* (non-static) names declared in .env files, stamped by the build. */
+	publicEnv?: string[];
+} = readArtifact("manifest.json") ?? { js: [], css: [], entry: "hydrate.js" };
 
 export const isDev = process.env.NODE_ENV !== "production";
 const cacheBust = isDev ? `?v=${Date.now()}` : "";
@@ -115,23 +110,19 @@ export function safeJsonForScript(data: unknown): string {
 // ─── Public Env Injection ─────────────────────────────────
 
 /**
- * Collect PUBLIC_* (non-static) vars that were declared in .env files.
- * Only exposes keys tracked by loadEnv() — never leaks system env vars
- * that happen to start with PUBLIC_.
+ * PUBLIC_* (non-static) vars declared in .env files, with their current values.
+ * The names come from the build (`distManifest.publicEnv`), never from
+ * process.env — system env vars that happen to start with PUBLIC_ don't leak.
+ * The server runs as its own process (and on Workers, with no .env on disk),
+ * so the names must travel with the build rather than in loadEnv()'s memory.
  */
-const _publicDynamicEnv: Record<string, string> = (() => {
-	const declared = getDeclaredEnvKeys();
+export function getPublicDynamicEnv(): Record<string, string> {
 	const result: Record<string, string> = {};
-	for (const key of declared) {
-		if (key.startsWith("PUBLIC_") && !key.startsWith("PUBLIC_STATIC_")) {
-			const value = process.env[key];
-			if (value !== undefined) result[key] = value;
-		}
+	for (const key of distManifest.publicEnv ?? []) {
+		const value = process.env[key];
+		if (value !== undefined) result[key] = value;
 	}
 	return result;
-})();
-function getPublicDynamicEnv(): Record<string, string> {
-	return _publicDynamicEnv;
 }
 
 // ─── Lang Validation ──────────────────────────────────────

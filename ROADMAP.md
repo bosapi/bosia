@@ -11,7 +11,9 @@
 
 - [x] 🟠 Phase 0 spike: `target: "browser"` + `external: ["node:*"]`; Elysia `CloudflareAdapter` handles `"*"` routes + `onError`; a global `Bun` shim breaks Elysia's runtime detection.
 - [x] 🔴 Phase 1: `config.ts` rebuilt config as `{ plugins }`, dropping `strictImports` (and any future `target`). Now keeps every field; tests cover source + prebuilt paths.
-- [ ] 🟠 Phase 2: inline boot-time build artifacts (manifest, app-html, route-manifest, declared env keys) as `bosia:manifests`.
+- [x] 🟠 Phase 2: build artifacts read via `core/artifacts.ts` `readArtifact()`; build writes `.bosia/artifacts.ts` (inlined JSON), swapped in by `makeBosiaPlugin(_, "workers")`.
+- [x] 🔴 `window.__BOSIA_ENV__` was always empty: declared `PUBLIC_*` names lived in the CLI process, not the spawned server. Build now stamps `publicEnv` into manifest.json.
+- [ ] 🟡 Phase 5: write `.bosia/artifacts.ts` only for workers target (dev + build share it today).
 - [ ] 🟠 Phase 3: swap `Bun.CryptoHasher`/`Bun.gzipSync` for `node:crypto`/`node:zlib` (both runtimes); `bosia:platform` only for process lifecycle.
 - [ ] 🔴 Phase 4: Workers entry via `createApp()`; `event.platform`; `Response.redirect(relative)` throws in workerd → hook redirects 500 (server.ts, renderer.ts ×2).
 - [ ] 🟡 Phase 5: `target` config + `--target=workers`, `wrangler.jsonc`, `bosia start` → `wrangler dev`; drop `+` from chunk names (CF assets 307 `+` → `%2B`).

@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 
 import { OUT_DIR } from "./paths.ts";
+import { readArtifact } from "./artifacts.ts";
 import { rebaseHtmlAttrs } from "./basePath.ts";
 import { currentBase } from "./appBase.ts";
 
@@ -86,16 +87,6 @@ export function writeAppHtmlSegments(segments: AppHtmlSegments, outDir: string =
 	return target;
 }
 
-function readPersistedSegments(cwd: string): AppHtmlSegments | undefined {
-	const persistedPath = join(cwd, OUT_DIR, "app-html.json");
-	if (!existsSync(persistedPath)) return undefined;
-	try {
-		return JSON.parse(readFileSync(persistedPath, "utf-8")) as AppHtmlSegments;
-	} catch {
-		return undefined;
-	}
-}
-
 // ─── Cached Getter ────────────────────────────────────────
 
 export function getAppHtmlSegments(cwd: string = process.cwd()): AppHtmlSegments {
@@ -104,7 +95,8 @@ export function getAppHtmlSegments(cwd: string = process.cwd()): AppHtmlSegments
 	}
 	// Prefer persisted dist artifact (production runtime — no `src/` in image).
 	// Fall back to parsing `src/app.html` directly (dev mode, build step).
-	cachedSegments = readPersistedSegments(cwd) ?? loadAppHtmlTemplate(cwd);
+	cachedSegments =
+		readArtifact<AppHtmlSegments>("app-html.json", join(cwd, OUT_DIR)) ?? loadAppHtmlTemplate(cwd);
 	return cachedSegments;
 }
 

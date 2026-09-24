@@ -7,8 +7,12 @@ import { resolveImportPath } from "./resolveImport.ts";
 //   bosia:routes  → .bosia/routes.ts  (generated route map)
 //   $env           → .bosia/env.server.ts (bun) or .bosia/env.client.ts (browser)
 //   $*             → resolved dynamically via tsconfig.json compilerOptions.paths
+//   ./artifacts.ts → .bosia/artifacts.ts (workers runtime — no filesystem)
 
-export function makeBosiaPlugin(target: "browser" | "bun" = "bun") {
+export function makeBosiaPlugin(
+	target: "browser" | "bun" = "bun",
+	runtime: "bun" | "workers" = "bun",
+) {
 	return {
 		name: "bosia-resolver",
 		setup(build: import("bun").PluginBuilder) {
@@ -22,6 +26,16 @@ export function makeBosiaPlugin(target: "browser" | "bun" = "bun") {
 					target === "browser" ? "routes.client.ts" : "routes.ts",
 				),
 			}));
+
+			// Workers has no filesystem: the core's build-artifact reader becomes
+			// the generated module with the same JSON inlined.
+			if (runtime === "workers") {
+				build.onResolve({ filter: /^\.\/artifacts\.ts$/ }, (args) =>
+					args.importer.startsWith(import.meta.dir)
+						? { path: join(process.cwd(), ".bosia", "artifacts.ts") }
+						: undefined,
+				);
+			}
 
 			// $env → .bosia/env.client.ts (browser) or .bosia/env.server.ts (bun)
 			build.onResolve({ filter: /^\$env$/ }, () => ({

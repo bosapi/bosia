@@ -1,7 +1,7 @@
 import { spawn, type Subprocess } from "bun";
 import { readdirSync, statSync, watch, type Dirent } from "fs";
 import { join } from "path";
-import { loadEnv, resetDeclaredKeys } from "./env.ts";
+import { loadEnv } from "./env.ts";
 import { BOSIA_NODE_PATH } from "./paths.ts";
 import { pidsOnPort } from "./port.ts";
 import { affectsRouteManifest, shouldIgnoreForRebuild } from "./devWatch.ts";
@@ -31,7 +31,6 @@ function reloadEnv() {
 	for (const [k, v] of Object.entries(SHELL_ENV_SNAPSHOT)) {
 		if (v !== undefined) process.env[k] = v;
 	}
-	resetDeclaredKeys();
 	loadEnv("development");
 }
 

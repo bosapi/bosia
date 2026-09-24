@@ -1,12 +1,13 @@
 import { Elysia } from "elysia";
 
-import { existsSync, readFileSync } from "fs";
+import { existsSync } from "fs";
 import { join } from "path";
 
 import { findMatch, compileRoutes, canonicalPathname } from "./matcher.ts";
 import { resolveApiMatch } from "./apiResolver.ts";
 import { apiRoutes, serverRoutes } from "bosia:routes";
 import { loadPlugins } from "./config.ts";
+import { readArtifact } from "./artifacts.ts";
 import type { RouteManifest } from "./types.ts";
 
 // Pre-compile route patterns into RegExp at startup (shared by renderer.ts via module reference)
@@ -1211,12 +1212,8 @@ if (plugins.length > 0) {
 
 // Read the build-time route manifest so plugins.backend.after can introspect routes.
 function loadBuiltManifest(): RouteManifest {
-	const path = `${OUT_DIR}/route-manifest.json`;
-	if (existsSync(path)) {
-		try {
-			return JSON.parse(readFileSync(path, "utf-8"));
-		} catch {}
-	}
+	const built = readArtifact<RouteManifest>("route-manifest.json");
+	if (built) return built;
 	// Fallback: synthesize from runtime arrays (no file paths, just patterns).
 	return {
 		pages: serverRoutes.map((r: any) => ({

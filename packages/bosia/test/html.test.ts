@@ -12,6 +12,7 @@ import {
 	buildMetadataChunk,
 	metadataTags,
 	distManifest,
+	getPublicDynamicEnv,
 } from "../src/core/html.ts";
 import type { AppHtmlSegments } from "../src/core/appHtml.ts";
 import type { Metadata } from "../src/core/hooks.ts";
@@ -436,5 +437,28 @@ describe("buildHtml — template segments", () => {
 
 		expect(html).toContain(segments.tail);
 		expect(html).toContain("content");
+	});
+});
+
+describe("public runtime env", () => {
+	test("exposes only PUBLIC_* names the build declared, with live values", () => {
+		process.env.PUBLIC_DECLARED_X = "yes";
+		process.env.PUBLIC_UNDECLARED_X = "leak";
+		distManifest.publicEnv = ["PUBLIC_DECLARED_X", "PUBLIC_UNSET_X"];
+		try {
+			expect(getPublicDynamicEnv()).toEqual({ PUBLIC_DECLARED_X: "yes" });
+			expect(buildHtml("", "", {}, [], true, null, "en", true)).toContain(
+				`window.__BOSIA_ENV__={"PUBLIC_DECLARED_X":"yes"}`,
+			);
+		} finally {
+			delete distManifest.publicEnv;
+			delete process.env.PUBLIC_DECLARED_X;
+			delete process.env.PUBLIC_UNDECLARED_X;
+		}
+	});
+
+	test("no declared names → no env script", () => {
+		expect(getPublicDynamicEnv()).toEqual({});
+		expect(buildHtml("", "", {}, [], true, null, "en", true)).not.toContain("__BOSIA_ENV__");
 	});
 });

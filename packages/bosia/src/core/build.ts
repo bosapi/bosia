@@ -17,6 +17,7 @@ import { finalizeTailwindCss, TW_TEMP_BASENAME } from "./twHash.ts";
 import { loadPlugins } from "./config.ts";
 import type { BuildContext } from "./types/plugin.ts";
 import { loadAppHtmlTemplate, writeAppHtmlSegments } from "./appHtml.ts";
+import { generateArtifactsModule } from "./artifactCodegen.ts";
 
 // Resolved from this file's location inside the bosia package
 const CORE_DIR = import.meta.dir;
@@ -77,6 +78,7 @@ for (const p of [
 	".bosia/routes.client.ts",
 	".bosia/env.server.ts",
 	".bosia/env.client.ts",
+	".bosia/artifacts.ts",
 	".bosia/types",
 ]) {
 	try {
@@ -289,6 +291,9 @@ const distManifest = {
 	// The CSS urls and the client route table are baked in with this prefix.
 	// Stamped so the server can warn when it boots with a different one.
 	basePath: currentBase(),
+	// Names of PUBLIC_* runtime vars the page may expose to the browser. The
+	// server is its own process, so it can't see which names loadEnv() declared.
+	publicEnv: Object.keys(classifiedEnv.publicDynamic),
 };
 writeFileSync(`${OUT_DIR}/manifest.json`, JSON.stringify(distManifest, null, 2));
 console.log(`✅ Client bundle: ${jsFiles.join(", ")}`);
@@ -301,6 +306,10 @@ writeFileSync(`${OUT_DIR}/route-manifest.json`, JSON.stringify(manifest, null, 2
 // `src/app.html` in the image. Renderer reads `${OUT_DIR}/app-html.json` first,
 // falls back to parsing `src/app.html` for dev.
 writeAppHtmlSegments(appHtml);
+
+// 8c-bis. Inline the artifacts above into .bosia/artifacts.ts for runtimes
+// without a filesystem (Cloudflare Workers). Unused by the Bun server.
+generateArtifactsModule();
 
 // 8d. Bundle user `src/hooks.server.ts` and `bosia.config.{ts,js,mjs}` into
 // `dist/` so production images can copy only `dist/` + `node_modules/` —
