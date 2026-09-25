@@ -34,7 +34,7 @@
 - [x] 🟡 Startup warm-up: each isolate renders `/` once (no hooks/loaders/cache). Live: 32 requests on a fresh deploy, max 3ms CPU, 0 over 10ms, 0 errors. Startup 98ms.
 - [x] 🔴 Workers: client nav to a prerendered page POSTed its data file → asset server 405. Router now GETs prerendered data; `prerender`+`actions` pages render live.
 - [x] Workers docs + skill R9: prerender pages that never change (no worker CPU, no request).
-- [x] Workers bundle: stub `svelte/compiler` (pulled in by dev-only inspector). Demo 1453→626KB, 408→184KB gz. Left: Elysia+typebox+file-type ~330KB (item 4).
+- [x] Workers bundle: stub `svelte/compiler` (pulled in by dev-only inspector). Demo 1453→626KB, 408→184KB gz; live startup 148→49ms. Left: Elysia+typebox+file-type ~330KB (item 4).
 - [ ] ~~Workers shared cache via `caches.default`~~ skipped: per-colo, no tag/prefix purge, no-op on workers.dev.
 
 ## bosia 0.9.7 (2026-09-24) — native Windows support
