@@ -33,6 +33,8 @@
 - [x] 🟡 Live after fix: first request per isolate 8–15ms CPU (was 11–23), warm 1–5ms, no 1102 errors. Rest is V8 compiling on first run.
 - [x] 🟡 Startup warm-up: each isolate renders `/` once (no hooks/loaders/cache). Live: 32 requests on a fresh deploy, max 3ms CPU, 0 over 10ms, 0 errors. Startup 98ms.
 - [x] 🔴 Workers: client nav to a prerendered page POSTed its data file → asset server 405. Router now GETs prerendered data; `prerender`+`actions` pages render live.
+- [x] Workers docs + skill R9: prerender pages that never change (no worker CPU, no request).
+- [ ] ~~Workers shared cache via `caches.default`~~ skipped: per-colo, no tag/prefix purge, no-op on workers.dev.
 
 ## bosia 0.9.7 (2026-09-24) — native Windows support
 

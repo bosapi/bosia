@@ -252,6 +252,17 @@ Worker tidak punya global `Bun` dan tidak punya filesystem. Build berhenti lebih
 
 Pengecekan `typeof Bun` di baris yang sama diizinkan, jadi kode yang dipakai bersama kedua target bisa bercabang. Pemeriksaan ini membaca file berdasarkan path, jadi panggilan `Bun` di helper biasa `src/lib/*.ts` lolos — dan baru gagal saat request. Set `BOSIA_WORKERS_GUARD=0` untuk mengubah error menjadi peringatan.
 
+### Prerender halaman yang tidak berubah
+
+Halaman yang di-prerender adalah file biasa yang disajikan Cloudflare sebelum worker berjalan. Tidak memakai waktu CPU dan tidak dihitung sebagai request worker, yang penting di paket gratis (100.000 request per hari). Halaman landing, harga, dan dokumentasi cocok untuk ini:
+
+```ts
+// src/routes/pricing/+page.server.ts
+export const prerender = true;
+```
+
+Loader-nya berjalan sekali, saat build, jadi jangan dipakai untuk halaman yang bergantung pada pengunjung (cookie, user yang login), membaca binding `event.platform.env`, atau mengekspor form `actions` — build membiarkan halaman itu tetap live.
+
 ### Batasan
 
 - **Response cache per isolate.** Tetap membantu di route yang ramai, tapi Cloudflare menjalankan banyak isolate dan membuangnya sesukanya, jadi `invalidate()` hanya membersihkan salinan di isolate yang menjalankannya. Buat halaman ter-cache berumur pendek, atau keluarkan route dengan `export const cache = false`.

@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - CLI and API reference cover the Workers build option and `event.platform`.
 - Cloudflare Workers docs explain the startup warm-up and that Cloudflare handles compression.
 - Routing guide notes that pages with form actions are never prerendered.
+- Workers guide suggests prerendering pages that never change, to save CPU and requests.
 
 ## [0.8.15] - 2026-09-24
 

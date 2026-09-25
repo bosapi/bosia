@@ -252,6 +252,17 @@ A worker has no `Bun` global and no filesystem. The build stops early if your se
 
 A `typeof Bun` check on the same line is allowed, so code shared between targets can branch. The check reads files by path, so a `Bun` call in a plain `src/lib/*.ts` helper slips past it — and fails at request time instead. Set `BOSIA_WORKERS_GUARD=0` to turn the error into a warning.
 
+### Prerender pages that don't change
+
+A prerendered page is a plain file that Cloudflare serves before the worker runs. It uses no CPU time and doesn't count as a worker request, which matters on the free tier (100,000 requests a day). Landing, pricing and docs pages are good fits:
+
+```ts
+// src/routes/pricing/+page.server.ts
+export const prerender = true;
+```
+
+Its loader runs once, at build time, so skip it for pages that depend on who is visiting (cookies, the logged-in user), read `event.platform.env` bindings, or export form `actions` — the build keeps those pages live.
+
 ### Limits
 
 - **Response cache is per isolate.** It still helps on busy routes, but Cloudflare runs many isolates and evicts them freely, so `invalidate()` only clears the copy in the isolate that ran it. Keep cached pages short-lived, or opt routes out with `export const cache = false`.

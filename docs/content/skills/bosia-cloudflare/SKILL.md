@@ -109,6 +109,10 @@ Each isolate renders `/` once at startup with no hooks, loaders, `metadata()` or
 
 `prerender = true` pages are served by Cloudflare's asset server, which answers only GET/HEAD (anything else gets 405, before the worker runs). The router already fetches their data with GET, and the build refuses to prerender a page that exports `actions`. Don't POST to a prerendered URL by hand.
 
+### R9 — Prerender pages that are the same for every visitor
+
+A prerendered page costs no worker CPU and no worker request. When a page's output doesn't depend on the visitor or on bindings (landing, pricing, docs, about), add `export const prerender = true` to its `+page.server.ts`. Its loader runs at build time: no cookies, no `event.platform.env`. Pages with `actions` stay live.
+
 ## Anti-patterns
 
 - Reading a binding from `process.env.DB` or a module-level global — bindings are only on `event.platform.env`.
