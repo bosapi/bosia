@@ -35,6 +35,9 @@
 - [x] 🔴 Workers: client nav to a prerendered page POSTed its data file → asset server 405. Router now GETs prerendered data; `prerender`+`actions` pages render live.
 - [x] Workers docs + skill R9: prerender pages that never change (no worker CPU, no request).
 - [x] Workers bundle: stub `svelte/compiler` (pulled in by dev-only inspector). Demo 1453→626KB, 408→184KB gz; live startup 148→49ms. Left: Elysia+typebox+file-type ~330KB (item 4).
+- [ ] Workers: drop Elysia (~360KB min, ~90KB gz est.). It only wraps handleRequest: 6 catch-alls, onError→500 JSON, HEAD=GET w/o body. Move createApp out of server.ts; lean worker entry calls handleRequest.
+- [ ] Workers Elysia removal: build picks lean entry when no prod plugin uses `backend` hooks, else keeps Elysia. `server-timing` needs Elysia today — later a framework request-wrap hook so it doesn't.
+- [ ] 🟡 Unrouted methods (TRACE etc.) answer 500: Elysia's NOT_FOUND reaches the base onError. Should be 405 on Bun and Workers.
 - [ ] ~~Workers shared cache via `caches.default`~~ skipped: per-colo, no tag/prefix purge, no-op on workers.dev.
 
 ## bosia 0.9.7 (2026-09-24) — native Windows support
