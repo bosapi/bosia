@@ -72,6 +72,18 @@ beforeAll(async () => {
 			`\tres.headers.set("x-hooked", "yes");\n` +
 			`\treturn res;\n};\n`,
 	);
+	// Prerendered pages: Workers serves them as static files, which answer only GET.
+	for (const [dir, server] of [
+		["fixed", `export const prerender = true;\n`],
+		[
+			"form",
+			`export const prerender = true;\nexport const actions = { default: () => ({ ok: true }) };\n`,
+		],
+	]) {
+		mkdirSync(join(routes, dir), { recursive: true });
+		writeFileSync(join(routes, dir, "+page.server.ts"), server);
+		writeFileSync(join(routes, dir, "+page.svelte"), `<p>${dir}</p>\n`);
+	}
 	writeFileSync(join(tmpDir, "bosia.config.ts"), `export default { target: "workers" };\n`);
 
 	await build();
@@ -103,6 +115,23 @@ describe("workers target build", () => {
 		expect(config.main).toBe("./dist/worker/index.js");
 		expect(config.assets.directory).toBe("./dist/static");
 		expect(config.compatibility_flags).toContain("nodejs_compat");
+	});
+
+	// The router fetches a prerendered route's data with a plain GET (a POST would
+	// get 405 from the asset server) — it knows which routes are prerendered.
+	test("prerendered routes are flagged for the client; pages with actions aren't prerendered", () => {
+		const client = readFileSync(join(tmpDir, ".bosia", "routes.client.ts"), "utf-8");
+		const flag = (pattern: string) =>
+			new RegExp(`pattern: "${pattern}",[\\s\\S]*?prerender: (true|false)`).exec(client)?.[1];
+		expect(flag("/fixed")).toBe("true");
+		expect(flag("/hello")).toBe("false");
+
+		const statics = join(tmpDir, "dist", "static");
+		expect(existsSync(join(statics, "fixed.html"))).toBe(true);
+		expect(existsSync(join(statics, "__bosia", "data", "fixed.json"))).toBe(true);
+		// A static file can't run a form action, so /form stays a live page.
+		expect(existsSync(join(statics, "form.html"))).toBe(false);
+		expect(flag("/form")).toBe("false");
 	});
 
 	// Importing the worker runs its startup warm-up: `/` renders once, with no

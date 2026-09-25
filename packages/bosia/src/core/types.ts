@@ -34,6 +34,8 @@ export interface PageRoute {
 	 *   `null`  — a `cache` export exists but isn't a literal `false` (dynamic) → import at runtime
 	 */
 	cache: boolean | null;
+	/** `export const prerender = true` in +page.server.ts — its data is a static file at runtime. */
+	prerender: boolean;
 }
 
 /** An API route discovered from the file system */

@@ -1223,6 +1223,7 @@ function loadBuiltManifest(): RouteManifest {
 			errorPages: [],
 			trailingSlash: r.trailingSlash,
 			cache: r.cache ?? null,
+			prerender: false,
 		})),
 		apis: apiRoutes.map((r: any) => ({ pattern: r.pattern, server: "" })),
 		errorPage: null,

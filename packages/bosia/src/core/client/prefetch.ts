@@ -17,7 +17,9 @@ export function buildMaskBits(path: string): string | null {
 	const url = new URL(path, window.location.origin);
 	const pathname = url.pathname;
 	const match = findMatch(clientRoutes, pathname);
-	if (!match) return null;
+	// Prerendered data is a fixed file: nothing to skip, and on Workers only a
+	// plain GET reaches it (the asset server answers a POST with 405).
+	if (!match || match.route.prerender) return null;
 	const ctx = liveContext(pathname, match.params, url);
 	const layoutIds = (match.route as any).layoutIds as (string | null)[];
 	const pageId = (match.route as any).pageId as string | null;

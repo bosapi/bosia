@@ -162,4 +162,4 @@ export const prerender = true; // build ke HTML statis saat `bosia build`
 - `csr = false` — tidak ada JS untuk halaman ini. HTML statis saja.
 - `prerender = true` — di-capture saat build. Untuk route dinamis, ekspor juga `entries()` yang mengembalikan nilai param yang akan di-prerender.
 
-`ssr = false` bersama `csr = false` tidak akan merender apapun dan otomatis di-override ke `csr = true` (dengan peringatan di mode dev). `ssr = false` bersama `prerender = true` bertentangan; route akan dilewati saat prerender.
+`ssr = false` bersama `csr = false` tidak akan merender apapun dan otomatis di-override ke `csr = true` (dengan peringatan di mode dev). `ssr = false` bersama `prerender = true` bertentangan; route akan dilewati saat prerender. Begitu juga halaman yang mengekspor `actions`: file statis tidak bisa menjalankan form action, jadi halaman tetap dirender langsung.

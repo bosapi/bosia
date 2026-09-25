@@ -5,6 +5,7 @@ import type { RouteManifest, TrailingSlash } from "./types.ts";
 
 import { BOSIA_NODE_PATH, OUT_DIR } from "./paths.ts";
 import { currentBase } from "./appBase.ts";
+import { prerenderSkipReason, wantsPrerender } from "./scanner.ts";
 
 /** Acquire an OS-assigned ephemeral port. Tiny TOCTOU race window; acceptable for build-time use. */
 export function getEphemeralPort(): Promise<number> {
@@ -129,11 +130,10 @@ async function detectPrerenderRoutes(manifest: RouteManifest): Promise<Prerender
 		if (!route.pageServer) return [];
 		const filePath = join("src", "routes", route.pageServer);
 		const content = await Bun.file(filePath).text();
-		if (!/export\s+const\s+prerender\s*=\s*true/.test(content)) return [];
-		if (/export\s+const\s+ssr\s*=\s*false/.test(content)) {
-			console.warn(
-				`   ⚠️  ${route.pattern} has prerender=true && ssr=false — contradictory, skipped`,
-			);
+		if (!wantsPrerender(content)) return [];
+		const skip = prerenderSkipReason(content);
+		if (skip) {
+			console.warn(`   ⚠️  ${route.pattern} has prerender=true && ${skip}, skipped`);
 			return [];
 		}
 		const ts = route.trailingSlash;
@@ -144,7 +144,7 @@ async function detectPrerenderRoutes(manifest: RouteManifest): Promise<Prerender
 	const apiTasks = manifest.apis.map(async (route): Promise<PrerenderTarget[]> => {
 		const filePath = join("src", "routes", route.server);
 		const content = await Bun.file(filePath).text();
-		if (!/export\s+const\s+prerender\s*=\s*true/.test(content)) return [];
+		if (!wantsPrerender(content)) return [];
 		if (route.pattern.includes("["))
 			return expandDynamicRoute(route.pattern, filePath, "api", "never");
 		return [{ path: route.pattern, kind: "api", trailingSlash: "never" }];

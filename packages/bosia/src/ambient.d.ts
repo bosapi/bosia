@@ -11,6 +11,7 @@ declare module "bosia:routes" {
 		layouts: Loader[];
 		hasServerData: boolean;
 		trailingSlash: TrailingSlash;
+		prerender: boolean;
 	}>;
 
 	export const serverRoutes: Array<{

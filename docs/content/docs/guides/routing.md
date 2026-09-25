@@ -205,4 +205,4 @@ export const trailingSlash = "never"; // canonicalize URL form: "never" | "alway
   - 308 (permanent) preserves the request method, so form `POST`s submitted to the wrong slash still reach the action.
   - Root `/` is never modified. API routes (`+server.ts`) are unaffected.
 
-`ssr = false` together with `csr = false` would render nothing and is overridden to `csr = true` (with a dev warning). `ssr = false` together with `prerender = true` is contradictory; the route is skipped during prerender.
+`ssr = false` together with `csr = false` would render nothing and is overridden to `csr = true` (with a dev warning). `ssr = false` together with `prerender = true` is contradictory; the route is skipped during prerender. The same goes for a page that exports `actions`: a static file can't run a form action, so the page stays live.

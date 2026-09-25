@@ -68,6 +68,7 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 	lines.push("  layoutIds: (string | null)[];");
 	lines.push("  loading: (() => Promise<any>) | null;");
 	lines.push("  layoutPaths: string[];");
+	lines.push("  prerender: boolean;");
 	lines.push("}> = [");
 	for (const r of pages) {
 		const layoutImports = r.layouts
@@ -102,6 +103,7 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 			`    loading: ${r.loading ? `() => import(${JSON.stringify(toImportPath(r.loading))})` : "null"},`,
 		);
 		lines.push(`    layoutPaths: ${JSON.stringify(r.layouts)},`);
+		lines.push(`    prerender: ${r.prerender},`);
 		lines.push("  },");
 	}
 	lines.push("];\n");
@@ -204,6 +206,7 @@ function generateClientRoutesFile(
 	lines.push("  layoutIds: (string | null)[];");
 	lines.push("  loading: (() => Promise<any>) | null;");
 	lines.push("  layoutPaths: string[];");
+	lines.push("  prerender: boolean;");
 	lines.push("}> = [");
 	for (const r of pages) {
 		const layoutImports = r.layouts
@@ -235,6 +238,7 @@ function generateClientRoutesFile(
 			`    loading: ${r.loading ? `() => import(${JSON.stringify(toImportPath(r.loading))})` : "null"},`,
 		);
 		lines.push(`    layoutPaths: ${JSON.stringify(r.layouts)},`);
+		lines.push(`    prerender: ${r.prerender},`);
 		lines.push("  },");
 	}
 	lines.push("];\n");

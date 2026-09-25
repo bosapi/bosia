@@ -42,6 +42,35 @@ function readPageCache(filePath: string): boolean | null {
 	}
 }
 
+/** Literal `export const prerender = true` in a server module's source. */
+export function wantsPrerender(src: string): boolean {
+	return /export\s+const\s+prerender\s*=\s*true/.test(src);
+}
+
+/** Why a page that asks for prerender can't have it, or null when it can. */
+export function prerenderSkipReason(src: string): string | null {
+	if (/export\s+const\s+ssr\s*=\s*false/.test(src)) return "ssr=false — contradictory";
+	// A static file can't run an action: Bun would answer the POST with the
+	// prerendered HTML, Workers' asset server with 405. Render it live instead.
+	if (
+		/export\s+(const|let|var|async\s+function|function)\s+actions\b|export\s*\{[^}]*\bactions\b/.test(
+			src,
+		)
+	)
+		return "actions — forms need a live page";
+	return null;
+}
+
+/** True when the page will really be prerendered — the client fetches its data as a static file. */
+function readPrerender(filePath: string): boolean {
+	try {
+		const src = readFileSync(filePath, "utf-8");
+		return wantsPrerender(src) && prerenderSkipReason(src) === null;
+	} catch {
+		return false;
+	}
+}
+
 function readTrailingSlash(filePath: string): TrailingSlash | null {
 	try {
 		const src = readFileSync(filePath, "utf-8");
@@ -137,6 +166,7 @@ export function scanRoutes(): RouteManifest {
 				errorPages: [...currentErrorPages],
 				trailingSlash: effectiveTs,
 				cache: readPageCache(join(ROUTES_DIR, pageFile)),
+				prerender: pageServerFile ? readPrerender(join(ROUTES_DIR, pageServerFile)) : false,
 			});
 		}
 

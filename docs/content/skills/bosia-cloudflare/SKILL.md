@@ -105,6 +105,10 @@ Code shared by both targets may branch on `typeof Bun !== "undefined"` **on the 
 
 Each isolate renders `/` once at startup with no hooks, loaders, `metadata()` or cache, so `data` is empty. Top-level `<script>` code in `/`'s components runs that extra time: keep it free of side effects. A throw there is harmless — the warm-up is best effort. Compression is Cloudflare's job; don't gzip/brotli in hooks.
 
+### R8 — Prerendered pages are static assets
+
+`prerender = true` pages are served by Cloudflare's asset server, which answers only GET/HEAD (anything else gets 405, before the worker runs). The router already fetches their data with GET, and the build refuses to prerender a page that exports `actions`. Don't POST to a prerendered URL by hand.
+
 ## Anti-patterns
 
 - Reading a binding from `process.env.DB` or a module-level global — bindings are only on `event.platform.env`.

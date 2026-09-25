@@ -219,7 +219,10 @@
 		// Forward cached parent data for skipped layers so downstream loaders see
 		// real parent() data, not {}. POST only when there's something to carry —
 		// keeps the no-skip case a cacheable/dedupable GET.
-		const snapshots = buildParentSnapshots(path, maskBits);
+		// A prerendered route's data is a fixed file, so there is nothing to skip —
+		// and on Workers the asset server answers anything but GET with 405.
+		const prerendered = match.route.prerender;
+		const snapshots = prerendered ? {} : buildParentSnapshots(path, maskBits);
 		const dataInit: RequestInit =
 			Object.keys(snapshots).length > 0
 				? {
@@ -231,7 +234,7 @@
 		const dataFetch = cached
 			? Promise.resolve(cached)
 			: match.route.hasServerData
-				? fetch(dataUrl(path, maskBits), dataInit)
+				? fetch(dataUrl(path, prerendered ? undefined : maskBits), dataInit)
 						.then(readDataResponse)
 						// Only a failed request reaches here now — offline, DNS, aborted.
 						// A response that arrived is read for what it says, not discarded.
