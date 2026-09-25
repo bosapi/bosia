@@ -360,6 +360,29 @@ console.log(`\n🎉 Build complete in ${Math.round(performance.now() - buildStar
 
 // ─── Helpers ─────────────────────────────────────────────
 
+// Dev-only plugins in bosia.config.ts (the inspector) import svelte/compiler, which
+// would put ~820KB of never-run code in the worker, 60% of the demo's bundle.
+// Nothing compiles Svelte at runtime, so every export becomes a function that throws.
+function stubSvelteCompiler(): import("bun").BunPlugin {
+	return {
+		name: "bosia-stub-svelte-compiler",
+		setup(build) {
+			build.onResolve({ filter: /^svelte\/compiler$/ }, () => ({
+				path: "svelte/compiler",
+				namespace: "bosia-stub",
+			}));
+			build.onLoad({ filter: /.*/, namespace: "bosia-stub" }, async () => {
+				const names = Object.keys(await import("svelte/compiler"));
+				const fail = `() => { throw new Error("The Svelte compiler isn't available on Cloudflare Workers"); }`;
+				return {
+					loader: "js",
+					contents: names.map((n) => `export const ${n} = ${fail};`).join("\n"),
+				};
+			});
+		},
+	};
+}
+
 async function buildWorker(): Promise<void> {
 	// The isolate has no filesystem: inline the artifacts and static-import the
 	// user's hooks + config instead of reading them off disk at boot.
@@ -378,6 +401,7 @@ async function buildWorker(): Promise<void> {
 		external: ["node:*"],
 		define: { "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "development") },
 		plugins: [
+			stubSvelteCompiler(),
 			makeBosiaPlugin("bun", "workers"),
 			...userServerBunPlugins,
 			makeBosiaSvelteCompiler("bun"),

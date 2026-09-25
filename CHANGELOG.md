@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Pages on Cloudflare Workers use much less CPU time on their first visit.
 - Visiting a prerendered page from another page no longer fails on Cloudflare Workers.
 - Prerendered pages with form actions are now served live, so their forms work.
+- Workers apps are less than half the size when a dev-only plugin like the inspector is used.
 
 ## [0.9.7] - 2026-09-24
 

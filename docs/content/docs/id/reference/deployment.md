@@ -266,7 +266,7 @@ Loader-nya berjalan sekali, saat build, jadi jangan dipakai untuk halaman yang b
 ### Batasan
 
 - **Response cache per isolate.** Tetap membantu di route yang ramai, tapi Cloudflare menjalankan banyak isolate dan membuangnya sesukanya, jadi `invalidate()` hanya membersihkan salinan di isolate yang menjalankannya. Buat halaman ter-cache berumur pendek, atau keluarkan route dengan `export const cache = false`.
-- **Ukuran bundle.** Paket gratis mengizinkan 3 MB setelah gzip. Aplikasi demo sekitar 410 KB; plugin yang di-import `bosia.config.ts` ikut di-bundle meski hanya aktif di dev.
+- **Ukuran bundle.** Paket gratis mengizinkan 3 MB setelah gzip. Aplikasi demo sekitar 185 KB. Plugin yang di-import `bosia.config.ts` ikut di-bundle meski hanya aktif di dev, tapi compiler Svelte yang dipakainya tidak ikut.
 - **Tanpa graceful shutdown** — siklus hidup diatur Cloudflare. `/_health` tetap menjawab.
 - **Pemanasan saat startup.** Tiap isolate baru merender `/` sekali, tanpa hooks, loader, atau cache, agar request pertama tidak menanggung biaya kompilasi. Kode di bagian atas komponen `/` berjalan satu kali ekstra per isolate.
 - **Kompresi** dilakukan Cloudflare, bukan Bosia, jadi tidak memakan waktu CPU Anda.

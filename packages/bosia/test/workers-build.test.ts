@@ -66,8 +66,11 @@ beforeAll(async () => {
 	);
 	writeFileSync(
 		join(tmpDir, "src", "hooks.server.ts"),
-		`export const handle = async ({ event, resolve }) => {\n` +
+		// Imports the compiler the way dev-only plugins do; the worker gets a stub.
+		`import { compile } from "svelte/compiler";\n` +
+			`export const handle = async ({ event, resolve }) => {\n` +
 			`\tglobalThis.__hooks = (globalThis.__hooks ?? 0) + 1;\n` +
+			`\tglobalThis.__compile = compile;\n` +
 			`\tconst res = await resolve(event);\n` +
 			`\tres.headers.set("x-hooked", "yes");\n` +
 			`\treturn res;\n};\n`,
@@ -156,6 +159,15 @@ describe("workers target build", () => {
 
 		const missing = await worker.fetch(new Request("http://x/nope"), env);
 		expect(missing.status).toBe(404);
+	});
+
+	test("the Svelte compiler is stubbed out of the worker", async () => {
+		const bundle = readFileSync(join(tmpDir, "dist", "worker", "index.js"), "utf-8");
+		expect(bundle).not.toContain("css_selector_invalid");
+		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
+		await worker.fetch(new Request("http://x/hello"), env);
+		const compile = (globalThis as Record<string, unknown>).__compile as () => void;
+		expect(() => compile()).toThrow("isn't available on Cloudflare Workers");
 	});
 
 	// Cloudflare's edge compresses responses outside the worker's CPU budget, so

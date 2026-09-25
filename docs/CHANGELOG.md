@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Cloudflare Workers docs explain the startup warm-up and that Cloudflare handles compression.
 - Routing guide notes that pages with form actions are never prerendered.
 - Workers guide suggests prerendering pages that never change, to save CPU and requests.
+- Workers guide shows the smaller bundle size now that the Svelte compiler is left out.
 
 ## [0.8.15] - 2026-09-24
 
