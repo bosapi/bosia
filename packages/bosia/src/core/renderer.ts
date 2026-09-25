@@ -36,7 +36,7 @@ import {
 } from "./html.ts";
 import type { Metadata } from "./hooks.ts";
 import { loadPlugins } from "./config.ts";
-import { getPlatform } from "./platform.ts";
+import { getPlatform, warmingUp } from "./platform.ts";
 import { reportDevErrorFromCatch } from "./devErrorReport.ts";
 import { dev500Response } from "./dev-500.ts";
 import type { BosiaPlugin, RenderContext } from "./types/plugin.ts";
@@ -420,7 +420,7 @@ export async function loadRouteData(
 				continue;
 			}
 			const mod = await ls.loader();
-			if (typeof mod.load === "function") {
+			if (typeof mod.load === "function" && !warmingUp) {
 				// Snapshot per layer so loaders cannot mutate the shared accumulator,
 				// preserving the same isolation semantics as the previous merge-on-call code.
 				const snapshot = { ...parentData };
@@ -489,7 +489,7 @@ export async function loadRouteData(
 			if (skipPage) {
 				pageData = null;
 				pageDeps = null;
-			} else if (typeof mod.load === "function") {
+			} else if (typeof mod.load === "function" && !warmingUp) {
 				const snapshot = { ...parentData };
 				const parent = async () => snapshot;
 				const deps = emptyDeps();
@@ -563,7 +563,7 @@ export async function loadMetadata(
 	if (!route.pageServer) return null;
 	try {
 		const mod = await route.pageServer();
-		if (typeof mod.metadata === "function") {
+		if (typeof mod.metadata === "function" && !warmingUp) {
 			const fetch = makeFetch(req, url);
 			return (
 				(await withTimeout(
@@ -621,7 +621,8 @@ export async function renderSSRStream(
 	// into the cached HTML but the CSP header is re-derived each request, so a
 	// cached page would ship with a dead nonce and the browser would block its
 	// inline scripts. Operators who turn on CSP_DIRECTIVES forfeit the cache.
-	const cacheable = CACHE_ENABLED && !CSP_ENABLED && routeCacheable && req.method === "GET";
+	const cacheable =
+		CACHE_ENABLED && !CSP_ENABLED && !warmingUp && routeCacheable && req.method === "GET";
 	let cacheKey: string | null = null;
 	let releaseMiss: (() => void) | null = null;
 	if (cacheable) {

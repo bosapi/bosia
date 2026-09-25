@@ -10,6 +10,8 @@ import { BOSIA_NODE_PATH } from "../src/core/paths.ts";
 // boots without a filesystem path and that bindings reach loaders.
 
 let tmpDir: string;
+// Bindings are captured once per isolate, so every request passes the same env.
+const env = { GREETING: "halo Jeki" };
 
 async function build(env: Record<string, string> = {}) {
 	const proc = Bun.spawn(["bun", "run", join(import.meta.dir, "..", "src", "core", "build.ts")], {
@@ -38,7 +40,16 @@ beforeAll(async () => {
 		join(tmpDir, "src", "app.html"),
 		`<!doctype html>\n<html lang="%bosia.lang%">\n<head>%bosia.head%</head>\n<body>%bosia.body%</body>\n</html>\n`,
 	);
-	writeFileSync(join(routes, "+page.svelte"), `<h1>Beranda</h1>\n`);
+	// Each counts its runs on globalThis, so the test can see what the worker's
+	// startup warm-up render ran.
+	writeFileSync(
+		join(routes, "+page.svelte"),
+		`<script>globalThis.__renders = (globalThis.__renders ?? 0) + 1;</script>\n<h1>Beranda</h1>\n`,
+	);
+	writeFileSync(
+		join(routes, "+page.server.ts"),
+		`export function load() {\n\tglobalThis.__loads = (globalThis.__loads ?? 0) + 1;\n\treturn {};\n}\n`,
+	);
 	// Above the 2KB compression threshold, so a plain body proves the worker skipped it.
 	mkdirSync(join(routes, "big"), { recursive: true });
 	writeFileSync(
@@ -56,6 +67,7 @@ beforeAll(async () => {
 	writeFileSync(
 		join(tmpDir, "src", "hooks.server.ts"),
 		`export const handle = async ({ event, resolve }) => {\n` +
+			`\tglobalThis.__hooks = (globalThis.__hooks ?? 0) + 1;\n` +
 			`\tconst res = await resolve(event);\n` +
 			`\tres.headers.set("x-hooked", "yes");\n` +
 			`\treturn res;\n};\n`,
@@ -93,9 +105,20 @@ describe("workers target build", () => {
 		expect(config.compatibility_flags).toContain("nodejs_compat");
 	});
 
+	// Importing the worker runs its startup warm-up: `/` renders once, with no
+	// user hooks or loaders (no bindings yet) and nothing stored in the cache.
+	test("startup warm-up renders / without hooks, loaders or caching", async () => {
+		const g = globalThis as Record<string, unknown>;
+		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
+		expect([g.__renders, g.__hooks, g.__loads]).toEqual([1, undefined, undefined]);
+
+		const res = await worker.fetch(new Request("http://x/"), env);
+		expect(res.headers.get("x-bosia-cache")).toBeNull();
+		expect([g.__renders, g.__hooks, g.__loads]).toEqual([2, 1, 1]);
+	});
+
 	test("the worker serves pages, runs hooks, and hands bindings to loaders", async () => {
 		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
-		const env = { GREETING: "halo Jeki" };
 
 		const res = await worker.fetch(new Request("http://x/hello"), env);
 		expect(res.status).toBe(200);
@@ -111,11 +134,11 @@ describe("workers target build", () => {
 	test("the worker leaves compression to Cloudflare", async () => {
 		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
 		const req = () => new Request("http://x/big", { headers: { "Accept-Encoding": "br, gzip" } });
-		const miss = await worker.fetch(req(), {});
+		const miss = await worker.fetch(req(), env);
 		expect(miss.headers.get("content-encoding")).toBeNull();
 		await miss.text();
 
-		const hit = await worker.fetch(req(), {});
+		const hit = await worker.fetch(req(), env);
 		expect(hit.headers.get("x-bosia-cache")).toBe("HIT");
 		expect(hit.headers.get("content-encoding")).toBeNull();
 		expect(await hit.text()).toContain("<html");

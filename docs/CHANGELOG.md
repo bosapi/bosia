@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - CLI and API reference cover the Workers build option and `event.platform`.
+- Cloudflare Workers docs explain the startup warm-up and that Cloudflare handles compression.
 
 ## [0.8.15] - 2026-09-24
 

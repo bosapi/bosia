@@ -101,6 +101,10 @@ Code shared by both targets may branch on `typeof Bun !== "undefined"` **on the 
 
 `invalidate()` clears only the isolate that ran it; other isolates keep serving their copy until evicted. Don't rely on the cache for data that must be fresh right after a write — `export const cache = false` on those routes (see [[bosia-response-cache]]).
 
+### R7 — Startup warm-up renders `/`
+
+Each isolate renders `/` once at startup with no hooks, loaders, `metadata()` or cache, so `data` is empty. Top-level `<script>` code in `/`'s components runs that extra time: keep it free of side effects. A throw there is harmless — the warm-up is best effort. Compression is Cloudflare's job; don't gzip/brotli in hooks.
+
 ## Anti-patterns
 
 - Reading a binding from `process.env.DB` or a module-level global — bindings are only on `event.platform.env`.

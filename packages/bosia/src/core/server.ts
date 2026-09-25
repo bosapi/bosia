@@ -5,7 +5,7 @@ import { resolveApiMatch } from "./apiResolver.ts";
 import { apiRoutes, serverRoutes } from "bosia:routes";
 import { loadPlugins } from "./config.ts";
 import { readArtifact } from "./artifacts.ts";
-import { getPlatform } from "./platform.ts";
+import { getPlatform, warmingUp } from "./platform.ts";
 import type { RouteManifest } from "./types.ts";
 
 // Pre-compile route patterns into RegExp at startup (shared by renderer.ts via module reference)
@@ -425,6 +425,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 	const apiMaybe = resolveApiMatch(apiRoutes, path);
 	const apiMatch = apiMaybe instanceof Promise ? await apiMaybe : apiMaybe;
 	if (apiMatch) {
+		if (warmingUp) return new Response(null, { status: 404 });
 		// INVARIANT: once set, releaseApiMiss must fire exactly once — a missed
 		// release() hangs coalesced waiters for the process lifetime. The cache
 		// write path hands it off to its microtask by nulling it first.
@@ -980,7 +981,8 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 			isDataRequest: dataReq !== null,
 			platform: getPlatform(),
 		};
-		let response = userHandle ? await userHandle({ event, resolve }) : await resolve(event);
+		let response =
+			userHandle && !warmingUp ? await userHandle({ event, resolve }) : await resolve(event);
 
 		// A hook that short-circuits a data request with a redirect is answering
 		// the client router, which speaks JSON — an unconverted 3xx is followed by

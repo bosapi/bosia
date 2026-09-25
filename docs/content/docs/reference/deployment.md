@@ -257,6 +257,8 @@ A `typeof Bun` check on the same line is allowed, so code shared between targets
 - **Response cache is per isolate.** It still helps on busy routes, but Cloudflare runs many isolates and evicts them freely, so `invalidate()` only clears the copy in the isolate that ran it. Keep cached pages short-lived, or opt routes out with `export const cache = false`.
 - **Bundle size.** The free tier allows 3 MB gzipped. The demo app is about 410 KB; plugins imported by `bosia.config.ts` are bundled even when they only act in dev.
 - **No graceful shutdown** — Cloudflare manages the lifecycle. `/_health` still answers.
+- **Startup warm-up.** Each new isolate renders `/` once, without hooks, loaders or the cache, so the first real request doesn't pay to compile the render path. Code at the top of `/`'s components runs one extra time per isolate.
+- **Compression** is done by Cloudflare, not Bosia, so it doesn't count against your CPU time.
 
 ## Sandboxed / Multi-Tenant Hosting
 
