@@ -30,7 +30,7 @@
 - [x] 🟡 `apps/demo-worker`: Workers mirror of `apps/demo` (no uploads routes, `/platform` reads a wrangler var). `apps/demo` stays Bun-only.
 - [x] 🟡 Live `demo-worker`: routes, actions, CSRF, guard, 413, `platform.env` OK. 60 alice/bob requests × gzip/br/none: no leak, all readable. CPU warm 0–5ms.
 - [x] 🟡 Cold `/` CPU (workerd, 8 isolates): median ~11ms → ~7ms. Workers skips compression (edge does it; miss 3.3 → 1.6ms), tailwind-merge warmed at startup.
-- [ ] ⚪ Cold SSR still 5–10ms, mostly V8 compiling code on first run. Revisit only if live CPU hits the 10ms limit often.
+- [ ] 🟡 Live after fix: first request per isolate 8–15ms CPU (was 11–23), warm 1–5ms, no 1102 errors. Rest is V8 compiling on first run; try a startup warm-up render.
 
 ## bosia 0.9.7 (2026-09-24) — native Windows support
 
