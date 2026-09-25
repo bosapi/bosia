@@ -425,6 +425,13 @@ export function buildHtmlTail(
 
 const GZIP_MIN_BYTES = 2048;
 
+// Off on Workers: Cloudflare's edge compresses responses itself, outside the
+// worker's CPU budget. The first brotli call alone cost ~4ms of a 10ms limit.
+export let compressionOn = true;
+export function disableCompression(): void {
+	compressionOn = false;
+}
+
 // Shared, stateless — one instance instead of a fresh allocation per response.
 const textEncoder = new TextEncoder();
 
@@ -446,7 +453,7 @@ export function compress(
 	const bytes = textEncoder.encode(body);
 	// Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
 	// responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
-	if (!isDev && bytes.length > GZIP_MIN_BYTES && accept.includes("gzip")) {
+	if (compressionOn && !isDev && bytes.length > GZIP_MIN_BYTES && accept.includes("gzip")) {
 		return new Response(gzipSync(bytes), {
 			...PRECOMPRESSED,
 			status,

@@ -29,7 +29,8 @@
 - [x] 🔴 Live deploy: cache hits came back as brotli-inside-gzip — workerd re-encodes bodies with `Content-Encoding`. `encodeBody: "manual"` on precompressed responses, kept through `handleRequest`'s rebuild.
 - [x] 🟡 `apps/demo-worker`: Workers mirror of `apps/demo` (no uploads routes, `/platform` reads a wrangler var). `apps/demo` stays Bun-only.
 - [x] 🟡 Live `demo-worker`: routes, actions, CSRF, guard, 413, `platform.env` OK. 60 alice/bob requests × gzip/br/none: no leak, all readable. CPU warm 0–5ms.
-- [ ] 🟡 First SSR of `/` per isolate costs 11–23ms CPU, over the free tier's 10ms. Profile the cold render (module init, first Svelte compile of the route).
+- [x] 🟡 Cold `/` CPU (workerd, 8 isolates): median ~11ms → ~7ms. Workers skips compression (edge does it; miss 3.3 → 1.6ms), tailwind-merge warmed at startup.
+- [ ] ⚪ Cold SSR still 5–10ms, mostly V8 compiling code on first run. Revisit only if live CPU hits the 10ms limit often.
 
 ## bosia 0.9.7 (2026-09-24) — native Windows support
 

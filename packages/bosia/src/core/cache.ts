@@ -12,7 +12,7 @@ import { brotliCompressSync, gzipSync, constants as zlibConstants } from "node:z
 import type { Cookies, LoaderDeps } from "./hooks.ts";
 import type { CookieJar } from "./cookies.ts";
 import { dedupKey } from "./dedup.ts";
-import { PRECOMPRESSED } from "./html.ts";
+import { compressionOn, PRECOMPRESSED } from "./html.ts";
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -286,7 +286,7 @@ export function buildCompressedVariants(body: Bytes): {
 	brotli: Bytes | null;
 } {
 	const COMPRESS_MIN_BYTES = 2048;
-	if (body.length < COMPRESS_MIN_BYTES) return { gzip: null, brotli: null };
+	if (!compressionOn || body.length < COMPRESS_MIN_BYTES) return { gzip: null, brotli: null };
 	let gzip: Bytes | null = null;
 	let brotli: Bytes | null = null;
 	try {

@@ -39,7 +39,7 @@ beforeAll(async () => {
 		`<!doctype html>\n<html lang="%bosia.lang%">\n<head>%bosia.head%</head>\n<body>%bosia.body%</body>\n</html>\n`,
 	);
 	writeFileSync(join(routes, "+page.svelte"), `<h1>Beranda</h1>\n`);
-	// Big enough to be stored compressed, so a repeat request is a compressed cache hit.
+	// Above the 2KB compression threshold, so a plain body proves the worker skipped it.
 	mkdirSync(join(routes, "big"), { recursive: true });
 	writeFileSync(
 		join(routes, "big", "+page.svelte"),
@@ -106,32 +106,19 @@ describe("workers target build", () => {
 		expect(missing.status).toBe(404);
 	});
 
-	// Workers compresses a body sent with Content-Encoding again unless the
-	// Response says encodeBody: "manual". handleRequest rebuilds every response,
-	// which once dropped the flag and shipped brotli-inside-gzip. Bun ignores the
-	// key, so check the flag on the Response the worker builds last.
-	test("compressed responses keep encodeBody: manual through handleRequest", async () => {
+	// Cloudflare's edge compresses responses outside the worker's CPU budget, so
+	// the worker sends plain bytes on a miss and stores no compressed copies.
+	test("the worker leaves compression to Cloudflare", async () => {
 		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
-		const req = () => new Request("http://x/big", { headers: { "Accept-Encoding": "gzip" } });
-		await worker.fetch(req(), {});
+		const req = () => new Request("http://x/big", { headers: { "Accept-Encoding": "br, gzip" } });
+		const miss = await worker.fetch(req(), {});
+		expect(miss.headers.get("content-encoding")).toBeNull();
+		await miss.text();
 
-		const inits: ResponseInit[] = [];
-		const Real = globalThis.Response;
-		globalThis.Response = class extends Real {
-			constructor(body?: BodyInit | null, init?: ResponseInit) {
-				super(body, init);
-				if (init) inits.push(init);
-			}
-		} as typeof Response;
-		let res: Response;
-		try {
-			res = await worker.fetch(req(), {});
-		} finally {
-			globalThis.Response = Real;
-		}
-		expect(res.headers.get("x-bosia-cache")).toBe("HIT");
-		expect(res.headers.get("content-encoding")).toBe("gzip");
-		expect((inits.at(-1) as { encodeBody?: string }).encodeBody).toBe("manual");
+		const hit = await worker.fetch(req(), {});
+		expect(hit.headers.get("x-bosia-cache")).toBe("HIT");
+		expect(hit.headers.get("content-encoding")).toBeNull();
+		expect(await hit.text()).toContain("<html");
 	});
 
 	test("a user-edited wrangler.jsonc survives a rebuild; --target overrides config", async () => {

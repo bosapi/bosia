@@ -5,13 +5,19 @@
 
 import { CloudflareAdapter } from "elysia/adapter/cloudflare-worker";
 import { config, handle } from "bosia:workers-runtime";
+import { twMerge } from "tailwind-merge";
 
 import { setBosiaConfig } from "./config.ts";
 import type { PlatformEnv } from "./hooks.ts";
+import { disableCompression } from "./html.ts";
 import { getPlatform, setPlatform } from "./platform.ts";
 import { createApp } from "./server.ts";
 
 setBosiaConfig(config);
+disableCompression();
+// tailwind-merge builds its class map on the first cn() call (~5ms). Pay it at
+// isolate startup, which has its own CPU budget, not in the first request.
+twMerge("");
 
 const app = (await createApp({ handle, adapter: CloudflareAdapter })).compile();
 
