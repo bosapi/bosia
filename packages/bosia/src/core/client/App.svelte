@@ -147,7 +147,10 @@
 		}
 		lastTick = currentTick;
 
-		appState.form = null;
+		// Only a real navigation drops the action result. An invalidation re-run
+		// (same URL, new tick) is how `use:enhance` refreshes the page after a
+		// successful action — clearing here wiped the `form` it had just set.
+		if (navKey !== lastNavKey) appState.form = null;
 		if (navDoneTimer) {
 			clearTimeout(navDoneTimer);
 			navDoneTimer = null;

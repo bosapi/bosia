@@ -19,7 +19,7 @@
 - [ ] 🟢 Report the Windows `rmSync` relative-path ENOENT to Bun with a minimal repro; drop the fallback in `clearOutput` once fixed upstream.
 - [ ] 🟡 Retest `new Bun.SQL("postgres://…")` `FailedToOpenSocket` on 1.4 with a live Postgres; drop the 1.3.x gotcha from skills if fixed. Object form stays (timeouts).
 - [ ] 🟡 Inspector `parseTopFrame` regex `[^)]+` breaks on route groups like `(public)`: errors point at `renderer.ts`, not the user's `+page.server.ts`. Pre-existing, not Bun.
-- [ ] 🟡 `use:enhance` success never shows `form` (demo `/actions-test` "Welcome…"): server returns success JSON; the page reload after `applyResult` seems to wipe it. Same on 1.3.14.
+- [x] 🟡 `use:enhance` success never showed `form`: App's nav effect ran on the post-action invalidation and set `form = null`. Now only a real URL change clears it. Verified in Chrome (dev + prod).
 - [ ] 🟢 Inspector overlay has no client-side dedup: 50× loop on `/errors-test` shows 50 rows. Only server errors use `DEDUP_WINDOW_MS`.
 - [ ] 🟡 UI test file driven by `Bun.WebView` (no Playwright): load demo pages in dev + prod, assert hydration, SPA nav, form actions, no console errors. Would have caught the dev `?v=` hydration bug.
 - [ ] 🟢 Try `bun test --parallel` in CI.

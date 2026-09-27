@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Builds now warn when an old build folder can't be deleted, instead of keeping stale files.
+- Forms using `use:enhance` now show their success message instead of it vanishing at once.
 
 ## [0.9.10] - 2026-09-27
 
