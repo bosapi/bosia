@@ -5,7 +5,7 @@
 
 ---
 
-## bosia 0.9.8 (2026-09-25) — Cloudflare Workers target
+## bosia 0.9.9 (2026-09-27) — Cloudflare Workers target
 
 > Deploy Bosia to Workers free tier via `target: "workers"` — two runtime entries, no general adapter API. Spike: demo SSR renders in workerd, 172KB gzipped; sync `node:crypto`/`node:zlib` work there.
 
@@ -40,6 +40,16 @@
 - [ ] 🟡 Unrouted methods (TRACE etc.) answer 500: Elysia's NOT_FOUND reaches the base onError. Should be 405 on Bun and Workers.
 - [ ] ~~Workers shared cache via `caches.default`~~ skipped: per-colo, no tag/prefix purge, no-op on workers.dev.
 
+## bosia 0.9.8 (2026-09-27) — two pages, one URL: fail like SvelteKit
+
+> Found while writing the dev-smoke job: appending to `src/routes/+page.svelte` in the default template created a second `/` next to `(public)/+page.svelte`. Nothing complained, and one page was silently unreachable.
+
+- [x] 🔴 `scanner.ts` `preventConflicts` throws `RouteConflictError` when pages or `+server.ts` APIs match once groups and param names are ignored (`[id]` ≡ `[slug]`) — SvelteKit's `prevent_conflicts`, Next.js's "two parallel pages".
+- [x] 🟠 `build.ts` + `bosia sync` print the message and exit 1 (no stack). Dev shows "Build failed", keeps the last good build (503 if none), recovers on fix.
+- [x] 🟡 Breaking for apps that already had duplicates. Routing guide (+ `id/`) and `bosia-routing` skill R4 updated.
+- [x] 🟢 CI: cleared the Node 20 deprecation — `checkout@v7`, `upload-artifact@v7`, `download-artifact@v8`, `wrangler-action@v4` (Wrangler 4; `pages deploy` flags unchanged). `setup-bun@v2` already on node24.
+- [ ] 🟢 Matcher: exact Map is last-wins, linear scan first-wins. Unreachable now that conflicts fail the scan; revisit if duplicates ever become legal.
+
 ## bosia 0.9.7 (2026-09-24) — native Windows support
 
 > Asked whether Bosia runs on Windows. It had never been tried: CI was Linux-only, and the code assumed `/` paths, `:` in NODE_PATH, extensionless `.bin` shims and `lsof`.
@@ -51,7 +61,12 @@
 - [x] 🟡 `port.ts` falls back to `netstat -ano` on Windows (listener = foreign `:0`, since the state column is localized). Parsers `parseLsof`/`parseNetstat` unit-tested.
 - [x] 🟠 New `ci.yml`: tests + scaffold/build/start/asset-probe smoke on ubuntu + windows. `publish.yml` split into decide/test/build-templates/publish-npm/release/refresh-assets; publishing now waits on both OSes.
 - [x] 🟡 `.gitattributes` forces LF so Windows checkouts don't fail `prettier --check`. Getting Started lists Windows (native or WSL2).
-- [ ] 🟡 Verify the first `windows-latest` CI run and a manual `bosia dev` session on a real Windows machine (watcher, HMR, route add).
+- [x] 🔴 First CI run failed on `prettier --check`: `bun.lock` was gitignored, so CI installed prettier 3.9.9, not 3.8.3. Now committed (without untracked `apps/demo-worker`); Bun pinned via `.bun-version`.
+- [x] 🟠 Tests blocked the 0.9.7 publish, but `decide` only published when the push diff touched `package.json`, so no retry was possible. It now publishes whenever the version isn't on npm.
+- [x] 🟠 Windows CI run 2: 22/513 tests failed. Real bug: `resolveLocalRegistry` used `new URL(import.meta.url).pathname` (`/D:/…` on Windows) → `import.meta.dir`. Tests: scanner helper split on `/`; svelte-audit deleted its cwd (EBUSY).
+- [x] 🟢 `windows-latest` CI green (513 tests + create/build/start/asset smoke); 0.9.7 published via `workflow_dispatch` after the npm-based `decide` change.
+- [x] 🟠 `dev-smoke` CI job (ubuntu + windows, `.github/scripts/dev-smoke.sh`): dev serves, picks up a page edit + new route, `pidsOnPort` finds the proxy, and a restart after a hard kill reaps the orphaned app server.
+- [ ] 🟡 Manual `bosia dev` on real Windows for live browser reload (SSE) and Ctrl+C shutdown — CI can't check either.
 
 ## bosia 0.9.6 (2026-09-10) — every SSR'd page painted before its own CSS existed
 

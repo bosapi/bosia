@@ -1,13 +1,16 @@
 name: Publish & prebuilt templates
 
-# One workflow, two outcomes — decided by whether this push changed
-# packages/bosia/package.json:
+# One workflow, two outcomes — decided by whether the version in
+# packages/bosia/package.json is already on npm:
 #
-#   • package.json changed (version bump) → build templates, npm publish,
+#   • not on npm yet (version bump) → build templates, npm publish,
 #     create the GitHub Release and upload the prebuilt artifacts.
-#   • registry/templates changed only     → build templates and re-upload
+#   • already on npm                → build templates and re-upload
 #     (--clobber) onto the EXISTING release. Never touches npm, so the
 #     "version already exists" error can't happen.
+#
+# Asking npm (not git diff) means a publish blocked by failing tests is retried
+# by the next run — a fix push or "Run workflow" — without another bump.
 #
 # Job graph:
 #
@@ -26,6 +29,8 @@ on:
       - "packages/bosia/package.json"
       - "registry/**"
       - "packages/bosia/templates/**"
+      - ".github/workflows/publish.yml"
+      - ".github/workflows/ci.yml"
   workflow_dispatch:
 
 # Serialize runs of this workflow so two pushes landing close together never
@@ -43,13 +48,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.decide.outputs.version }}
-      pkg_changed: ${{ steps.decide.outputs.pkg_changed }}
       published: ${{ steps.decide.outputs.published }}
       tag: ${{ steps.decide.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # full history: diff the whole push range, not just HEAD^
+      - uses: actions/checkout@v7
 
       - name: Decide what to do
         id: decide
@@ -57,22 +59,7 @@ jobs:
           VERSION=$(jq -r '.version' packages/bosia/package.json)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          # Publish to npm ONLY when this push changed package.json — check the
-          # WHOLE push range (before..after), not just the last commit, so a bump
-          # in an earlier commit of a multi-commit push isn't missed.
-          BEFORE="${{ github.event.before }}"
-          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            RANGE="HEAD^ HEAD" # first push / workflow_dispatch: no before SHA
-          else
-            RANGE="$BEFORE HEAD"
-          fi
-          if git diff --name-only $RANGE 2>/dev/null | grep -qx 'packages/bosia/package.json'; then
-            echo "pkg_changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "pkg_changed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          # Guard against re-publishing a version already on npm.
+          # Publish only a version npm doesn't have yet.
           if npm view "bosia@$VERSION" version 2>/dev/null; then
             echo "published=true" >> "$GITHUB_OUTPUT"
           else
@@ -93,27 +80,29 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version # same Bun as local; bun.lock is tied to it
 
       - name: Build prebuilt template artifacts
         run: bun run build:templates
         working-directory: packages/bosia
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: prebuilt
           path: packages/bosia/dist/prebuilt/*.tar.gz
           if-no-files-found: error
 
-  # ── Publish path: package.json changed AND not yet on npm ──
+  # ── Publish path: version not on npm yet ──
   publish-npm:
     needs: [decide, build-templates]
-    if: needs.decide.outputs.pkg_changed == 'true' && needs.decide.outputs.published == 'false'
+    if: needs.decide.outputs.published == 'false'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
@@ -130,9 +119,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4 # gh release create needs the repo context
+      - uses: actions/checkout@v7 # gh release create needs the repo context
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: prebuilt
           path: prebuilt
@@ -149,17 +138,17 @@ jobs:
             gh release create "$VERSION" --title "$VERSION" --generate-notes "${ASSETS[@]}"
           fi
 
-  # ── Refresh path: registry/template-only change ──
+  # ── Refresh path: version already on npm (registry/template change) ──
   refresh-assets:
     needs: [decide, build-templates]
-    if: needs.decide.outputs.pkg_changed == 'false'
+    if: needs.decide.outputs.published == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: prebuilt
           path: prebuilt

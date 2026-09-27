@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [0.9.8] - 2026-09-25
+## [0.9.9] - 2026-09-27
 
 ### Added
 
@@ -24,12 +24,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Prerendered pages with form actions are now served live, so their forms work.
 - Workers apps are less than half the size when a dev-only plugin like the inspector is used.
 
+## [0.9.8] - 2026-09-27
+
+### Changed
+
+- **Breaking:** the build now fails when two route files serve the same URL, like SvelteKit.
+
 ## [0.9.7] - 2026-09-24
 
 ### Fixed
 
 - Bosia now builds and runs on native Windows, not only macOS and Linux.
 - Static files and page assets load correctly on Windows servers.
+- `bosia create --local` finds the local registry on Windows.
 
 ### Added
 

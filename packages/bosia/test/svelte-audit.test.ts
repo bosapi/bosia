@@ -70,8 +70,8 @@ beforeAll(() => {
 });
 
 afterEach(() => {
+	process.chdir(originalCwd); // before rm: Windows can't delete the cwd (EBUSY)
 	if (tmpDir) rmSync(tmpDir, { recursive: true, force: true });
-	process.chdir(originalCwd);
 	if (originalEnv === undefined) delete process.env.BOSIA_STRICT_IMPORTS;
 	else process.env.BOSIA_STRICT_IMPORTS = originalEnv;
 });

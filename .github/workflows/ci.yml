@@ -23,9 +23,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version # same Bun as local; bun.lock is tied to it
 
       - name: Install
         run: bun install --frozen-lockfile
@@ -50,9 +52,11 @@ jobs:
       run:
         shell: bash # Git Bash on windows-latest — one script for both OSes
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version # same Bun as local; bun.lock is tied to it
 
       - name: Install
         run: bun install --frozen-lockfile
@@ -86,3 +90,35 @@ jobs:
         if: always()
         working-directory: ../smoke
         run: cat start.log 2>/dev/null || true
+
+  # `bun run dev`: serve, pick up an edit and a new route without restarting,
+  # then survive a hard kill + restart. Steps live in .github/scripts/dev-smoke.sh.
+  dev-smoke:
+    name: dev-smoke (${{ matrix.os }})
+    needs: test
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version # same Bun as local; bun.lock is tied to it
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Scaffold app from local template
+        working-directory: ..
+        run: bun "$GITHUB_WORKSPACE/packages/bosia/src/cli/index.ts" create devsmoke --template default --local
+
+      - name: Dev server smoke
+        working-directory: ../devsmoke
+        run: bash "$GITHUB_WORKSPACE/.github/scripts/dev-smoke.sh" "$GITHUB_WORKSPACE/packages/bosia"

@@ -21,7 +21,7 @@ export interface InstallOptions {
 // ─── Local registry resolution ────────────────────────────
 
 export function resolveLocalRegistry(): string {
-	let dir = dirname(new URL(import.meta.url).pathname);
+	let dir = import.meta.dir;
 	for (let i = 0; i < 10; i++) {
 		const candidate = join(dir, "registry");
 		if (existsSync(join(candidate, "index.json"))) return candidate;

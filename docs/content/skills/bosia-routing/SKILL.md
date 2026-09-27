@@ -56,7 +56,7 @@ Don't use `parent()` for scope identifiers (`farmId`/`orgId`/`userId`) — read 
 
 R3b — Loader event fields: `url`, `params`, `locals`, `cookies`, `fetch`, `parent`, `metadata`, `depends`, `setHeaders`. `setHeaders({ "cache-control": "..." })` sets response headers from any loader — same header twice throws, `set-cookie` forbidden (use `cookies`), no-op during prerender.
 
-R4 — Groups & dynamic segments: `(group)/` invisible in URL, shares layouts (`(public)`, `(private)`); `[param]/` → `params.param`; `[...rest]/` catch-all.
+R4 — Groups & dynamic segments: `(group)/` invisible in URL, shares layouts (`(public)`, `(private)`); `[param]/` → `params.param`; `[...rest]/` catch-all. Never put two pages at one URL (`+page.svelte` + `(public)/+page.svelte`, or `[id]` + `(g)/[slug]`): the build fails with "routes conflict with each other".
 
 R5 — Layout chain: `+layout.svelte` wraps children; `+layout.server.ts` loads for the subtree; `+error.svelte` renders to its depth; `scope` (`public`/`private`) inherits from the nearest layout that sets it.
 
