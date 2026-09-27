@@ -35,9 +35,10 @@
 - [x] 🔴 Workers: client nav to a prerendered page POSTed its data file → asset server 405. Router now GETs prerendered data; `prerender`+`actions` pages render live.
 - [x] Workers docs + skill R9: prerender pages that never change (no worker CPU, no request).
 - [x] Workers bundle: stub `svelte/compiler` (pulled in by dev-only inspector). Demo 1453→626KB, 408→184KB gz; live startup 148→49ms. Left: Elysia+typebox+file-type ~330KB (item 4).
-- [ ] Workers: drop Elysia (~360KB min, ~90KB gz est.). It only wraps handleRequest: 6 catch-alls, onError→500 JSON, HEAD=GET w/o body. Move createApp out of server.ts; lean worker entry calls handleRequest.
-- [ ] Workers Elysia removal: build picks lean entry when no prod plugin uses `backend` hooks, else keeps Elysia. `server-timing` needs Elysia today — later a framework request-wrap hook so it doesn't.
-- [ ] 🟡 Unrouted methods (TRACE etc.) answer 500: Elysia's NOT_FOUND reaches the base onError. Should be 405 on Bun and Workers.
+- [x] Dropped Elysia on Bun and Workers: own Elysia-shaped `BosiaApp` (`core/backend.ts`) with routes, onRequest/onAfterHandle/onError, HEAD=GET w/o body. Test worker 527→151KB.
+- [x] ~~Lean entry only when no plugin uses `backend`~~ not needed: `BosiaApp` is small, so server-timing and inspector run on it everywhere.
+- [x] 🟡 Unrouted methods (TRACE etc.) answered 500 via Elysia's NOT_FOUND. Now 405 + `Allow` on Bun and Workers.
+- [ ] 🟢 `BosiaApp` routes: add `:param` paths when a plugin needs them (exact + `"*"` only today).
 - [x] 🟢 Windows CI: `findWorkersIncompatible` returned `\` paths (report already printed `/`). Hits now use posix paths on every OS.
 - [ ] ~~Workers shared cache via `caches.default`~~ skipped: per-colo, no tag/prefix purge, no-op on workers.dev.
 

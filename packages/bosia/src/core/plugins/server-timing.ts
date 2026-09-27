@@ -39,7 +39,7 @@ export function serverTiming(options: ServerTimingOptions = {}): BosiaPlugin {
 							return;
 						}
 
-						// Otherwise, push into Elysia's outbound header bag.
+						// Otherwise, push into the outbound header bag.
 						const headers = (set.headers ??= {}) as Record<string, string>;
 						headers[headerName] = value;
 					});

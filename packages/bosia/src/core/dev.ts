@@ -210,7 +210,7 @@ async function startAppServer() {
 			NODE_ENV: "development",
 			// Force app server to APP_PORT — prevents PORT from .env conflicting with the dev proxy
 			PORT: String(APP_PORT),
-			// Allow externalized deps (elysia, etc.) to resolve from bosia's node_modules
+			// Allow externalized deps to resolve from bosia's node_modules
 			NODE_PATH: BOSIA_NODE_PATH,
 			// Point the server child at dev's output dir so its OUT_DIR reads match what build wrote.
 			BOSIA_OUT_DIR: DEV_OUT_DIR,

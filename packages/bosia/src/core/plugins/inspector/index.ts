@@ -1,6 +1,5 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import type { Elysia } from "elysia";
 import { createInspectorBunPlugin } from "./bun-plugin.ts";
 import { getOverlayScript } from "./overlay.ts";
 import { resolveFrame, resolveStack } from "./sourcemap.ts";
@@ -142,7 +141,7 @@ function installProcessListeners() {
 // live in a separately-bundled module graph from this disk-loaded plugin —
 // can notify the inspector without an import dependency. Renderer catches
 // (page load, layout load, SSR load) swallow errors and return a rendered
-// error page, so they never reach Elysia `.onError()` on their own. The
+// error page, so they never reach the backend `.onError()` on their own. The
 // global is typed in core/devErrorReport.ts.
 function installGlobalReporter() {
 	globalThis.__BOSIA_REPORT_ERROR__ = (e) => {
@@ -179,10 +178,7 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 
 		backend: {
 			before(app) {
-				// Cast to the base Elysia type — chaining .post/.get/.onError narrows
-				// the generic so the plugin return type drifts unless we widen back.
-				let chained: Elysia = app as unknown as Elysia;
-				chained = chained.post(endpoint, async ({ body }: { body: unknown }) => {
+				let chained = app.post(endpoint, async ({ body }) => {
 					const data = (body ?? {}) as {
 						file?: string;
 						line?: number;
@@ -270,7 +266,7 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 					installProcessListeners();
 					installGlobalReporter();
 
-					// Elysia onError — runs because server.ts registers plugin
+					// Backend onError — runs because server.ts registers plugin
 					// backend.before() ahead of the base .onError() responder.
 					chained = chained.onError(({ error }) => {
 						const e = error as Error;
@@ -281,12 +277,12 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 						});
 						// Fall through to the base handler.
 						return undefined;
-					}) as unknown as Elysia;
+					});
 
 					// Live SSE stream. New clients also get a flush of the bounded
 					// replay buffer so errors that fired during a failing render
 					// (before the 500 page's overlay could subscribe) are visible.
-					chained = chained.get("/__bosia/errors", ({ request }: { request: Request }) => {
+					chained = chained.get("/__bosia/errors", ({ request }) => {
 						const stream = new ReadableStream<Uint8Array>({
 							start(ctrl) {
 								sseClients.add(ctrl);
@@ -322,7 +318,7 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 								Connection: "keep-alive",
 							},
 						});
-					}) as unknown as Elysia;
+					});
 				}
 
 				return chained;

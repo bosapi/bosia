@@ -1,7 +1,7 @@
 // ─── Bosia Plugin Types ──────────────────────────────────
 // Public surface for first-party and third-party plugins.
 
-import type { Elysia } from "elysia";
+import type { BosiaApp } from "../backend.ts";
 import type { BunPlugin } from "bun";
 import type { RouteManifest } from "../types.ts";
 import type { Metadata } from "../hooks.ts";
@@ -34,15 +34,14 @@ export interface BosiaPlugin {
 	name: string;
 
 	/**
-	 * Mount points around the framework's HTTP backend. Currently typed as
-	 * `Elysia` (the underlying backend), but the namespace is intentionally
-	 * abstract so the API survives a future backend swap.
+	 * Mount points around the framework's HTTP backend — Bosia's own small,
+	 * Elysia-shaped app (`get/post/…`, `onRequest`, `onAfterHandle`, `onError`).
 	 */
 	backend?: {
 		/** Runs before framework middleware/routes — can register routes that bypass Bosia. */
-		before?: (app: Elysia) => MaybePromise<Elysia>;
+		before?: (app: BosiaApp) => MaybePromise<BosiaApp>;
 		/** Runs after framework routes — receives the route manifest for introspection. */
-		after?: (app: Elysia, ctx: { manifest: RouteManifest }) => MaybePromise<Elysia>;
+		after?: (app: BosiaApp, ctx: { manifest: RouteManifest }) => MaybePromise<BosiaApp>;
 	};
 
 	/** Build pipeline hooks. */

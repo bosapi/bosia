@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { Elysia } from "elysia";
+import { BosiaApp } from "../src/core/backend.ts";
 import { serverTiming } from "../src/core/plugins/server-timing.ts";
 
 describe("serverTiming plugin", () => {
@@ -10,11 +10,11 @@ describe("serverTiming plugin", () => {
 
 	test("adds Server-Timing header to responses", async () => {
 		const plugin = serverTiming();
-		let app = new Elysia();
+		let app = new BosiaApp();
 		app = (await plugin.backend!.before!(app)) ?? app;
 		app = app.get("/", () => "ok");
 
-		const res = await app.handle(new Request("http://localhost/"));
+		const res = await app.fetch(new Request("http://localhost/"));
 		const header = res.headers.get("Server-Timing");
 		expect(header).not.toBeNull();
 		expect(header).toMatch(/^handler;dur=\d+/);
@@ -22,11 +22,11 @@ describe("serverTiming plugin", () => {
 
 	test("custom metric name is honored", async () => {
 		const plugin = serverTiming({ metric: "bosia" });
-		let app = new Elysia();
+		let app = new BosiaApp();
 		app = (await plugin.backend!.before!(app)) ?? app;
 		app = app.get("/", () => "ok");
 
-		const res = await app.handle(new Request("http://localhost/"));
+		const res = await app.fetch(new Request("http://localhost/"));
 		const header = res.headers.get("Server-Timing");
 		expect(header).toMatch(/^bosia;dur=/);
 	});

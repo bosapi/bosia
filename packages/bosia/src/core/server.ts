@@ -1,4 +1,4 @@
-import { Elysia, type ElysiaAdapter } from "elysia";
+import { BosiaApp } from "./backend.ts";
 
 import { findMatch, compileRoutes, canonicalPathname } from "./matcher.ts";
 import { resolveApiMatch } from "./apiResolver.ts";
@@ -1205,7 +1205,7 @@ export function inFlightCount(): number {
 	return inFlight;
 }
 
-// ─── Elysia App ───────────────────────────────────────────
+// ─── Backend App ──────────────────────────────────────────
 
 // Read the build-time route manifest so plugins.backend.after can introspect routes.
 function loadBuiltManifest(): RouteManifest {
@@ -1233,12 +1233,13 @@ function loadBuiltManifest(): RouteManifest {
 export type CreateAppOptions = {
 	/** `handle` from the user's `src/hooks.server.ts`. */
 	handle?: Handle | null;
-	/** Elysia adapter. Omitted → Bun (`Bun.serve`). */
-	adapter?: ElysiaAdapter;
 };
 
-/** Build the Elysia app: plugins, the framework's catch-all routes, error handling. */
-export async function createApp(options: CreateAppOptions = {}): Promise<Elysia> {
+const frameworkHandler = ({ request }: { request: Request }) =>
+	handleRequest(request, new URL(request.url));
+
+/** Build the backend app: plugins, the framework's catch-all routes, error handling. */
+export async function createApp(options: CreateAppOptions = {}): Promise<BosiaApp> {
 	userHandle = options.handle ?? null;
 
 	const plugins = await loadPlugins(process.cwd());
@@ -1246,25 +1247,22 @@ export async function createApp(options: CreateAppOptions = {}): Promise<Elysia>
 		console.log(`🔌 Loaded ${plugins.length} plugin(s): ${plugins.map((p) => p.name).join(", ")}`);
 	}
 
-	// Elysia's chained generics drift when plugins add routes — track the app as a
-	// loose `Elysia` so plugin-extended types stay assignable.
-	let app: Elysia = (options.adapter
-		? new Elysia({ adapter: options.adapter })
-		: new Elysia({
-				serve: {
-					maxRequestBodySize: BODY_SIZE_LIMIT,
-					idleTimeout: IDLE_TIMEOUT,
-					// Elysia's Bun adapter defaults reusePort:true — SO_REUSEPORT lets a second
-					// server silently join the port and the kernel splits traffic between two
-					// different builds. Opt in only for deliberate N-worker clustering.
-					reusePort: process.env.BOSIA_REUSE_PORT === "1",
-				},
-			})) as unknown as Elysia;
+	// serve options only apply on Bun (`listen`); Workers calls `fetch` directly.
+	let app = new BosiaApp({
+		serve: {
+			maxRequestBodySize: BODY_SIZE_LIMIT,
+			idleTimeout: IDLE_TIMEOUT,
+			// SO_REUSEPORT lets a second server silently join the port and the kernel
+			// splits traffic between two different builds. Opt in only for deliberate
+			// N-worker clustering.
+			reusePort: process.env.BOSIA_REUSE_PORT === "1",
+		},
+	});
 
 	// Plugins.backend.before — runs before framework middleware/routes.
 	// Plugin-registered routes here BYPASS the framework (CSRF, hooks, etc.).
-	// Plugins register their own `.onError()` handlers here. Elysia fires onError
-	// handlers in registration order; plugin handlers run first and (when they
+	// Plugins register their own `.onError()` handlers here. onError handlers
+	// fire in registration order; plugin handlers run first and (when they
 	// return undefined) fall through to the base 500 responder chained after this
 	// loop. Registering the base responder before the loop would short-circuit
 	// every plugin handler.
@@ -1279,40 +1277,20 @@ export async function createApp(options: CreateAppOptions = {}): Promise<Elysia>
 		}
 	}
 
-	app = app.onError(({ error }) => {
-		if (isDev) console.error("Uncaught server error:", error);
-		else console.error("Uncaught server error:", (error as Error)?.message ?? error);
-		return Response.json({ error: "Internal Server Error" }, { status: 500 });
-	}) as unknown as Elysia;
-
+	// Static files are served by resolve() with path traversal protection and security headers.
+	// Only the verbs Bosia answers are routed — anything else (TRACE, …) gets a 405.
 	app = app
-		// Static files are served by resolve() with path traversal protection and security headers
-		// SSR pages
-		.get("*", ({ request }: { request: Request }) => {
-			const url = new URL(request.url);
-			return handleRequest(request, url);
+		.onError(({ error }) => {
+			if (isDev) console.error("Uncaught server error:", error);
+			else console.error("Uncaught server error:", (error as Error)?.message ?? error);
+			return Response.json({ error: "Internal Server Error" }, { status: 500 });
 		})
-		// Non-GET catch-alls route every method through handleRequest()
-		.post("*", ({ request }: { request: Request }) => {
-			const url = new URL(request.url);
-			return handleRequest(request, url);
-		})
-		.put("*", ({ request }: { request: Request }) => {
-			const url = new URL(request.url);
-			return handleRequest(request, url);
-		})
-		.patch("*", ({ request }: { request: Request }) => {
-			const url = new URL(request.url);
-			return handleRequest(request, url);
-		})
-		.delete("*", ({ request }: { request: Request }) => {
-			const url = new URL(request.url);
-			return handleRequest(request, url);
-		})
-		.options("*", ({ request }: { request: Request }) => {
-			const url = new URL(request.url);
-			return handleRequest(request, url);
-		}) as unknown as Elysia;
+		.get("*", frameworkHandler)
+		.post("*", frameworkHandler)
+		.put("*", frameworkHandler)
+		.patch("*", frameworkHandler)
+		.delete("*", frameworkHandler)
+		.options("*", frameworkHandler);
 
 	// Plugins.backend.after — runs after framework routes; receives the route manifest.
 	for (const plugin of plugins) {

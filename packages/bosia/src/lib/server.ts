@@ -10,3 +10,4 @@
 //   import { invalidate, invalidateAll } from "bosia/server";
 
 export { invalidate, invalidateAll } from "../core/cache.ts";
+export type { BosiaApp, HandlerContext, ResponseSet } from "../core/backend.ts";

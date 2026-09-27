@@ -23,6 +23,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Visiting a prerendered page from another page no longer fails on Cloudflare Workers.
 - Prerendered pages with form actions are now served live, so their forms work.
 - Workers apps are less than half the size when a dev-only plugin like the inspector is used.
+- Requests with an unknown method (like TRACE) now get "405 Method Not Allowed", not a 500 error.
+
+### Changed
+
+- Plugins now get Bosia's own small server app; it works like Elysia's, so most plugins just work.
+
+### Removed
+
+- Bosia no longer depends on Elysia. Workers apps shrink by about 70% (527KB → 151KB).
+- Elysia plugins added with `app.use()` in `backend` hooks no longer work.
 
 ## [0.9.8] - 2026-09-27
 

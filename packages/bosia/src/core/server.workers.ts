@@ -3,7 +3,6 @@
 // config arrive as static imports (workersCodegen.ts), static files are served
 // by Workers Static Assets before the worker runs.
 
-import { CloudflareAdapter } from "elysia/adapter/cloudflare-worker";
 import { config, handle } from "bosia:workers-runtime";
 import { twMerge } from "tailwind-merge";
 
@@ -19,7 +18,7 @@ disableCompression();
 // isolate startup, which has its own CPU budget, not in the first request.
 twMerge("");
 
-const app = (await createApp({ handle, adapter: CloudflareAdapter })).compile();
+const app = await createApp({ handle });
 
 // The first request in an isolate paid ~5ms of V8 compiling the render path, on a
 // 10ms CPU budget. Render `/` once now instead — startup CPU is budgeted apart.

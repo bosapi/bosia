@@ -170,6 +170,19 @@ describe("workers target build", () => {
 		expect(() => compile()).toThrow("isn't available on Cloudflare Workers");
 	});
 
+	test("the worker bundles no Elysia or TypeBox", () => {
+		const bundle = readFileSync(join(tmpDir, "dist", "worker", "index.js"), "utf-8");
+		if (process.env.BOSIA_PRINT_SIZE) console.log(`worker bundle: ${bundle.length} bytes`);
+		expect(bundle).not.toContain("elysia");
+		expect(bundle).not.toContain("TypeBox");
+	});
+
+	test("unrouted methods answer 405 on the worker", async () => {
+		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
+		const res = await worker.fetch(new Request("http://x/hello", { method: "TRACE" }), env);
+		expect(res.status).toBe(405);
+	});
+
 	// Cloudflare's edge compresses responses outside the worker's CPU budget, so
 	// the worker sends plain bytes on a miss and stores no compressed copies.
 	test("the worker leaves compression to Cloudflare", async () => {

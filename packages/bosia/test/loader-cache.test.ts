@@ -175,7 +175,7 @@ describe("shouldRerun", () => {
 
 describe("server bitmask decoding", () => {
 	// Mirror the helper in server.ts so we can test its semantics without
-	// pulling the whole Elysia module into the test harness.
+	// pulling the whole server module into the test harness.
 	function buildMaskFromBits(bits: string, layoutCount: number) {
 		const page = bits[0] !== "0";
 		const layouts: boolean[] = [];

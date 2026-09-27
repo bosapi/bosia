@@ -1,6 +1,6 @@
 # {{PROJECT_NAME}}
 
-A [Bosia](https://github.com/bosapi/bosia) project — SSR · Svelte 5 · Bun · ElysiaJS.
+A [Bosia](https://github.com/bosapi/bosia) project — SSR · Svelte 5 · Bun.
 
 Bosia is **production-ready out of the box** — security (CSRF, XSS, secure cookies, headers), performance (response cache, gzip, prerendering), and reliability (graceful shutdown, request backpressure, crash backoff) are all built in.
 

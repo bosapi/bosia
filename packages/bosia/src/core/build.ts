@@ -28,7 +28,7 @@ import { workersGuardReport } from "./workersGuard.ts";
 const CORE_DIR = import.meta.dir;
 
 // Runtime externals: never bundled into dist/hooks.server.js or dist/bosia.config.js
-const BOSIA_RUNTIME_EXTERNALS = ["bosia", "elysia", "bun", "svelte", "svelte/server"];
+const BOSIA_RUNTIME_EXTERNALS = ["bosia", "bun", "svelte", "svelte/server"];
 
 // ─── Entry Point ─────────────────────────────────────────
 
@@ -233,7 +233,6 @@ const serverPromise = Bun.build({
 	naming: { entry: "index.[ext]", chunk: "[name]-[hash].[ext]" },
 	minify: isProduction,
 	sourcemap: isProduction ? "none" : "linked",
-	external: ["elysia"],
 	plugins: [serverPlugin, ...userServerBunPlugins, makeBosiaSvelteCompiler("bun")],
 });
 

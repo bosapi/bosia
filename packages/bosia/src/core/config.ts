@@ -55,7 +55,7 @@ export async function loadBosiaConfig(cwd: string = process.cwd()): Promise<Bosi
 		entrypoints: [configPath],
 		target: "bun",
 		format: "esm",
-		external: ["bosia", "elysia", "bun", "svelte", "svelte/server"],
+		external: ["bosia", "bun", "svelte", "svelte/server"],
 	});
 
 	if (!result.success || !result.outputs[0]) {
