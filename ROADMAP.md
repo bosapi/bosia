@@ -19,6 +19,7 @@
 - [ ] 🟡 Inspector `parseTopFrame` regex `[^)]+` breaks on route groups like `(public)`: errors point at `renderer.ts`, not the user's `+page.server.ts`. Pre-existing, not Bun.
 - [ ] 🟡 `use:enhance` success never shows `form` (demo `/actions-test` "Welcome…"): server returns success JSON; the page reload after `applyResult` seems to wipe it. Same on 1.3.14.
 - [ ] 🟢 Inspector overlay has no client-side dedup: 50× loop on `/errors-test` shows 50 rows. Only server errors use `DEDUP_WINDOW_MS`.
+- [ ] 🟡 UI test file driven by `Bun.WebView` (no Playwright): load demo pages in dev + prod, assert hydration, SPA nav, form actions, no console errors. Would have caught the dev `?v=` hydration bug.
 - [ ] 🟢 Try `bun test --parallel` in CI.
 - [ ] 🟢 Consider `minChunkSize` for the client build (fewer tiny chunks).
 - [ ] 🟢 Consider `Bun.serve` `{ dir }` routes in `BosiaApp` for static assets (sendfile, ETag, Range for free).
