@@ -93,15 +93,18 @@ if (process.env.BOSIA_SKIP_ROUTE_SCAN === "1") {
 // at .bosia/dev/ — the codegen files (routes*.ts, env.*.ts, types/) are the
 // only things this build needs to clear to avoid stale entries on route renames.
 // Windows won't delete a file another process holds open (a running `bosia
-// start`, an editor, a test that imported the worker). Warn instead of silently
-// building over stale output.
+// start`, an editor, antivirus scanning fresh files). Retries ride out short
+// locks; anything left is warned about instead of silently built over.
 function clearOutput(path: string): void {
 	try {
-		rmSync(path, { recursive: true, force: true });
+		rmSync(path, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 	} catch (err) {
 		const code = (err as NodeJS.ErrnoException).code ?? String(err);
 		console.warn(`⚠️  Could not delete ${path} (${code}) — stop whatever is using it and rebuild.`);
+		return;
 	}
+	if (existsSync(path))
+		console.warn(`⚠️  ${path} still exists after deleting it — output may be stale.`);
 }
 clearOutput(OUT_DIR);
 // A Bun build must not ship a leftover Workers bundle from an earlier target.

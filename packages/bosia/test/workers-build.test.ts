@@ -34,6 +34,7 @@ async function build(env: Record<string, string> = {}) {
 		new Response(proc.stderr).text(),
 	]);
 	if (code !== 0) throw new Error(`build failed (${code})\n${out}\n${err}`);
+	return `${out}\n${err}`;
 }
 
 // Imports a copy of the worker that lives outside dist/, never dist/ itself.
@@ -224,10 +225,13 @@ describe("workers target build", () => {
 		await build();
 		expect(readFileSync(join(tmpDir, "wrangler.jsonc"), "utf-8")).toBe(`{ "name": "kept" }\n`);
 
-		await build({ BOSIA_TARGET: "bun" });
+		const log = await build({ BOSIA_TARGET: "bun" });
 		const manifest = JSON.parse(readFileSync(join(tmpDir, "dist", "manifest.json"), "utf-8"));
 		expect(manifest.target).toBe("bun");
-		expect(existsSync(join(tmpDir, "dist", "worker"))).toBe(false);
+		const staleWorker = existsSync(join(tmpDir, "dist", "worker"));
+		// The build's own ⚠️ line says why dist/ couldn't be cleared.
+		if (staleWorker) console.error(`dist/worker survived the rebuild. Build output:\n${log}`);
+		expect(staleWorker).toBe(false);
 		expect(existsSync(join(tmpDir, ".bosia", "artifacts.ts"))).toBe(false);
 	}, 180_000);
 });
