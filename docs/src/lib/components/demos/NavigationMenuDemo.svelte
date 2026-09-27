@@ -23,7 +23,7 @@
 							>
 								<div class="mt-4 mb-2 text-lg font-medium">Bosia</div>
 								<p class="text-sm leading-tight text-muted-foreground">
-									A fullstack framework built on Bun, Svelte 5, and ElysiaJS.
+									A fullstack framework built on Bun and Svelte 5.
 								</p>
 							</NavigationMenuLink>
 						</li>

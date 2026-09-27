@@ -8,7 +8,7 @@
 	<title>Bosia</title>
 	<meta
 		name="description"
-		content="Framework fullstack yang cepat dan lengkap, dibangun di atas Bun + Svelte 5 + ElysiaJS."
+		content="Framework fullstack yang cepat dan lengkap, dibangun di atas Bun + Svelte 5."
 	/>
 </svelte:head>
 

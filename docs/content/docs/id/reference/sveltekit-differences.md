@@ -29,7 +29,7 @@ Hal-hal berikut bekerja dengan cara yang sama seperti yang Anda harapkan:
 | ---------------------- | -------------------------------- | ---------------------------------------------- |
 | **Runtime**            | Node.js                          | Bun                                            |
 | **Bundler**            | Vite                             | Bun.build                                      |
-| **Server HTTP**        | Dapat dikonfigurasi via adapters | ElysiaJS (bawaan)                              |
+| **Server HTTP**        | Dapat dikonfigurasi via adapters | Bawaan (`Bun.serve` / `fetch` Workers)         |
 | **Adapters**           | Diperlukan (node, vercel, dll.)  | Tidak ada — satu server Bun                    |
 | **Universal load**     | `+page.ts` / `+layout.ts`        | Tidak didukung — hanya server loaders          |
 | **Stores**             | `$app/stores`                    | Tidak tersedia — gunakan `$props()`            |
@@ -86,5 +86,5 @@ Fitur-fitur SvelteKit berikut tidak tersedia di Bosia:
 - Service workers
 - Snapshots
 - Shallow routing (`pushState` / `replaceState`)
-- Sistem adapter (terikat pada Bun + ElysiaJS)
+- Sistem adapter (Bun dan Cloudflare Workers sudah bawaan)
 - `<svelte:head>` untuk metadata (gunakan `metadata()` sebagai gantinya)

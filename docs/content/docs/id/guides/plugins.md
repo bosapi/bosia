@@ -5,7 +5,7 @@ description: Perluas Bosia dengan plugin first-party dan pihak ketiga melalui bo
 
 Plugin memperluas Bosia di empat titik lifecycle: backend HTTP, pipeline build, pipeline render SSR, dan (di versi mendatang) dev server serta runtime klien. Plugin first-party didistribusikan di bawah `bosia/plugins/*`; plugin pihak ketiga berada di paket npm mana pun yang mengekspor sebuah `BosiaPlugin`.
 
-Backend saat ini adalah Elysia, jadi `backend.before` / `backend.after` menerima sebuah app Elysia. Namespace-nya sengaja dibuat abstrak agar API plugin publik bertahan saat backend ditukar di masa depan.
+`backend.before` / `backend.after` menerima app backend kecil milik Bosia sendiri. Bentuknya mirip Elysia, jadi kebanyakan plugin terbaca sama, tapi tanpa dependensi Elysia.
 
 ## Konfigurasi
 
@@ -88,18 +88,34 @@ export function myPlugin(): BosiaPlugin {
 
 ## Referensi Lifecycle
 
-| Hook                               | Kapan                                       | Menerima                      |
-| ---------------------------------- | ------------------------------------------- | ----------------------------- |
-| `backend.before(app)`              | Start server, sebelum route framework       | App backend mentah (Elysia)   |
-| `backend.after(app, { manifest })` | Start server, setelah route framework       | App backend + `RouteManifest` |
-| `build.preBuild(ctx)`              | Sebelum pemindaian route                    | `BuildContext` (mode, cwd)    |
-| `build.postScan(manifest, ctx)`    | Setelah pemindaian route, sebelum bundling  | `RouteManifest`               |
-| `build.bunPlugins(target)`         | Bundling — digabung ke plugin `Bun.build()` | `"browser"` atau `"bun"`      |
-| `build.postBuild(ctx)`             | Setelah pembuatan situs statis              | `BuildContext`                |
-| `render.head(ctx)`                 | SSR streaming, sebelum `</head>`            | `RenderContext`               |
-| `render.bodyEnd(ctx)`              | SSR streaming, sebelum `</body>`            | `RenderContext`               |
+| Hook                               | Kapan                                       | Menerima                     |
+| ---------------------------------- | ------------------------------------------- | ---------------------------- |
+| `backend.before(app)`              | Start server, sebelum route framework       | `BosiaApp`                   |
+| `backend.after(app, { manifest })` | Start server, setelah route framework       | `BosiaApp` + `RouteManifest` |
+| `build.preBuild(ctx)`              | Sebelum pemindaian route                    | `BuildContext` (mode, cwd)   |
+| `build.postScan(manifest, ctx)`    | Setelah pemindaian route, sebelum bundling  | `RouteManifest`              |
+| `build.bunPlugins(target)`         | Bundling — digabung ke plugin `Bun.build()` | `"browser"` atau `"bun"`     |
+| `build.postBuild(ctx)`             | Setelah pembuatan situs statis              | `BuildContext`               |
+| `render.head(ctx)`                 | SSR streaming, sebelum `</head>`            | `RenderContext`              |
+| `render.bodyEnd(ctx)`              | SSR streaming, sebelum `</body>`            | `RenderContext`              |
 
 Hook `dev.*` dan `client.*` dicadangkan untuk v0.5.0.
+
+## App Backend
+
+`app` yang diterima `backend.before` / `backend.after` adalah `BosiaApp` (tipenya diekspor dari `bosia/server`). Setiap method mengembalikan app, jadi bisa dirantai.
+
+| Method                                                  | Fungsinya                                                                   |
+| ------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `get` / `post` / `put` / `patch` / `delete` / `options` | Tambah route. Path persis (`/__my-plugin/health`) atau `"*"`.               |
+| `all(path, handler)`                                    | Route untuk method apa pun.                                                 |
+| `onRequest(({ request, set }) => …)`                    | Jalan paling awal di setiap request. Kembalikan nilai untuk langsung jawab. |
+| `onAfterHandle(({ request, response, set }) => …)`      | Jalan setelah handler. Kembalikan nilai untuk mengganti response.           |
+| `onError(({ request, error, set }) => …)`               | Jalan berurutan. Kembalikan nilai untuk jawab; `undefined` diteruskan.      |
+
+Handler route menerima `{ request, body, query, set }`. `body` di-parse dari JSON atau form data. Kembalikan `Response`, string (teks biasa), atau objek (JSON). `set.status` dan `set.headers` digabung ke balasan.
+
+Path persis menang atas `"*"`. Parameter path (`/users/:id`) belum didukung. Request dengan method yang tidak ditangani route mana pun mendapat `405 Method Not Allowed`.
 
 ## Urutan
 
@@ -109,4 +125,17 @@ Plugin berjalan sesuai urutan kemunculannya di `plugins: []`. Plugin `before` te
 
 - `bosia.config.ts` dikompilasi dengan `Bun.build({ target: "bun" })`. Ia bisa memakai TypeScript dan impor bare-specifier.
 - Plugin yang melempar error saat `backend.before` / `backend.after` membatalkan startup server. Build hook yang melempar error membatalkan build.
-- Plugin Elysia pihak ketiga bisa dibungkus dengan mudah: `before(app) { return app.use(elysiaPlugin()); }`.
+- Plugin Elysia (`app.use(...)`) tidak lagi berfungsi — Bosia melepas Elysia di 0.9.9. Pindahkan ke method di atas.
+
+## Migrasi dari Elysia (0.9.9)
+
+Plugin yang memakai `get/post/…`, `onRequest`, `onAfterHandle`, `onError` atau `set.headers` tetap berjalan. Hanya tipenya yang berubah:
+
+```ts
+// sebelum
+import type { Elysia } from "elysia";
+// sesudah
+import type { BosiaApp } from "bosia/server";
+```
+
+`app.use()`, `.derive()`, `.decorate()`, `.group()`, `.ws()`, validasi skema dan path `:param` sudah tidak ada. Tangani di dalam handler Anda sendiri.

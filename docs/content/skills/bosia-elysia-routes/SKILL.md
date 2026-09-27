@@ -45,7 +45,7 @@ export async function POST({ request, locals }) { … }
 export async function DELETE({ params, locals }) { … }
 ```
 
-Never default export. Never an Elysia app instance — Bosia wraps each verb itself.
+Never default export. Never an app/router instance — Bosia wraps each verb itself.
 
 ### R2 — Body parsing
 

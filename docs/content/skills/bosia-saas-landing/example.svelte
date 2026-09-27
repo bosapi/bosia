@@ -15,7 +15,7 @@
 		{ title: "Runes everywhere", body: "Svelte 5 reactivity by default — no legacy stores." },
 		{
 			title: "Type-safe routes",
-			body: "File-based routing with Elysia handlers and inferred params.",
+			body: "File-based routing with typed handlers and inferred params.",
 		},
 		{
 			title: "Drizzle wired",

@@ -81,7 +81,7 @@
 			stack: [
 				{ name: "Bun", role: "Runtime & bundler", url: "https://bun.sh" },
 				{ name: "Svelte 5", role: "UI with runes", url: "https://svelte.dev" },
-				{ name: "ElysiaJS", role: "HTTP server", url: "https://elysiajs.com" },
+				{ name: "Tailwind CSS", role: "Styling", url: "https://tailwindcss.com" },
 			],
 			ctaTitle: "Ready to build?",
 			ctaSub: "Start your first Bosia project today.",
@@ -141,7 +141,7 @@
 			stack: [
 				{ name: "Bun", role: "Runtime & bundler", url: "https://bun.sh" },
 				{ name: "Svelte 5", role: "UI dengan runes", url: "https://svelte.dev" },
-				{ name: "ElysiaJS", role: "HTTP server", url: "https://elysiajs.com" },
+				{ name: "Tailwind CSS", role: "Styling", url: "https://tailwindcss.com" },
 			],
 			ctaTitle: "Siap untuk membangun?",
 			ctaSub: "Mulai proyek Bosia pertama Anda hari ini.",

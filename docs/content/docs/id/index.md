@@ -1,6 +1,6 @@
 ---
 title: Bosia
-description: Framework fullstack yang cepat dan lengkap, dibangun di atas Bun + Svelte 5 + ElysiaJS.
+description: Framework fullstack yang cepat dan lengkap, dibangun di atas Bun + Svelte 5.
 ---
 
 Framework fullstack yang cepat dan lengkap. Konvensi SvelteKit, tanpa Node.js, tanpa Vite, tanpa kerumitan adapter.
@@ -33,7 +33,7 @@ Buka [http://localhost:9000](http://localhost:9000) dan mulai membangun.
 | Lapisan | Teknologi        |
 | ------- | ---------------- |
 | Runtime | Bun              |
-| HTTP    | ElysiaJS         |
+| HTTP    | Bawaan Bosia     |
 | UI      | Svelte 5 (Runes) |
 | CSS     | Tailwind CSS v4  |
 | Bundler | Bun.build        |

@@ -29,7 +29,7 @@ These work the same way you'd expect:
 | ----------------------- | ----------------------------- | ------------------------------------------------- |
 | **Runtime**             | Node.js                       | Bun                                               |
 | **Bundler**             | Vite                          | Bun.build                                         |
-| **HTTP server**         | Configurable via adapters     | ElysiaJS (built-in)                               |
+| **HTTP server**         | Configurable via adapters     | Built-in (`Bun.serve` / Workers `fetch`)          |
 | **Adapters**            | Required (node, vercel, etc.) | None — single Bun server                          |
 | **Universal load**      | `+page.ts` / `+layout.ts`     | Not supported — server loaders only               |
 | **Stores**              | `$app/stores`                 | Not available — use `$props()`                    |
@@ -86,5 +86,5 @@ These SvelteKit features are not available in Bosia:
 - Service workers
 - Snapshots
 - Shallow routing (`pushState` / `replaceState`)
-- Adapter system (tied to Bun + ElysiaJS)
+- Adapter system (Bun and Cloudflare Workers are built in)
 - `<svelte:head>` for metadata (use `metadata()` instead)

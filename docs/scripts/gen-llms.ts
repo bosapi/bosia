@@ -83,7 +83,7 @@ const sections = [
 const body =
 	[
 		"# Bosia",
-		"> Fullstack web framework: Bun + Svelte 5 + ElysiaJS. Skills, blocks, components and themes are served as JSON for AI agents.",
+		"> Fullstack web framework: Bun + Svelte 5. Skills, blocks, components and themes are served as JSON for AI agents.",
 		"",
 		"Each skill links to `/api/skills/<name>.json` (full SKILL.md body + references). Blocks, components and themes link to their registry JSON.",
 		"",
