@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Dev-server smoke test, run from inside a scaffolded app (see test.yml).
+# Dev-server smoke test, run from inside a scaffolded app (see test-publish.yml).
 #
 #   1. `bun run dev` serves the home page
 #   2. editing +page.svelte shows up without a restart (watcher + rebuild)
