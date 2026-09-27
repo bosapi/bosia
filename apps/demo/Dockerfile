@@ -20,7 +20,7 @@ RUN NODE_ENV=production bun run ../../packages/bosia/src/core/build.ts
 FROM oven/bun:1-alpine
 WORKDIR /app
 
-# External dependencies not bundled into the server (elysia)
+# External dependencies not bundled into the server
 COPY --from=builder /app/packages/bosia/node_modules ./node_modules
 
 # Built artifacts

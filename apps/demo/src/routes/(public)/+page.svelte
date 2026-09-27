@@ -41,7 +41,7 @@
 
 <svelte:head>
 	<title>Bosia Demo</title>
-	<meta name="description" content="Bosia — SSR + Svelte 5 + Bun + ElysiaJS" />
+	<meta name="description" content="Bosia — SSR + Svelte 5 + Bun" />
 </svelte:head>
 
 <div class="space-y-12">
@@ -52,7 +52,7 @@
 		</h1>
 		<p class="text-xs text-muted-foreground">{PUBLIC_STATIC_BASE_URL}</p>
 		<p class="text-xl text-muted-foreground max-w-xl">
-			A minimalist fullstack framework — SSR, Svelte 5 Runes, Bun, and ElysiaJS.
+			A minimalist fullstack framework — SSR, Svelte 5 Runes, and Bun.
 		</p>
 	</div>
 
