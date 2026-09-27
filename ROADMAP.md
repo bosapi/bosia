@@ -1,7 +1,20 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.9.8**
+> Current version: **0.9.10**
+
+---
+
+## bosia 0.9.10 (2026-09-27) — Drop Elysia
+
+> Elysia only wrapped `handleRequest`. Replaced by a small built-in `BosiaApp`, so plugins keep their shape and Workers bundles shrink.
+
+- [x] Dropped Elysia on Bun and Workers: own Elysia-shaped `BosiaApp` (`core/backend.ts`) with routes, onRequest/onAfterHandle/onError, HEAD=GET w/o body. Test worker 527→151KB.
+- [x] ~~Lean entry only when no plugin uses `backend`~~ not needed: `BosiaApp` is small, so server-timing and inspector run on it everywhere.
+- [x] 🟡 Unrouted methods (TRACE etc.) answered 500 via Elysia's NOT_FOUND. Now 405 + `Allow` on Bun and Workers.
+- [ ] 🟢 `BosiaApp` routes: add `:param` paths when a plugin needs them (exact + `"*"` only today).
+- [x] demo + demo-worker e2e in Chrome vs the 0.9.9 build: pages, nav, actions, API, HEAD, 405, guard data, inspector SSE all match. demo-worker 626→265KB.
+- [ ] 🟡 Pre-existing (0.9.9 too): `/actions-test` success message never shows; guard client-nav click stays put; `/all/[...catchall]` shows no segments.
 
 ---
 
@@ -35,10 +48,6 @@
 - [x] 🔴 Workers: client nav to a prerendered page POSTed its data file → asset server 405. Router now GETs prerendered data; `prerender`+`actions` pages render live.
 - [x] Workers docs + skill R9: prerender pages that never change (no worker CPU, no request).
 - [x] Workers bundle: stub `svelte/compiler` (pulled in by dev-only inspector). Demo 1453→626KB, 408→184KB gz; live startup 148→49ms. Left: Elysia+typebox+file-type ~330KB (item 4).
-- [x] Dropped Elysia on Bun and Workers: own Elysia-shaped `BosiaApp` (`core/backend.ts`) with routes, onRequest/onAfterHandle/onError, HEAD=GET w/o body. Test worker 527→151KB.
-- [x] ~~Lean entry only when no plugin uses `backend`~~ not needed: `BosiaApp` is small, so server-timing and inspector run on it everywhere.
-- [x] 🟡 Unrouted methods (TRACE etc.) answered 500 via Elysia's NOT_FOUND. Now 405 + `Allow` on Bun and Workers.
-- [ ] 🟢 `BosiaApp` routes: add `:param` paths when a plugin needs them (exact + `"*"` only today).
 - [x] 🟢 Windows CI: `findWorkersIncompatible` returned `\` paths (report already printed `/`). Hits now use posix paths on every OS.
 - [ ] ~~Workers shared cache via `caches.default`~~ skipped: per-colo, no tag/prefix purge, no-op on workers.dev.
 - [x] 🟢 Tests ran twice on publish pushes. `ci.yml` → `test.yml`; `publish.yml` runs only on a `package.json` change and waits for test.yml on the same commit.
@@ -1301,7 +1310,7 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 
 > Test routes end-to-end without starting a real server.
 
-- [ ] 🟠 `createTestApp()` — build an in-process Elysia instance from the route manifest
+- [ ] 🟠 `createTestApp()` — build an in-process `BosiaApp` from the route manifest
 - [ ] 🟠 `testRequest()` — send HTTP requests to the test app, get standard `Response` back
 - [ ] 🟠 Support API routes, page routes (SSR HTML), and form actions
 - [ ] 🟡 Response assertion helpers: `expectJson()`, `expectRedirect()`, `expectHtml()`

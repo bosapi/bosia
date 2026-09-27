@@ -125,9 +125,9 @@ Plugins run in the order they appear in `plugins: []`. `before` plugins register
 
 - `bosia.config.ts` is compiled with `Bun.build({ target: "bun" })`. It can use TypeScript and bare-specifier imports.
 - Plugins that throw during `backend.before` / `backend.after` abort server startup. Build hooks that throw abort the build.
-- Elysia plugins (`app.use(...)`) no longer work — Bosia dropped Elysia in 0.9.9. Port them to the methods above.
+- Elysia plugins (`app.use(...)`) no longer work — Bosia dropped Elysia in 0.9.10. Port them to the methods above.
 
-## Migrating from Elysia (0.9.9)
+## Migrating from Elysia (0.9.10)
 
 Plugins that used `get/post/…`, `onRequest`, `onAfterHandle`, `onError` or `set.headers` keep working. Only the type changes:
 

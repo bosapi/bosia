@@ -125,9 +125,9 @@ Plugin berjalan sesuai urutan kemunculannya di `plugins: []`. Plugin `before` te
 
 - `bosia.config.ts` dikompilasi dengan `Bun.build({ target: "bun" })`. Ia bisa memakai TypeScript dan impor bare-specifier.
 - Plugin yang melempar error saat `backend.before` / `backend.after` membatalkan startup server. Build hook yang melempar error membatalkan build.
-- Plugin Elysia (`app.use(...)`) tidak lagi berfungsi — Bosia melepas Elysia di 0.9.9. Pindahkan ke method di atas.
+- Plugin Elysia (`app.use(...)`) tidak lagi berfungsi — Bosia melepas Elysia di 0.9.10. Pindahkan ke method di atas.
 
-## Migrasi dari Elysia (0.9.9)
+## Migrasi dari Elysia (0.9.10)
 
 Plugin yang memakai `get/post/…`, `onRequest`, `onAfterHandle`, `onError` atau `set.headers` tetap berjalan. Hanya tipenya yang berubah:
 

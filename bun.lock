@@ -60,7 +60,7 @@
     },
     "packages/bosia": {
       "name": "bosia",
-      "version": "0.9.9",
+      "version": "0.9.10",
       "bin": {
         "bosia": "src/cli/index.ts",
       },
