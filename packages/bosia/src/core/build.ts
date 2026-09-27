@@ -1,4 +1,13 @@
-import { writeFileSync, readFileSync, rmSync, mkdirSync, existsSync } from "fs";
+import {
+	writeFileSync,
+	readFileSync,
+	rmSync,
+	mkdirSync,
+	existsSync,
+	readdirSync,
+	unlinkSync,
+	rmdirSync,
+} from "fs";
 import { basename, join, relative } from "path";
 import type { RouteManifest } from "./types.ts";
 
@@ -95,16 +104,31 @@ if (process.env.BOSIA_SKIP_ROUTE_SCAN === "1") {
 // Windows won't delete a file another process holds open (a running `bosia
 // start`, an editor, antivirus scanning fresh files). Retries ride out short
 // locks; anything left is warned about instead of silently built over.
+// No `force`: on Windows, Bun 1.4.2's rmSync with `force: true` returned without
+// error yet deleted nothing. If rmSync still leaves the tree, delete it entry by
+// entry so a failure names the exact file.
 function clearOutput(path: string): void {
+	if (!existsSync(path)) return;
 	try {
-		rmSync(path, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+		rmSync(path, { recursive: true, maxRetries: 5, retryDelay: 100 });
+		if (existsSync(path)) removeTree(path);
 	} catch (err) {
-		const code = (err as NodeJS.ErrnoException).code ?? String(err);
-		console.warn(`⚠️  Could not delete ${path} (${code}) — stop whatever is using it and rebuild.`);
+		const e = err as NodeJS.ErrnoException;
+		console.warn(
+			`⚠️  Could not delete ${e.path ?? path} (${e.code ?? String(err)}) — stop whatever is using it and rebuild.`,
+		);
 		return;
 	}
 	if (existsSync(path))
 		console.warn(`⚠️  ${path} still exists after deleting it — output may be stale.`);
+}
+function removeTree(path: string): void {
+	for (const entry of readdirSync(path, { withFileTypes: true })) {
+		const child = join(path, entry.name);
+		if (entry.isDirectory()) removeTree(child);
+		else unlinkSync(child);
+	}
+	rmdirSync(path);
 }
 clearOutput(OUT_DIR);
 // A Bun build must not ship a leftover Workers bundle from an earlier target.
