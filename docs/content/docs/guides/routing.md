@@ -141,6 +141,8 @@ Create `+error.svelte` to handle errors thrown by loaders:
 
 The error page receives the `HttpError` thrown by `error()` in a loader. Place it at the route level where you want to catch errors — it catches errors from all child routes. `ErrorProps` and the underlying `PageError` type come from the generated `./$types` module — no manual prop typing needed.
 
+It also gets the failing route's `params` (`let { error, params }: ErrorProps = $props()`). An error page catches its child routes too, so a child's params (like `params.slug` under `/blog`) are typed `string | undefined`, and a 404 gets `{}`.
+
 ### Nested error boundaries
 
 `+error.svelte` can live in any route folder, not just the root. When a loader throws, Bosia walks up from the failing route and renders the nearest `+error.svelte` **inside the matching prefix of the layout chain** — so the surrounding nav, header, and other layouts above the boundary stay visible while only the broken page is replaced.

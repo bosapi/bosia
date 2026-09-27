@@ -12,7 +12,7 @@
 - [x] Removed the `page.params` getter + dead SSR `appState.routeParams` seed. SSR error layouts now get `params` via `ssrPageData`. Test probes the prop.
 - [x] Moved the `use:enhance` success fix (84763a4, committed 09-28) from 1.0.0 to 1.1.0 in the changelog.
 - [x] Demo `/all/[...catchall]` showed no segments: it read the stripped `data.params`. Now uses the `params` prop.
-- [ ] 🟡 `+error.svelte` only gets `{ error }`, so it can't read route params now. Pass `params` as a prop if an app needs it.
+- [x] `+error.svelte` gets `params` as a prop (nested + root, SSR + client). `ErrorProps.params` adds `string | undefined` for child-route keys. Tested.
 
 ---
 

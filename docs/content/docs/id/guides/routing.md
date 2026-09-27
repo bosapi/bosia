@@ -129,6 +129,8 @@ Buat `+error.svelte` untuk menangani error yang dilempar oleh loader:
 
 Halaman error menerima `HttpError` yang dilempar oleh `error()` di dalam loader. Tempatkan halaman error pada level route di mana Anda ingin menangkap error — halaman ini menangkap error dari semua route anak. Tipe `ErrorProps` dan `PageError` di-generate ke `./$types` — tidak perlu mendeklarasikan tipe prop secara manual.
 
+Halaman error juga menerima `params` dari route yang gagal (`let { error, params }: ErrorProps = $props()`). Karena halaman error menangkap route anak juga, `params` milik anak (misalnya `params.slug` di bawah `/blog`) bertipe `string | undefined`, dan 404 mendapat `{}`.
+
 ## Kerangka Loading
 
 Buat `+loading.svelte` di folder route untuk menampilkan kerangka (skeleton) saat berpindah **ke** halaman tersebut, alih-alih membiarkan halaman lama tetap tampil sampai kode dan data halaman baru selesai dimuat:

@@ -460,7 +460,7 @@
 	{#if depth > 0 && layoutComponents.length > 0}
 		{@render renderLayout(0, depth)}
 	{:else}
-		<ErrorComponent {...errorProps ?? {}} />
+		<ErrorComponent {...errorProps ?? {}} {params} />
 	{/if}
 {:else if layoutComponents.length > 0}
 	{@render renderLayout(0, layoutComponents.length)}
@@ -493,7 +493,7 @@
 	{:else}
 		<Layout {data} {params}>
 			{#if ErrorComponent}
-				<ErrorComponent {...errorProps ?? {}} />
+				<ErrorComponent {...errorProps ?? {}} {params} />
 			{:else if PageComponent}
 				<PageComponent bind:this={pageInstance} data={pageData} {params} form={formData} />
 			{:else}

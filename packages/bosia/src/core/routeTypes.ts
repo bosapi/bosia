@@ -123,7 +123,9 @@ export function generateRouteTypes(manifest: RouteManifest): void {
 		if (info.hasErrorPage) {
 			lines.push(``);
 			lines.push(`export type PageError = { status: number; message: string };`);
-			lines.push(`export type ErrorProps = { error: PageError };`);
+			lines.push(
+				`export type ErrorProps = { error: PageError; params: Params & Record<string, string | undefined> };`,
+			);
 		}
 
 		// ActionData — union of all action return types, unwrapping ActionFailure

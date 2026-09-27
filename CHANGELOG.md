@@ -8,13 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [1.1.0] - 2026-09-28
 
-### Removed
+### Added
 
-- `page.params` is gone; read route params from `$props()` in your page or layout instead.
+- Error pages (`+error.svelte`) now get the failing route's `params` too.
 
 ### Fixed
 
 - Forms using `use:enhance` now show their success message instead of it vanishing at once.
+
+### Removed
+
+- `page.params` is gone; read route params from `$props()` in your page or layout instead.
 
 ## [1.0.0] - 2026-09-27
 
