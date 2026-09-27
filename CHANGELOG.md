@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Bosia now needs Bun 1.4 or newer.
 - Apps load a bit less JavaScript, thanks to Bun 1.4's smarter bundling.
 
+### Fixed
+
+- Builds now warn when an old build folder can't be deleted, instead of keeping stale files.
+
 ## [0.9.10] - 2026-09-27
 
 ### Changed

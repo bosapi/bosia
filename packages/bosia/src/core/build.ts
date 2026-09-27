@@ -92,9 +92,20 @@ if (process.env.BOSIA_SKIP_ROUTE_SCAN === "1") {
 // would clobber a concurrently-running `bosia dev` whose compiled server lives
 // at .bosia/dev/ — the codegen files (routes*.ts, env.*.ts, types/) are the
 // only things this build needs to clear to avoid stale entries on route renames.
-try {
-	rmSync(OUT_DIR, { recursive: true, force: true });
-} catch {}
+// Windows won't delete a file another process holds open (a running `bosia
+// start`, an editor, a test that imported the worker). Warn instead of silently
+// building over stale output.
+function clearOutput(path: string): void {
+	try {
+		rmSync(path, { recursive: true, force: true });
+	} catch (err) {
+		const code = (err as NodeJS.ErrnoException).code ?? String(err);
+		console.warn(`⚠️  Could not delete ${path} (${code}) — stop whatever is using it and rebuild.`);
+	}
+}
+clearOutput(OUT_DIR);
+// A Bun build must not ship a leftover Workers bundle from an earlier target.
+if (target !== "workers" && existsSync(`${OUT_DIR}/worker`)) clearOutput(`${OUT_DIR}/worker`);
 for (const p of [
 	".bosia/routes.ts",
 	".bosia/routes.client.ts",

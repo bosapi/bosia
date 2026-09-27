@@ -1,5 +1,13 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "fs";
+import {
+	cpSync,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "fs";
 import { join } from "path";
 
 import { BOSIA_NODE_PATH } from "../src/core/paths.ts";
@@ -26,6 +34,19 @@ async function build(env: Record<string, string> = {}) {
 		new Response(proc.stderr).text(),
 	]);
 	if (code !== 0) throw new Error(`build failed (${code})\n${out}\n${err}`);
+}
+
+// Imports a copy of the worker that lives outside dist/, never dist/ itself.
+// On Windows (seen with Bun 1.4) an imported file can stay locked, so a later
+// rebuild can't delete dist/ and stale output survives. Copied once, so every test
+// shares one module instance (warm-up counts, cache state).
+let workerCopy: string | undefined;
+function importWorker() {
+	if (!workerCopy) {
+		workerCopy = join(tmpDir, ".worker-under-test");
+		cpSync(join(tmpDir, "dist", "worker"), workerCopy, { recursive: true });
+	}
+	return import(join(workerCopy, "index.js"));
 }
 
 beforeAll(async () => {
@@ -141,7 +162,7 @@ describe("workers target build", () => {
 	// user hooks or loaders (no bindings yet) and nothing stored in the cache.
 	test("startup warm-up renders / without hooks, loaders or caching", async () => {
 		const g = globalThis as Record<string, unknown>;
-		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
+		const worker = (await importWorker()).default;
 		expect([g.__renders, g.__hooks, g.__loads]).toEqual([1, undefined, undefined]);
 
 		const res = await worker.fetch(new Request("http://x/"), env);
@@ -150,7 +171,7 @@ describe("workers target build", () => {
 	});
 
 	test("the worker serves pages, runs hooks, and hands bindings to loaders", async () => {
-		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
+		const worker = (await importWorker()).default;
 
 		const res = await worker.fetch(new Request("http://x/hello"), env);
 		expect(res.status).toBe(200);
@@ -164,7 +185,7 @@ describe("workers target build", () => {
 	test("the Svelte compiler is stubbed out of the worker", async () => {
 		const bundle = readFileSync(join(tmpDir, "dist", "worker", "index.js"), "utf-8");
 		expect(bundle).not.toContain("css_selector_invalid");
-		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
+		const worker = (await importWorker()).default;
 		await worker.fetch(new Request("http://x/hello"), env);
 		const compile = (globalThis as Record<string, unknown>).__compile as () => void;
 		expect(() => compile()).toThrow("isn't available on Cloudflare Workers");
@@ -178,7 +199,7 @@ describe("workers target build", () => {
 	});
 
 	test("unrouted methods answer 405 on the worker", async () => {
-		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
+		const worker = (await importWorker()).default;
 		const res = await worker.fetch(new Request("http://x/hello", { method: "TRACE" }), env);
 		expect(res.status).toBe(405);
 	});
@@ -186,7 +207,7 @@ describe("workers target build", () => {
 	// Cloudflare's edge compresses responses outside the worker's CPU budget, so
 	// the worker sends plain bytes on a miss and stores no compressed copies.
 	test("the worker leaves compression to Cloudflare", async () => {
-		const worker = (await import(join(tmpDir, "dist", "worker", "index.js"))).default;
+		const worker = (await importWorker()).default;
 		const req = () => new Request("http://x/big", { headers: { "Accept-Encoding": "br, gzip" } });
 		const miss = await worker.fetch(req(), env);
 		expect(miss.headers.get("content-encoding")).toBeNull();

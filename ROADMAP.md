@@ -15,6 +15,7 @@
 - [x] Bun 1.4.1 now injects a lazy-`import()` modulepreload helper into the hydrate chunk (URLs from `import.meta.url`, copies CSP nonce). Kept; `modulePreload: false` turns it off.
 - [x] 🔴 Dev hydration died ("reading 'call'"): 1.4 chunks import the entry by bare URL, dev loaded it with `?v=` → two Svelte runtimes. `html.ts` now emits the hashed entry verbatim; test pins it.
 - [x] Verified in Chrome: prod, dev and `wrangler dev` hydrate + SPA-navigate with no console errors; form action, inspector badge. Plus 563 tests, dev-smoke, curl prod checks.
+- [x] 🔴 Windows CI: rebuild left stale `dist/worker` — the test's imported worker kept a file locked and `build.ts` swallowed the `rmSync` error. Tests import a copy; build warns and clears `dist/worker` on Bun builds.
 - [ ] 🟡 Retest `new Bun.SQL("postgres://…")` `FailedToOpenSocket` on 1.4 with a live Postgres; drop the 1.3.x gotcha from skills if fixed. Object form stays (timeouts).
 - [ ] 🟡 Inspector `parseTopFrame` regex `[^)]+` breaks on route groups like `(public)`: errors point at `renderer.ts`, not the user's `+page.server.ts`. Pre-existing, not Bun.
 - [ ] 🟡 `use:enhance` success never shows `form` (demo `/actions-test` "Welcome…"): server returns success JSON; the page reload after `applyResult` seems to wipe it. Same on 1.3.14.
