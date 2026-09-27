@@ -38,6 +38,7 @@
 - [ ] Workers: drop Elysia (~360KB min, ~90KB gz est.). It only wraps handleRequest: 6 catch-alls, onError→500 JSON, HEAD=GET w/o body. Move createApp out of server.ts; lean worker entry calls handleRequest.
 - [ ] Workers Elysia removal: build picks lean entry when no prod plugin uses `backend` hooks, else keeps Elysia. `server-timing` needs Elysia today — later a framework request-wrap hook so it doesn't.
 - [ ] 🟡 Unrouted methods (TRACE etc.) answer 500: Elysia's NOT_FOUND reaches the base onError. Should be 405 on Bun and Workers.
+- [x] 🟢 Windows CI: `findWorkersIncompatible` returned `\` paths (report already printed `/`). Hits now use posix paths on every OS.
 - [ ] ~~Workers shared cache via `caches.default`~~ skipped: per-colo, no tag/prefix purge, no-op on workers.dev.
 
 ## bosia 0.9.8 (2026-09-27) — two pages, one URL: fail like SvelteKit

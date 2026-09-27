@@ -48,7 +48,8 @@ export function findWorkersIncompatible(srcDir = "./src"): WorkersGuardHit[] {
 	for (const entry of entries) {
 		const rel = toPosix(entry);
 		if (!isServerFile(rel)) continue;
-		const file = join(srcDir, entry);
+		// Posix on every OS, so reports and callers see one path shape.
+		const file = toPosix(join(srcDir, entry));
 		const source = readFileSync(file, "utf-8");
 		const lines = source.split("\n");
 
@@ -93,7 +94,7 @@ export function findWorkersIncompatible(srcDir = "./src"): WorkersGuardHit[] {
 export function workersGuardReport(srcDir = "./src"): string | null {
 	const hits = findWorkersIncompatible(srcDir);
 	if (hits.length === 0) return null;
-	const body = hits.map((h) => `  ${toPosix(h.file)}:${h.line}:${h.col}  ${h.message}`).join("\n");
+	const body = hits.map((h) => `  ${h.file}:${h.line}:${h.col}  ${h.message}`).join("\n");
 	const text =
 		`Workers guard: server code uses APIs Cloudflare Workers doesn't have\n\n${body}\n\n` +
 		"Use fetch/Web APIs or bindings (event.platform.env) instead. " +
