@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ErrorProps } from "./$types";
-	let { error }: ErrorProps = $props();
+	let { error, params }: ErrorProps = $props();
 </script>
 
 <svelte:head>
@@ -11,6 +11,11 @@
 	<p class="text-sm uppercase tracking-wide text-red-700 dark:text-red-300">Blog section error</p>
 	<p class="text-3xl font-bold">{error.status}</p>
 	<p class="text-base text-red-800 dark:text-red-200">{error.message}</p>
+	{#if params.slug}
+		<p class="text-sm text-red-700 dark:text-red-300" data-error-slug={params.slug}>
+			Post: <code class="font-mono">{params.slug}</code>
+		</p>
+	{/if}
 	<div class="flex gap-2 pt-2">
 		<a href="/blog" class="rounded-md bg-red-700 text-white text-sm px-3 py-1.5 hover:bg-red-800">
 			Back to blog
