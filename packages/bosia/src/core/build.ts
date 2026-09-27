@@ -8,7 +8,7 @@ import {
 	unlinkSync,
 	rmdirSync,
 } from "fs";
-import { basename, join, relative } from "path";
+import { basename, join, relative, resolve } from "path";
 import type { RouteManifest } from "./types.ts";
 
 import { scanRoutes, RouteConflictError } from "./scanner.ts";
@@ -102,25 +102,26 @@ if (process.env.BOSIA_SKIP_ROUTE_SCAN === "1") {
 // at .bosia/dev/ — the codegen files (routes*.ts, env.*.ts, types/) are the
 // only things this build needs to clear to avoid stale entries on route renames.
 // Windows won't delete a file another process holds open (a running `bosia
-// start`, an editor, antivirus scanning fresh files). Retries ride out short
-// locks; anything left is warned about instead of silently built over.
-// No `force`: on Windows, Bun 1.4.2's rmSync with `force: true` returned without
-// error yet deleted nothing. If rmSync still leaves the tree, delete it entry by
-// entry so a failure names the exact file.
+// start`, an editor, antivirus scanning fresh files); warn instead of silently
+// building over stale output. rmSync is only a first try: on Windows, Bun 1.4.2
+// threw ENOENT for an existing "./dist" (and with `force` hid it, deleting
+// nothing). So resolve the path, check what's left, and finish entry by entry —
+// a real failure then names the exact file.
 function clearOutput(path: string): void {
-	if (!existsSync(path)) return;
+	const abs = resolve(path);
+	if (!existsSync(abs)) return;
 	try {
-		rmSync(path, { recursive: true, maxRetries: 5, retryDelay: 100 });
-		if (existsSync(path)) removeTree(path);
+		rmSync(abs, { recursive: true, maxRetries: 5, retryDelay: 100 });
+	} catch {}
+	if (!existsSync(abs)) return;
+	try {
+		removeTree(abs);
 	} catch (err) {
 		const e = err as NodeJS.ErrnoException;
 		console.warn(
 			`⚠️  Could not delete ${e.path ?? path} (${e.code ?? String(err)}) — stop whatever is using it and rebuild.`,
 		);
-		return;
 	}
-	if (existsSync(path))
-		console.warn(`⚠️  ${path} still exists after deleting it — output may be stale.`);
 }
 function removeTree(path: string): void {
 	for (const entry of readdirSync(path, { withFileTypes: true })) {
@@ -142,9 +143,7 @@ for (const p of [
 	".bosia/runtime.workers.ts",
 	".bosia/types",
 ]) {
-	try {
-		rmSync(p, { recursive: true, force: true });
-	} catch {}
+	clearOutput(p);
 }
 
 // 1. Scan routes (or reuse the cached manifest — see 0b-pre)
