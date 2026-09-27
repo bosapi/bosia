@@ -346,6 +346,24 @@ describe("tailwind stylesheet link", () => {
 	});
 });
 
+describe("client entry URL", () => {
+	// Split chunks import the entry as a bare `./hydrate-*.js`. Any query on the
+	// page's copy (e.g. a dev `?v=`) loads it twice → two Svelte runtimes and a
+	// dead hydration. Tests run with isDev true, so this covers the dev path.
+	test("script and modulepreload use the bare entry URL on every render path", () => {
+		const entry = `/dist/client/${distManifest.entry}`;
+		for (const html of [
+			buildHtml("", "", {}, [], true, null, "en", true),
+			buildHtmlShellOpen("en"),
+			buildHtmlTail("", "", {}, [], true),
+		]) {
+			const urls = [...html.matchAll(/(?:src|href)="([^"]*hydrate[^"]*)"/g)].map((m) => m[1]);
+			expect(urls.length).toBeGreaterThan(0);
+			for (const url of urls) expect(url).toBe(entry);
+		}
+	});
+});
+
 describe("safeLang", () => {
 	test("accepts BCP 47-ish tags", () => {
 		expect(safeLang("en")).toBe("en");

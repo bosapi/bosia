@@ -52,7 +52,7 @@ bun run start
 
 | Layer       | Technology                                 |
 | ----------- | ------------------------------------------ |
-| Runtime     | [Bun](https://bun.sh)                      |
+| Runtime     | [Bun](https://bun.sh) ≥ 1.4                |
 | HTTP Server | Built-in (`Bun.serve`)                     |
 | UI          | [Svelte 5](https://svelte.dev) (Runes)     |
 | CSS         | [Tailwind CSS v4](https://tailwindcss.com) |

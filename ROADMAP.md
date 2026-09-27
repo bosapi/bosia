@@ -1,7 +1,27 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.9.10**
+> Current version: **1.0.0**
+
+---
+
+## bosia 1.0.0 (2026-09-27) — Bun 1.4
+
+> Toolchain moves to Bun 1.4.2 (`.bun-version`); apps declare `engines.bun >=1.4`. Safe floor because Elysia (hit by the 1.4.0–1.4.1 var/let bundler bug) is gone.
+
+- [x] `.bun-version` 1.4.2, `@types/bun` 1.4.2 in every workspace. `engines: { bun: ">=1.4" }` in bosia, all 4 templates, `apps/demo`, `apps/demo-worker`.
+- [x] 1.4 types type `BuildArtifact.kind`; dropped the `as { kind?: string }` cast in `build.ts`.
+- [x] Demo client 36 JS / 272KB → 33 / 268KB. Worker 265KB / 81KB gz → 244KB / 72KB gz. Manifest entry + component CSS unchanged.
+- [x] Bun 1.4.1 now injects a lazy-`import()` modulepreload helper into the hydrate chunk (URLs from `import.meta.url`, copies CSP nonce). Kept; `modulePreload: false` turns it off.
+- [x] 🔴 Dev hydration died ("reading 'call'"): 1.4 chunks import the entry by bare URL, dev loaded it with `?v=` → two Svelte runtimes. `html.ts` now emits the hashed entry verbatim; test pins it.
+- [x] Verified in Chrome: prod, dev and `wrangler dev` hydrate + SPA-navigate with no console errors; form action, inspector badge. Plus 563 tests, dev-smoke, curl prod checks.
+- [ ] 🟡 Retest `new Bun.SQL("postgres://…")` `FailedToOpenSocket` on 1.4 with a live Postgres; drop the 1.3.x gotcha from skills if fixed. Object form stays (timeouts).
+- [ ] 🟡 Inspector `parseTopFrame` regex `[^)]+` breaks on route groups like `(public)`: errors point at `renderer.ts`, not the user's `+page.server.ts`. Pre-existing, not Bun.
+- [ ] 🟡 `use:enhance` success never shows `form` (demo `/actions-test` "Welcome…"): server returns success JSON; the page reload after `applyResult` seems to wipe it. Same on 1.3.14.
+- [ ] 🟢 Inspector overlay has no client-side dedup: 50× loop on `/errors-test` shows 50 rows. Only server errors use `DEDUP_WINDOW_MS`.
+- [ ] 🟢 Try `bun test --parallel` in CI.
+- [ ] 🟢 Consider `minChunkSize` for the client build (fewer tiny chunks).
+- [ ] 🟢 Consider `Bun.serve` `{ dir }` routes in `BosiaApp` for static assets (sendfile, ETag, Range for free).
 
 ---
 

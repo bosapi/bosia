@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.0.0] - 2026-09-27
+
+### Changed
+
+- First stable release: Bosia 1.0.0.
+- Bosia now needs Bun 1.4 or newer.
+- Apps load a bit less JavaScript, thanks to Bun 1.4's smarter bundling.
+
 ## [0.9.10] - 2026-09-27
 
 ### Changed

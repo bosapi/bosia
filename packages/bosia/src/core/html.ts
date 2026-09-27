@@ -38,6 +38,12 @@ const TW_CSS = `${B}/bosia-tw.css`;
 const FAVICON = `${B}/favicon.svg`;
 const SSE = `${B}/__bosia/sse`;
 
+// The client entry, emitted verbatim — never with a `?v=` buster. Split chunks
+// import it by bare relative URL (Bun 1.4 keeps shared code in the entry), so a
+// query here makes the browser load it twice: two Svelte runtimes, and hydration
+// dies with "reading 'call'". The content-hashed name is already the buster.
+const ENTRY = `${DIST}/${distManifest.entry}`;
+
 /**
  * Handed to the client bundle so its router strips the same prefix the server
  * added. Emitted before the module script, and omitted entirely at the origin
@@ -195,7 +201,7 @@ export function buildHtml(
 		: "";
 
 	const scripts = csr
-		? `${baseScript(nonce)}${envScript}${dataIslands}${sysScript}\n  <script${n} type="module" src="${DIST}/${distManifest.entry}${cacheBust}"></script>`
+		? `${baseScript(nonce)}${envScript}${dataIslands}${sysScript}\n  <script${n} type="module" src="${ENTRY}"></script>`
 		: isDev
 			? `\n  <script${n}>!function r(){var e=new EventSource("${SSE}");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`
 			: "";
@@ -264,7 +270,7 @@ export function buildHtmlShellOpen(
 			`\n  ${faviconLine}${twCssLink()}\n` +
 			componentCssLinks() +
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
-			`  <link rel="modulepreload" href="${DIST}/${distManifest.entry}${cacheBust}">`
+			`  <link rel="modulepreload" href="${ENTRY}">`
 		);
 	}
 
@@ -276,7 +282,7 @@ export function buildHtmlShellOpen(
 		`  ${twCssLink()}\n` +
 		componentCssLinks() +
 		`  <script${n}>${THEME_INIT_JS}</script>\n` +
-		`  <link rel="modulepreload" href="${DIST}/${distManifest.entry}${cacheBust}">`
+		`  <link rel="modulepreload" href="${ENTRY}">`
 	);
 }
 
@@ -401,7 +407,7 @@ export function buildHtmlTail(
 		if (ssrFlag || depsInject) {
 			out += `\n<script${n}>${ssrFlag}${depsInject}</script>`;
 		}
-		out += `\n<script${n} type="module" src="${DIST}/${distManifest.entry}${cacheBust}"></script>`;
+		out += `\n<script${n} type="module" src="${ENTRY}"></script>`;
 	} else if (isDev) {
 		out += `\n<script${n}>!function r(){var e=new EventSource("${SSE}");e.addEventListener("reload",()=>location.reload());e.onopen=()=>r._ok||(r._ok=1);e.onerror=()=>{e.close();setTimeout(r,2000)}}()</script>`;
 	}

@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Docs, site and templates no longer say Bosia is built on ElysiaJS.
 - Workers guide suggests prerendering pages that never change, to save CPU and requests.
 - Workers guide shows the smaller bundle size now that the Svelte compiler is left out.
+- Getting started now says Bosia needs Bun 1.4 or newer.
 
 ## [0.8.16] - 2026-09-27
 

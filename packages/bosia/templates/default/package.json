@@ -2,6 +2,9 @@
 	"name": "{{PROJECT_NAME}}",
 	"private": true,
 	"type": "module",
+	"engines": {
+		"bun": ">=1.4"
+	},
 	"scripts": {
 		"dev": "bosia dev",
 		"build": "bosia build",

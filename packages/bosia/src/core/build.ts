@@ -287,7 +287,7 @@ for (const output of clientResult.outputs) {
 	const rel = toPosix(relative(`${OUT_DIR}/client`, output.path)); // URL path, not fs path
 	if (output.path.endsWith(".js")) jsFiles.push(rel);
 	if (output.path.endsWith(".css")) cssFiles.push(rel);
-	if ((output as { kind?: string }).kind === "entry-point" && output.path.endsWith(".js")) {
+	if (output.kind === "entry-point" && output.path.endsWith(".js")) {
 		clientEntry = rel;
 	}
 }
