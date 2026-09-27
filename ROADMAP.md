@@ -19,7 +19,9 @@
 - [x] 🔴 First CI run failed on `prettier --check`: `bun.lock` was gitignored, so CI installed prettier 3.9.9, not 3.8.3. Now committed (without untracked `apps/demo-worker`); Bun pinned via `.bun-version`.
 - [x] 🟠 Tests blocked the 0.9.7 publish, but `decide` only published when the push diff touched `package.json`, so no retry was possible. It now publishes whenever the version isn't on npm.
 - [x] 🟠 Windows CI run 2: 22/513 tests failed. Real bug: `resolveLocalRegistry` used `new URL(import.meta.url).pathname` (`/D:/…` on Windows) → `import.meta.dir`. Tests: scanner helper split on `/`; svelte-audit deleted its cwd (EBUSY).
-- [ ] 🟡 Verify the first `windows-latest` CI run and a manual `bosia dev` session on a real Windows machine (watcher, HMR, route add).
+- [x] 🟢 `windows-latest` CI green (513 tests + create/build/start/asset smoke); 0.9.7 published via `workflow_dispatch` after the npm-based `decide` change.
+- [x] 🟠 `dev-smoke` CI job (ubuntu + windows, `.github/scripts/dev-smoke.sh`): dev serves, picks up a page edit + new route, `pidsOnPort` finds the proxy, and a restart after a hard kill reaps the orphaned app server.
+- [ ] 🟡 Manual `bosia dev` on real Windows for live browser reload (SSE) and Ctrl+C shutdown — CI can't check either.
 
 ## bosia 0.9.6 (2026-09-10) — every SSR'd page painted before its own CSS existed
 
