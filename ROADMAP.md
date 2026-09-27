@@ -41,6 +41,7 @@
 - [ ] 🟢 `BosiaApp` routes: add `:param` paths when a plugin needs them (exact + `"*"` only today).
 - [x] 🟢 Windows CI: `findWorkersIncompatible` returned `\` paths (report already printed `/`). Hits now use posix paths on every OS.
 - [ ] ~~Workers shared cache via `caches.default`~~ skipped: per-colo, no tag/prefix purge, no-op on workers.dev.
+- [x] 🟢 Tests ran twice on publish pushes. `ci.yml` → `test.yml`; `publish.yml` runs only on a `package.json` change and waits for test.yml on the same commit.
 
 ## bosia 0.9.8 (2026-09-27) — two pages, one URL: fail like SvelteKit
 

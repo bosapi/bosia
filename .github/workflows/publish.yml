@@ -1,36 +1,28 @@
 name: Publish & prebuilt templates
 
-# One workflow, two outcomes — decided by whether the version in
-# packages/bosia/package.json is already on npm:
+# Runs when packages/bosia/package.json changes on main. Publishes only a
+# version npm doesn't have yet: build templates, npm publish, then create the
+# GitHub Release with the prebuilt artifacts.
 #
-#   • not on npm yet (version bump) → build templates, npm publish,
-#     create the GitHub Release and upload the prebuilt artifacts.
-#   • already on npm                → build templates and re-upload
-#     (--clobber) onto the EXISTING release. Never touches npm, so the
-#     "version already exists" error can't happen.
+# Tests aren't run here — `wait-tests` waits for test.yml's run on the same
+# commit and stops the publish if it failed.
 #
 # Asking npm (not git diff) means a publish blocked by failing tests is retried
-# by the next run — a fix push or "Run workflow" — without another bump.
+# with "Run workflow" after the fix lands — no second bump needed.
 #
 # Job graph:
 #
-#   decide ─────────────────────────┐
-#   test (ci.yml: linux + windows) ─┴─ build-templates ─┬─ publish-npm ── release
-#                                                       └─ refresh-assets
+#   decide ─────────────────────────────┐
+#   wait-tests (test.yml, same commit) ─┴─ build-templates ── publish-npm ── release
 #
-# Nothing is published unless tests pass on both OSes. build:templates runs
-# exactly once per push; its tarballs travel between jobs as the "prebuilt"
-# artifact.
+# build:templates runs exactly once per run; its tarballs travel between jobs
+# as the "prebuilt" artifact.
 
 on:
   push:
     branches: [main]
     paths:
       - "packages/bosia/package.json"
-      - "registry/**"
-      - "packages/bosia/templates/**"
-      - ".github/workflows/publish.yml"
-      - ".github/workflows/ci.yml"
   workflow_dispatch:
 
 # Serialize runs of this workflow so two pushes landing close together never
@@ -73,11 +65,34 @@ jobs:
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
 
-  test:
-    uses: ./.github/workflows/ci.yml
+  wait-tests:
+    needs: decide
+    if: needs.decide.outputs.published == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      actions: read
+    steps:
+      - name: Wait for test.yml on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          # test.yml is started by the same push — give it a moment to register.
+          for i in $(seq 1 12); do
+            RUN_ID=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/test.yml/runs?head_sha=$SHA&per_page=1" --jq '.workflow_runs[0].id // empty')
+            [ -n "$RUN_ID" ] && break
+            sleep 10
+          done
+          if [ -z "$RUN_ID" ]; then
+            echo "No test.yml run found for $SHA"
+            exit 1
+          fi
+          echo "Waiting for test.yml run $RUN_ID"
+          gh run watch "$RUN_ID" -R "$GITHUB_REPOSITORY" --interval 30 --exit-status > /dev/null
 
   build-templates:
-    needs: test
+    needs: wait-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -96,10 +111,8 @@ jobs:
           path: packages/bosia/dist/prebuilt/*.tar.gz
           if-no-files-found: error
 
-  # ── Publish path: version not on npm yet ──
   publish-npm:
     needs: [decide, build-templates]
-    if: needs.decide.outputs.published == 'false'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -137,31 +150,3 @@ jobs:
           else
             gh release create "$VERSION" --title "$VERSION" --generate-notes "${ASSETS[@]}"
           fi
-
-  # ── Refresh path: version already on npm (registry/template change) ──
-  refresh-assets:
-    needs: [decide, build-templates]
-    if: needs.decide.outputs.published == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/download-artifact@v8
-        with:
-          name: prebuilt
-          path: prebuilt
-
-      - name: Refresh release assets
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="v${{ needs.decide.outputs.version }}"
-          # The release is created by the publish path on version bump. If the
-          # current version isn't released yet, there's nothing to clobber.
-          if ! gh release view "$VERSION" >/dev/null 2>&1; then
-            echo "Release $VERSION not published yet — nothing to refresh."
-            exit 0
-          fi
-          gh release upload "$VERSION" prebuilt/*.tar.gz --clobber

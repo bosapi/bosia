@@ -79,7 +79,7 @@
 			Navigate to <a class="underline" href="/errors-test/server-throw">/errors-test/server-throw</a
 			>
 			— the <code>+page.server.ts</code> <code>load()</code> throws; the inspector catches it via
-			Elysia
+			the backend
 			<code>.onError()</code> and pushes through SSE to all open tabs.
 		</p>
 	</section>

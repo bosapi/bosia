@@ -1,14 +1,13 @@
-name: CI
+name: Test
 
 # Tests + a scaffold/build/start smoke run on Linux and Windows.
-# Runs on every push / PR, and is reused by publish.yml (workflow_call) so
-# nothing reaches npm unless both OSes are green.
+# Runs on every push / PR. publish.yml waits for this run on the same commit,
+# so nothing reaches npm unless both OSes are green.
 
 on:
   push:
     branches: [main]
   pull_request:
-  workflow_call:
   workflow_dispatch:
 
 permissions:
