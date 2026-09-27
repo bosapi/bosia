@@ -1,7 +1,18 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.0.0**
+> Current version: **1.1.0**
+
+---
+
+## bosia 1.1.0 (2026-09-28) — drop `page.params`
+
+> The 0.7.0 deprecation promised removal at 1.0. Params come from `$props()` only. SvelteKit still keeps `page.params`; this is Bosia's choice.
+
+- [x] Removed the `page.params` getter + dead SSR `appState.routeParams` seed. SSR error layouts now get `params` via `ssrPageData`. Test probes the prop.
+- [x] Moved the `use:enhance` success fix (84763a4, committed 09-28) from 1.0.0 to 1.1.0 in the changelog.
+- [x] Demo `/all/[...catchall]` showed no segments: it read the stripped `data.params`. Now uses the `params` prop.
+- [ ] 🟡 `+error.svelte` only gets `{ error }`, so it can't read route params now. Pass `params` as a prop if an app needs it.
 
 ---
 

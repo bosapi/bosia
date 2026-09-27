@@ -45,7 +45,7 @@ Inside `+page.svelte` and `+layout.svelte`, `params` is a top-level prop alongsi
 </script>
 ```
 
-> **Deprecated:** `page.params` (from `bosia/client`) still works as a fallback for legacy code, but it is deprecated and will be removed in 1.0.0. New code should read `params` from `$props()` as shown above.
+> **Removed in 1.1.0:** `page.params` (from `bosia/client`) no longer exists. Read `params` from `$props()` as shown above.
 
 ## Catch-All Routes
 

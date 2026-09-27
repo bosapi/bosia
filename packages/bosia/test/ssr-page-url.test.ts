@@ -59,9 +59,9 @@ beforeAll(async () => {
 		join(routes, "+error.svelte"),
 		`<script>\n` +
 			`\timport { page } from "bosia/client";\n` +
-			`\tlet { error } = $props();\n` +
+			`\tlet { error, params } = $props();\n` +
 			`</script>\n\n` +
-			`<p data-path={page.url.pathname} data-status={error.status}>Aduh</p>\n`,
+			`<p data-path={page.url.pathname} data-status={error.status} data-id={params.id}>Aduh</p>\n`,
 	);
 
 	const urlProbe =
@@ -76,15 +76,15 @@ beforeAll(async () => {
 	mkdirSync(join(routes, "admin", "audit"), { recursive: true });
 	writeFileSync(join(routes, "admin", "audit", "+page.svelte"), urlProbe);
 
-	// Deprecated page.params read the appState cell that App.svelte never wrote
-	// during SSR, so it was {} on every server-rendered page too.
+	// Params arrive as a prop (page.params was removed in 1.1.0).
 	mkdirSync(join(routes, "blog", "[slug]"), { recursive: true });
 	writeFileSync(
 		join(routes, "blog", "[slug]", "+page.svelte"),
 		`<script>\n` +
 			`\timport { page } from "bosia/client";\n` +
+			`\tlet { params } = $props();\n` +
 			`</script>\n\n` +
-			`<p data-path={page.url.pathname} data-slug={page.params.slug}>probe</p>\n`,
+			`<p data-path={page.url.pathname} data-slug={params.slug}>probe</p>\n`,
 	);
 
 	// A nested +error.svelte, so the error render goes through the boundary
@@ -102,6 +102,22 @@ beforeAll(async () => {
 			`\tlet { error } = $props();\n` +
 			`</script>\n\n` +
 			`<p data-path={page.url.pathname} data-status={error.status}>gagal</p>\n`,
+	);
+
+	// A failing param route under each kind of error boundary: `rusak` has its
+	// own +error.svelte, `pecah` falls back to the global root one.
+	for (const dir of ["rusak", "pecah"]) {
+		mkdirSync(join(routes, dir, "[id]"), { recursive: true });
+		writeFileSync(join(routes, dir, "[id]", "+page.svelte"), `<h1>ok</h1>\n`);
+		writeFileSync(
+			join(routes, dir, "[id]", "+page.server.ts"),
+			`export function load() {\n\tthrow new Error("meledak");\n}\n`,
+		);
+	}
+	writeFileSync(
+		join(routes, "rusak", "+error.svelte"),
+		`<script>\n\tlet { error, params } = $props();\n</script>\n\n` +
+			`<p data-status={error.status} data-id={params.id}>rusak</p>\n`,
 	);
 
 	const build = Bun.spawn(["bun", "run", join(import.meta.dir, "..", "src", "core", "build.ts")], {
@@ -178,7 +194,7 @@ describe("page.url during SSR", () => {
 	});
 });
 
-describe("page.params during SSR", () => {
+describe("params prop during SSR", () => {
 	test("is populated instead of {}", async () => {
 		const html = await (await fetch(`${origin}/blog/halo-dunia`)).text();
 		expect(attr(html, "data-path")).toBe("/blog/halo-dunia");
@@ -229,5 +245,19 @@ describe("error renders seed the URL too", () => {
 		const html = await res.text();
 		expect(attr(html, "data-status")).toBe("404");
 		expect(attr(html, "data-path")).toBe("/tidak-ada");
+	});
+});
+
+describe("+error.svelte gets the failing route's params", () => {
+	test("nested boundary", async () => {
+		const html = await (await fetch(`${origin}/rusak/42`)).text();
+		expect(attr(html, "data-status")).toBe("500");
+		expect(attr(html, "data-id")).toBe("42");
+	});
+
+	test("global root error page", async () => {
+		const html = await (await fetch(`${origin}/pecah/7`)).text();
+		expect(attr(html, "data-status")).toBe("500");
+		expect(attr(html, "data-id")).toBe("7");
 	});
 });

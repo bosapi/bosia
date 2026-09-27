@@ -1,6 +1,7 @@
 <script lang="ts">
-	let { data = {} }: { data?: Record<string, any> } = $props();
-	const segments = $derived(((data as any)?.params?.catchall ?? "").split("/").filter(Boolean));
+	import type { PageProps } from "./$types";
+	let { params }: PageProps = $props();
+	const segments = $derived((params.catchall ?? "").split("/").filter(Boolean));
 </script>
 
 <svelte:head>

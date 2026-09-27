@@ -23,7 +23,6 @@ import { HttpError, Redirect, isHttpError, isRedirect } from "./errors.ts";
 import { pickErrorPage, type ErrorOrigin } from "./errorMatch.ts";
 import App from "./client/App.svelte";
 import { router } from "./client/router.svelte.ts";
-import { appState } from "./client/appState.svelte.ts";
 import { withBase } from "./basePath.ts";
 import { currentBase } from "./appBase.ts";
 import {
@@ -92,15 +91,9 @@ const enc = new TextEncoder();
 // `render`'s own signature is conditional on the component's prop type, so it
 // collapses to `never` behind a generic wrapper — hence `any` on both, matching
 // how the call sites already type `pageMod.default` / `layoutMods`.
-function renderWithPageContext(
-	component: any,
-	options: { props?: Record<string, any> },
-	url: URL,
-	params: Record<string, string> = {},
-) {
+function renderWithPageContext(component: any, options: { props?: Record<string, any> }, url: URL) {
 	router.origin = url.origin;
 	router.currentRoute = withBase(currentBase(), url.pathname) + url.search + url.hash;
-	appState.routeParams = params;
 	return render(component, options as any);
 }
 
@@ -805,7 +798,6 @@ export async function renderSSRStream(
 					},
 				},
 				url,
-				params,
 			));
 		} catch (err) {
 			if (isDev) console.error("SSR render error:", err);
@@ -1056,7 +1048,6 @@ export async function renderPageWithFormData(
 			},
 		},
 		url,
-		params,
 	);
 
 	const html = buildHtml(
@@ -1117,10 +1108,9 @@ export async function renderErrorPage(
 	};
 	const bodyEndExtras = await pluginRenderFragments("bodyEnd", renderCtx);
 
-	// The failing route's own params, so a nested +error.svelte under
-	// /blog/[slug] still sees its `slug`. A 404 matches nothing and yields {},
-	// which is also what has to be seeded rather than left holding the previous
-	// request's values.
+	// The failing route's own params, so +error.svelte (and the layouts wrapping
+	// a nested one) under /blog/[slug] get `params.slug`. A 404 matches nothing
+	// and yields {}.
 	const errorParams = findMatch(serverRoutes, url.pathname)?.params ?? {};
 
 	// 1. Nested boundary
@@ -1150,10 +1140,10 @@ export async function renderErrorPage(
 							ssrErrorComponent: errorMod.default,
 							ssrErrorProps: { error: { status, message } },
 							ssrErrorDepth: K,
+							ssrPageData: { params: errorParams },
 						},
 					},
 					url,
-					errorParams,
 				);
 				// csr=false: no client hydration on the error page itself.
 				const html = buildHtml(
@@ -1191,9 +1181,8 @@ export async function renderErrorPage(
 			// expects `error` as a direct prop: `let { error } = $props()`.
 			const { body, head } = renderWithPageContext(
 				mod.default,
-				{ props: { error: { status, message } } },
+				{ props: { error: { status, message }, params: errorParams } },
 				url,
-				errorParams,
 			);
 			const html = buildHtml(
 				body,

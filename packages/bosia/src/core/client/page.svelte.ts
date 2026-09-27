@@ -6,15 +6,10 @@
 //
 // Bosia passes `params` as a prop to `+page.svelte` / `+layout.svelte` (see
 // App.svelte), mirroring the modern SvelteKit `$app/state` direction. Route
-// components should destructure `params` from `$props()`. `page.params` still
-// exists as a deprecated, working fallback (reactive, backed by
-// `appState.routeParams`) so legacy code keeps running — it will be removed in
-// 1.0.0.
+// components should destructure `params` from `$props()`. `page.params` was
+// removed in 1.1.0.
 
-import { appState } from "./appState.svelte.ts";
 import { router } from "./router.svelte.ts";
-
-let paramsWarned = false;
 
 class Page {
 	// Real on the server too: the renderer seeds `router.currentRoute`/`.origin`
@@ -28,21 +23,6 @@ class Page {
 	}
 	get pathname() {
 		return this.#url.pathname;
-	}
-
-	/**
-	 * @deprecated Read route params from `$props()` instead:
-	 * `let { params } = $props()` in `+page.svelte` / `+layout.svelte`.
-	 * `page.params` is a temporary fallback and will be removed in 1.0.0.
-	 */
-	get params() {
-		if (process.env.NODE_ENV !== "production" && !paramsWarned) {
-			paramsWarned = true;
-			console.warn(
-				"[bosia] page.params is deprecated — destructure `params` from $props() in your route component. It will be removed in 1.0.0.",
-			);
-		}
-		return appState.routeParams;
 	}
 }
 

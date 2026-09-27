@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.0] - 2026-09-28
+
+### Removed
+
+- `page.params` is gone; read route params from `$props()` in your page or layout instead.
+
+### Fixed
+
+- Forms using `use:enhance` now show their success message instead of it vanishing at once.
+
 ## [1.0.0] - 2026-09-27
 
 ### Changed
@@ -17,7 +27,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Builds now warn when an old build folder can't be deleted, instead of keeping stale files.
-- Forms using `use:enhance` now show their success message instead of it vanishing at once.
 
 ## [0.9.10] - 2026-09-27
 
