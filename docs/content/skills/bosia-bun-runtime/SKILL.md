@@ -97,8 +97,6 @@ const client = new Bun.SQL({
 export const db = drizzle(client, { schema });
 ```
 
-Gotcha (Bun 1.3.x): the URL-string form `new Bun.SQL("postgres://...")` throws `FailedToOpenSocket` even on a valid URL — use the object form above (`registry/features/drizzle/drizzle-index.pg.ts` parses `DATABASE_URL` for this reason).
-
 Gotcha — intermittent `Failed query` in the dev server that a fresh `bun run`/`db_query` can't reproduce: `Failed query: <sql>` is Drizzle's generic wrapper; the real error is in `err.cause`, almost always `PostgresError: Connection closed`. The long-lived client kept a pooled socket open with default `idleTimeout: 0` (never close); Postgres / the lima port-forward reaped the idle socket but Bun ran the next query on the dead one. Fresh-process tools get a new connection → can't repro (don't conclude "the DB is fine"). Fix: set `idleTimeout`/`maxLifetime` as above. Always read `err.cause` before investigating the SQL.
 
 Env: `DATABASE_URL=postgres://user:pass@host:5432/db`.

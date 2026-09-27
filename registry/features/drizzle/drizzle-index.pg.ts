@@ -12,9 +12,7 @@ if (!connectionString) {
 
 const url = connectionString || "postgresql://postgres@localhost:5432/postgres";
 
-// Bun 1.3.x has a bug where `new Bun.SQL("postgres://...")` errors
-// `FailedToOpenSocket` even on valid URLs. The object form works, so parse
-// the URL ourselves.
+// Parse the URL into the object form so the pool timeouts below can ride along.
 function buildClient() {
 	const u = new URL(url);
 	const opts = {

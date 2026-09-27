@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.18] - 2026-09-28
+
+### Removed
+
+- Skills drop the old Bun 1.3 Postgres URL warning — plain `postgres://` URLs work on Bun 1.4.
+
+---
+
 ## [0.8.17] - 2026-09-27
 
 ### Added

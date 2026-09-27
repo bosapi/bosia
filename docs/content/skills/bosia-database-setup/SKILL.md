@@ -125,7 +125,7 @@ Don't dump everything into `schemas.ts`. Each table lives next to its feature (`
 
 `drizzle-orm/bun-sqlite` for sqlite, `drizzle-orm/bun-sql` for postgres (Bun.SQL), `drizzle-orm/mysql2` for mysql. Don't mix.
 
-For postgres, the scaffold constructs `Bun.SQL` from a parsed `DATABASE_URL` (object form) — the URL-string form throws `FailedToOpenSocket` on Bun 1.3.x. See [[bosia-bun-runtime]] for the gotcha.
+For postgres, the scaffold parses `DATABASE_URL` into the `Bun.SQL` object form so it can pass pool timeouts. See [[bosia-bun-runtime]].
 
 ## Anti-patterns
 
