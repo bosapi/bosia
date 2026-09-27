@@ -19,7 +19,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: .bun-version # same Bun as local; bun.lock is tied to it
 
       - name: Install (hoisted for monorepo)
         run: bun install --frozen-lockfile --linker=hoisted

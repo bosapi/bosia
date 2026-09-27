@@ -26,6 +26,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version # same Bun as local; bun.lock is tied to it
 
       - name: Install
         run: bun install --frozen-lockfile
@@ -53,6 +55,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version # same Bun as local; bun.lock is tied to it
 
       - name: Install
         run: bun install --frozen-lockfile
