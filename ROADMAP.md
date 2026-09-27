@@ -12,6 +12,7 @@
 - [x] 🔴 `scanner.ts` `preventConflicts` throws `RouteConflictError` when pages or `+server.ts` APIs match once groups and param names are ignored (`[id]` ≡ `[slug]`) — SvelteKit's `prevent_conflicts`, Next.js's "two parallel pages".
 - [x] 🟠 `build.ts` + `bosia sync` print the message and exit 1 (no stack). Dev shows "Build failed", keeps the last good build (503 if none), recovers on fix.
 - [x] 🟡 Breaking for apps that already had duplicates. Routing guide (+ `id/`) and `bosia-routing` skill R4 updated.
+- [x] 🟢 CI: cleared the Node 20 deprecation — `checkout@v7`, `upload-artifact@v7`, `download-artifact@v8`, `wrangler-action@v4` (Wrangler 4; `pages deploy` flags unchanged). `setup-bun@v2` already on node24.
 - [ ] 🟢 Matcher: exact Map is last-wins, linear scan first-wins. Unreachable now that conflicts fail the scan; revisit if duplicates ever become legal.
 
 ## bosia 0.9.7 (2026-09-24) — native Windows support

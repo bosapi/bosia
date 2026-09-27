@@ -51,7 +51,7 @@ jobs:
       published: ${{ steps.decide.outputs.published }}
       tag: ${{ steps.decide.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Decide what to do
         id: decide
@@ -80,7 +80,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -90,7 +90,7 @@ jobs:
         run: bun run build:templates
         working-directory: packages/bosia
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: prebuilt
           path: packages/bosia/dist/prebuilt/*.tar.gz
@@ -102,7 +102,7 @@ jobs:
     if: needs.decide.outputs.published == 'false'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
@@ -119,9 +119,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4 # gh release create needs the repo context
+      - uses: actions/checkout@v7 # gh release create needs the repo context
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: prebuilt
           path: prebuilt
@@ -146,9 +146,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: prebuilt
           path: prebuilt
