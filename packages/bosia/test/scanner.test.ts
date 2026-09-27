@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
-import { join } from "path";
+import { dirname, join } from "path";
 import { scanRoutes } from "../src/core/scanner.ts";
 
 let originalCwd: string;
@@ -9,7 +9,7 @@ let tmpDir: string;
 
 function write(rel: string, content = "") {
 	const full = join(tmpDir, "src", "routes", rel);
-	mkdirSync(full.substring(0, full.lastIndexOf("/")), { recursive: true });
+	mkdirSync(dirname(full), { recursive: true });
 	writeFileSync(full, content);
 }
 

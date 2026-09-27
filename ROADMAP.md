@@ -18,6 +18,7 @@
 - [x] 🟡 `.gitattributes` forces LF so Windows checkouts don't fail `prettier --check`. Getting Started lists Windows (native or WSL2).
 - [x] 🔴 First CI run failed on `prettier --check`: `bun.lock` was gitignored, so CI installed prettier 3.9.9, not 3.8.3. Now committed (without untracked `apps/demo-worker`); Bun pinned via `.bun-version`.
 - [x] 🟠 Tests blocked the 0.9.7 publish, but `decide` only published when the push diff touched `package.json`, so no retry was possible. It now publishes whenever the version isn't on npm.
+- [x] 🟠 Windows CI run 2: 22/513 tests failed. Real bug: `resolveLocalRegistry` used `new URL(import.meta.url).pathname` (`/D:/…` on Windows) → `import.meta.dir`. Tests: scanner helper split on `/`; svelte-audit deleted its cwd (EBUSY).
 - [ ] 🟡 Verify the first `windows-latest` CI run and a manual `bosia dev` session on a real Windows machine (watcher, HMR, route add).
 
 ## bosia 0.9.6 (2026-09-10) — every SSR'd page painted before its own CSS existed

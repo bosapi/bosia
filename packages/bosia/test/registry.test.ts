@@ -9,6 +9,7 @@ import {
 	writeRegistryFile,
 } from "../src/cli/registry.ts";
 import { routeAdd, type AddRunners } from "../src/cli/addRouter.ts";
+import { toPosix } from "../src/core/paths.ts";
 
 let tmpDir: string;
 
@@ -97,7 +98,7 @@ describe("resolveLocalRegistry()", () => {
 	test("walks up to find registry/index.json in this monorepo", () => {
 		// This test runs inside the bosia repo, where registry/index.json exists at root.
 		const out = resolveLocalRegistry();
-		expect(out.endsWith("/registry")).toBe(true);
+		expect(toPosix(out).endsWith("/registry")).toBe(true);
 	});
 });
 
