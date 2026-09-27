@@ -1,4 +1,5 @@
 import { safeJsonStringify } from "../../html.ts";
+import { FRAME_RE } from "./sourcemap.ts";
 
 export interface OverlayConfig {
 	aiEndpoint?: string;
@@ -209,12 +210,10 @@ if(ERR_ENABLED){
   function uid(){return "c-"+Math.random().toString(36).slice(2)+Date.now().toString(36)}
   function escapeHtml(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","'":"&#39;"}[c]})}
 
+  var FRAME_RE=new RegExp(${JSON.stringify(FRAME_RE.source)});
   function parseTopFrame(stack){
-    if(!stack)return null;
-    var m=/\\((https?:\\/\\/[^)]+|\\/[^)]+):(\\d+):(\\d+)\\)/.exec(stack)
-        ||/at\\s+(\\S+):(\\d+):(\\d+)/.exec(stack)
-        ||/@(\\S+):(\\d+):(\\d+)/.exec(stack);
-    return m?{file:m[1],line:+m[2],col:+m[3]}:null;
+    var m=stack?FRAME_RE.exec(stack):null;
+    return m?{file:m[2],line:+m[3],col:+m[4]}:null;
   }
 
   function trackInteraction(e){

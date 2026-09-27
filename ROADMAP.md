@@ -29,7 +29,7 @@
 - [x] 🔴 Windows CI: Bun 1.4.2 `rmSync("./dist", {recursive})` threw ENOENT on an existing dir (`force` hid it), so rebuilds kept stale `dist/`. `clearOutput` resolves paths and finishes leftovers entry by entry.
 - [ ] 🟢 Report the Windows `rmSync` relative-path ENOENT to Bun with a minimal repro; drop the fallback in `clearOutput` once fixed upstream.
 - [x] 🟡 `new Bun.SQL("postgres://…")` works on 1.4.2 (6 URL shapes + IPv4-only forward, live PG 15). Dropped 1.3.x gotcha from skills/registry. Object form stays (timeouts).
-- [ ] 🟡 Inspector `parseTopFrame` regex `[^)]+` breaks on route groups like `(public)`: errors point at `renderer.ts`, not the user's `+page.server.ts`. Pre-existing, not Bun.
+- [x] 🟡 Inspector `parseTopFrame` skipped frames with `(group)` paths → pointed at `renderer.ts`. One `FRAME_RE` (sourcemap.ts) now serves server, overlay, `resolveStack`; Windows paths too.
 - [x] 🟡 `use:enhance` success never showed `form`: App's nav effect ran on the post-action invalidation and set `form = null`. Now only a real URL change clears it. Verified in Chrome (dev + prod).
 - [ ] 🟢 Inspector overlay has no client-side dedup: 50× loop on `/errors-test` shows 50 rows. Only server errors use `DEDUP_WINDOW_MS`.
 - [ ] 🟡 UI test file driven by `Bun.WebView` (no Playwright): load demo pages in dev + prod, assert hydration, SPA nav, form actions, no console errors. Would have caught the dev `?v=` hydration bug.

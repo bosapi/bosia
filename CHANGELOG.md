@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Forms using `use:enhance` now show their success message instead of it vanishing at once.
+- Dev error badge now points at your file, even inside route groups like `(public)`.
 
 ### Removed
 

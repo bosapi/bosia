@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { createInspectorBunPlugin } from "./bun-plugin.ts";
 import { getOverlayScript } from "./overlay.ts";
-import { resolveFrame, resolveStack } from "./sourcemap.ts";
+import { parseTopFrame, resolveFrame, resolveStack } from "./sourcemap.ts";
 import type { BosiaPlugin } from "../../types/plugin.ts";
 
 export interface InspectorOptions {
@@ -32,18 +32,6 @@ const RUNTIME_ERROR_PREFIX = "[runtime error]";
 function buildEditorArgs(editor: string, file: string, line: number, col: number): string[] {
 	if (editor === "zed") return [`${file}:${line}:${col}`];
 	return ["-g", `${file}:${line}:${col}`];
-}
-
-// Parse the top frame out of a stack trace string. Best-effort.
-function parseTopFrame(
-	stack: string | undefined,
-): { file: string; line: number; col: number } | null {
-	if (!stack) return null;
-	const m =
-		/\((https?:\/\/[^)]+|\/[^)]+):(\d+):(\d+)\)/.exec(stack) ||
-		/at\s+(\S+):(\d+):(\d+)/.exec(stack) ||
-		/@(\S+):(\d+):(\d+)/.exec(stack);
-	return m ? { file: m[1], line: Number(m[2]), col: Number(m[3]) } : null;
 }
 
 // Module-scoped state for the error feature. Initialised lazily inside the

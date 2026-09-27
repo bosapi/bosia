@@ -123,15 +123,24 @@ function relToCwd(abs: string): string {
 	return rel && !rel.startsWith("..") && !isAbsolute(rel) ? toPosix(rel) : abs;
 }
 
-// Rewrite frames in stack strings: "(url:L:C)", "at url:L:C", "@url:L:C".
-// Lazy match on the file body so URLs with ports (`http://host:9000/...`) keep
-// the port as part of the file rather than being chopped at the first `:`.
+// One stack frame: "(file:L:C)", "at file:L:C", "@file:L:C". The file body is
+// lazy up to the first ":L:C", so ")" in route groups like `(public)` and the
+// port in `http://host:9000/...` stay inside the file. Groups: lead, file, L, C, tail.
+// The browser overlay reuses this source too (see overlay.ts).
+export const FRAME_RE = /(\(|\bat\s+|@)((?:https?:\/\/|\/|[A-Za-z]:[\\/])[^\n]*?):(\d+):(\d+)(\)?)/;
+
+// Top frame of a stack trace string. Best-effort.
+export function parseTopFrame(
+	stack: string | undefined,
+): { file: string; line: number; col: number } | null {
+	const m = stack ? FRAME_RE.exec(stack) : null;
+	return m ? { file: m[2], line: Number(m[3]), col: Number(m[4]) } : null;
+}
+
+// Rewrite every frame in a stack string to its original source position.
 export function resolveStack(stack: string): string {
-	return stack.replace(
-		/(\(|at\s+|@)((?:https?:\/\/|\/)[^\s)]+?):(\d+):(\d+)(\)?)/g,
-		(_m, lead, file, l, c, tail) => {
-			const r = resolveFrame(file, Number(l), Number(c));
-			return r ? `${lead}${r.file}:${r.line}:${r.col}${tail}` : _m;
-		},
-	);
+	return stack.replace(new RegExp(FRAME_RE.source, "g"), (_m, lead, file, l, c, tail) => {
+		const r = resolveFrame(file, Number(l), Number(c));
+		return r ? `${lead}${r.file}:${r.line}:${r.col}${tail}` : _m;
+	});
 }
