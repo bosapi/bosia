@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
-import { scanRoutes } from "../src/core/scanner.ts";
+import { scanRoutes, RouteConflictError } from "../src/core/scanner.ts";
 
 let originalCwd: string;
 let tmpDir: string;
@@ -159,5 +159,50 @@ describe("scanRoutes()", () => {
 		expect(route.layoutServers).toHaveLength(2);
 		expect(route.layoutServers[0].path).toBe("+layout.server.ts");
 		expect(route.layoutServers[1].path).toBe("admin/+layout.server.ts");
+	});
+});
+
+describe("scanRoutes() route conflicts", () => {
+	function conflict(): RouteConflictError | null {
+		try {
+			scanRoutes();
+			return null;
+		} catch (err) {
+			if (err instanceof RouteConflictError) return err;
+			throw err;
+		}
+	}
+
+	test("fails when a route group duplicates a page URL, naming both files", () => {
+		write("+page.svelte");
+		write("(public)/+page.svelte");
+		const err = conflict();
+		expect(err?.message).toContain('The "/" and "/" routes conflict with each other');
+		expect(err?.message).toContain("src/routes/+page.svelte");
+		expect(err?.message).toContain("src/routes/(public)/+page.svelte");
+	});
+
+	test("differently named params at the same spot conflict", () => {
+		write("blog/[id]/+page.svelte");
+		write("(app)/blog/[slug]/+page.svelte");
+		const msg = conflict()?.message ?? "";
+		expect(msg).toContain("routes conflict with each other");
+		expect(msg).toContain("src/routes/blog/[id]/+page.svelte");
+		expect(msg).toContain("src/routes/(app)/blog/[slug]/+page.svelte");
+	});
+
+	test("duplicate +server.ts API routes conflict", () => {
+		write("(a)/api/ping/+server.ts");
+		write("(b)/api/ping/+server.ts");
+		expect(conflict()?.message).toContain("src/routes/(b)/api/ping/+server.ts");
+	});
+
+	test("distinct routes, and a page plus an API at one URL, do not conflict", () => {
+		write("+page.svelte");
+		write("about/+page.svelte");
+		write("blog/[slug]/+page.svelte");
+		write("blog/[...rest]/+page.svelte");
+		write("about/+server.ts");
+		expect(conflict()).toBe(null);
 	});
 });

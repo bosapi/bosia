@@ -1,9 +1,18 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **0.9.7**
+> Current version: **0.9.8**
 
 ---
+
+## bosia 0.9.8 (2026-09-27) — two pages, one URL: fail like SvelteKit
+
+> Found while writing the dev-smoke job: appending to `src/routes/+page.svelte` in the default template created a second `/` next to `(public)/+page.svelte`. Nothing complained, and one page was silently unreachable.
+
+- [x] 🔴 `scanner.ts` `preventConflicts` throws `RouteConflictError` when pages or `+server.ts` APIs match once groups and param names are ignored (`[id]` ≡ `[slug]`) — SvelteKit's `prevent_conflicts`, Next.js's "two parallel pages".
+- [x] 🟠 `build.ts` + `bosia sync` print the message and exit 1 (no stack). Dev shows "Build failed", keeps the last good build (503 if none), recovers on fix.
+- [x] 🟡 Breaking for apps that already had duplicates. Routing guide (+ `id/`) and `bosia-routing` skill R4 updated.
+- [ ] 🟢 Matcher: exact Map is last-wins, linear scan first-wins. Unreachable now that conflicts fail the scan; revisit if duplicates ever become legal.
 
 ## bosia 0.9.7 (2026-09-24) — native Windows support
 

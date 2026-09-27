@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.9.8] - 2026-09-27
+
+### Changed
+
+- **Breaking:** the build now fails when two route files serve the same URL, like SvelteKit.
+
 ## [0.9.7] - 2026-09-24
 
 ### Fixed

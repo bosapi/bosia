@@ -2,7 +2,7 @@ import { writeFileSync, readFileSync, rmSync, mkdirSync, existsSync } from "fs";
 import { basename, join, relative } from "path";
 import type { RouteManifest } from "./types.ts";
 
-import { scanRoutes } from "./scanner.ts";
+import { scanRoutes, RouteConflictError } from "./scanner.ts";
 import { generateRoutesFile } from "./routeFile.ts";
 import { generateRouteTypes, ensureRootDirs } from "./routeTypes.ts";
 import { makeBosiaPlugin } from "./plugin.ts";
@@ -85,7 +85,14 @@ for (const p of [
 }
 
 // 1. Scan routes (or reuse the cached manifest — see 0b-pre)
-const manifest = cachedManifest ?? scanRoutes();
+let manifest: RouteManifest;
+try {
+	manifest = cachedManifest ?? scanRoutes();
+} catch (err) {
+	if (!(err instanceof RouteConflictError)) throw err;
+	console.error(`❌ ${err.message}`);
+	process.exit(1);
+}
 buildCtx.manifest = manifest;
 console.log(
 	`📂 Found ${manifest.pages.length} page route(s)${cachedManifest ? " (cached scan)" : ""}:`,

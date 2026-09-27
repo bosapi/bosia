@@ -181,9 +181,43 @@ export function scanRoutes(): RouteManifest {
 		}
 	}
 
+	preventConflicts(pages, (p) => p.page);
+	preventConflicts(apis, (a) => a.server);
+
 	const errorPage = existsSync(join(ROUTES_DIR, "+error.svelte")) ? "+error.svelte" : null;
 
 	return { pages, apis, errorPage };
+}
+
+/**
+ * Fail when two route files serve the same URL — e.g. `+page.svelte` next to
+ * `(public)/+page.svelte`, or `blog/[id]` next to `(app)/blog/[slug]`. Route
+ * groups vanish from the URL and param names don't affect matching, so one of
+ * the two could never be reached. Same rule as SvelteKit's prevent_conflicts
+ * and Next.js's "two parallel pages that resolve to the same path".
+ */
+function preventConflicts<T extends { pattern: string }>(routes: T[], fileOf: (r: T) => string) {
+	const seen = new Map<string, T>();
+	for (const r of routes) {
+		const key = r.pattern.replace(/\[\.\.\.\w+\]/g, "[...]").replace(/\[\w+\]/g, "[]");
+		const first = seen.get(key);
+		if (!first) {
+			seen.set(key, r);
+			continue;
+		}
+		throw new RouteConflictError(
+			`The "${first.pattern}" and "${r.pattern}" routes conflict with each other:\n` +
+				`   src/routes/${fileOf(first)}\n` +
+				`   src/routes/${fileOf(r)}\n` +
+				`   Route groups like (public) are not part of the URL, and [id] matches the same URLs as [slug].\n` +
+				`   Delete or move one of them.`,
+		);
+	}
+}
+
+/** Two route files resolve to the same URL. Callers print `message` and exit. */
+export class RouteConflictError extends Error {
+	override name = "RouteConflictError";
 }
 
 function toUrlPath(segments: string[]): string {

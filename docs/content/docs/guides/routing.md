@@ -74,6 +74,8 @@ src/routes/(admin)/dashboard/+page.svelte   →  /dashboard
 
 The `(public)` and `(admin)` groups never appear in the URL. They only control which `+layout.svelte` wraps the pages inside.
 
+Because groups vanish, two files can end up at the same URL — e.g. `src/routes/+page.svelte` and `src/routes/(public)/+page.svelte` are both `/`. The same goes for `blog/[id]` and `(app)/blog/[slug]`. Like SvelteKit and Next.js, Bosia refuses this: `bun run build` fails and `bun run dev` shows the error, naming both files. Delete or move one of them.
+
 ## Route Priority
 
 When multiple routes could match a URL, Bosia resolves them in order:

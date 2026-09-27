@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.16] - 2026-09-27
+
+### Changed
+
+- Routing guide and routing skill explain why two pages at one URL now fail the build.
+
 ## [0.8.15] - 2026-09-24
 
 ### Changed
