@@ -254,7 +254,7 @@ if(ERR_ENABLED){
       var locStr=er.file?(er.file+(er.line?":"+er.line:"")):er.source;
       rows+='<div data-row="'+er.id+'" style="padding:10px 12px;border-bottom:1px solid #f4f4f5">'
         +'<div style="font:11px ui-monospace,monospace;color:#71717a;margin-bottom:4px">['+escapeHtml(er.source)+'] '+escapeHtml(locStr)+'</div>'
-        +'<div style="margin-bottom:6px;font-weight:500;word-break:break-word">'+escapeHtml(er.message)+'</div>'
+        +'<div style="margin-bottom:6px;font-weight:500;word-break:break-word">'+escapeHtml(er.message)+(er.count>1?' <span style="color:#71717a;font-weight:400">&times;'+er.count+'</span>':"")+'</div>'
         +(er.stack?'<details><summary style="cursor:pointer;color:#71717a;font-size:11px">Stack</summary><pre style="margin:6px 0 0;padding:8px;background:#f4f4f5;border-radius:4px;font:11px/1.4 ui-monospace,monospace;white-space:pre-wrap;overflow:auto;max-height:200px">'+escapeHtml(er.stack)+'</pre></details>':"")
         +'<div style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end">'
         +(AI?'<button data-send="'+er.id+'" style="padding:4px 10px;border:0;background:#111;color:#fff;border-radius:4px;cursor:pointer;font-size:12px">Send to AI</button>':"")
@@ -303,7 +303,17 @@ if(ERR_ENABLED){
     var id=e.id||uid();
     if(seenIds[id])return;
     seenIds[id]=true;
+    // Same key as the server's dedup (source, message, top frame). Repeats
+    // bump a counter on the existing row instead of adding a new one.
+    var key=(e.source||"unknown")+"|"+(e.message||"")+"|"+(e.file||"")+":"+(e.line||"");
+    for(var i=0;i<errors.length;i++)if(errors[i].key===key){
+      errors[i].count++;
+      errors[i].ts=e.ts||Date.now();
+      renderBadge();
+      return;
+    }
     var entry={
+      key:key,count:1,
       id:id,
       ts:e.ts||Date.now(),
       source:e.source||"unknown",

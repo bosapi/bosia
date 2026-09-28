@@ -81,6 +81,8 @@ The plugin makes no assumption about the AI service; you implement the endpoint.
 
 4. **Server endpoint.** The plugin mounts `POST /__bosia/locate` via `backend.before`. With no comment, it spawns the editor command and returns. With a comment + `aiEndpoint`, it forwards the payload to your endpoint.
 
+5. **Runtime errors badge.** Client and server errors show in a red badge (bottom-right), streamed over `/__bosia/errors`. The same error repeated shows as one row with a `×N` count. Opt out with `errorsEnabled: false`.
+
 ## Production
 
 The plugin no-ops when `NODE_ENV !== "development"`:

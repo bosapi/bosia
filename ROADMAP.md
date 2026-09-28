@@ -13,6 +13,7 @@
 - [x] Moved the `use:enhance` success fix (84763a4, committed 09-28) from 1.0.0 to 1.1.0 in the changelog.
 - [x] Demo `/all/[...catchall]` showed no segments: it read the stripped `data.params`. Now uses the `params` prop.
 - [x] `+error.svelte` gets `params` as a prop (nested + root, SSR + client). `ErrorProps.params` adds `string | undefined` for child-route keys. Tested; demo `/blog/boom` shows the slug (Chrome: SSR + client nav).
+- [x] 🟡 Dev: inspector `/__bosia/errors` SSE died every ~12s (`ECONNRESET`): server idle timeout 10s, ping 25s. Ping now 5s.
 
 ---
 
@@ -31,7 +32,7 @@
 - [x] 🟡 `new Bun.SQL("postgres://…")` works on 1.4.2 (6 URL shapes + IPv4-only forward, live PG 15). Dropped 1.3.x gotcha from skills/registry. Object form stays (timeouts).
 - [x] 🟡 Inspector `parseTopFrame` skipped frames with `(group)` paths → pointed at `renderer.ts`. One `FRAME_RE` (sourcemap.ts) now serves server, overlay, `resolveStack`; Windows paths too.
 - [x] 🟡 `use:enhance` success never showed `form`: App's nav effect ran on the post-action invalidation and set `form = null`. Now only a real URL change clears it. Verified in Chrome (dev + prod).
-- [ ] 🟢 Inspector overlay has no client-side dedup: 50× loop on `/errors-test` shows 50 rows. Only server errors use `DEDUP_WINDOW_MS`.
+- [x] 🟢 Inspector overlay dedups client-side: same source+message+file:line collapses into one row with `×N` (50× loop on `/errors-test` → 1 row).
 - [ ] 🟡 UI test file driven by `Bun.WebView` (no Playwright): load demo pages in dev + prod, assert hydration, SPA nav, form actions, no console errors. Would have caught the dev `?v=` hydration bug.
 - [ ] 🟢 Try `bun test --parallel` in CI.
 - [ ] 🟢 Consider `minChunkSize` for the client build (fewer tiny chunks).

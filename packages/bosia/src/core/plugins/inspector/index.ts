@@ -281,6 +281,9 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 									return;
 								}
 								flushReplay(ctrl);
+								// Under the app server's 10s default idle timeout, or Bun drops the
+								// stream (ECONNRESET) and EventSource reconnects. Still breaks if
+								// IDLE_TIMEOUT < 5; use server.timeout(req, 0) if that ever matters.
 								const ping = setInterval(() => {
 									try {
 										ctrl.enqueue(encode(":ping\n\n"));
@@ -288,7 +291,7 @@ export function inspector(options: InspectorOptions = {}): BosiaPlugin | false {
 										clearInterval(ping);
 										sseClients.delete(ctrl);
 									}
-								}, 25_000);
+								}, 5_000);
 
 								request.signal.addEventListener("abort", () => {
 									clearInterval(ping);

@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Forms using `use:enhance` now show their success message instead of it vanishing at once.
 - Dev error badge now points at your file, even inside route groups like `(public)`.
+- Dev error badge no longer drops and reconnects its live connection every few seconds.
+- Dev error badge shows a repeated error as one row with a count, not many rows.
 
 ### Removed
 
