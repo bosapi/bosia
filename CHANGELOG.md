@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.1] - 2026-09-30
+
+### Fixed
+
+- Pages now show fresh data after a form action, even if you hovered a link to the same page.
+
 ## [1.1.0] - 2026-09-28
 
 ### Added

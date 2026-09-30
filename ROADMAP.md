@@ -1237,6 +1237,7 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 
 - [x] 🟠 `depends()` and `invalidate()` — selective data reloading
 - [x] 🟡 Prefetch sends the loader cache mask — hover/viewport `data-bosia-preload` was warming the data endpoint with no mask, re-running every loader server-side; now it sends the same `_invalidated` bits as a real nav
+- [x] 🔴 Stale prefetch after invalidation — a hover/viewport prefetch of the current page was served instead of refetching after `use:enhance` / `invalidate*()` / `goto({ invalidateAll })`; now skipped — 1.1.1
 - [x] 🟡 `setHeaders()` in load functions — set response headers from loaders — shipped 0.8.7
 
 ### Navigation

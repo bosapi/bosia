@@ -145,6 +145,9 @@
 			settleScroll();
 			return;
 		}
+		// A prefetch saved before an invalidation holds pre-mutation data — after a
+		// `use:enhance` success or `invalidate*()` it must not stand in for the refetch.
+		const invalidated = currentTick !== lastTick || appState.dirty.all;
 		lastTick = currentTick;
 
 		// Only a real navigation drops the action result. An invalidation re-run
@@ -217,7 +220,7 @@
 
 		// Load components + data in parallel, then update state atomically
 		// to avoid a flash of stale/empty data before the fetch completes.
-		const cached = match.route.hasServerData ? consumePrefetch(path) : null;
+		const cached = match.route.hasServerData && !invalidated ? consumePrefetch(path) : null;
 		prefetchCache.clear(); // clear remaining entries on navigation — matches SvelteKit behavior
 		// Forward cached parent data for skipped layers so downstream loaders see
 		// real parent() data, not {}. POST only when there's something to carry —
