@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { makeSetHeaders } from "../src/core/hooks.ts";
-import { compress } from "../src/core/html.ts";
+import { gunzipSync, brotliDecompressSync } from "node:zlib";
+import { compress, encodeBytes, pickEncoding } from "../src/core/html.ts";
 
 describe("makeSetHeaders", () => {
 	test("accumulates lowercased keys across multiple calls", () => {
@@ -38,5 +39,20 @@ describe("compress extraHeaders", () => {
 		});
 		expect(res.headers.get("content-type")).toBe("text/plain");
 		expect(res.headers.get("cache-control")).toBe("public, max-age=60");
+	});
+});
+
+describe("pickEncoding / encodeBytes", () => {
+	test("brotli over gzip, null for identity", () => {
+		expect(pickEncoding("gzip, deflate, br, zstd")).toBe("br");
+		expect(pickEncoding("gzip, deflate")).toBe("gzip");
+		expect(pickEncoding("identity")).toBeNull();
+		expect(pickEncoding(null)).toBeNull();
+	});
+
+	test("both encodings round-trip", () => {
+		const body = new TextEncoder().encode("<p>hello</p>".repeat(500));
+		expect(new Uint8Array(brotliDecompressSync(encodeBytes(body, "br")))).toEqual(body);
+		expect(new Uint8Array(gunzipSync(encodeBytes(body, "gzip")))).toEqual(body);
 	});
 });

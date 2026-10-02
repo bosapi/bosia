@@ -19,6 +19,7 @@ import { makeBosiaSvelteCompiler, svelteMapCache } from "./svelteCompiler.ts";
 import { finalizeComponentCss } from "./componentCss.ts";
 import { buildPreloadMap } from "./preloadMap.ts";
 import { prerenderStaticRoutes, generateStaticSite } from "./prerender.ts";
+import { precompressDir } from "./precompress.ts";
 import { loadEnv, classifyEnvVars } from "./env.ts";
 import { generateEnvModules } from "./envCodegen.ts";
 import { BOSIA_NODE_PATH, OUT_DIR, resolveBosiaBin, toPosix } from "./paths.ts";
@@ -397,6 +398,25 @@ await prerenderStaticRoutes(manifest);
 
 // 10. Generate static site output (HTML + client assets + public → dist/static/)
 generateStaticSite();
+
+// 10b. Precompress client assets + prerendered HTML (.br/.gz siblings) for the
+// Bun server. Runs after the static mirror so dist/static — the Workers upload
+// and static-host output — stays free of them; Workers' edge compresses itself.
+// public/ is left raw: mostly already-compressed images, and it is the app's
+// source dir. Precompress into dist/static and serve from there if that bites.
+if (isProduction && target !== "workers") {
+	const t0 = performance.now();
+	const results = await Promise.all([
+		precompressDir(join(OUT_DIR, "client")),
+		precompressDir(join(OUT_DIR, "prerendered")),
+	]);
+	const files = results.reduce((n, r) => n + r.files, 0);
+	const raw = results.reduce((n, r) => n + r.rawBytes, 0);
+	const br = results.reduce((n, r) => n + r.brBytes, 0);
+	console.log(
+		`✅ Precompressed ${files} files: ${Math.round(raw / 1024)}KB → ${Math.round(br / 1024)}KB br (${Math.round(performance.now() - t0)}ms)`,
+	);
+}
 
 // 11. Workers target: a second server bundle for Cloudflare. The Bun one above
 // still exists — prerender just booted it to crawl static routes.

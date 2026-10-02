@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.3] - 2026-10-03
+
+### Fixed
+
+- Pages load faster: page HTML is now sent compressed on every visit, not only repeat ones.
+- Page scripts and styles are compressed at build time, so they download about 4× smaller.
+- The first visit to a cached page no longer waits for its cache copy to be compressed.
+
 ## [1.1.2] - 2026-10-02
 
 ### Fixed

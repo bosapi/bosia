@@ -1,4 +1,4 @@
-import { gzipSync } from "node:zlib";
+import { brotliCompressSync, gzipSync, constants as zlibConstants } from "node:zlib";
 
 import { readArtifact } from "./artifacts.ts";
 import { nonceAttr } from "./csp.ts";
@@ -464,8 +464,39 @@ export function disableCompression(): void {
 // Shared, stateless — one instance instead of a fresh allocation per response.
 const textEncoder = new TextEncoder();
 
+export type Encoding = "br" | "gzip";
+
+/** Best encoding the client accepts — brotli over gzip, null for identity.
+ *  A substring check, not q-value parsing: no browser sends `br;q=0`. */
+export function pickEncoding(accept: string | null): Encoding | null {
+	if (!accept) return null;
+	if (accept.includes("br")) return "br";
+	if (accept.includes("gzip")) return "gzip";
+	return null;
+}
+
+// Quality 5: close to gzip's speed with a better ratio — runs per request.
+const BROTLI_RUNTIME = { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } };
+
+/** Compress bytes on the request path. The one place runtime quality is set —
+ *  cache.ts builds its stored variants through here too. */
+export function encodeBytes(bytes: Uint8Array, enc: Encoding): Uint8Array<ArrayBuffer> {
+	const out = enc === "br" ? brotliCompressSync(bytes, BROTLI_RUNTIME) : gzipSync(bytes);
+	return new Uint8Array(out) as Uint8Array<ArrayBuffer>;
+}
+
 export function compress(
 	body: string,
+	contentType: string,
+	req: Request,
+	status = 200,
+	extraHeaders?: Record<string, string>,
+): Response {
+	return compressBytes(textEncoder.encode(body), contentType, req, status, extraHeaders);
+}
+
+export function compressBytes(
+	bytes: Uint8Array<ArrayBuffer>,
 	contentType: string,
 	req: Request,
 	status = 200,
@@ -478,15 +509,14 @@ export function compress(
 		vary: "Accept-Encoding",
 		...extraHeaders,
 	};
-	const accept = req.headers.get("accept-encoding") ?? "";
-	const bytes = textEncoder.encode(body);
+	const enc = pickEncoding(req.headers.get("accept-encoding"));
 	// Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
 	// responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
-	if (compressionOn && !isDev && bytes.length > GZIP_MIN_BYTES && accept.includes("gzip")) {
-		return new Response(gzipSync(bytes), {
+	if (compressionOn && !isDev && enc && bytes.length > GZIP_MIN_BYTES) {
+		return new Response(encodeBytes(bytes, enc), {
 			...PRECOMPRESSED,
 			status,
-			headers: { ...headers, "content-encoding": "gzip" },
+			headers: { ...headers, "content-encoding": enc },
 		});
 	}
 	return new Response(bytes, { status, headers });

@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.19] - 2026-10-03
+
+### Added
+
+- Deployment guide explains how Bosia compresses pages, scripts and styles.
+
+### Changed
+
+- Response cache and Server-Timing docs match how pages are now sent.
+
 ## [0.8.18] - 2026-09-28
 
 ### Added

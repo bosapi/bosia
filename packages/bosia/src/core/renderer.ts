@@ -16,6 +16,7 @@ import {
 	collectTags,
 	computeCacheKey,
 	concatChunks,
+	deferCacheWrite,
 	serveCached,
 } from "./cache.ts";
 import type { CookieJar } from "./cookies.ts";
@@ -31,6 +32,7 @@ import {
 	buildMetadataChunk,
 	buildHtmlTail,
 	compress,
+	compressBytes,
 	isDev,
 } from "./html.ts";
 import type { Metadata } from "./hooks.ts";
@@ -640,7 +642,7 @@ export async function renderSSRStream(
 	// INVARIANT: releaseMiss must fire exactly once — a missed release() hangs
 	// coalesced waiters for the process lifetime. Every early return and throw
 	// below must stay inside this try; the cache-write path hands the release
-	// off to its cacheSet microtask by nulling releaseMiss first.
+	// off to its deferred cacheSet by nulling releaseMiss first.
 	try {
 		// ── Pre-stream phase: resolve metadata before committing to a 200 ──
 		// Errors here return a proper error response with correct status code.
@@ -777,9 +779,7 @@ export async function renderSSRStream(
 					data.layoutDeps,
 					appHtmlSegments,
 				);
-			return new Response(html, {
-				headers: { "content-type": "text/html; charset=utf-8", ...data.loaderHeaders },
-			});
+			return compress(html, "text/html; charset=utf-8", req, 200, data.loaderHeaders);
 		}
 
 		// Render-first: run render() before committing to a 200. Failure → proper error page
@@ -817,7 +817,10 @@ export async function renderSSRStream(
 			);
 		}
 
-		// Pre-compute all chunks; pull-based stream gives Bun native backpressure.
+		// Every chunk is built before the first byte, so the body goes out whole and
+		// compressed — a stream here never streamed, it only skipped compression.
+		// Truly progressive SSR (ROADMAP) would pipe a stream through
+		// CompressionStream instead.
 		const chunks: Uint8Array[] = [
 			enc.encode(
 				buildHtmlShellOpen(
@@ -846,22 +849,23 @@ export async function renderSSRStream(
 			),
 		];
 
-		// ── Response cache: write after chunks built, before stream creation ──
+		const fullBody = concatChunks(chunks);
+
+		// ── Response cache: write after the response has gone out ──
 		// Skip if the handler set cookies — cached response can't reproduce
-		// per-request Set-Cookie headers. Compression runs in a microtask so
-		// the response goes out first.
+		// per-request Set-Cookie headers. deferCacheWrite runs the variant
+		// compression after this response is flushed, not ahead of it.
 		if (cacheable && cacheKey && (cookies as any).outgoing?.length === 0) {
-			const fullBody = concatChunks(chunks);
 			// Oversized bodies skip early so they never pay compression; cacheSet
 			// re-checks as the authoritative guard.
 			if (CACHE_MAX_BODY_BYTES === 0 || fullBody.length <= CACHE_MAX_BODY_BYTES) {
 				const tags = collectTags(data.layoutDeps ?? null, data.pageDeps ?? null);
 				const keyForWrite = cacheKey;
-				// Hand the gate release to the write microtask: waiters resume only
+				// Hand the gate release to the deferred write: waiters resume only
 				// after cacheSet ran, so their re-check hits.
 				const rel = releaseMiss;
 				releaseMiss = null;
-				queueMicrotask(() => {
+				deferCacheWrite(() => {
 					try {
 						const { gzip, brotli } = buildCompressedVariants(fullBody);
 						cacheSet(
@@ -884,35 +888,7 @@ export async function renderSSRStream(
 			}
 		}
 
-		let i = 0;
-		let cancelled = false;
-		const onAbort = () => {
-			cancelled = true;
-		};
-		req.signal.addEventListener("abort", onAbort, { once: true });
-
-		const stream = new ReadableStream<Uint8Array>({
-			pull(controller) {
-				if (cancelled || i >= chunks.length) {
-					controller.close();
-					req.signal.removeEventListener("abort", onAbort);
-					return;
-				}
-				controller.enqueue(chunks[i++]);
-				if (i >= chunks.length) {
-					controller.close();
-					req.signal.removeEventListener("abort", onAbort);
-				}
-			},
-			cancel() {
-				cancelled = true;
-				req.signal.removeEventListener("abort", onAbort);
-			},
-		});
-
-		return new Response(stream, {
-			headers: { "content-type": "text/html; charset=utf-8", ...data.loaderHeaders },
-		});
+		return compressBytes(fullBody, "text/html; charset=utf-8", req, 200, data.loaderHeaders);
 	} finally {
 		releaseMiss?.();
 	}

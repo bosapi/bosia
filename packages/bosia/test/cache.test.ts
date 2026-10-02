@@ -9,6 +9,7 @@ import {
 	computeCacheKey,
 	computeIdentityHash,
 	concatChunks,
+	deferCacheWrite,
 	invalidate,
 	invalidateAll,
 	serveCached,
@@ -575,5 +576,26 @@ describe("cacheClear", () => {
 		expect(cacheGet("/b|i=0")).toBeUndefined();
 		expect(invalidate("x")).toBe(0);
 		expect(invalidate("y")).toBe(0);
+	});
+});
+
+// A microtask write ran before the awaiting caller got the response back, so
+// compressing the cache variants delayed the first byte.
+describe("deferCacheWrite", () => {
+	test("runs after the awaiting caller has its response", async () => {
+		const order: string[] = [];
+		async function render() {
+			deferCacheWrite(() => {
+				order.push("cache write");
+			});
+			return "response";
+		}
+		async function handle() {
+			await render();
+			order.push("response returned");
+		}
+		await handle();
+		await new Promise((r) => setImmediate(r));
+		expect(order).toEqual(["response returned", "cache write"]);
 	});
 });

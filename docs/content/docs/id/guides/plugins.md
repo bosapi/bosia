@@ -26,7 +26,7 @@ Konfigurasi dimuat sekali saat startup oleh `bosia dev`, `bosia build`, dan `bos
 
 ### `bosia/plugins/server-timing`
 
-Menambahkan header `Server-Timing: handler;dur=<ms>` ke setiap respons. Durasinya mengukur rantai handler framework (`onRequest` → `onAfterHandle`). Untuk route SSR streaming ini adalah "waktu mulai streaming", bukan waktu render end-to-end penuh — `Server-Timing` adalah header respons, jadi harus di-flush sebelum body. Berguna untuk memunculkan overhead framework di browser DevTools.
+Menambahkan header `Server-Timing: handler;dur=<ms>` ke setiap respons. Durasinya mengukur rantai handler framework (`onRequest` → `onAfterHandle`). Ini adalah waktu membangun respons, bukan waktu mengirimnya (untuk route `+server.ts` streaming, "waktu mulai streaming") — `Server-Timing` adalah header respons, jadi harus di-flush sebelum body. Berguna untuk memunculkan overhead framework di browser DevTools.
 
 ```ts
 import { serverTiming } from "bosia/plugins/server-timing";

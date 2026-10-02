@@ -8,11 +8,10 @@
 // node:crypto / node:zlib rather than Bun.* — the same code runs on Bun and on
 // Cloudflare Workers (nodejs_compat), and both stay sync there.
 import { createHash } from "node:crypto";
-import { brotliCompressSync, gzipSync, constants as zlibConstants } from "node:zlib";
 import type { Cookies, LoaderDeps } from "./hooks.ts";
 import type { CookieJar } from "./cookies.ts";
 import { dedupKey } from "./dedup.ts";
-import { compressionOn, PRECOMPRESSED } from "./html.ts";
+import { compressionOn, encodeBytes, PRECOMPRESSED } from "./html.ts";
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -280,7 +279,7 @@ function cacheDeleteIndexOnly(key: string, entry: CacheEntry): void {
 
 // ─── Compression helpers ─────────────────────────────────
 
-/** Build gzip + brotli copies of body. Sync, runs in microtask. */
+/** Build gzip + brotli copies of body. Sync — call it from `deferCacheWrite`. */
 export function buildCompressedVariants(body: Bytes): {
 	gzip: Bytes | null;
 	brotli: Bytes | null;
@@ -290,22 +289,33 @@ export function buildCompressedVariants(body: Bytes): {
 	let gzip: Bytes | null = null;
 	let brotli: Bytes | null = null;
 	try {
-		gzip = new Uint8Array(gzipSync(body)) as Bytes;
+		gzip = encodeBytes(body, "gzip");
 	} catch {
 		gzip = null;
 	}
 	try {
-		// Quality 5: ~20x faster than the default 11, still beats gzip on size.
-		// This runs sync in a microtask — 11 would block the event loop ~17ms/500KB.
-		brotli = new Uint8Array(
-			brotliCompressSync(body, {
-				params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 },
-			}),
-		) as Bytes;
+		// Quality 5 (set in encodeBytes): ~20x faster than the default 11, still
+		// beats gzip on size. 11 would block the event loop ~17ms/500KB.
+		brotli = encodeBytes(body, "br");
 	} catch {
 		brotli = null;
 	}
 	return { gzip, brotli };
+}
+
+/**
+ * Run a cache write after the current response has gone out. A microtask
+ * would not: it fires before the awaiting caller resumes, so gzip + brotli of
+ * the body ran ahead of the first byte. `setImmediate` yields to I/O first.
+ * Workers keeps the microtask — it compresses nothing (the edge does), and a
+ * timer after the response returns is not guaranteed to run there.
+ *
+ * On a miss the variant sent to the client is compressed twice (response +
+ * cache). Off the critical path; pass the built variant in if it ever shows up.
+ */
+export function deferCacheWrite(fn: () => void | Promise<void>): void {
+	if (compressionOn) setImmediate(fn);
+	else queueMicrotask(fn);
 }
 
 /** Concatenate multiple Uint8Array chunks into one buffer. */

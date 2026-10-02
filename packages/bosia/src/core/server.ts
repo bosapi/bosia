@@ -25,7 +25,12 @@ import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
 import { stripBase, withBase } from "./basePath.ts";
 import { currentBase } from "./appBase.ts";
-import { buildPrerenderManifest, buildStaticManifest, lookupStatic } from "./staticManifest.ts";
+import {
+	buildPrerenderManifest,
+	buildStaticManifest,
+	lookupStatic,
+	serveStatic,
+} from "./staticManifest.ts";
 import { dedup } from "./dedup.ts";
 import {
 	CACHE_ENABLED,
@@ -35,6 +40,7 @@ import {
 	cacheSet,
 	coalesceMiss,
 	computeCacheKey,
+	deferCacheWrite,
 	serveCached,
 	warnUncoveredCookies,
 } from "./cache.ts";
@@ -410,12 +416,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 	// api-before-static ordering intact for every user-facing path.
 	if (staticManifest && (path.startsWith("/dist/") || path.startsWith("/__bosia/"))) {
 		const hit = lookupStatic(staticManifest, path);
-		if (hit) {
-			return new Response(
-				Bun.file(hit.absPath),
-				hit.cacheControl ? { headers: { "Cache-Control": hit.cacheControl } } : undefined,
-			);
-		}
+		if (hit) return serveStatic(hit, request);
 	}
 
 	// API routes (+server.ts) — resolve with `.json` alias preference.
@@ -428,7 +429,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		if (warmingUp) return new Response(null, { status: 404 });
 		// INVARIANT: once set, releaseApiMiss must fire exactly once — a missed
 		// release() hangs coalesced waiters for the process lifetime. The cache
-		// write path hands it off to its microtask by nulling it first.
+		// write path hands it off to its deferred write by nulling it first.
 		let releaseApiMiss: (() => void) | null = null;
 		try {
 			const mod = await apiMatch.route.module();
@@ -518,11 +519,11 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				const extraHeaders = captureCacheableHeaders(response.headers);
 				const contentType = responseContentType || "application/octet-stream";
 				const keyForWrite = apiCacheKey;
-				// Hand the gate release to the write microtask: waiters resume only
+				// Hand the gate release to the deferred write: waiters resume only
 				// after the cacheSet attempt, so their re-check hits.
 				const rel = releaseApiMiss;
 				releaseApiMiss = null;
-				queueMicrotask(async () => {
+				deferCacheWrite(async () => {
 					try {
 						const buf = new Uint8Array(await cloned.arrayBuffer());
 						// Oversized bodies skip early so they never pay compression;
@@ -588,12 +589,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		// Prod fast path: single Map lookup, no per-request stat calls.
 		if (staticManifest) {
 			const hit = lookupStatic(staticManifest, path);
-			if (hit) {
-				return new Response(
-					Bun.file(hit.absPath),
-					hit.cacheControl ? { headers: { "Cache-Control": hit.cacheControl } } : undefined,
-				);
-			}
+			if (hit) return serveStatic(hit, request);
 			return new Response("Not Found", { status: 404 });
 		}
 		// Dev: keep the per-request fallthrough so files dropped into `public/`
@@ -646,13 +642,11 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		// Keys come from a boot-time walk of `dist/prerendered/`, not from the
 		// URL, so no safePath needed — a non-matching path is just a miss.
 		const key = path === "/" ? "/" : path.replace(/\/$/, "");
-		const abs = prerenderManifest.get(key);
-		if (abs) {
-			return new Response(Bun.file(abs), {
-				headers: {
-					"Content-Type": "text/html; charset=utf-8",
-					"Cache-Control": "public, max-age=3600",
-				},
+		const hit = prerenderManifest.get(key);
+		if (hit) {
+			return serveStatic(hit, request, {
+				"Content-Type": "text/html; charset=utf-8",
+				"Cache-Control": "public, max-age=3600",
 			});
 		}
 	}

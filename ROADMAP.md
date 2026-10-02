@@ -1,7 +1,23 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.1.2**
+> Current version: **1.1.3**
+
+---
+
+## Perf audit (2026-10-03) — open findings
+
+> Code read of the request path (server.ts, renderer.ts, html.ts, cache.ts, staticManifest.ts). Not benchmarked; only the microtask ordering (#4) was verified with a script.
+
+- [x] 🟠 SSR cache misses ship raw HTML. Fixed 1.1.3: body built whole (it never streamed) and sent via `compressBytes`, br preferred. Demo `/` miss 9.5KB → 2.4KB br.
+- [x] 🟠 Static assets uncompressed. Fixed 1.1.3: build writes `.br`/`.gz` for `dist/client` + `dist/prerendered`; `serveStatic` negotiates. Hydrate chunk 108KB → 31KB br.
+- [ ] ⚪ `public/` text files (svg/txt/json) still ship raw — the precompress pass skips the app's source dir. Precompress into `dist/static` if it matters.
+- [ ] ⚪ `compress()` is untestable for encoding under `bun test` (`isDev` read at import). Integration coverage is `apps/demo` curl + `ui.e2e.ts`; add a built-server encoding test.
+- [ ] 🟠 User `handle` hook runs for every static asset: static branches live inside `resolve()`. A session-lookup hook = one DB query per chunk. Serve manifest hits in `handleRequest` before hooks.
+- [x] 🟡 Cache-write compression blocked the first byte (microtask). Fixed 1.1.3: `deferCacheWrite` uses `setImmediate` on Bun, microtask on Workers (no compression there). Order test added.
+- [ ] 🟡 Layout loaders run serially root→leaf even when none call `parent()`. Start all in parallel; make `parent()` await the earlier layers (SvelteKit's model).
+- [ ] 🟡 `metadata()` adds a serial step: before loaders on SSR (needed only if it returns `data`), after loaders on the data endpoint (`data` unused there). Also check: page `load` gets `metadata: null` on client nav.
+- [ ] ⚪ `public/` files ship with no Cache-Control (heuristic caching). Prerendered HTML `max-age=3600` can outlive a deploy and point at deleted hashed chunks.
 
 ---
 

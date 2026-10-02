@@ -1,7 +1,9 @@
 import { existsSync, readdirSync, statSync } from "fs";
 import { basename, join, resolve as resolvePath } from "path";
+import { PRECOMPRESSED, pickEncoding } from "./html.ts";
 
-export type StaticEntry = { absPath: string; cacheControl?: string };
+/** `br`/`gz`: absolute paths of build-time precompressed siblings (precompress.ts). */
+export type StaticEntry = { absPath: string; cacheControl?: string; br?: string; gz?: string };
 export type StaticManifest = Map<string, StaticEntry>;
 
 const HASHED_BASENAME = /\-[a-z0-9]{8,}\.[a-z]+$/;
@@ -49,9 +51,16 @@ export function buildStaticManifest(outDir: string): StaticManifest {
 
 	const clientRoot = join(outAbs, "client");
 	if (existsSync(clientRoot)) {
-		for (const { abs, rel } of walk(clientRoot)) {
-			const cacheControl = HASHED_BASENAME.test(basename(rel)) ? IMMUTABLE_CACHE : DEFAULT_CACHE;
-			addOnce(manifest, `/dist/client/${rel}`, { absPath: abs, cacheControl });
+		for (const entry of withSiblings(walk(clientRoot))) {
+			const cacheControl = HASHED_BASENAME.test(basename(entry.rel))
+				? IMMUTABLE_CACHE
+				: DEFAULT_CACHE;
+			addOnce(manifest, `/dist/client/${entry.rel}`, {
+				absPath: entry.abs,
+				cacheControl,
+				br: entry.br,
+				gz: entry.gz,
+			});
 		}
 	}
 
@@ -99,6 +108,54 @@ export function buildStaticManifest(outDir: string): StaticManifest {
 	return manifest;
 }
 
+/**
+ * Fold `x.br` / `x.gz` into the entry for `x`. The variants are not URLs of
+ * their own — a request for `/chunk.js.br` is a miss, like any file the build
+ * never meant to publish. A `.br` with no original is kept as a plain file.
+ */
+function withSiblings(
+	all: Iterable<{ abs: string; rel: string }>,
+): Array<{ abs: string; rel: string; br?: string; gz?: string }> {
+	const list = [...all];
+	const byRel = new Map(list.map((f) => [f.rel, f]));
+	const out: Array<{ abs: string; rel: string; br?: string; gz?: string }> = [];
+	for (const f of list) {
+		const ext = f.rel.endsWith(".br") ? ".br" : f.rel.endsWith(".gz") ? ".gz" : null;
+		if (ext && byRel.has(f.rel.slice(0, -ext.length))) continue;
+		out.push({
+			...f,
+			br: byRel.get(`${f.rel}.br`)?.abs,
+			gz: byRel.get(`${f.rel}.gz`)?.abs,
+		});
+	}
+	return out;
+}
+
+/**
+ * Response for a manifest hit, precompressed when the build left a variant the
+ * client accepts. Content-Type comes from the original — `Bun.file("x.js.br")`
+ * would infer the wrong one. `Vary` only when variants exist: a raw-only file
+ * answers every client the same way.
+ */
+export function serveStatic(
+	entry: StaticEntry,
+	req: Request,
+	headers: Record<string, string> = {},
+): Response {
+	const out: Record<string, string> = { ...headers };
+	if (entry.cacheControl) out["Cache-Control"] = entry.cacheControl;
+	if (!entry.br && !entry.gz) return new Response(Bun.file(entry.absPath), { headers: out });
+
+	out["Vary"] = "Accept-Encoding";
+	const enc = pickEncoding(req.headers.get("accept-encoding"));
+	const variant = enc === "br" ? (entry.br ?? entry.gz) : enc === "gzip" ? entry.gz : undefined;
+	if (!variant) return new Response(Bun.file(entry.absPath), { headers: out });
+
+	out["Content-Type"] ??= Bun.file(entry.absPath).type;
+	out["Content-Encoding"] = variant === entry.br ? "br" : "gzip";
+	return new Response(Bun.file(variant), { ...PRECOMPRESSED, headers: out });
+}
+
 export function lookupStatic(manifest: StaticManifest, urlPath: string): StaticEntry | null {
 	const raw = urlPath.split("?")[0];
 	// Manifest keys are raw filenames; URLs arrive percent-encoded.
@@ -117,10 +174,10 @@ export function lookupStatic(manifest: StaticManifest, urlPath: string): StaticE
  * On collision the `…/index.html` variant wins (mirrors the old runtime
  * candidate order). Replaces per-request `Bun.file().exists()` probes.
  */
-export function buildPrerenderManifest(outDir: string): Map<string, string> {
-	const manifest = new Map<string, string>();
+export function buildPrerenderManifest(outDir: string): Map<string, StaticEntry> {
+	const manifest = new Map<string, StaticEntry>();
 	const root = join(resolvePath(outDir), "prerendered");
-	for (const { abs, rel } of walk(root)) {
+	for (const { abs, rel, br, gz } of withSiblings(walk(root))) {
 		if (!rel.endsWith(".html")) continue;
 		let key: string;
 		let isIndex = false;
@@ -133,7 +190,7 @@ export function buildPrerenderManifest(outDir: string): Map<string, string> {
 		} else {
 			key = `/${rel.slice(0, -".html".length)}`;
 		}
-		if (isIndex || !manifest.has(key)) manifest.set(key, abs);
+		if (isIndex || !manifest.has(key)) manifest.set(key, { absPath: abs, br, gz });
 	}
 	return manifest;
 }

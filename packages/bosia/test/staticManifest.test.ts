@@ -6,6 +6,7 @@ import {
 	buildPrerenderManifest,
 	buildStaticManifest,
 	lookupStatic,
+	serveStatic,
 } from "../src/core/staticManifest.ts";
 
 let workdir: string;
@@ -172,9 +173,9 @@ describe("buildPrerenderManifest", () => {
 
 		const m = buildPrerenderManifest(outDir);
 
-		expect(m.get("/")).toBe(join(outDir, "prerendered", "index.html"));
-		expect(m.get("/about")).toBe(join(outDir, "prerendered", "about", "index.html"));
-		expect(m.get("/contact")).toBe(join(outDir, "prerendered", "contact.html"));
+		expect(m.get("/")?.absPath).toBe(join(outDir, "prerendered", "index.html"));
+		expect(m.get("/about")?.absPath).toBe(join(outDir, "prerendered", "about", "index.html"));
+		expect(m.get("/contact")?.absPath).toBe(join(outDir, "prerendered", "contact.html"));
 	});
 
 	test("on collision the index.html variant wins regardless of walk order", () => {
@@ -183,12 +184,94 @@ describe("buildPrerenderManifest", () => {
 
 		const m = buildPrerenderManifest(outDir);
 
-		expect(m.get("/about")).toBe(join(outDir, "prerendered", "about", "index.html"));
+		expect(m.get("/about")?.absPath).toBe(join(outDir, "prerendered", "about", "index.html"));
 	});
 
 	test("missing prerendered dir yields empty map; non-html files ignored", () => {
 		expect(buildPrerenderManifest(outDir).size).toBe(0);
 		touch(join(outDir, "prerendered", "notes.txt"), "txt");
 		expect(buildPrerenderManifest(outDir).size).toBe(0);
+	});
+});
+
+describe("precompressed siblings", () => {
+	test("x.br / x.gz fold into x's entry and are not URLs of their own", () => {
+		touch(join(outDir, "client", "chunk-abcd1234.js"), "js");
+		touch(join(outDir, "client", "chunk-abcd1234.js.br"), "br");
+		touch(join(outDir, "client", "chunk-abcd1234.js.gz"), "gz");
+
+		const m = buildStaticManifest(outDir);
+		const e = lookupStatic(m, "/dist/client/chunk-abcd1234.js")!;
+
+		expect(e.br).toBe(join(outDir, "client", "chunk-abcd1234.js.br"));
+		expect(e.gz).toBe(join(outDir, "client", "chunk-abcd1234.js.gz"));
+		expect(lookupStatic(m, "/dist/client/chunk-abcd1234.js.br")).toBeNull();
+		expect(lookupStatic(m, "/dist/client/chunk-abcd1234.js.gz")).toBeNull();
+	});
+
+	test("a .gz with no original stays a plain file", () => {
+		touch(join(outDir, "client", "archive.tar.gz"), "tar");
+		const m = buildStaticManifest(outDir);
+		expect(lookupStatic(m, "/dist/client/archive.tar.gz")).not.toBeNull();
+	});
+
+	test("prerendered entries carry their siblings", () => {
+		touch(join(outDir, "prerendered", "index.html"), "root");
+		touch(join(outDir, "prerendered", "index.html.br"), "br");
+		const e = buildPrerenderManifest(outDir).get("/")!;
+		expect(e.br).toBe(join(outDir, "prerendered", "index.html.br"));
+		expect(e.gz).toBeUndefined();
+	});
+});
+
+describe("serveStatic", () => {
+	const req = (accept?: string) =>
+		new Request("http://x/", accept ? { headers: { "Accept-Encoding": accept } } : {});
+
+	function entry() {
+		touch(join(outDir, "client", "a-abcd1234.js"), "raw");
+		touch(join(outDir, "client", "a-abcd1234.js.br"), "BR");
+		touch(join(outDir, "client", "a-abcd1234.js.gz"), "GZ");
+		return lookupStatic(buildStaticManifest(outDir), "/dist/client/a-abcd1234.js")!;
+	}
+
+	test("br preferred, with the original's content-type", async () => {
+		const res = serveStatic(entry(), req("gzip, deflate, br"));
+		expect(res.headers.get("content-encoding")).toBe("br");
+		expect(res.headers.get("content-type")).toContain("javascript");
+		expect(res.headers.get("vary")).toBe("Accept-Encoding");
+		expect(res.headers.get("cache-control")).toContain("immutable");
+		expect(await res.text()).toBe("BR");
+	});
+
+	test("gzip when br is not accepted", async () => {
+		const res = serveStatic(entry(), req("gzip"));
+		expect(res.headers.get("content-encoding")).toBe("gzip");
+		expect(await res.text()).toBe("GZ");
+	});
+
+	test("raw with no Accept-Encoding, still Vary", async () => {
+		const res = serveStatic(entry(), req());
+		expect(res.headers.get("content-encoding")).toBeNull();
+		expect(res.headers.get("vary")).toBe("Accept-Encoding");
+		expect(await res.text()).toBe("raw");
+	});
+
+	test("br-accepting client falls back to gzip when only .gz exists", async () => {
+		touch(join(outDir, "client", "b.css"), "raw");
+		touch(join(outDir, "client", "b.css.gz"), "GZ");
+		const e = lookupStatic(buildStaticManifest(outDir), "/dist/client/b.css")!;
+		const res = serveStatic(e, req("br, gzip"));
+		expect(res.headers.get("content-encoding")).toBe("gzip");
+		expect(res.headers.get("content-type")).toContain("css");
+	});
+
+	test("no siblings: raw, no Vary; caller headers win for content-type", async () => {
+		touch(join(outDir, "prerendered", "index.html"), "<p>");
+		const e = buildPrerenderManifest(outDir).get("/")!;
+		const res = serveStatic(e, req("br"), { "Content-Type": "text/html; charset=utf-8" });
+		expect(res.headers.get("content-encoding")).toBeNull();
+		expect(res.headers.get("vary")).toBeNull();
+		expect(res.headers.get("content-type")).toBe("text/html; charset=utf-8");
 	});
 });

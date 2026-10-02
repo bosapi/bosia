@@ -63,6 +63,16 @@ Bosia sets cache headers automatically:
 | Hashed filenames | `public, max-age=31536000, immutable` |
 | Non-hashed files | `no-cache`                            |
 
+## Compression
+
+Bosia compresses responses itself — no reverse-proxy setup needed:
+
+- **Pages and JSON** are compressed per request, brotli when the browser accepts it, else gzip. Bodies under 2KB go out as-is.
+- **Client JS/CSS and prerendered pages** are compressed once at build time (`.br` + `.gz` next to each file in `dist/`) and served ready-made.
+- **`public/` files** are served as-is. Images are already compressed.
+
+A proxy in front (nginx, Caddy) passes the encoded response through untouched. On Cloudflare Workers, Cloudflare compresses instead and no `.br`/`.gz` files are built.
+
 ## Behind a Reverse Proxy
 
 When Bosia runs behind nginx, Caddy, Cloudflare, an ALB, or any other reverse proxy / load balancer, the public-facing host typically differs from the `Host` header reaching the inner Bun process. Set:

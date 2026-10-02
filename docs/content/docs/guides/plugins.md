@@ -26,7 +26,7 @@ The config is loaded once at startup by `bosia dev`, `bosia build`, and `bosia s
 
 ### `bosia/plugins/server-timing`
 
-Adds a `Server-Timing: handler;dur=<ms>` header to every response. The duration measures the framework handler chain (`onRequest` → `onAfterHandle`). For streaming SSR routes this is "time to start streaming," not full end-to-end render time — `Server-Timing` is a response header, so it must flush before the body. Useful for surfacing framework overhead in browser DevTools.
+Adds a `Server-Timing: handler;dur=<ms>` header to every response. The duration measures the framework handler chain (`onRequest` → `onAfterHandle`). It is the time to build the response, not to deliver it (for a streaming `+server.ts` route, "time to start streaming") — `Server-Timing` is a response header, so it must flush before the body. Useful for surfacing framework overhead in browser DevTools.
 
 ```ts
 import { serverTiming } from "bosia/plugins/server-timing";

@@ -63,6 +63,16 @@ Bosia mengatur cache header secara otomatis:
 | Nama file dengan hash | `public, max-age=31536000, immutable` |
 | File tanpa hash       | `no-cache`                            |
 
+## Kompresi
+
+Bosia mengompresi response sendiri — tanpa perlu setup reverse proxy:
+
+- **Halaman dan JSON** dikompresi per request, brotli bila browser mendukung, jika tidak gzip. Body di bawah 2KB dikirim apa adanya.
+- **JS/CSS client dan halaman prerender** dikompresi sekali saat build (`.br` + `.gz` di samping tiap file di `dist/`) lalu dikirim siap pakai.
+- **File `public/`** dikirim apa adanya. Gambar sudah terkompresi.
+
+Proxy di depan (nginx, Caddy) meneruskan response terkompresi tanpa mengubahnya. Di Cloudflare Workers, Cloudflare yang mengompresi dan file `.br`/`.gz` tidak dibuat.
+
 ## Di Belakang Reverse Proxy
 
 Saat Bosia berjalan di belakang nginx, Caddy, Cloudflare, ALB, atau reverse proxy / load balancer lain, host publik biasanya berbeda dengan header `Host` yang sampai ke proses Bun di dalamnya. Setel:

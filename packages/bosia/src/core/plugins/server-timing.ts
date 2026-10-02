@@ -10,9 +10,9 @@ export interface ServerTimingOptions {
 /**
  * Adds a `Server-Timing` response header that reports how long each request
  * spent inside the framework's handler. Measured from `onRequest` to
- * `onAfterHandle` — so for streaming SSR routes this is "time to start
- * streaming," not full end-to-end. Headers must flush before the body, so a
- * true end-to-end value cannot be reported in a response header.
+ * `onAfterHandle` — the time to build the response, not to deliver it. A
+ * streaming `+server.ts` route reports "time to start streaming". Headers must
+ * flush before the body, so a true end-to-end value cannot be reported here.
  */
 export function serverTiming(options: ServerTimingOptions = {}): BosiaPlugin {
 	const headerName = options.header ?? "Server-Timing";
