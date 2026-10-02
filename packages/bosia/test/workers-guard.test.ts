@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, afterAll, afterEach } from "bun:test";
+import { describe, test, expect, beforeAll, afterAll, afterEach, spyOn } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "fs";
 import { join } from "path";
 
@@ -61,7 +61,13 @@ describe("workers guard", () => {
 	test("report fails by default, warns with BOSIA_WORKERS_GUARD=0", () => {
 		expect(workersGuardReport(src)).toContain("uses Bun.version");
 		process.env.BOSIA_WORKERS_GUARD = "0";
-		expect(workersGuardReport(src)).toBeNull();
+		const warn = spyOn(console, "warn").mockImplementation(() => {});
+		try {
+			expect(workersGuardReport(src)).toBeNull();
+			expect(warn.mock.calls[0]?.[0]).toContain("Workers guard");
+		} finally {
+			warn.mockRestore();
+		}
 	});
 
 	test("missing src/ is clean", () => {

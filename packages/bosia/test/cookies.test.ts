@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { CookieJar } from "../src/core/cookies.ts";
 
 describe("CookieJar — incoming", () => {
@@ -96,7 +96,13 @@ describe("CookieJar — set / delete", () => {
 
 	test("http mode downgrades caller-forced secure:true", () => {
 		const jar = new CookieJar("", false);
-		jar.set("session", "abc", { secure: true });
+		// Warns once per process, so only silence it here, don't assert on it.
+		const warn = spyOn(console, "warn").mockImplementation(() => {});
+		try {
+			jar.set("session", "abc", { secure: true });
+		} finally {
+			warn.mockRestore();
+		}
 		expect(jar.outgoing[0]).not.toContain("Secure");
 	});
 

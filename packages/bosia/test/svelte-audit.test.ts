@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, afterAll, afterEach } from "bun:test";
+import { describe, test, expect, beforeAll, afterAll, afterEach, spyOn } from "bun:test";
 import { mkdirSync, writeFileSync, rmSync } from "fs";
 import { join } from "path";
 
@@ -260,9 +260,17 @@ describe("svelte component-import audit", () => {
 		});
 
 		process.env.BOSIA_STRICT_IMPORTS = "0";
-		const result = await runBuild(tmpDir);
-		// Audit downgraded — build should succeed at the audit step. (The svelte
-		// compile itself can still produce warnings, but that's separate.)
-		expect(result.logs).not.toContain("Svelte component-import audit failed");
+		const warn = spyOn(console, "warn").mockImplementation(() => {});
+		try {
+			const result = await runBuild(tmpDir);
+			// Audit downgraded — build should succeed at the audit step. (The svelte
+			// compile itself can still produce warnings, but that's separate.)
+			expect(result.logs).not.toContain("Svelte component-import audit failed");
+			expect(warn.mock.calls.map((c) => String(c[0])).join("\n")).toContain(
+				"Svelte component-import audit failed",
+			);
+		} finally {
+			warn.mockRestore();
+		}
 	});
 });
