@@ -44,6 +44,7 @@ describe("scanRoutes()", () => {
 	});
 
 	test("discovers nested route with +page.server.ts", () => {
+		write("blog/+page.svelte");
 		write("blog/[slug]/+page.svelte");
 		write("blog/[slug]/+page.server.ts", "export const load = async () => ({})");
 		const m = scanRoutes();
@@ -200,6 +201,7 @@ describe("scanRoutes() route conflicts", () => {
 	test("distinct routes, and a page plus an API at one URL, do not conflict", () => {
 		write("+page.svelte");
 		write("about/+page.svelte");
+		write("blog/+page.svelte");
 		write("blog/[slug]/+page.svelte");
 		write("blog/[...rest]/+page.svelte");
 		write("about/+server.ts");
