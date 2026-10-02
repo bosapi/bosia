@@ -24,6 +24,8 @@ export const distManifest: {
 	basePath?: string;
 	/** PUBLIC_* (non-static) names declared in .env files, stamped by the build. */
 	publicEnv?: string[];
+	/** Client chunks per route pattern, stamped by the build (see preloadMap.ts). */
+	preload?: Record<string, string[]>;
 } = readArtifact("manifest.json") ?? { js: [], css: [], entry: "hydrate.js" };
 
 export const isDev = process.env.NODE_ENV !== "production";
@@ -53,6 +55,17 @@ export function baseScript(nonce?: string): string {
 	return B
 		? `\n  <script${nonceAttr(nonce)}>window.__BOSIA_BASE__=${JSON.stringify(B)};</script>`
 		: "";
+}
+
+/** modulepreload links for the chunks `pattern` needs to hydrate, so they
+ *  download alongside the entry instead of after it has run. Hashed names, so
+ *  no buster (same reason as ENTRY). Unknown pattern or an older dist/ without
+ *  the `preload` field → nothing, and the page loads as it did before. */
+export function routePreloadLinks(pattern?: string): string {
+	if (!pattern) return "";
+	return (distManifest.preload?.[pattern] ?? [])
+		.map((f) => `\n  <link rel="modulepreload" href="${DIST}/${f}">`)
+		.join("");
 }
 
 /** Tailwind stylesheet link. Content-hashed name needs no cache buster — the
@@ -161,6 +174,7 @@ export function buildHtml(
 	bodyEndExtras?: string[],
 	segments?: AppHtmlSegments,
 	metadata?: Metadata | null,
+	pattern?: string,
 ): string {
 	// An app writes <a href="/masuk">; under a base the browser has to be handed
 	// /sso/masuk or it walks off this app entirely. Only the rendered markup is
@@ -208,6 +222,11 @@ export function buildHtml(
 
 	const bodyEnd = bodyEndExtras?.length ? "\n  " + bodyEndExtras.join("\n  ") : "";
 
+	// Same hints the streaming shell sends; skipped when no JS runs at all.
+	const preloads = csr
+		? `  <link rel="modulepreload" href="${ENTRY}">${routePreloadLinks(pattern)}\n`
+		: "";
+
 	if (segments) {
 		const safeKey = safeLang(lang);
 		const headOpenInterpolated = interpolateSegment(segments.headOpen, {
@@ -225,6 +244,7 @@ export function buildHtml(
 			`\n  ${faviconLine}${twCssLink()}\n` +
 			componentCssLinks() +
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
+			preloads +
 			`  ${fallbackTitle}${metaTags}${head}` +
 			headCloseInterpolated +
 			(body ? "" : `\n${SPINNER}`) +
@@ -243,7 +263,7 @@ export function buildHtml(
 ${metaTags}  ${head}
   ${twCssLink()}
 ${componentCssLinks()}  <script${n}>${THEME_INIT_JS}</script>
-</head>
+${preloads}</head>
 <body>
   <div id="app">${body}</div>${scripts}${bodyEnd}
 </body>
@@ -257,6 +277,7 @@ export function buildHtmlShellOpen(
 	lang?: string,
 	nonce?: string,
 	segments?: AppHtmlSegments,
+	pattern?: string,
 ): string {
 	const key = safeLang(lang);
 	const n = nonceAttr(nonce);
@@ -270,7 +291,8 @@ export function buildHtmlShellOpen(
 			`\n  ${faviconLine}${twCssLink()}\n` +
 			componentCssLinks() +
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
-			`  <link rel="modulepreload" href="${ENTRY}">`
+			`  <link rel="modulepreload" href="${ENTRY}">` +
+			routePreloadLinks(pattern)
 		);
 	}
 
@@ -282,7 +304,8 @@ export function buildHtmlShellOpen(
 		`  ${twCssLink()}\n` +
 		componentCssLinks() +
 		`  <script${n}>${THEME_INIT_JS}</script>\n` +
-		`  <link rel="modulepreload" href="${ENTRY}">`
+		`  <link rel="modulepreload" href="${ENTRY}">` +
+		routePreloadLinks(pattern)
 	);
 }
 

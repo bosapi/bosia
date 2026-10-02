@@ -1,7 +1,19 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.1.0**
+> Current version: **1.1.2**
+
+---
+
+## bosia 1.1.2 (2026-10-02) — preload route chunks
+
+> Clicks before hydration were lost: the HTML only hinted the entry, so page/layout chunks loaded in a serial waterfall after it ran.
+
+- [x] Client build emits a metafile; `preloadMap.ts` maps each route to its layout+page chunks plus static imports → `manifest.preload`.
+- [x] Shell and `buildHtml` emit a `modulepreload` per route chunk (skipped when `csr=false`). Demo `/blog/[slug]`: 6 links, all 200; prerendered too.
+- [ ] 🟡 Measure the before/after hydration time on sso/pay prod (DevTools, throttled), then `bun update bosia` in both.
+- [ ] 🟢 Send the preloads as an HTTP `Link` header / 103 Early Hints so they start before the HTML arrives.
+- [ ] 🟢 Verify `wrangler dev` (Workers) and a `BASE_PATH` build emit the links; covered by code path, not run.
 
 ---
 

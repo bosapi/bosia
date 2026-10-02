@@ -17,6 +17,7 @@ import { generateRouteTypes, ensureRootDirs } from "./routeTypes.ts";
 import { makeBosiaPlugin } from "./plugin.ts";
 import { makeBosiaSvelteCompiler, svelteMapCache } from "./svelteCompiler.ts";
 import { finalizeComponentCss } from "./componentCss.ts";
+import { buildPreloadMap } from "./preloadMap.ts";
 import { prerenderStaticRoutes, generateStaticSite } from "./prerender.ts";
 import { loadEnv, classifyEnvVars } from "./env.ts";
 import { generateEnvModules } from "./envCodegen.ts";
@@ -252,6 +253,8 @@ const clientPromise = Bun.build({
 	// Chunks are named after their source, which for routes is `+page` — and
 	// Cloudflare's asset server answers a `+` in the path with a redirect.
 	naming: { entry: "[name]-[hash].[ext]", chunk: "chunk-[hash].[ext]" },
+	// Read below to map each route to the chunks it needs (see preloadMap.ts).
+	metafile: true,
 	minify: isProduction,
 	sourcemap: isProduction ? "none" : "linked",
 	define: {
@@ -346,14 +349,20 @@ const serverEntry = serverEntryOutput ? basename(serverEntryOutput.path) : "inde
 
 // 8. Write dist/manifest.json
 mkdirSync(OUT_DIR, { recursive: true });
+const entryFile =
+	clientEntry ??
+	jsFiles.find((f) => f === "hydrate.js") ??
+	jsFiles.find((f) => f.startsWith("hydrate")) ??
+	"hydrate.js";
 const distManifest = {
 	js: jsFiles,
 	css: cssFiles,
-	entry:
-		clientEntry ??
-		jsFiles.find((f) => f === "hydrate.js") ??
-		jsFiles.find((f) => f.startsWith("hydrate")) ??
-		"hydrate.js",
+	entry: entryFile,
+	// Per-route modulepreload list, so a page's code downloads with the entry
+	// instead of after it.
+	preload: clientResult.metafile
+		? buildPreloadMap(clientResult.metafile, manifest.pages, entryFile)
+		: {},
 	serverEntry,
 	target,
 	tw: twFile,

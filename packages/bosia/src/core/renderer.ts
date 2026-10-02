@@ -761,7 +761,7 @@ export async function renderSSRStream(
 				);
 			}
 			const html =
-				buildHtmlShellOpen(metadata?.lang, nonce, appHtmlSegments) +
+				buildHtmlShellOpen(metadata?.lang, nonce, appHtmlSegments, route.pattern) +
 				buildMetadataChunk(metadata, headExtras, appHtmlSegments) +
 				buildHtmlTail(
 					"",
@@ -819,7 +819,14 @@ export async function renderSSRStream(
 
 		// Pre-compute all chunks; pull-based stream gives Bun native backpressure.
 		const chunks: Uint8Array[] = [
-			enc.encode(buildHtmlShellOpen(metadata?.lang, nonce, appHtmlSegments)),
+			enc.encode(
+				buildHtmlShellOpen(
+					metadata?.lang,
+					nonce,
+					appHtmlSegments,
+					data.csr ? route.pattern : undefined,
+				),
+			),
 			enc.encode(buildMetadataChunk(metadata, headExtras, appHtmlSegments)),
 			enc.encode(
 				buildHtmlTail(
@@ -1031,6 +1038,7 @@ export async function renderPageWithFormData(
 			bodyEndExtras,
 			appHtmlSegments,
 			metadata,
+			route.pattern,
 		);
 		return compress(html, "text/html; charset=utf-8", req, status, data.loaderHeaders);
 	}
@@ -1065,6 +1073,7 @@ export async function renderPageWithFormData(
 		bodyEndExtras,
 		appHtmlSegments,
 		metadata,
+		route.pattern,
 	);
 	return compress(html, "text/html; charset=utf-8", req, status, data.loaderHeaders);
 }

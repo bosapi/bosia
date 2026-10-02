@@ -383,6 +383,80 @@ describe("safeLang", () => {
 	});
 });
 
+describe("route modulepreload links", () => {
+	// Without these the page's chunks only start downloading after the entry has
+	// run, and clicks before hydration hit dead buttons.
+	const segments: AppHtmlSegments = {
+		headOpen: `<!DOCTYPE html>\n<html lang="%bosia.lang%">\n<head>\n`,
+		headClose: `\n</head>\n<body>\n`,
+		tail: `\n</body>\n</html>`,
+		hasCustomFavicon: false,
+	};
+	const link = (f: string) => `<link rel="modulepreload" href="/dist/client/${f}">`;
+	const page = (csr: boolean, segs?: AppHtmlSegments, pattern?: string) =>
+		buildHtml(
+			"",
+			"",
+			{},
+			[],
+			csr,
+			null,
+			"en",
+			true,
+			undefined,
+			null,
+			null,
+			undefined,
+			segs,
+			null,
+			pattern,
+		);
+
+	test("every render path preloads the route's chunks, in <head>", () => {
+		distManifest.preload = { "/blog/[slug]": ["chunk-layout.js", "chunk-page.js"] };
+		try {
+			for (const html of [
+				buildHtmlShellOpen("en", undefined, undefined, "/blog/[slug]"),
+				buildHtmlShellOpen("en", undefined, segments, "/blog/[slug]"),
+				page(true, undefined, "/blog/[slug]"),
+				page(true, segments, "/blog/[slug]"),
+			]) {
+				expect(html).toContain(link("chunk-layout.js"));
+				expect(html).toContain(link("chunk-page.js"));
+				expect(html).toContain(
+					`<link rel="modulepreload" href="/dist/client/${distManifest.entry}">`,
+				);
+				const headEnd = html.indexOf("</head>");
+				if (headEnd !== -1) expect(html.indexOf("chunk-page.js")).toBeLessThan(headEnd);
+			}
+		} finally {
+			delete distManifest.preload;
+		}
+	});
+
+	test("unknown pattern, no pattern, or an older dist/ adds no route links", () => {
+		distManifest.preload = { "/blog/[slug]": ["chunk-page.js"] };
+		try {
+			expect(buildHtmlShellOpen("en", undefined, undefined, "/about")).not.toContain("chunk-");
+			expect(buildHtmlShellOpen("en")).not.toContain("chunk-");
+			expect(page(true, undefined, "/about")).not.toContain("chunk-");
+		} finally {
+			delete distManifest.preload;
+		}
+		expect(page(true, undefined, "/blog/[slug]")).not.toContain("chunk-");
+	});
+
+	test("csr=false pages preload nothing — no JS will run", () => {
+		distManifest.preload = { "/blog/[slug]": ["chunk-page.js"] };
+		try {
+			const html = page(false, undefined, "/blog/[slug]");
+			expect(html).not.toContain("modulepreload");
+		} finally {
+			delete distManifest.preload;
+		}
+	});
+});
+
 describe("buildHtml — template segments", () => {
 	const segments: AppHtmlSegments = {
 		headOpen: `<!DOCTYPE html>\n<html lang="%bosia.lang%">\n<head>\n`,
