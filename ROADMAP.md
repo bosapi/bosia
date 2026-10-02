@@ -5,6 +5,10 @@
 
 ---
 
+## docs 0.8.19 (2026-10-03) — "Brand" in block previews
+
+- [x] 🟢 `docs/sync-docs.ts` copies `registry/blocks` → `docs/.bosia/blocks` with `__BRAND__` → `Brand`; `$blocks/*` + `$lib/blocks/*` aliases point there. Registry keeps the sentinel.
+
 ## Perf audit (2026-10-03) — open findings
 
 > Code read of the request path (server.ts, renderer.ts, html.ts, cache.ts, staticManifest.ts). Not benchmarked; only the microtask ordering (#4) was verified with a script.

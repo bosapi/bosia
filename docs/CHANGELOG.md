@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Response cache and Server-Timing docs match how pages are now sent.
+- Navbar, footer and storefront previews in the docs now say "Brand" instead of `__BRAND__`.
 
 ## [0.8.18] - 2026-09-28
 

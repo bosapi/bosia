@@ -9,8 +9,8 @@
  *
  * Run before `bun run dev` or `bun run build`.
  */
-import { readFileSync, writeFileSync, mkdirSync } from "fs";
-import { join } from "path";
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, rmSync } from "fs";
+import { dirname, join } from "path";
 
 const docsDir = import.meta.dir;
 const repoRoot = join(docsDir, "..");
@@ -53,3 +53,21 @@ for (const file of files) {
 	writeFileSync(join(idOutDir, file.dest), outputId);
 	console.log(`  Synced ${file.source} -> content/docs/id/reference/${file.dest}`);
 }
+
+// Registry blocks ship the literal `__BRAND__` placeholder (the brand guard and AI
+// verifiers look for it), but the docs previews should read "Brand". The docs
+// `$blocks/*` and `$lib/blocks/*` aliases point at this copy, never the registry.
+// Plain copy, so registry edits show up after the next `sync`, not via dev HMR.
+const blocksSrc = join(repoRoot, "registry", "blocks");
+const blocksOut = join(docsDir, ".bosia", "blocks");
+rmSync(blocksOut, { recursive: true, force: true });
+for (const rel of readdirSync(blocksSrc, { recursive: true }) as string[]) {
+	const from = join(blocksSrc, rel);
+	if (statSync(from).isDirectory()) continue;
+	const to = join(blocksOut, rel);
+	mkdirSync(dirname(to), { recursive: true });
+	const bytes = readFileSync(from);
+	const text = /\.(svelte|ts|js|json)$/.test(rel) ? bytes.toString("utf-8") : null;
+	writeFileSync(to, text === null ? bytes : text.replaceAll("__BRAND__", "Brand"));
+}
+console.log("  Synced registry/blocks -> .bosia/blocks (__BRAND__ -> Brand)");
