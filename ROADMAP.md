@@ -33,7 +33,9 @@
 - [x] 🟡 Inspector `parseTopFrame` skipped frames with `(group)` paths → pointed at `renderer.ts`. One `FRAME_RE` (sourcemap.ts) now serves server, overlay, `resolveStack`; Windows paths too.
 - [x] 🟡 `use:enhance` success never showed `form`: App's nav effect ran on the post-action invalidation and set `form = null`. Now only a real URL change clears it. Verified in Chrome (dev + prod).
 - [x] 🟢 Inspector overlay dedups client-side: same source+message+file:line collapses into one row with `×N` (50× loop on `/errors-test` → 1 row).
-- [ ] 🟡 UI test file driven by `Bun.WebView` (no Playwright): load demo pages in dev + prod, assert hydration, SPA nav, form actions, no console errors. Would have caught the dev `?v=` hydration bug.
+- [x] 🟡 `apps/demo/test/ui.e2e.ts` (`bun run test:ui`): `Bun.WebView` drives demo in prod + dev. Hydration, SPA nav, title, back, form actions, guard, catch-all, no console errors. macOS only.
+- [ ] 🟢 Run `ui.e2e.ts` in CI (`backend: "chrome"`, ubuntu job) once it proves stable locally.
+- [ ] ⚪ Add the `parent()` client-nav regression (0.6.17 section) to `ui.e2e.ts`; needs a layout+page server pair in demo.
 - [ ] 🟢 Try `bun test --parallel` in CI.
 - [ ] 🟢 Consider `minChunkSize` for the client build (fewer tiny chunks).
 - [ ] 🟢 Consider `Bun.serve` `{ dir }` routes in `BosiaApp` for static assets (sendfile, ETag, Range for free).
@@ -50,7 +52,7 @@
 - [ ] 🟢 `BosiaApp` routes: add `:param` paths when a plugin needs them (exact + `"*"` only today).
 - [x] demo + demo-worker e2e in Chrome vs the 0.9.9 build: pages, nav, actions, API, HEAD, 405, guard data, inspector SSE all match. demo-worker 626→265KB.
 - [x] 🟡 Pre-existing: `/actions-test` success message never showed. Fixed in 1.1.0 (`84763a4`).
-- [ ] 🟡 Pre-existing (0.9.9 too): guard client-nav click stays put; `/all/[...catchall]` shows no segments.
+- [x] 🟡 Pre-existing (0.9.9 too): guard client-nav click stays put; `/all/[...catchall]` shows no segments. Both work now, `ui.e2e.ts` covers them.
 
 ---
 
