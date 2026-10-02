@@ -49,7 +49,8 @@
 - [x] 🟡 Unrouted methods (TRACE etc.) answered 500 via Elysia's NOT_FOUND. Now 405 + `Allow` on Bun and Workers.
 - [ ] 🟢 `BosiaApp` routes: add `:param` paths when a plugin needs them (exact + `"*"` only today).
 - [x] demo + demo-worker e2e in Chrome vs the 0.9.9 build: pages, nav, actions, API, HEAD, 405, guard data, inspector SSE all match. demo-worker 626→265KB.
-- [ ] 🟡 Pre-existing (0.9.9 too): `/actions-test` success message never shows; guard client-nav click stays put; `/all/[...catchall]` shows no segments.
+- [x] 🟡 Pre-existing: `/actions-test` success message never showed. Fixed in 1.1.0 (`84763a4`).
+- [ ] 🟡 Pre-existing (0.9.9 too): guard client-nav click stays put; `/all/[...catchall]` shows no segments.
 
 ---
 
@@ -208,7 +209,7 @@
 
 ---
 
-## bosia (open) — success-only action data is wiped by the default `enhance`
+## bosia 1.1.0 (2026-09-28) — success-only action data is wiped by the default `enhance`
 
 > Found in Ujiku (2026-08-07), building `/akun/profil`: the save worked and the row was written, but the "Perubahan tersimpan." message never rendered. A **successful** action that returns data for the `form` prop silently loses it under the default `use:enhance`.
 >
@@ -216,10 +217,10 @@
 >
 > Why it stays hidden: the `failure` branch (`enhance.ts:48-51`) sets `appState.form` and **returns early without invalidating**, so `fail()` messages always render fine. Only success-with-payload is affected — and most actions return `{ ok: true }` and redirect, so nobody looks.
 
-- [ ] 🟠 Don't null `appState.form` for an invalidation the form itself just triggered. The nav effect can't currently tell "loader refresh after my own action" from a real navigation; carrying the action's tick (or clearing on route change rather than on tick) would keep the payload alive across the refetch.
-- [ ] 🟡 Failing that, make it loud rather than silent: warn once in dev when a success result carries `data` and `invalidateAll` is about to discard it, naming `invalidateAll: false` as the fix.
-- [ ] 🟡 Document the pairing in the forms guide — an action whose whole point is its return value (preview, dry-run, computed quote) wants `await update({ invalidateAll: false })`; one that writes and needs fresh loader data wants the callback to latch what it needs before `update()`.
-- [ ] ⚪ App-side workaround in use today (Ujiku `akun/profil`, `akun/keamanan`): latch `result.type === "success"` into local `$state` inside the enhance callback, then `await update()` — keeps the invalidation _and_ the confirmation. `invalidateAll: false` alone is wrong here, since the page header reads the row that was just written.
+- [x] 🟠 Don't null `appState.form` on the form's own invalidation. Fixed in 1.1.0 (`84763a4`): `App.svelte` clears it only when pathname+search changes.
+- [x] ~~🟡 Dev warning when `invalidateAll` discards success `data`~~ not needed, the data is no longer discarded.
+- [x] ~~🟡 Document `invalidateAll: false` vs latching in the forms guide~~ not needed: default `update()` keeps `form` and refreshes loaders.
+- [x] ⚪ Ujiku (`akun/profil`, `akun/keamanan`) latches success into local `$state` before `update()`. Can drop the latch on bosia ≥1.1.0.
 
 ---
 
