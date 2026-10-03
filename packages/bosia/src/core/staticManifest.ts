@@ -142,6 +142,10 @@ function withSiblings(
  * them; the miss itself is served from disk as before and fills the cache in
  * the background. Range requests always go to disk — Bun answers those with a
  * 206 for `Bun.file` bodies, not for bytes.
+ *
+ * Every answer carries an `ETag` (Bun's `Bun.file` responses have none), so a
+ * `no-cache` file or an expired prerendered page revalidates with a 304
+ * instead of downloading again.
  */
 export function serveStatic(
 	entry: StaticEntry,
@@ -165,6 +169,16 @@ export function serveStatic(
 		}
 	}
 
+	const etag = etagFor(path, out["Content-Encoding"]);
+	if (etag) {
+		out["ETag"] = etag;
+		if (matchesEtag(req.headers.get("if-none-match"), etag)) {
+			delete out["Content-Encoding"];
+			delete out["Content-Type"];
+			return new Response(null, { status: 304, headers: out });
+		}
+	}
+
 	if (cache.enabled && !req.headers.has("range")) {
 		const hit = cache.get(path);
 		if (hit) {
@@ -178,6 +192,36 @@ export function serveStatic(
 		out["Content-Type"] ??= Bun.file(entry.absPath).type;
 	}
 	return new Response(Bun.file(path), { ...init, headers: out });
+}
+
+// One stat per served path per process. Files under dist/ and public/ are not
+// expected to change while the server runs; a redeploy restarts the process.
+// If that ever stops holding, key the map on mtime too (one stat per request).
+const etags = new Map<string, string | null>();
+
+/** Strong ETag from size + mtime. The encoding suffix keeps br/gzip/raw apart. */
+function etagFor(path: string, encoding: string | undefined): string | null {
+	let tag = etags.get(path);
+	if (tag === undefined) {
+		try {
+			const st = statSync(path);
+			const suffix = encoding === "br" ? "-br" : encoding === "gzip" ? "-gz" : "";
+			tag = `"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}${suffix}"`;
+		} catch {
+			tag = null;
+		}
+		etags.set(path, tag);
+	}
+	return tag;
+}
+
+function matchesEtag(header: string | null, etag: string): boolean {
+	if (!header) return false;
+	for (const raw of header.split(",")) {
+		const t = raw.trim();
+		if (t === "*" || t === etag || (t.startsWith("W/") && t.slice(2) === etag)) return true;
+	}
+	return false;
 }
 
 export function lookupStatic(manifest: StaticManifest, urlPath: string): StaticEntry | null {

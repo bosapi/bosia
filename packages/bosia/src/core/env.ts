@@ -3,6 +3,7 @@ import { join } from "path";
 
 // ─── Framework-reserved vars ─────────────────────────────
 // These are controlled by Bosia itself — users access them via process.env directly.
+// `test/env.test.ts` scans `src/` and fails when Bosia reads a name missing here.
 const FRAMEWORK_VARS = new Set([
 	"PORT",
 	"NODE_ENV",
@@ -20,9 +21,23 @@ const FRAMEWORK_VARS = new Set([
 	"LOAD_TIMEOUT",
 	"METADATA_TIMEOUT",
 	"PRERENDER_TIMEOUT",
+	"PRERENDER_CONCURRENCY",
+	"IDLE_TIMEOUT",
+	"MAX_INFLIGHT",
+	"TRUST_PROXY",
+	"CSP_DIRECTIVES",
+	"DISABLE_X_FRAME_OPTIONS",
+	"CACHE_KEYS",
+	"CACHE_MAX_ENTRIES",
+	"CACHE_MAX_BODY_BYTES",
 	"ASSET_CACHE_MAX_BYTES",
 	"ASSET_CACHE_MAX_FILE_BYTES",
 ]);
+
+/** Framework-owned: a listed name, or anything under the reserved `BOSIA_` prefix. */
+export function isFrameworkVar(name: string): boolean {
+	return FRAMEWORK_VARS.has(name) || name.startsWith("BOSIA_");
+}
 
 // ─── .env File Parser ────────────────────────────────────
 
@@ -175,7 +190,7 @@ export function loadEnv(mode: string, dir?: string): Record<string, string> {
 	// Return only non-framework vars
 	const result: Record<string, string> = {};
 	for (const key of declaredNames) {
-		if (!FRAMEWORK_VARS.has(key)) {
+		if (!isFrameworkVar(key)) {
 			result[key] = process.env[key] ?? merged[key] ?? "";
 		}
 	}

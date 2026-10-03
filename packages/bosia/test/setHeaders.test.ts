@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { makeSetHeaders } from "../src/core/hooks.ts";
 import { gunzipSync, brotliDecompressSync } from "node:zlib";
-import { compress, encodeBytes, pickEncoding } from "../src/core/html.ts";
+import { compress, compressBytes, encodeBytes, pickEncoding } from "../src/core/html.ts";
 
 describe("makeSetHeaders", () => {
 	test("accumulates lowercased keys across multiple calls", () => {
@@ -54,5 +54,21 @@ describe("pickEncoding / encodeBytes", () => {
 		const body = new TextEncoder().encode("<p>hello</p>".repeat(500));
 		expect(new Uint8Array(brotliDecompressSync(encodeBytes(body, "br")))).toEqual(body);
 		expect(new Uint8Array(gunzipSync(encodeBytes(body, "gzip")))).toEqual(body);
+	});
+
+	test("request and cache quality both round-trip", () => {
+		const body = new TextEncoder().encode("<p>hello</p>".repeat(500));
+		for (const q of ["request", "cache"] as const) {
+			expect(new Uint8Array(brotliDecompressSync(encodeBytes(body, "br", q)))).toEqual(body);
+		}
+	});
+
+	test("compressBytes sends a prebuilt body as-is", async () => {
+		const body = new TextEncoder().encode("<p>hello</p>".repeat(500));
+		const encoded = encodeBytes(body, "br", "cache");
+		const req = new Request("http://x/", { headers: { "Accept-Encoding": "br" } });
+		const res = compressBytes(body, "text/html", req, 200, undefined, { enc: "br", encoded });
+		expect(res.headers.get("content-encoding")).toBe("br");
+		expect(new Uint8Array(await res.arrayBuffer())).toEqual(encoded);
 	});
 });

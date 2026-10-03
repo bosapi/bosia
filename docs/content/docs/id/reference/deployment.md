@@ -63,11 +63,13 @@ Bosia mengatur cache header secara otomatis:
 | Nama file dengan hash | `public, max-age=31536000, immutable` |
 | File tanpa hash       | `no-cache`                            |
 
+Setiap file statis dan halaman prerender juga membawa `ETag`. Saat browser mengecek ulang file `no-cache` dan tidak ada yang berubah, Bosia membalas `304 Not Modified` tanpa body.
+
 ## Kompresi
 
 Bosia mengompresi response sendiri — tanpa perlu setup reverse proxy:
 
-- **Halaman dan JSON** dikompresi per request, brotli bila browser mendukung, jika tidak gzip. Body di bawah 2KB dikirim apa adanya.
+- **Halaman dan JSON** dikompresi per request, brotli bila browser mendukung, jika tidak gzip. Body di bawah 2KB dikirim apa adanya. Response tanpa cache memakai level brotli yang cepat; halaman di [response cache](/id/guides/response-cache) dikompresi sekali dengan level lebih kuat.
 - **JS/CSS client dan halaman prerender** dikompresi sekali saat build (`.br` + `.gz` di samping tiap file di `dist/`) lalu dikirim siap pakai.
 - **File `public/`** dikirim apa adanya. Gambar sudah terkompresi.
 

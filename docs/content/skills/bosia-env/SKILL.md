@@ -67,7 +67,7 @@ Never `process.env.PUBLIC_API_URL` for user vars. The `$env` module is the contr
 
 ### R3 — Read framework vars via `process.env`
 
-These are reserved by Bosia and live outside `$env`:
+These are reserved by Bosia and live outside `$env` (so is every `BOSIA_*` name):
 
 | Var                          | Default    | Purpose                                                                                              |
 | ---------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
@@ -81,6 +81,7 @@ These are reserved by Bosia and live outside `$env`:
 | `LOAD_TIMEOUT`               | —          | `load()` timeout in ms                                                                               |
 | `METADATA_TIMEOUT`           | —          | `metadata()` timeout                                                                                 |
 | `PRERENDER_TIMEOUT`          | —          | Prerender fetch timeout                                                                              |
+| `PRERENDER_CONCURRENCY`      | `6`        | Pages prerendered at once                                                                            |
 | `ASSET_CACHE_MAX_BYTES`      | `52428800` | Memory for static files + prerendered pages after first hit. `0` = always disk                       |
 | `ASSET_CACHE_MAX_FILE_BYTES` | `1048576`  | Largest file kept in that memory cache                                                               |
 | `CSRF_ALLOWED_ORIGINS`       | —          | Extra origins allowed on POST/PUT/PATCH/DELETE                                                       |

@@ -279,26 +279,35 @@ function cacheDeleteIndexOnly(key: string, entry: CacheEntry): void {
 
 // ─── Compression helpers ─────────────────────────────────
 
-/** Build gzip + brotli copies of body. Sync — call it from `deferCacheWrite`. */
-export function buildCompressedVariants(body: Bytes): {
+/**
+ * Build gzip + brotli copies of body. Sync — call it from `deferCacheWrite`.
+ * `prebuilt`: a variant already encoded for the response (at cache quality),
+ * reused as-is so a miss compresses each encoding once.
+ */
+export function buildCompressedVariants(
+	body: Bytes,
+	prebuilt: { gzip?: Bytes; brotli?: Bytes } = {},
+): {
 	gzip: Bytes | null;
 	brotli: Bytes | null;
 } {
 	const COMPRESS_MIN_BYTES = 2048;
 	if (!compressionOn || body.length < COMPRESS_MIN_BYTES) return { gzip: null, brotli: null };
-	let gzip: Bytes | null = null;
-	let brotli: Bytes | null = null;
-	try {
-		gzip = encodeBytes(body, "gzip");
-	} catch {
-		gzip = null;
+	let gzip: Bytes | null = prebuilt.gzip ?? null;
+	let brotli: Bytes | null = prebuilt.brotli ?? null;
+	if (!gzip) {
+		try {
+			gzip = encodeBytes(body, "gzip", "cache");
+		} catch {
+			gzip = null;
+		}
 	}
-	try {
-		// Quality 5 (set in encodeBytes): ~20x faster than the default 11, still
-		// beats gzip on size. 11 would block the event loop ~17ms/500KB.
-		brotli = encodeBytes(body, "br");
-	} catch {
-		brotli = null;
+	if (!brotli) {
+		try {
+			brotli = encodeBytes(body, "br", "cache");
+		} catch {
+			brotli = null;
+		}
 	}
 	return { gzip, brotli };
 }
@@ -309,9 +318,6 @@ export function buildCompressedVariants(body: Bytes): {
  * the body ran ahead of the first byte. `setImmediate` yields to I/O first.
  * Workers keeps the microtask — it compresses nothing (the edge does), and a
  * timer after the response returns is not guaranteed to run there.
- *
- * On a miss the variant sent to the client is compressed twice (response +
- * cache). Off the critical path; pass the built variant in if it ever shows up.
  */
 export function deferCacheWrite(fn: () => void | Promise<void>): void {
 	if (compressionOn) setImmediate(fn);

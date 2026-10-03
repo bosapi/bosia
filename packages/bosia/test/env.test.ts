@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { parseEnvFile, classifyEnvVars, loadEnv } from "../src/core/env.ts";
+import { parseEnvFile, classifyEnvVars, isFrameworkVar, loadEnv } from "../src/core/env.ts";
 
 describe("parseEnvFile", () => {
 	test("unquoted basic", () => {
@@ -126,5 +126,44 @@ describe("loadEnv", () => {
 	test("malformed off-mode file throws", () => {
 		write(".env.production", "FOO-BAR=x");
 		expect(() => loadEnv("development", tmpDir)).toThrow(/Invalid env variable name/);
+	});
+});
+
+describe("framework vars", () => {
+	test("loadEnv leaves framework vars and BOSIA_* out of $env", () => {
+		const dir = mkdtempSync(join(tmpdir(), "bosia-fwvars-"));
+		try {
+			// Off-mode file: names only, so process.env is not touched.
+			writeFileSync(
+				join(dir, ".env.production"),
+				"CACHE_KEYS=a\nTRUST_PROXY=1\nBOSIA_FOO=x\nMY_KEY=y",
+			);
+			const env = loadEnv("development", dir);
+			expect(Object.keys(env)).toEqual(["MY_KEY"]);
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+	});
+
+	// Every env name the framework reads must be reserved, or a user who declares
+	// it in .env sees it in $env. Fails until a new name is added to FRAMEWORK_VARS.
+	test("every env name read in src/ is a framework var", () => {
+		const IGNORE = new Set(["X", "PUBLIC_FOO"]); // names in comments
+		const READS = [
+			/process\.env\.([A-Z_][A-Z0-9_]*)/g,
+			/process\.env\["([A-Z_][A-Z0-9_]*)"\]/g,
+			/\benv\.([A-Z_][A-Z0-9_]*)/g,
+			/splitCsvEnv\("([A-Z_][A-Z0-9_]*)"\)/g,
+		];
+		const src = join(import.meta.dir, "../src");
+		const names = new Set<string>();
+		for (const rel of readdirSync(src, { recursive: true, encoding: "utf8" })) {
+			if (!rel.endsWith(".ts")) continue;
+			const text = readFileSync(join(src, rel), "utf8");
+			for (const re of READS) for (const m of text.matchAll(re)) names.add(m[1]!);
+		}
+		expect(names.size).toBeGreaterThan(10);
+		const missing = [...names].filter((n) => !IGNORE.has(n) && !isFrameworkVar(n));
+		expect(missing).toEqual([]);
 	});
 });

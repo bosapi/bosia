@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Deployment guide explains how static files are kept in memory, and how to limit it.
 - Environment variables guide lists the two new asset cache settings.
+- Deployment guide explains ETag re-checks and the two compression levels.
+- Environment variables guide lists `PRERENDER_CONCURRENCY`, `CSP_DIRECTIVES` and the `BOSIA_` prefix.
 
 ## [0.8.19] - 2026-10-03
 

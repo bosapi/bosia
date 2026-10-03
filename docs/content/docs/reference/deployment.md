@@ -63,11 +63,13 @@ Bosia sets cache headers automatically:
 | Hashed filenames | `public, max-age=31536000, immutable` |
 | Non-hashed files | `no-cache`                            |
 
+Every static file and prerendered page also carries an `ETag`. When the browser re-checks a `no-cache` file and nothing changed, Bosia answers `304 Not Modified` with no body.
+
 ## Compression
 
 Bosia compresses responses itself — no reverse-proxy setup needed:
 
-- **Pages and JSON** are compressed per request, brotli when the browser accepts it, else gzip. Bodies under 2KB go out as-is.
+- **Pages and JSON** are compressed per request, brotli when the browser accepts it, else gzip. Bodies under 2KB go out as-is. Uncached responses use a fast brotli level; pages kept in the [response cache](/guides/response-cache) are compressed once at a stronger level.
 - **Client JS/CSS and prerendered pages** are compressed once at build time (`.br` + `.gz` next to each file in `dist/`) and served ready-made.
 - **`public/` files** are served as-is. Images are already compressed.
 

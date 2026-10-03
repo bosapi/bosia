@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Static files and prebuilt pages are served from memory after the first visit, about 3× faster.
 - New `ASSET_CACHE_MAX_BYTES` and `ASSET_CACHE_MAX_FILE_BYTES` settings limit that memory use.
+- Pages that aren't cached are compressed faster, so the server handles more visits.
+
+### Fixed
+
+- Browsers re-check unchanged static files with the server instead of downloading them again.
+- The first visit to a cached page compresses it once instead of twice.
+- Bosia's own settings (like `CACHE_KEYS` or `BOSIA_*`) no longer show up in `$env`.
 
 ## [1.1.3] - 2026-10-03
 

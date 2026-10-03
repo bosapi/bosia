@@ -439,6 +439,20 @@ describe("buildCompressedVariants", () => {
 		const body = new Uint8Array(brotliDecompressSync(await res.arrayBuffer()));
 		expect(body).toEqual(big);
 	});
+
+	test("a prebuilt variant is reused and only the other one is built", () => {
+		const big = new Uint8Array(new ArrayBuffer(8192)) as Uint8Array<ArrayBuffer>;
+		for (let i = 0; i < big.length; i++) big[i] = i % 251;
+		const brotli = new Uint8Array(new ArrayBuffer(3)) as Uint8Array<ArrayBuffer>;
+		const out = buildCompressedVariants(big, { brotli });
+		expect(out.brotli).toBe(brotli);
+		expect(out.gzip).toBeInstanceOf(Uint8Array);
+
+		const gzip = new Uint8Array(new ArrayBuffer(3)) as Uint8Array<ArrayBuffer>;
+		const out2 = buildCompressedVariants(big, { gzip });
+		expect(out2.gzip).toBe(gzip);
+		expect(out2.brotli!.length).toBeGreaterThan(3);
+	});
 });
 
 // Workers re-compresses a body sent with Content-Encoding unless the init says

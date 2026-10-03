@@ -475,14 +475,40 @@ export function pickEncoding(accept: string | null): Encoding | null {
 	return null;
 }
 
-// Quality 5: close to gzip's speed with a better ratio — runs per request.
-const BROTLI_RUNTIME = { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } };
+// Per-request brotli runs once per response, so it favors speed: q3 is ~2x
+// faster than q5 for ~5–25% bigger output. Cached variants are built once and
+// served many times, so they take q5. 11 (the default) would block the event
+// loop ~17ms per 500KB.
+export type Quality = "request" | "cache";
+const BROTLI = {
+	request: { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 3 } },
+	cache: { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } },
+};
 
-/** Compress bytes on the request path. The one place runtime quality is set —
- *  cache.ts builds its stored variants through here too. */
-export function encodeBytes(bytes: Uint8Array, enc: Encoding): Uint8Array<ArrayBuffer> {
-	const out = enc === "br" ? brotliCompressSync(bytes, BROTLI_RUNTIME) : gzipSync(bytes);
+/** The one place runtime compression quality is set — cache.ts builds its
+ *  stored variants through here too. gzip keeps zlib's default level. */
+export function encodeBytes(
+	bytes: Uint8Array,
+	enc: Encoding,
+	quality: Quality = "request",
+): Uint8Array<ArrayBuffer> {
+	const out = enc === "br" ? brotliCompressSync(bytes, BROTLI[quality]) : gzipSync(bytes);
 	return new Uint8Array(out) as Uint8Array<ArrayBuffer>;
+}
+
+export type Encoded = { enc: Encoding; encoded: Uint8Array<ArrayBuffer> };
+
+/** The body this client gets, or null when it goes out uncompressed. */
+export function encodeForRequest(
+	bytes: Uint8Array<ArrayBuffer>,
+	req: Request,
+	quality: Quality = "request",
+): Encoded | null {
+	const enc = pickEncoding(req.headers.get("accept-encoding"));
+	// Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
+	// responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
+	if (!compressionOn || isDev || !enc || bytes.length <= GZIP_MIN_BYTES) return null;
+	return { enc, encoded: encodeBytes(bytes, enc, quality) };
 }
 
 export function compress(
@@ -495,12 +521,15 @@ export function compress(
 	return compressBytes(textEncoder.encode(body), contentType, req, status, extraHeaders);
 }
 
+/** `encoded`: the result of `encodeForRequest` when the caller already has it
+ *  (a cache write reuses the same bytes); omitted, it is built here. */
 export function compressBytes(
 	bytes: Uint8Array<ArrayBuffer>,
 	contentType: string,
 	req: Request,
 	status = 200,
 	extraHeaders?: Record<string, string>,
+	encoded: Encoded | null = encodeForRequest(bytes, req),
 ): Response {
 	// Base keys lowercased so lowercased extraHeaders (e.g. loader setHeaders)
 	// override them instead of getting comma-joined by Headers.
@@ -509,14 +538,11 @@ export function compressBytes(
 		vary: "Accept-Encoding",
 		...extraHeaders,
 	};
-	const enc = pickEncoding(req.headers.get("accept-encoding"));
-	// Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
-	// responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
-	if (compressionOn && !isDev && enc && bytes.length > GZIP_MIN_BYTES) {
-		return new Response(encodeBytes(bytes, enc), {
+	if (encoded) {
+		return new Response(encoded.encoded, {
 			...PRECOMPRESSED,
 			status,
-			headers: { ...headers, "content-encoding": enc },
+			headers: { ...headers, "content-encoding": encoded.enc },
 		});
 	}
 	return new Response(bytes, { status, headers });

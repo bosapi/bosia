@@ -397,3 +397,58 @@ describe("serveStatic with the asset cache", () => {
 		expect(parseAssetCacheEnv({ ASSET_CACHE_MAX_FILE_BYTES: "2048" }).maxFileBytes).toBe(2048);
 	});
 });
+
+describe("serveStatic ETag", () => {
+	const req = (headers: Record<string, string> = {}) => new Request("http://x/", { headers });
+
+	function entry() {
+		touch(join(outDir, "client", "app.css"), "body{}");
+		touch(join(outDir, "client", "app.css.br"), "BR");
+		touch(join(outDir, "client", "app.css.gz"), "GZ");
+		return lookupStatic(buildStaticManifest(outDir), "/dist/client/app.css")!;
+	}
+	const off = new AssetCache(0, 0);
+	const etagOf = (e: ReturnType<typeof entry>, h: Record<string, string> = {}) =>
+		serveStatic(e, req(h), {}, off).headers.get("etag");
+
+	test("present, stable, and different per encoding", () => {
+		const e = entry();
+		const raw = etagOf(e);
+		expect(raw).toMatch(/^"[a-z0-9]+-[a-z0-9]+"$/);
+		expect(etagOf(e)).toBe(raw);
+		const br = etagOf(e, { "Accept-Encoding": "br" });
+		const gz = etagOf(e, { "Accept-Encoding": "gzip" });
+		expect(new Set([raw, br, gz]).size).toBe(3);
+	});
+
+	test("matching If-None-Match answers 304 with no body and keeps cache headers", async () => {
+		const e = entry();
+		const tag = etagOf(e, { "Accept-Encoding": "br" })!;
+		for (const inm of [tag, `W/${tag}`, `"nope", ${tag}`, "*"]) {
+			const res = serveStatic(e, req({ "Accept-Encoding": "br", "If-None-Match": inm }), {}, off);
+			expect(res.status).toBe(304);
+			expect(await res.text()).toBe("");
+			expect(res.headers.get("etag")).toBe(tag);
+			expect(res.headers.get("cache-control")).toBe("no-cache");
+			expect(res.headers.get("vary")).toBe("Accept-Encoding");
+			expect(res.headers.get("content-encoding")).toBeNull();
+		}
+	});
+
+	test("a stale tag gets the full body", async () => {
+		const res = serveStatic(entry(), req({ "If-None-Match": '"stale"' }), {}, off);
+		expect(res.status).toBe(200);
+		expect(await res.text()).toBe("body{}");
+	});
+
+	test("asset-cache hits carry the same ETag and answer 304 too", async () => {
+		const cache = new AssetCache(1024, 1024);
+		const e = entry();
+		const miss = serveStatic(e, req(), {}, cache);
+		await cache.idle();
+		const hit = serveStatic(e, req(), {}, cache);
+		expect(hit.headers.get("etag")).toBe(miss.headers.get("etag"));
+		const tag = hit.headers.get("etag")!;
+		expect(serveStatic(e, req({ "If-None-Match": tag }), {}, cache).status).toBe(304);
+	});
+});

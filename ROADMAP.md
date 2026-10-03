@@ -14,9 +14,11 @@
 - [x] Range requests stay on `Bun.file` (Bun answers 206). Workers untouched: Static Assets serve files before the worker runs.
 - [x] Demo after: `/about` br 14.9k → 51.4k rps, hydrate chunk br 14.1k → 36.1k rps. Miss/hit headers + body identical; RSS unchanged (~55MB).
 - [x] Tests: fill→hit parity (raw/br/gz), per-file limit, LRU eviction, Range bypass, disabled, env parsing. Docs: env vars + deployment (en/id), `bosia-env` skill, `.env.example`.
-- [ ] 🟡 `CACHE_KEYS`, `CACHE_MAX_ENTRIES`, `CACHE_MAX_BODY_BYTES` are missing from `FRAMEWORK_VARS` (`core/env.ts`), so they leak into `$env` codegen.
-- [ ] 🟡 SSR cache miss with brotli: 13k → 5.9k rps vs uncompressed (`/blog`, quality 5). Try quality 4 or gzip for runtime bodies; measure size vs rps.
-- [ ] ⚪ No `ETag`/`Last-Modified` on static files (Bun.file sends none either), so repeat visits to non-hashed files always re-download.
+- [x] 🟡 `FRAMEWORK_VARS` was missing `CACHE_*`, `IDLE_TIMEOUT`, `MAX_INFLIGHT`, `TRUST_PROXY`, `CSP_DIRECTIVES`… Added, `BOSIA_*` reserved via `isFrameworkVar`; a test scans `src/` for env reads.
+- [x] 🟡 Brotli split: q3 per request, q5 for cache entries. Uncached `/blog` br 5.9k → 8.7k rps, 2.25KB/response. Cached hits unchanged (~48k).
+- [x] 🟡 Cacheable miss compressed the client's variant twice. Now encoded once at q5, sent, and reused by `buildCompressedVariants(body, prebuilt)`.
+- [x] ⚪ `serveStatic` sends a strong `ETag` (size+mtime, per encoding) and answers `If-None-Match` with 304. ETag only: no `Last-Modified`, so no heuristic freshness on `public/`.
+- [ ] ⚪ ETags are cached per process (one stat per path). A file swapped in place while the server runs keeps its old ETag until restart.
 
 ## docs 0.8.19 (2026-10-03) — "Brand" in block previews
 

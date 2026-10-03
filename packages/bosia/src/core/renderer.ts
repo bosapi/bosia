@@ -33,7 +33,9 @@ import {
 	buildHtmlTail,
 	compress,
 	compressBytes,
+	encodeForRequest,
 	isDev,
+	type Encoded,
 } from "./html.ts";
 import type { Metadata } from "./hooks.ts";
 import { loadPlugins } from "./config.ts";
@@ -850,6 +852,9 @@ export async function renderSSRStream(
 		];
 
 		const fullBody = concatChunks(chunks);
+		// Set only on a cache write: the client's variant, encoded once at cache
+		// quality and shared by the response and the cache entry.
+		let sent: Encoded | null | undefined;
 
 		// ── Response cache: write after the response has gone out ──
 		// Skip if the handler set cookies — cached response can't reproduce
@@ -865,9 +870,18 @@ export async function renderSSRStream(
 				// after cacheSet ran, so their re-check hits.
 				const rel = releaseMiss;
 				releaseMiss = null;
+				const encoded = encodeForRequest(fullBody, req, "cache");
+				sent = encoded;
 				deferCacheWrite(() => {
 					try {
-						const { gzip, brotli } = buildCompressedVariants(fullBody);
+						const { gzip, brotli } = buildCompressedVariants(
+							fullBody,
+							encoded?.enc === "br"
+								? { brotli: encoded.encoded }
+								: encoded
+									? { gzip: encoded.encoded }
+									: {},
+						);
 						cacheSet(
 							keyForWrite,
 							{
@@ -888,7 +902,7 @@ export async function renderSSRStream(
 			}
 		}
 
-		return compressBytes(fullBody, "text/html; charset=utf-8", req, 200, data.loaderHeaders);
+		return compressBytes(fullBody, "text/html; charset=utf-8", req, 200, data.loaderHeaders, sent);
 	} finally {
 		releaseMiss?.();
 	}
