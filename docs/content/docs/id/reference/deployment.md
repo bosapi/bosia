@@ -73,6 +73,16 @@ Bosia mengompresi response sendiri — tanpa perlu setup reverse proxy:
 
 Proxy di depan (nginx, Caddy) meneruskan response terkompresi tanpa mengubahnya. Di Cloudflare Workers, Cloudflare yang mengompresi dan file `.br`/`.gz` tidak dibuat.
 
+## File Statis di Memori
+
+Setelah request pertama, Bosia menyimpan file statis kecil dan halaman prerender (beserta versi `.br`/`.gz`-nya) di memori, sehingga request berikutnya tidak perlu membaca disk. Tidak ada yang dimuat saat startup, jadi cold start tidak lebih lambat.
+
+- `ASSET_CACHE_MAX_FILE_BYTES` (default 1MB): file yang lebih besar selalu dibaca dari disk.
+- `ASSET_CACHE_MAX_BYTES` (default 50MB): batas total. Jika penuh, file yang paling lama tidak dipakai dibuang. `0` mematikannya.
+- Range request (seek video, lanjut unduh) selalu dibaca dari disk.
+
+Di Cloudflare Workers ini tidak berpengaruh: Cloudflare menyajikan file statis sebelum worker berjalan.
+
 ## Di Belakang Reverse Proxy
 
 Saat Bosia berjalan di belakang nginx, Caddy, Cloudflare, ALB, atau reverse proxy / load balancer lain, host publik biasanya berbeda dengan header `Host` yang sampai ke proses Bun di dalamnya. Setel:

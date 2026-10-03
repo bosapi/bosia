@@ -11,6 +11,7 @@ import { isDev } from "./html.ts";
 import { OUT_DIR } from "./paths.ts";
 import { pidsOnPort } from "./port.ts";
 import { CACHE_ENABLED, CACHE_KEYS } from "./cache.ts";
+import { logAssetCache } from "./assetCache.ts";
 
 // ─── User Hooks ──────────────────────────────────────────
 // Production prefers the pre-bundled `${OUT_DIR}/hooks.server.js` emitted by the
@@ -43,6 +44,9 @@ if (hooksPath) {
 }
 
 const app = await createApp({ handle });
+
+// Dev serves files straight from disk (no manifest), so the cache never runs there.
+if (!isDev) logAssetCache();
 
 // ─── Listen ──────────────────────────────────────────────
 

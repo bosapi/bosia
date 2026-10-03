@@ -1,9 +1,22 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.1.3**
+> Current version: **1.1.4**
 
 ---
+
+## bosia 1.1.4 (2026-10-04) — static files from memory
+
+> Load test (M1, oha, 50 conns): cached SSR ~46k rps, but `/about` (prerendered) ~14k and hashed chunks ~13k. `serveStatic` read `Bun.file` from disk on every request.
+
+- [x] 🟠 New `core/assetCache.ts`: byte-budget LRU, filled lazily on first hit (no boot I/O, cold start unchanged). `serveStatic` answers hits from memory; `.br`/`.gz` cached per variant.
+- [x] Env `ASSET_CACHE_MAX_BYTES` (50MB, `0` = off) + `ASSET_CACHE_MAX_FILE_BYTES` (1MB), in `FRAMEWORK_VARS`. Not `STATIC_*`: that prefix is the build-time env tier.
+- [x] Range requests stay on `Bun.file` (Bun answers 206). Workers untouched: Static Assets serve files before the worker runs.
+- [x] Demo after: `/about` br 14.9k → 51.4k rps, hydrate chunk br 14.1k → 36.1k rps. Miss/hit headers + body identical; RSS unchanged (~55MB).
+- [x] Tests: fill→hit parity (raw/br/gz), per-file limit, LRU eviction, Range bypass, disabled, env parsing. Docs: env vars + deployment (en/id), `bosia-env` skill, `.env.example`.
+- [ ] 🟡 `CACHE_KEYS`, `CACHE_MAX_ENTRIES`, `CACHE_MAX_BODY_BYTES` are missing from `FRAMEWORK_VARS` (`core/env.ts`), so they leak into `$env` codegen.
+- [ ] 🟡 SSR cache miss with brotli: 13k → 5.9k rps vs uncompressed (`/blog`, quality 5). Try quality 4 or gzip for runtime bodies; measure size vs rps.
+- [ ] ⚪ No `ETag`/`Last-Modified` on static files (Bun.file sends none either), so repeat visits to non-hashed files always re-download.
 
 ## docs 0.8.19 (2026-10-03) — "Brand" in block previews
 

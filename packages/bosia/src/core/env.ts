@@ -20,6 +20,8 @@ const FRAMEWORK_VARS = new Set([
 	"LOAD_TIMEOUT",
 	"METADATA_TIMEOUT",
 	"PRERENDER_TIMEOUT",
+	"ASSET_CACHE_MAX_BYTES",
+	"ASSET_CACHE_MAX_FILE_BYTES",
 ]);
 
 // ─── .env File Parser ────────────────────────────────────

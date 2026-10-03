@@ -8,6 +8,12 @@ import {
 	lookupStatic,
 	serveStatic,
 } from "../src/core/staticManifest.ts";
+import {
+	AssetCache,
+	DEFAULT_ASSET_CACHE_MAX_BYTES,
+	DEFAULT_ASSET_CACHE_MAX_FILE_BYTES,
+	parseAssetCacheEnv,
+} from "../src/core/assetCache.ts";
 
 let workdir: string;
 let outDir: string;
@@ -273,5 +279,121 @@ describe("serveStatic", () => {
 		expect(res.headers.get("content-encoding")).toBeNull();
 		expect(res.headers.get("vary")).toBeNull();
 		expect(res.headers.get("content-type")).toBe("text/html; charset=utf-8");
+	});
+});
+
+describe("serveStatic with the asset cache", () => {
+	const req = (headers: Record<string, string> = {}) => new Request("http://x/", { headers });
+
+	function entry() {
+		touch(join(outDir, "client", "a-abcd1234.js"), "raw");
+		touch(join(outDir, "client", "a-abcd1234.js.br"), "BR");
+		touch(join(outDir, "client", "a-abcd1234.js.gz"), "GZ");
+		return lookupStatic(buildStaticManifest(outDir), "/dist/client/a-abcd1234.js")!;
+	}
+
+	const headersOf = (res: Response) => Object.fromEntries(res.headers);
+
+	test("first request fills, second is served from memory with the same headers", async () => {
+		const cache = new AssetCache(1024, 1024);
+		const e = entry();
+		for (const [accept, body] of [
+			["br", "BR"],
+			["gzip", "GZ"],
+			["", "raw"],
+		] as const) {
+			const h = accept ? { "Accept-Encoding": accept } : {};
+			const miss = serveStatic(e, req(h), {}, cache);
+			await cache.idle();
+			const hit = serveStatic(e, req(h), {}, cache);
+			expect(await miss.text()).toBe(body);
+			expect(await hit.text()).toBe(body);
+			expect(headersOf(hit)).toEqual(headersOf(miss));
+		}
+		expect(cache.size).toBe(3);
+		expect(cache.usedBytes).toBe(2 + 2 + 3);
+	});
+
+	test("hit body comes from memory, not disk", async () => {
+		const cache = new AssetCache(1024, 1024);
+		const e = entry();
+		serveStatic(e, req(), {}, cache);
+		await cache.idle();
+		writeFileSync(e.absPath, "changed");
+		expect(await serveStatic(e, req(), {}, cache).text()).toBe("raw");
+	});
+
+	test("caller content-type wins on a hit too", async () => {
+		const cache = new AssetCache(1024, 1024);
+		touch(join(outDir, "prerendered", "index.html"), "<p>");
+		touch(join(outDir, "prerendered", "index.html.br"), "BR");
+		const e = buildPrerenderManifest(outDir).get("/")!;
+		const ct = { "Content-Type": "text/html; charset=utf-8" };
+		serveStatic(e, req({ "Accept-Encoding": "br" }), ct, cache);
+		await cache.idle();
+		const hit = serveStatic(e, req({ "Accept-Encoding": "br" }), ct, cache);
+		expect(hit.headers.get("content-type")).toBe("text/html; charset=utf-8");
+		expect(hit.headers.get("content-encoding")).toBe("br");
+		expect(await hit.text()).toBe("BR");
+	});
+
+	test("files over the per-file limit stay on disk", async () => {
+		const cache = new AssetCache(1024, 2);
+		const e = entry();
+		serveStatic(e, req(), {}, cache);
+		await cache.idle();
+		expect(cache.size).toBe(0);
+	});
+
+	test("total budget evicts the least recently used file", async () => {
+		const cache = new AssetCache(6, 1024);
+		for (const name of ["a.txt", "b.txt", "c.txt"]) touch(join(workdir, "public", name), "xxx");
+		const m = buildStaticManifest(outDir);
+		const [a, b, c] = ["/a.txt", "/b.txt", "/c.txt"].map((p) => lookupStatic(m, p)!);
+		serveStatic(a, req(), {}, cache);
+		serveStatic(b, req(), {}, cache);
+		await cache.idle();
+		cache.get(a.absPath); // a is now the most recent
+		serveStatic(c, req(), {}, cache);
+		await cache.idle();
+		expect(cache.get(a.absPath)).toBeDefined();
+		expect(cache.get(b.absPath)).toBeUndefined();
+		expect(cache.get(c.absPath)).toBeDefined();
+		expect(cache.usedBytes).toBe(6);
+	});
+
+	test("range requests bypass memory", async () => {
+		const cache = new AssetCache(1024, 1024);
+		const e = entry();
+		serveStatic(e, req(), {}, cache);
+		await cache.idle();
+		const res = serveStatic(e, req({ Range: "bytes=0-1" }), {}, cache);
+		expect(await res.text()).toBe("raw"); // Bun.file body; Bun.serve applies the range
+		writeFileSync(e.absPath, "changed");
+		expect(await serveStatic(e, req({ Range: "bytes=0-1" }), {}, cache).text()).toBe("changed");
+	});
+
+	test("disabled cache never stores", async () => {
+		const cache = new AssetCache(0, 1024);
+		const e = entry();
+		serveStatic(e, req(), {}, cache);
+		await cache.idle();
+		expect(cache.enabled).toBe(false);
+		expect(cache.size).toBe(0);
+	});
+
+	test("env parsing: defaults, 0 disables, invalid falls back", () => {
+		expect(parseAssetCacheEnv({})).toEqual({
+			maxBytes: DEFAULT_ASSET_CACHE_MAX_BYTES,
+			maxFileBytes: DEFAULT_ASSET_CACHE_MAX_FILE_BYTES,
+		});
+		expect(parseAssetCacheEnv({ ASSET_CACHE_MAX_BYTES: "0" }).maxBytes).toBe(0);
+		expect(parseAssetCacheEnv({ ASSET_CACHE_MAX_BYTES: "-5" }).maxBytes).toBe(
+			DEFAULT_ASSET_CACHE_MAX_BYTES,
+		);
+		expect(parseAssetCacheEnv({ ASSET_CACHE_MAX_FILE_BYTES: "abc" }).maxFileBytes).toBe(
+			DEFAULT_ASSET_CACHE_MAX_FILE_BYTES,
+		);
+		expect(parseAssetCacheEnv({ ASSET_CACHE_MAX_FILE_BYTES: "2048" }).maxFileBytes).toBe(2048);
 	});
 });

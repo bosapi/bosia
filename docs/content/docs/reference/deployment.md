@@ -73,6 +73,16 @@ Bosia compresses responses itself — no reverse-proxy setup needed:
 
 A proxy in front (nginx, Caddy) passes the encoded response through untouched. On Cloudflare Workers, Cloudflare compresses instead and no `.br`/`.gz` files are built.
 
+## Static files in memory
+
+After the first request, Bosia keeps small static files and prerendered pages (and their `.br`/`.gz` versions) in memory, so later requests skip the disk. Nothing is loaded at startup, so a cold start is not slower.
+
+- `ASSET_CACHE_MAX_FILE_BYTES` (default 1MB): bigger files are always read from disk.
+- `ASSET_CACHE_MAX_BYTES` (default 50MB): total budget. When it is full, the least recently used file is dropped. `0` turns it off.
+- Range requests (video seeking, resumed downloads) always read from disk.
+
+On Cloudflare Workers this does nothing: Cloudflare serves static files before the worker runs.
+
 ## Behind a Reverse Proxy
 
 When Bosia runs behind nginx, Caddy, Cloudflare, an ALB, or any other reverse proxy / load balancer, the public-facing host typically differs from the `Host` header reaching the inner Bun process. Set:

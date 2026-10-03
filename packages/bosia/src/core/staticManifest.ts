@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, statSync } from "fs";
 import { basename, join, resolve as resolvePath } from "path";
 import { PRECOMPRESSED, pickEncoding } from "./html.ts";
+import { AssetCache, assetCache } from "./assetCache.ts";
 
 /** `br`/`gz`: absolute paths of build-time precompressed siblings (precompress.ts). */
 export type StaticEntry = { absPath: string; cacheControl?: string; br?: string; gz?: string };
@@ -136,24 +137,47 @@ function withSiblings(
  * client accepts. Content-Type comes from the original — `Bun.file("x.js.br")`
  * would infer the wrong one. `Vary` only when variants exist: a raw-only file
  * answers every client the same way.
+ *
+ * Small files are answered from `assetCache` once a first request has read
+ * them; the miss itself is served from disk as before and fills the cache in
+ * the background. Range requests always go to disk — Bun answers those with a
+ * 206 for `Bun.file` bodies, not for bytes.
  */
 export function serveStatic(
 	entry: StaticEntry,
 	req: Request,
 	headers: Record<string, string> = {},
+	cache: AssetCache = assetCache,
 ): Response {
 	const out: Record<string, string> = { ...headers };
 	if (entry.cacheControl) out["Cache-Control"] = entry.cacheControl;
-	if (!entry.br && !entry.gz) return new Response(Bun.file(entry.absPath), { headers: out });
 
-	out["Vary"] = "Accept-Encoding";
-	const enc = pickEncoding(req.headers.get("accept-encoding"));
-	const variant = enc === "br" ? (entry.br ?? entry.gz) : enc === "gzip" ? entry.gz : undefined;
-	if (!variant) return new Response(Bun.file(entry.absPath), { headers: out });
+	let path = entry.absPath;
+	let init: ResponseInit = {};
+	if (entry.br || entry.gz) {
+		out["Vary"] = "Accept-Encoding";
+		const enc = pickEncoding(req.headers.get("accept-encoding"));
+		const variant = enc === "br" ? (entry.br ?? entry.gz) : enc === "gzip" ? entry.gz : undefined;
+		if (variant) {
+			path = variant;
+			init = PRECOMPRESSED;
+			out["Content-Encoding"] = variant === entry.br ? "br" : "gzip";
+		}
+	}
 
-	out["Content-Type"] ??= Bun.file(entry.absPath).type;
-	out["Content-Encoding"] = variant === entry.br ? "br" : "gzip";
-	return new Response(Bun.file(variant), { ...PRECOMPRESSED, headers: out });
+	if (cache.enabled && !req.headers.has("range")) {
+		const hit = cache.get(path);
+		if (hit) {
+			out["Content-Type"] ??= hit.type;
+			return new Response(hit.bytes, { ...init, headers: out });
+		}
+		const type = out["Content-Type"] ?? Bun.file(entry.absPath).type;
+		cache.fill(path, type);
+		if (path !== entry.absPath) out["Content-Type"] = type;
+	} else if (path !== entry.absPath) {
+		out["Content-Type"] ??= Bun.file(entry.absPath).type;
+	}
+	return new Response(Bun.file(path), { ...init, headers: out });
 }
 
 export function lookupStatic(manifest: StaticManifest, urlPath: string): StaticEntry | null {

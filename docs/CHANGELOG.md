@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.20] - 2026-10-04
+
+### Added
+
+- Deployment guide explains how static files are kept in memory, and how to limit it.
+- Environment variables guide lists the two new asset cache settings.
+
 ## [0.8.19] - 2026-10-03
 
 ### Added

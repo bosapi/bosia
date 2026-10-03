@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.4] - 2026-10-04
+
+### Changed
+
+- Static files and prebuilt pages are served from memory after the first visit, about 3× faster.
+- New `ASSET_CACHE_MAX_BYTES` and `ASSET_CACHE_MAX_FILE_BYTES` settings limit that memory use.
+
 ## [1.1.3] - 2026-10-03
 
 ### Fixed
