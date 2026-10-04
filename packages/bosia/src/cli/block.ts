@@ -1,13 +1,12 @@
-import { join, dirname } from "path";
-import { mkdirSync, existsSync } from "fs";
+import { join } from "path";
+import { existsSync } from "fs";
 import * as p from "@clack/prompts";
 import {
 	containedPath,
 	type InstallOptions,
 	resolveLocalRegistryOrExit,
 	readRegistryJSON,
-	readRegistryFile,
-	writeRegistryFile,
+	installRegistryFiles,
 	mergePkgJson,
 	bunAdd,
 } from "./registry.ts";
@@ -95,15 +94,14 @@ export async function runAddBlock(
 		}
 	}
 
-	mkdirSync(destDir, { recursive: true });
-
-	for (const file of meta.files) {
-		const content = await readRegistryFile(registryRoot, "blocks", name, file);
-		const dest = containedPath(destDir, file);
-		if (file.includes("/")) mkdirSync(dirname(dest), { recursive: true });
-		writeRegistryFile(dest, content);
-		console.log(`   ✍️  src/lib/blocks/${name}/${file}`);
-	}
+	await installRegistryFiles(
+		registryRoot,
+		"blocks",
+		name,
+		meta.files,
+		destDir,
+		`src/lib/blocks/${name}`,
+	);
 
 	// 3. Merge font @imports into app.css (idempotent)
 	if (meta.fonts && Object.keys(meta.fonts).length > 0) {

@@ -7,8 +7,7 @@ import {
 	REGISTRY_URL,
 	resolveLocalRegistryOrExit,
 	readRegistryJSON,
-	readRegistryFile,
-	writeRegistryFile,
+	installRegistryFiles,
 	mergePkgJson,
 	bunAdd,
 } from "./registry.ts";
@@ -147,15 +146,14 @@ export async function addComponent(name: string, root = false, options?: Install
 	}
 
 	// Download/copy component files into src/lib/components/<fullPath>/
-	mkdirSync(destDir, { recursive: true });
-
-	for (const file of meta.files) {
-		const content = await readRegistryFile(registryRoot, "components", fullPath, file);
-		const dest = containedPath(destDir, file);
-		if (file.includes("/")) mkdirSync(dirname(dest), { recursive: true });
-		writeRegistryFile(dest, content);
-		console.log(`   ✍️  src/lib/components/${fullPath}/${file}`);
-	}
+	await installRegistryFiles(
+		registryRoot,
+		"components",
+		fullPath,
+		meta.files,
+		destDir,
+		`src/lib/components/${fullPath}`,
+	);
 
 	// Install npm dependencies
 	if (Object.keys(meta.npmDeps).length > 0) {

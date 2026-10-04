@@ -272,19 +272,27 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 		console.log("");
 	}
 
-	// Apply each file entry per its strategy. Skip entries whose `when` clause doesn't match.
-	const createdDirs = new Set<string>();
-	const recordedFiles: { target: string; strategy: string; marker?: string }[] = [];
+	// Skip entries whose `when` clause doesn't match. Check every target and read
+	// every source before writing anything, so a rejected path or a failed
+	// download leaves no half-applied feature behind.
+	const planned: { entry: FileEntry; dest: string; content: string }[] = [];
 	for (const entry of meta.files) {
 		if (entry.when && !whenMatches(entry.when, myOptions)) continue;
 		const dest = containedPath(cwd, entry.target);
+		const content = await readRegistryFile(registryRoot, "features", name, entry.src);
+		planned.push({ entry, dest, content });
+	}
+
+	// Apply each file entry per its strategy.
+	const createdDirs = new Set<string>();
+	const recordedFiles: { target: string; strategy: string; marker?: string }[] = [];
+	for (const { entry, dest, content } of planned) {
 		const strategy: FileStrategy = entry.strategy ?? "write";
 		const dir = dirname(dest);
 		if (!createdDirs.has(dir)) {
 			mkdirSync(dir, { recursive: true });
 			createdDirs.add(dir);
 		}
-		const content = await readRegistryFile(registryRoot, "features", name, entry.src);
 		await applyStrategy({
 			dest,
 			target: entry.target,

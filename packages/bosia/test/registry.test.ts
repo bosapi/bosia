@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import {
 	containedPath,
+	installRegistryFiles,
 	mergePkgJson,
 	readRegistryJSON,
 	resolveLocalRegistry,
@@ -251,5 +252,46 @@ describe("containedPath", () => {
 	test("refuses a target that is the base itself", () => {
 		expect(() => containedPath(base, ".")).toThrow(/outside/);
 		expect(() => containedPath(base, "")).toThrow(/outside/);
+	});
+
+	test("refuses a backslash, which fetch() would read as a path separator", async () => {
+		expect(() => containedPath(base, "..\\..\\x")).toThrow(/not "\\"/);
+		await expect(readRegistryJSON(null, "features", "auth", "..\\..\\x.json")).rejects.toThrow(
+			/not "\\"/,
+		);
+	});
+});
+
+describe("installRegistryFiles", () => {
+	let registry: string;
+	let dest: string;
+
+	beforeEach(() => {
+		const root = mkdtempSync(join(tmpdir(), "bosia-install-"));
+		registry = join(root, "registry");
+		dest = join(root, "proj", "src", "lib", "blocks", "hero");
+		mkdirSync(join(registry, "blocks", "hero"), { recursive: true });
+		writeFileSync(join(registry, "blocks", "hero", "a.svelte"), "A");
+		writeFileSync(join(registry, "blocks", "hero", "b.svelte"), "B");
+	});
+
+	test("writes every file once all paths are checked", async () => {
+		await installRegistryFiles(registry, "blocks", "hero", ["a.svelte", "b.svelte"], dest, "x");
+		expect(readFileSync(join(dest, "a.svelte"), "utf-8")).toBe("A");
+		expect(readFileSync(join(dest, "b.svelte"), "utf-8")).toBe("B");
+	});
+
+	test("a rejected path later in the list leaves nothing written", async () => {
+		await expect(
+			installRegistryFiles(registry, "blocks", "hero", ["a.svelte", "../../../evil"], dest, "x"),
+		).rejects.toThrow(/outside/);
+		expect(existsSync(dest)).toBe(false);
+	});
+
+	test("a missing source later in the list leaves nothing written", async () => {
+		await expect(
+			installRegistryFiles(registry, "blocks", "hero", ["a.svelte", "missing.svelte"], dest, "x"),
+		).rejects.toThrow(/not found/);
+		expect(existsSync(dest)).toBe(false);
 	});
 });

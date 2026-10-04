@@ -1,5 +1,5 @@
 import { join, dirname, resolve as resolvePath } from "path";
-import { writeFileSync, readFileSync, existsSync, unlinkSync } from "fs";
+import { writeFileSync, readFileSync, existsSync, unlinkSync, mkdirSync } from "fs";
 import { spawn } from "bun";
 
 import { safePath } from "../core/safePath.ts";
@@ -50,8 +50,15 @@ export function resolveLocalRegistryOrExit(): string {
  * Resolve `rel` (a name or path taken from registry metadata or the command
  * line) under `base`, and throw if it lands outside it. Registry `meta.json`
  * decides where files go, so a `../` in it must not write over `~/.bashrc`.
+ *
+ * Backslashes are refused outright: on Linux and macOS `..\x` is one plain
+ * filename and would pass the check, but `fetch()` reads `\` as `/` when the
+ * same string goes into a registry URL. No registry entry uses one.
  */
 export function containedPath(base: string, rel: string): string {
+	if (rel.includes("\\")) {
+		throw new Error(`Refusing to use "${rel}": registry paths use "/", not "\\"`);
+	}
 	const full = safePath(base, rel);
 	if (!full || full === resolvePath(base)) {
 		throw new Error(`Refusing to use "${rel}": it resolves outside ${base}`);
@@ -101,6 +108,40 @@ export async function readRegistryFile(
 	// Same check for the remote registry: no `../` out of the category folder.
 	containedPath(category, join(name, file));
 	return fetchText(`${REGISTRY_URL}/${category}/${name}/${file}`);
+}
+
+// ─── Registry file installer ──────────────────────────────
+
+/**
+ * Copy a registry item's `files` into `destDir`. Every destination is checked
+ * and every file read before the first write, so a rejected path or a failed
+ * download leaves nothing half-installed. `label` is the project-relative
+ * `destDir` used in the log lines.
+ */
+export async function installRegistryFiles(
+	registryRoot: string | null,
+	category: string,
+	name: string,
+	files: string[],
+	destDir: string,
+	label: string,
+): Promise<void> {
+	const planned: { file: string; dest: string; content: string }[] = [];
+	for (const file of files) {
+		const dest = containedPath(destDir, file);
+		planned.push({
+			file,
+			dest,
+			content: await readRegistryFile(registryRoot, category, name, file),
+		});
+	}
+
+	mkdirSync(destDir, { recursive: true });
+	for (const { file, dest, content } of planned) {
+		if (file.includes("/")) mkdirSync(dirname(dest), { recursive: true });
+		writeRegistryFile(dest, content);
+		console.log(`   ✍️  ${label}/${file}`);
+	}
 }
 
 // ─── Registry file writer ─────────────────────────────────
