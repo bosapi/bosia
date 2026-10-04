@@ -2,6 +2,7 @@ import { join, dirname } from "path";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
 import * as p from "@clack/prompts";
 import {
+	containedPath,
 	type InstallOptions,
 	REGISTRY_URL,
 	resolveLocalRegistryOrExit,
@@ -134,7 +135,7 @@ export async function addComponent(name: string, root = false, options?: Install
 	}
 
 	// Check if component already exists (skip check entirely in non-interactive mode)
-	const destDir = join(cwd, "src", "lib", "components", fullPath);
+	const destDir = containedPath(join(cwd, "src", "lib", "components"), fullPath);
 	if (!options?.skipPrompts && existsSync(destDir)) {
 		const replace = await p.confirm({
 			message: `Component "${name}" already exists at src/lib/components/${fullPath}/. Replace it?`,
@@ -150,7 +151,7 @@ export async function addComponent(name: string, root = false, options?: Install
 
 	for (const file of meta.files) {
 		const content = await readRegistryFile(registryRoot, "components", fullPath, file);
-		const dest = join(destDir, file);
+		const dest = containedPath(destDir, file);
 		if (file.includes("/")) mkdirSync(dirname(dest), { recursive: true });
 		writeRegistryFile(dest, content);
 		console.log(`   ✍️  src/lib/components/${fullPath}/${file}`);

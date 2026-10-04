@@ -4,6 +4,7 @@ import * as p from "@clack/prompts";
 import { addComponent, initAddRegistry } from "./add.ts";
 import { runAddBlock } from "./block.ts";
 import {
+	containedPath,
 	type InstallOptions,
 	resolveLocalRegistryOrExit,
 	readRegistryJSON,
@@ -276,7 +277,7 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 	const recordedFiles: { target: string; strategy: string; marker?: string }[] = [];
 	for (const entry of meta.files) {
 		if (entry.when && !whenMatches(entry.when, myOptions)) continue;
-		const dest = join(cwd, entry.target);
+		const dest = containedPath(cwd, entry.target);
 		const strategy: FileStrategy = entry.strategy ?? "write";
 		const dir = dirname(dest);
 		if (!createdDirs.has(dir)) {

@@ -1,6 +1,8 @@
-import { join, dirname } from "path";
+import { join, dirname, resolve as resolvePath } from "path";
 import { writeFileSync, readFileSync, existsSync, unlinkSync } from "fs";
 import { spawn } from "bun";
+
+import { safePath } from "../core/safePath.ts";
 
 // ─── Shared registry utilities for feat.ts and add.ts ─────
 
@@ -42,6 +44,21 @@ export function resolveLocalRegistryOrExit(): string {
 	}
 }
 
+// ─── Path containment ─────────────────────────────────────
+
+/**
+ * Resolve `rel` (a name or path taken from registry metadata or the command
+ * line) under `base`, and throw if it lands outside it. Registry `meta.json`
+ * decides where files go, so a `../` in it must not write over `~/.bashrc`.
+ */
+export function containedPath(base: string, rel: string): string {
+	const full = safePath(base, rel);
+	if (!full || full === resolvePath(base)) {
+		throw new Error(`Refusing to use "${rel}": it resolves outside ${base}`);
+	}
+	return full;
+}
+
 // ─── Registry file readers ────────────────────────────────
 
 /** Read and parse a JSON file from the registry (local or remote). */
@@ -52,7 +69,7 @@ export async function readRegistryJSON<T>(
 	file: string,
 ): Promise<T> {
 	if (registryRoot) {
-		const path = join(registryRoot, category, name, file);
+		const path = containedPath(join(registryRoot, category), join(name, file));
 		if (!existsSync(path)) {
 			throw new Error(
 				`"${file}" not found for ${category.slice(0, -1)} "${name}" in local registry`,
@@ -60,6 +77,8 @@ export async function readRegistryJSON<T>(
 		}
 		return JSON.parse(readFileSync(path, "utf-8"));
 	}
+	// Same check for the remote registry: no `../` out of the category folder.
+	containedPath(category, join(name, file));
 	return fetchJSON<T>(`${REGISTRY_URL}/${category}/${name}/${file}`);
 }
 
@@ -71,7 +90,7 @@ export async function readRegistryFile(
 	file: string,
 ): Promise<string> {
 	if (registryRoot) {
-		const path = join(registryRoot, category, name, file);
+		const path = containedPath(join(registryRoot, category), join(name, file));
 		if (!existsSync(path)) {
 			throw new Error(
 				`File "${file}" not found for ${category.slice(0, -1)} "${name}" in local registry`,
@@ -79,6 +98,8 @@ export async function readRegistryFile(
 		}
 		return readFileSync(path, "utf-8");
 	}
+	// Same check for the remote registry: no `../` out of the category folder.
+	containedPath(category, join(name, file));
 	return fetchText(`${REGISTRY_URL}/${category}/${name}/${file}`);
 }
 

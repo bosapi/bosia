@@ -2,6 +2,7 @@ import { join, dirname } from "path";
 import { mkdirSync, existsSync } from "fs";
 import * as p from "@clack/prompts";
 import {
+	containedPath,
 	type InstallOptions,
 	resolveLocalRegistryOrExit,
 	readRegistryJSON,
@@ -82,7 +83,7 @@ export async function runAddPage(
 
 	// 2. Copy page files to src/lib/pages/<path>/
 	const cwd = resolvedOptions.cwd ?? process.cwd();
-	const destDir = join(cwd, "src", "lib", "pages", name);
+	const destDir = containedPath(join(cwd, "src", "lib", "pages"), name);
 
 	if (!resolvedOptions.skipPrompts && existsSync(destDir)) {
 		const replace = await p.confirm({
@@ -98,7 +99,7 @@ export async function runAddPage(
 
 	for (const file of meta.files) {
 		const content = await readRegistryFile(registryRoot, "pages", name, file);
-		const dest = join(destDir, file);
+		const dest = containedPath(destDir, file);
 		if (file.includes("/")) mkdirSync(dirname(dest), { recursive: true });
 		writeRegistryFile(dest, content);
 		console.log(`   ✍️  src/lib/pages/${name}/${file}`);

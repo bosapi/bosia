@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs"
 import { tmpdir } from "os";
 import { join } from "path";
 import {
+	containedPath,
 	mergePkgJson,
 	readRegistryJSON,
 	resolveLocalRegistry,
@@ -217,5 +218,38 @@ describe("routeAdd() — dispatch", () => {
 			{ name: "runAddBlock", args: ["cards/x", []] },
 			{ name: "runAddPage", args: ["storefront/home", []] },
 		]);
+	});
+});
+
+describe("containedPath", () => {
+	const base = join(tmpdir(), "bosia-proj");
+
+	test("keeps registry paths inside the project", () => {
+		expect(containedPath(base, "src/lib/features/auth/index.ts")).toBe(
+			join(base, "src/lib/features/auth/index.ts"),
+		);
+		expect(containedPath(join(base, "src/lib/components"), "ui/button")).toBe(
+			join(base, "src/lib/components/ui/button"),
+		);
+	});
+
+	test("refuses a target that climbs out of the project", () => {
+		expect(() => containedPath(base, "../.bashrc")).toThrow(/outside/);
+		expect(() => containedPath(base, "src/../../.ssh/authorized_keys")).toThrow(/outside/);
+	});
+
+	test("places an absolute target under the base, never at the real path", () => {
+		expect(containedPath(base, "/etc/passwd")).toBe(join(base, "etc/passwd"));
+	});
+
+	test("the remote registry reader refuses a traversing file name before fetching", async () => {
+		await expect(readRegistryJSON(null, "features", "auth", "../../../x.json")).rejects.toThrow(
+			/outside/,
+		);
+	});
+
+	test("refuses a target that is the base itself", () => {
+		expect(() => containedPath(base, ".")).toThrow(/outside/);
+		expect(() => containedPath(base, "")).toThrow(/outside/);
 	});
 });
