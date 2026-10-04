@@ -213,9 +213,11 @@ const dataRequests = new WeakMap<Request, DataRequest>();
 
 /**
  * Decode an `_invalidated` bitmask string. Char 0 = page, char i+1 = layout
- * depth i. Page: '0' = skip its loader. Layout: '0' = omit its data from the
- * response — the loader still runs, since it may be a guard. Missing/extra
- * chars default to '1'.
+ * depth i. Only '0' has a meaning; any other char counts as '1'.
+ *   - Page '0': skip the page loader.
+ *   - Layout '0': omit its data from the response. The loader still runs,
+ *     since it may be a guard.
+ * Missing chars count as '1'. Chars past the route's layout count are ignored.
  */
 function buildMaskFromBits(
 	bits: string,
@@ -267,9 +269,9 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		const { routeUrl, invalidatedBits } = dataReq;
 		try {
 			const pageMatch = findMatch(serverRoutes, routeUrl.pathname);
-			// Build mask from `?_invalidated=<bits>` where char 0 = page,
-			// char i+1 = layout depth i, '1' = send, '0' = omit from the response
-			// (layouts still run — they may be guards). Absent → send all.
+			// Build mask from `?_invalidated=<bits>` — see buildMaskFromBits. A page
+			// '0' skips the page loader; a layout '0' still runs the loader (it may
+			// be a guard) and only leaves its data out. Absent → run and send all.
 			// Mask is sized to the total layout count (matching client `layoutIds`),
 			// not the count of layout servers, so depths without a server loader
 			// still occupy a bit position and stay aligned with the client.
