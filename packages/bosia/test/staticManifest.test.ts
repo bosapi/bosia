@@ -5,6 +5,7 @@ import { join } from "path";
 import {
 	buildPrerenderManifest,
 	buildStaticManifest,
+	isPrivateOutPath,
 	lookupStatic,
 	serveStatic,
 } from "../src/core/staticManifest.ts";
@@ -92,6 +93,42 @@ describe("buildStaticManifest", () => {
 		expect(m.has("/route-manifest.json")).toBe(false);
 		expect(m.has("/index.html")).toBe(false);
 		expect(m.has("/render.js")).toBe(false);
+	});
+
+	test("server code bundled into OUT_DIR root is never served", () => {
+		// `bosia build` writes the user's hooks and config bundles to the dist
+		// root. They are server code, so `/hooks.server.js` must be a miss.
+		touch(join(outDir, "hooks.server.js"), "const SECRET = 1;");
+		touch(join(outDir, "hooks.server.js.map"), "{}");
+		touch(join(outDir, "bosia.config.js"), "export default {};");
+		touch(join(outDir, "bosia.config.js.map"), "{}");
+		touch(join(outDir, "app-html.json"), "{}");
+		touch(join(outDir, "svelte-maps.json"), "{}");
+		touch(join(outDir, "worker", "index.js"), "// worker");
+
+		const m = buildStaticManifest(outDir);
+
+		for (const key of [
+			"/hooks.server.js",
+			"/hooks.server.js.map",
+			"/bosia.config.js",
+			"/bosia.config.js.map",
+			"/app-html.json",
+			"/svelte-maps.json",
+			"/worker/index.js",
+		]) {
+			expect(m.has(key)).toBe(false);
+		}
+	});
+
+	test("isPrivateOutPath refuses server output and allows user files", () => {
+		expect(isPrivateOutPath("hooks.server.js")).toBe(true);
+		expect(isPrivateOutPath("bosia.config.js")).toBe(true);
+		expect(isPrivateOutPath("route-manifest.json")).toBe(true);
+		expect(isPrivateOutPath("server/index.js")).toBe(true);
+		expect(isPrivateOutPath("worker/index.js")).toBe(true);
+		expect(isPrivateOutPath("robots.txt")).toBe(false);
+		expect(isPrivateOutPath("img/hooks.server.js")).toBe(false);
 	});
 
 	test("dist/static/* is walked so production images can drop ./public", () => {

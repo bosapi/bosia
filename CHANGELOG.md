@@ -20,6 +20,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The first visit to a cached page compresses it once instead of twice.
 - Bosia's own settings (like `CACHE_KEYS` or `BOSIA_*`) no longer show up in `$env`.
 
+### Security
+
+- Your server code is no longer downloadable. A production server used to serve the bundled `src/hooks.server.ts` at `/hooks.server.js`, along with anything it imported.
+- The dev server no longer serves the built server code under `dist/`.
+
 ## [1.1.3] - 2026-10-03
 
 ### Fixed

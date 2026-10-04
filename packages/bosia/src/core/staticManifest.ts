@@ -11,10 +11,31 @@ const HASHED_BASENAME = /\-[a-z0-9]{8,}\.[a-z]+$/;
 const IMMUTABLE_CACHE = "public, max-age=31536000, immutable";
 const DEFAULT_CACHE = "no-cache";
 
-// Files/dirs at OUT_DIR root that the manifest must not surface — they're either
-// build metadata or re-merges already covered by the per-root walks.
-const OUT_DIR_SKIP_DIRS = new Set(["client", "static", "prerendered", "server"]);
-const OUT_DIR_SKIP_FILES = new Set(["manifest.json", "route-manifest.json"]);
+// Files/dirs at OUT_DIR root that must never be served — server code, build
+// metadata, or re-merges already covered by the per-root walks. `server/` and
+// `worker/` are server bundles; `hooks.server.js` and `bosia.config.js` are the
+// user's own server code bundled for the runtime (with their dev `.map`s).
+const OUT_DIR_SKIP_DIRS = new Set(["client", "static", "prerendered", "server", "worker"]);
+const OUT_DIR_SKIP_FILES = new Set([
+	"manifest.json",
+	"route-manifest.json",
+	"app-html.json",
+	"svelte-maps.json",
+	"hooks.server.js",
+	"hooks.server.js.map",
+	"bosia.config.js",
+	"bosia.config.js.map",
+]);
+
+/**
+ * Whether `rel` (a path relative to OUT_DIR, `/`-separated, no leading slash)
+ * is build output the server must not hand to a browser. Shared by the prod
+ * manifest and the dev per-request fallthrough so both refuse the same files.
+ */
+export function isPrivateOutPath(rel: string): boolean {
+	const slash = rel.indexOf("/");
+	return slash === -1 ? OUT_DIR_SKIP_FILES.has(rel) : OUT_DIR_SKIP_DIRS.has(rel.slice(0, slash));
+}
 
 const RESERVED_PREFIX = "/__bosia/";
 
@@ -94,13 +115,13 @@ export function buildStaticManifest(outDir: string): StaticManifest {
 		}
 		for (const ent of rootEntries) {
 			if (ent.isDirectory()) {
-				if (OUT_DIR_SKIP_DIRS.has(ent.name)) continue;
+				if (isPrivateOutPath(`${ent.name}/`)) continue;
 				const sub = join(outAbs, ent.name);
 				for (const { abs, rel } of walk(sub, ent.name)) {
 					addOnce(manifest, `/${rel}`, { absPath: abs });
 				}
 			} else if (ent.isFile()) {
-				if (OUT_DIR_SKIP_FILES.has(ent.name)) continue;
+				if (isPrivateOutPath(ent.name)) continue;
 				addOnce(manifest, `/${ent.name}`, { absPath: join(outAbs, ent.name) });
 			}
 		}
