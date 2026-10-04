@@ -76,7 +76,7 @@ export async function readRegistryJSON<T>(
 	file: string,
 ): Promise<T> {
 	if (registryRoot) {
-		const path = containedPath(join(registryRoot, category), join(name, file));
+		const path = containedPath(join(registryRoot, category), `${name}/${file}`);
 		if (!existsSync(path)) {
 			throw new Error(
 				`"${file}" not found for ${category.slice(0, -1)} "${name}" in local registry`,
@@ -85,7 +85,7 @@ export async function readRegistryJSON<T>(
 		return JSON.parse(readFileSync(path, "utf-8"));
 	}
 	// Same check for the remote registry: no `../` out of the category folder.
-	containedPath(category, join(name, file));
+	containedPath(category, `${name}/${file}`);
 	return fetchJSON<T>(`${REGISTRY_URL}/${category}/${name}/${file}`);
 }
 
@@ -97,7 +97,7 @@ export async function readRegistryFile(
 	file: string,
 ): Promise<string> {
 	if (registryRoot) {
-		const path = containedPath(join(registryRoot, category), join(name, file));
+		const path = containedPath(join(registryRoot, category), `${name}/${file}`);
 		if (!existsSync(path)) {
 			throw new Error(
 				`File "${file}" not found for ${category.slice(0, -1)} "${name}" in local registry`,
@@ -106,7 +106,7 @@ export async function readRegistryFile(
 		return readFileSync(path, "utf-8");
 	}
 	// Same check for the remote registry: no `../` out of the category folder.
-	containedPath(category, join(name, file));
+	containedPath(category, `${name}/${file}`);
 	return fetchText(`${REGISTRY_URL}/${category}/${name}/${file}`);
 }
 
