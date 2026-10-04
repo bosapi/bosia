@@ -5,6 +5,7 @@ import { join } from "path";
 import {
 	buildPrerenderManifest,
 	buildStaticManifest,
+	isPrivateOutFile,
 	isPrivateOutPath,
 	lookupStatic,
 	serveStatic,
@@ -129,6 +130,15 @@ describe("buildStaticManifest", () => {
 		expect(isPrivateOutPath("worker/index.js")).toBe(true);
 		expect(isPrivateOutPath("robots.txt")).toBe(false);
 		expect(isPrivateOutPath("img/hooks.server.js")).toBe(false);
+	});
+
+	test("isPrivateOutFile ignores case, as macOS and Windows filesystems do", () => {
+		// The dev fallthrough resolves the request path itself; on a
+		// case-insensitive disk `/SERVER/index.js` still opens dist/server/index.js.
+		expect(isPrivateOutFile(outDir, join(outDir, "SERVER", "index.js"))).toBe(true);
+		expect(isPrivateOutFile(outDir, join(outDir, "Hooks.Server.JS"))).toBe(true);
+		expect(isPrivateOutFile(outDir, join(outDir, "server", "index.js"))).toBe(true);
+		expect(isPrivateOutFile(outDir, join(outDir, "robots.txt"))).toBe(false);
 	});
 
 	test("dist/static/* is walked so production images can drop ./public", () => {

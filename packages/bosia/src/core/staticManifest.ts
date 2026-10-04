@@ -1,7 +1,8 @@
 import { existsSync, readdirSync, statSync } from "fs";
-import { basename, join, resolve as resolvePath } from "path";
+import { basename, join, relative, resolve as resolvePath } from "path";
 import { PRECOMPRESSED, pickEncoding } from "./html.ts";
 import { AssetCache, assetCache } from "./assetCache.ts";
+import { toPosix } from "./paths.ts";
 
 /** `br`/`gz`: absolute paths of build-time precompressed siblings (precompress.ts). */
 export type StaticEntry = { absPath: string; cacheControl?: string; br?: string; gz?: string };
@@ -35,6 +36,17 @@ const OUT_DIR_SKIP_FILES = new Set([
 export function isPrivateOutPath(rel: string): boolean {
 	const slash = rel.indexOf("/");
 	return slash === -1 ? OUT_DIR_SKIP_FILES.has(rel) : OUT_DIR_SKIP_DIRS.has(rel.slice(0, slash));
+}
+
+/**
+ * `isPrivateOutPath` for an absolute path already resolved under `outDir` (the
+ * dev per-request fallthrough). Lowercased first: macOS and Windows filesystems
+ * ignore case, so `/SERVER/index.js` still opens `dist/server/index.js` and must
+ * be refused the same way. Over-refusing a user file that differs only in case
+ * is harmless.
+ */
+export function isPrivateOutFile(outDir: string, absPath: string): boolean {
+	return isPrivateOutPath(toPosix(relative(resolvePath(outDir), absPath)).toLowerCase());
 }
 
 const RESERVED_PREFIX = "/__bosia/";

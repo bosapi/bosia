@@ -1,5 +1,3 @@
-import { relative, resolve as resolvePath, sep } from "path";
-
 import { BosiaApp } from "./backend.ts";
 
 import { findMatch, compileRoutes, canonicalPathname } from "./matcher.ts";
@@ -30,7 +28,7 @@ import { currentBase } from "./appBase.ts";
 import {
 	buildPrerenderManifest,
 	buildStaticManifest,
-	isPrivateOutPath,
+	isPrivateOutFile,
 	lookupStatic,
 	serveStatic,
 } from "./staticManifest.ts";
@@ -625,8 +623,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		const distPath = safePath(OUT_DIR, decodedPath);
 		// Same refusals as the prod manifest: never hand out the server bundle,
 		// the user's bundled hooks/config, or build metadata.
-		const distRel = distPath ? relative(resolvePath(OUT_DIR), distPath).split(sep).join("/") : "";
-		if (distPath && !isPrivateOutPath(distRel)) {
+		if (distPath && !isPrivateOutFile(OUT_DIR, distPath)) {
 			const dist = Bun.file(distPath);
 			if (await dist.exists()) return new Response(dist);
 		}
