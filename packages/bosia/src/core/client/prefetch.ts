@@ -10,8 +10,9 @@ import { base } from "./base.ts";
 
 /**
  * Build the `_invalidated` mask bits for a target path using the current
- * client loader cache. Char 0 = page, char i+1 = layout depth i; '1' = run,
- * '0' = skip. Returns `null` when the route cannot be matched.
+ * client loader cache. Char 0 = page, char i+1 = layout depth i; '1' = send,
+ * '0' = the client already holds it (the server still runs layout loaders,
+ * since they may be guards). Returns `null` when the route cannot be matched.
  */
 export function buildMaskBits(path: string): string | null {
 	const url = new URL(path, window.location.origin);
@@ -39,36 +40,6 @@ export function buildMaskBits(path: string): string | null {
 	}
 
 	return (pageRun ? "1" : "0") + layoutRunFlags.map((b) => (b ? "1" : "0")).join("");
-}
-
-/**
- * Build `parentSnapshots` (layout depth → cached data) for a target path from
- * the current loader cache, given the mask bits from `buildMaskBits`. For each
- * layout depth whose mask bit is '0' (skipped) and whose cached entry exists,
- * forward that layer's data so server-side downstream loaders see real
- * `parent()` data instead of `{}`. Returns `{}` when nothing to carry.
- *
- * Client-supplied perf hint only — the server never trusts it for authz.
- */
-export function buildParentSnapshots(
-	path: string,
-	maskBits: string,
-): Record<number, Record<string, any>> {
-	const snapshots: Record<number, Record<string, any>> = {};
-	const url = new URL(path, window.location.origin);
-	const match = findMatch(clientRoutes, url.pathname);
-	if (!match) return snapshots;
-	const layoutIds = (match.route as any).layoutIds as (string | null)[];
-
-	layoutIds.forEach((id, depth) => {
-		// maskBits char 0 = page, char depth+1 = layout depth. '0' = skipped.
-		if (maskBits[depth + 1] !== "0") return;
-		if (id === null) return;
-		const entry = appState.loaderCache.layouts[id];
-		if (entry) snapshots[depth] = entry.data;
-	});
-
-	return snapshots;
 }
 
 /** Builds the `/__bosia/data/…` URL for a given client path. */
@@ -163,23 +134,11 @@ export async function prefetchPath(path: string): Promise<void> {
 
 	pending.add(path);
 	try {
-		// Send the same mask as a real client nav would so the server can skip
-		// loaders whose tracked inputs haven't changed. Falls back to running
-		// everything when the route can't be matched (e.g. external/unknown URL).
+		// Send the same mask as a real client nav would so the server leaves out
+		// layers the client already holds. Falls back to sending everything when
+		// the route can't be matched (e.g. external/unknown URL).
 		const maskBits = buildMaskBits(path) ?? undefined;
-		// Forward cached parent data for skipped layers so a prefetched response
-		// is computed with real parent() data, not {}. POST only when there's
-		// something to carry — keeps the no-skip case a cacheable/dedupable GET.
-		const snapshots = maskBits ? buildParentSnapshots(path, maskBits) : {};
-		const init: RequestInit =
-			Object.keys(snapshots).length > 0
-				? {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ parentSnapshots: snapshots }),
-					}
-				: {};
-		const res = await fetch(dataUrl(path, maskBits), init);
+		const res = await fetch(dataUrl(path, maskBits));
 		// `ok` alone would cache a guard's login page (200 after the redirect was
 		// followed) as if it were this route's data.
 		if (res.ok && !res.redirected && isJsonResponse(res)) {

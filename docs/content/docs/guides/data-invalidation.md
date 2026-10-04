@@ -3,7 +3,7 @@ title: Data Invalidation
 description: Use depends(), invalidate(), and invalidateAll() to control when server loaders re-run on client-side navigation.
 ---
 
-By default, Bosia caches the result of every `+page.server.ts` and `+layout.server.ts` `load()` function in the browser after the first run. On the next client-side navigation, a loader only re-runs when something it actually read has changed — a route param, a search param, a tracked URL, or a key the loader declared via `depends()`. Layouts that haven't conceptually changed (e.g. a navbar that only reads `locals.user`) skip the server round-trip entirely.
+By default, Bosia caches the result of every `+page.server.ts` and `+layout.server.ts` `load()` function in the browser after the first run. On the next client-side navigation, a loader only re-runs when something it actually read has changed — a route param, a search param, a tracked URL, or a key the loader declared via `depends()`. Layouts that haven't conceptually changed (e.g. a navbar that only reads `locals.user`) aren't sent again: the browser reuses its cached copy. On the server, layout loaders still run on every navigation, because they often guard a route group. Only their data is left out of the response.
 
 This is the same model as SvelteKit: opt-in, predictable, and explicit.
 

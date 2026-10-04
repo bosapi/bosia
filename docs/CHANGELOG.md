@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Environment variables guide lists the two new asset cache settings.
 - Deployment guide explains ETag re-checks and the two compression levels.
 - Environment variables guide lists `PRERENDER_CONCURRENCY`, `CSP_DIRECTIVES` and the `BOSIA_` prefix.
+- Security guide explains how a layout login check protects the pages and form actions under it.
+- Data invalidation guide says layout loaders still run on the server when the browser reuses their data.
 
 ## [0.8.19] - 2026-10-03
 

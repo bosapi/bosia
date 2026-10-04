@@ -266,7 +266,8 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		try {
 			const pageMatch = findMatch(serverRoutes, routeUrl.pathname);
 			// Build mask from `?_invalidated=<bits>` where char 0 = page,
-			// char i+1 = layout depth i, '1' = run, '0' = skip. Absent → run all.
+			// char i+1 = layout depth i, '1' = send, '0' = omit from the response
+			// (layouts still run — they may be guards). Absent → send all.
 			// Mask is sized to the total layout count (matching client `layoutIds`),
 			// not the count of layout servers, so depths without a server loader
 			// still occupy a bit position and stay aligned with the client.
@@ -276,32 +277,8 @@ async function resolve(event: RequestEvent): Promise<Response> {
 						pageMatch?.route ? ((pageMatch.route as any).layoutModules?.length ?? 0) : 0,
 					)
 				: undefined;
-			// Client forwards each skipped layout layer's cached data as
-			// parentSnapshots (depth → data) so downstream loaders see real
-			// parent() data instead of {}. Perf hint only — never authoritative;
-			// authz must read locals. Guarded: undefined for GET / malformed body.
-			let parentSnapshots: Record<number, Record<string, any>> | undefined;
-			if (method !== "GET") {
-				try {
-					const body = await request.json();
-					if (body && typeof body === "object" && body.parentSnapshots) {
-						parentSnapshots = body.parentSnapshots as Record<number, Record<string, any>>;
-					}
-				} catch {
-					parentSnapshots = undefined;
-				}
-			}
 			const runLoad = async () => {
-				const data = await loadRouteData(
-					routeUrl,
-					locals,
-					request,
-					cookies,
-					null,
-					pageMatch,
-					mask,
-					parentSnapshots,
-				);
+				const data = await loadRouteData(routeUrl, locals, request, cookies, null, pageMatch, mask);
 
 				let metadata = null;
 				if (pageMatch) {
@@ -677,6 +654,15 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			try {
 				const mod = await pageMatch.route.pageServer();
 				if (mod.actions && typeof mod.actions === "object") {
+					// Layout loaders gate route groups (`(private)/+layout.server.ts`
+					// redirecting anonymous visitors), so they run before any action:
+					// a POST must not reach code the same visitor could not GET.
+					// Their data is discarded; a redirect or error() they throw is
+					// handled by the catch below exactly like one from the action.
+					await loadRouteData(url, locals, request, cookies, null, pageMatch, {
+						page: false,
+						layouts: [],
+					});
 					const actionName = parseActionName(url);
 					const action = mod.actions[actionName];
 					if (!action) {
