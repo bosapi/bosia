@@ -35,6 +35,7 @@ import {
 	compressBytes,
 	encodeForRequest,
 	isDev,
+	withPreloadLink,
 	type Encoded,
 } from "./html.ts";
 import type { Metadata } from "./hooks.ts";
@@ -791,7 +792,13 @@ export async function renderSSRStream(
 					data.layoutDeps,
 					appHtmlSegments,
 				);
-			return compress(html, "text/html; charset=utf-8", req, 200, data.loaderHeaders);
+			return compress(
+				html,
+				"text/html; charset=utf-8",
+				req,
+				200,
+				withPreloadLink(data.loaderHeaders, route.pattern, true),
+			);
 		}
 
 		// Render-first: run render() before committing to a 200. Failure → proper error page
@@ -862,6 +869,8 @@ export async function renderSSRStream(
 		];
 
 		const fullBody = concatChunks(chunks);
+		// Stored with the cache entry too, so hits carry the same Link header.
+		const headers = withPreloadLink(data.loaderHeaders, route.pattern, data.csr) ?? {};
 		// Set only on a cache write: the client's variant, encoded once at cache
 		// quality and shared by the response and the cache entry.
 		let sent: Encoded | null | undefined;
@@ -900,7 +909,7 @@ export async function renderSSRStream(
 								brotli,
 								contentType: "text/html; charset=utf-8",
 								status: 200,
-								extraHeaders: data.loaderHeaders,
+								extraHeaders: headers,
 								tags,
 							},
 							cookies,
@@ -912,7 +921,7 @@ export async function renderSSRStream(
 			}
 		}
 
-		return compressBytes(fullBody, "text/html; charset=utf-8", req, 200, data.loaderHeaders, sent);
+		return compressBytes(fullBody, "text/html; charset=utf-8", req, 200, headers, sent);
 	} finally {
 		releaseMiss?.();
 	}

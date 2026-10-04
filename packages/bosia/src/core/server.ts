@@ -29,6 +29,7 @@ import {
 	distManifest,
 	PRECOMPRESSED,
 	type Encoded,
+	preloadLinkHeader,
 } from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
@@ -729,9 +730,13 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		const key = path === "/" ? "/" : path.replace(/\/$/, "");
 		const hit = prerenderManifest.get(key);
 		if (hit) {
+			// Stylesheets only: whether this page hydrates isn't known here, and a
+			// hint for a script it never runs is a wasted download.
+			const link = preloadLinkHeader(undefined, false);
 			return serveStatic(hit, request, {
 				"Content-Type": "text/html; charset=utf-8",
 				"Cache-Control": "public, max-age=3600",
+				...(link ? { Link: link } : {}),
 			});
 		}
 	}

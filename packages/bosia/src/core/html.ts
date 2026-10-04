@@ -68,6 +68,51 @@ export function routePreloadLinks(pattern?: string): string {
 		.join("");
 }
 
+// One header value per route pattern (plus "" for no pattern), built on first
+// use. Bounded by the number of routes.
+const linkHeaders = new Map<string, string>();
+
+/**
+ * `Link` response header naming the stylesheets and, when the page hydrates,
+ * the client entry and the route's chunks. The document lists the same files,
+ * but a CDN that sends 103 Early Hints (Cloudflare) reads them off this header
+ * and lets the browser start downloading while the loaders still run.
+ * Prod only — dev URLs carry a cache buster and nothing sits in front.
+ */
+export function preloadLinkHeader(pattern: string | undefined, csr: boolean): string | null {
+	if (isDev) return null;
+	const key = `${csr ? "1" : "0"}${pattern ?? ""}`;
+	let value = linkHeaders.get(key);
+	if (value === undefined) {
+		const tw = distManifest.tw ? `${DIST}/${distManifest.tw}` : TW_CSS;
+		const parts = [tw, ...(distManifest.css ?? []).map((f) => `${DIST}/${f}`)].map(
+			(href) => `<${href}>; rel=preload; as=style`,
+		);
+		if (csr) {
+			const scripts = [
+				ENTRY,
+				...(distManifest.preload?.[pattern ?? ""] ?? []).map((f) => `${DIST}/${f}`),
+			];
+			for (const href of scripts) parts.push(`<${href}>; rel=modulepreload`);
+		}
+		value = parts.join(", ");
+		linkHeaders.set(key, value);
+	}
+	return value;
+}
+
+/** `extra` with the preload `Link` header added — after any `link` a loader set. */
+export function withPreloadLink(
+	extra: Record<string, string> | undefined,
+	pattern: string | undefined,
+	csr: boolean,
+): Record<string, string> | undefined {
+	const link = preloadLinkHeader(pattern, csr);
+	if (!link) return extra;
+	const own = extra?.["link"];
+	return { ...extra, link: own ? `${own}, ${link}` : link };
+}
+
 /** Tailwind stylesheet link. Content-hashed name needs no cache buster — the
  *  hash IS the buster. Fallback keeps older dist/ artifacts (no `tw` field) styled. */
 function twCssLink(): string {
