@@ -1,8 +1,7 @@
 import { existsSync, readdirSync, statSync } from "fs";
-import { basename, join, relative, resolve as resolvePath } from "path";
+import { basename, join, resolve as resolvePath } from "path";
 import { PRECOMPRESSED, pickEncoding } from "./html.ts";
 import { AssetCache, assetCache } from "./assetCache.ts";
-import { toPosix } from "./paths.ts";
 
 /** `br`/`gz`: absolute paths of build-time precompressed siblings (precompress.ts). */
 export type StaticEntry = { absPath: string; cacheControl?: string; br?: string; gz?: string };
@@ -39,14 +38,35 @@ export function isPrivateOutPath(rel: string): boolean {
 }
 
 /**
- * `isPrivateOutPath` for an absolute path already resolved under `outDir` (the
- * dev per-request fallthrough). Lowercased first: macOS and Windows filesystems
- * ignore case, so `/SERVER/index.js` still opens `dist/server/index.js` and must
- * be refused the same way. Over-refusing a user file that differs only in case
- * is harmless.
+ * Dev-mode lookup of a user file at the OUT_DIR root (the prod manifest covers
+ * this in production). `urlPath` is the decoded request path. Each segment must
+ * equal, exactly, a name `readdir` returns, and the joined real names must not
+ * be private. Matching the filesystem's own names instead of comparing request
+ * strings means no other spelling of a private file can get through: a
+ * different case, a trailing dot or space (Windows), an NTFS `::$DATA` stream,
+ * an 8.3 short name, or a Unicode case-folding twin like `ſerver` (macOS).
+ * Returns the absolute path, or null.
  */
-export function isPrivateOutFile(outDir: string, absPath: string): boolean {
-	return isPrivateOutPath(toPosix(relative(resolvePath(outDir), absPath)).toLowerCase());
+export function findOutDirFile(outDir: string, urlPath: string): string | null {
+	const segments = urlPath.split("/").filter(Boolean);
+	if (segments.length === 0) return null;
+	if (isPrivateOutPath(segments.join("/"))) return null;
+	let dir = resolvePath(outDir);
+	for (let i = 0; i < segments.length; i++) {
+		let names: string[];
+		try {
+			names = readdirSync(dir);
+		} catch {
+			return null;
+		}
+		if (!names.includes(segments[i]!)) return null;
+		dir = join(dir, segments[i]!);
+	}
+	try {
+		return statSync(dir).isFile() ? dir : null;
+	} catch {
+		return null;
+	}
 }
 
 const RESERVED_PREFIX = "/__bosia/";

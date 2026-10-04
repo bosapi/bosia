@@ -5,7 +5,7 @@ import { join } from "path";
 import {
 	buildPrerenderManifest,
 	buildStaticManifest,
-	isPrivateOutFile,
+	findOutDirFile,
 	isPrivateOutPath,
 	lookupStatic,
 	serveStatic,
@@ -132,13 +132,38 @@ describe("buildStaticManifest", () => {
 		expect(isPrivateOutPath("img/hooks.server.js")).toBe(false);
 	});
 
-	test("isPrivateOutFile ignores case, as macOS and Windows filesystems do", () => {
-		// The dev fallthrough resolves the request path itself; on a
-		// case-insensitive disk `/SERVER/index.js` still opens dist/server/index.js.
-		expect(isPrivateOutFile(outDir, join(outDir, "SERVER", "index.js"))).toBe(true);
-		expect(isPrivateOutFile(outDir, join(outDir, "Hooks.Server.JS"))).toBe(true);
-		expect(isPrivateOutFile(outDir, join(outDir, "server", "index.js"))).toBe(true);
-		expect(isPrivateOutFile(outDir, join(outDir, "robots.txt"))).toBe(false);
+	test("findOutDirFile serves real user files at the dist root", () => {
+		touch(join(outDir, "robots.txt"), "User-agent: *");
+		touch(join(outDir, "seo", "sitemap.xml"), "<urlset/>");
+		expect(findOutDirFile(outDir, "/robots.txt")).toBe(join(outDir, "robots.txt"));
+		expect(findOutDirFile(outDir, "/seo/sitemap.xml")).toBe(join(outDir, "seo", "sitemap.xml"));
+		expect(findOutDirFile(outDir, "/seo")).toBeNull(); // a folder, not a file
+		expect(findOutDirFile(outDir, "/missing.txt")).toBeNull();
+	});
+
+	test("findOutDirFile refuses private files under any spelling", () => {
+		// Each of these opens a private file on some filesystem: case on macOS
+		// and Windows, trailing dots/spaces, NTFS streams and 8.3 names on
+		// Windows, Unicode case folding (ſ → s) on macOS. Only exact readdir
+		// names match, so all of them miss.
+		touch(join(outDir, "hooks.server.js"), "secret");
+		touch(join(outDir, "server", "index.js"), "server");
+		for (const p of [
+			"/hooks.server.js",
+			"/server/index.js",
+			"/SERVER/index.js",
+			"/Hooks.Server.JS",
+			"/server./index.js",
+			"/server /index.js",
+			"/hooks.server.js.",
+			"/hooks.server.js::$DATA",
+			"/server::$INDEX_ALLOCATION/index.js",
+			"/hookss~1.js",
+			"/\u017Ferver/index.js",
+			"/../dist/hooks.server.js",
+		]) {
+			expect(findOutDirFile(outDir, p)).toBeNull();
+		}
 	});
 
 	test("dist/static/* is walked so production images can drop ./public", () => {
