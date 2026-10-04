@@ -5,6 +5,8 @@ import { join } from "path";
 import {
 	buildPrerenderManifest,
 	buildStaticManifest,
+	findOutDirFile,
+	isPrivateOutPath,
 	lookupStatic,
 	serveStatic,
 } from "../src/core/staticManifest.ts";
@@ -92,6 +94,76 @@ describe("buildStaticManifest", () => {
 		expect(m.has("/route-manifest.json")).toBe(false);
 		expect(m.has("/index.html")).toBe(false);
 		expect(m.has("/render.js")).toBe(false);
+	});
+
+	test("server code bundled into OUT_DIR root is never served", () => {
+		// `bosia build` writes the user's hooks and config bundles to the dist
+		// root. They are server code, so `/hooks.server.js` must be a miss.
+		touch(join(outDir, "hooks.server.js"), "const SECRET = 1;");
+		touch(join(outDir, "hooks.server.js.map"), "{}");
+		touch(join(outDir, "bosia.config.js"), "export default {};");
+		touch(join(outDir, "bosia.config.js.map"), "{}");
+		touch(join(outDir, "app-html.json"), "{}");
+		touch(join(outDir, "svelte-maps.json"), "{}");
+		touch(join(outDir, "worker", "index.js"), "// worker");
+
+		const m = buildStaticManifest(outDir);
+
+		for (const key of [
+			"/hooks.server.js",
+			"/hooks.server.js.map",
+			"/bosia.config.js",
+			"/bosia.config.js.map",
+			"/app-html.json",
+			"/svelte-maps.json",
+			"/worker/index.js",
+		]) {
+			expect(m.has(key)).toBe(false);
+		}
+	});
+
+	test("isPrivateOutPath refuses server output and allows user files", () => {
+		expect(isPrivateOutPath("hooks.server.js")).toBe(true);
+		expect(isPrivateOutPath("bosia.config.js")).toBe(true);
+		expect(isPrivateOutPath("route-manifest.json")).toBe(true);
+		expect(isPrivateOutPath("server/index.js")).toBe(true);
+		expect(isPrivateOutPath("worker/index.js")).toBe(true);
+		expect(isPrivateOutPath("robots.txt")).toBe(false);
+		expect(isPrivateOutPath("img/hooks.server.js")).toBe(false);
+	});
+
+	test("findOutDirFile serves real user files at the dist root", () => {
+		touch(join(outDir, "robots.txt"), "User-agent: *");
+		touch(join(outDir, "seo", "sitemap.xml"), "<urlset/>");
+		expect(findOutDirFile(outDir, "/robots.txt")).toBe(join(outDir, "robots.txt"));
+		expect(findOutDirFile(outDir, "/seo/sitemap.xml")).toBe(join(outDir, "seo", "sitemap.xml"));
+		expect(findOutDirFile(outDir, "/seo")).toBeNull(); // a folder, not a file
+		expect(findOutDirFile(outDir, "/missing.txt")).toBeNull();
+	});
+
+	test("findOutDirFile refuses private files under any spelling", () => {
+		// Each of these opens a private file on some filesystem: case on macOS
+		// and Windows, trailing dots/spaces, NTFS streams and 8.3 names on
+		// Windows, Unicode case folding (ſ → s) on macOS. Only exact readdir
+		// names match, so all of them miss.
+		touch(join(outDir, "hooks.server.js"), "secret");
+		touch(join(outDir, "server", "index.js"), "server");
+		for (const p of [
+			"/hooks.server.js",
+			"/server/index.js",
+			"/SERVER/index.js",
+			"/Hooks.Server.JS",
+			"/server./index.js",
+			"/server /index.js",
+			"/hooks.server.js.",
+			"/hooks.server.js::$DATA",
+			"/server::$INDEX_ALLOCATION/index.js",
+			"/hookss~1.js",
+			"/\u017Ferver/index.js",
+			"/../dist/hooks.server.js",
+		]) {
+			expect(findOutDirFile(outDir, p)).toBeNull();
+		}
 	});
 
 	test("dist/static/* is walked so production images can drop ./public", () => {

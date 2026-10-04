@@ -28,6 +28,7 @@ import { currentBase } from "./appBase.ts";
 import {
 	buildPrerenderManifest,
 	buildStaticManifest,
+	findOutDirFile,
 	lookupStatic,
 	serveStatic,
 } from "./staticManifest.ts";
@@ -600,7 +601,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			const pub = Bun.file(pubPath);
 			if (await pub.exists()) return new Response(pub);
 		}
-		const distPath = safePath(OUT_DIR, decodedPath);
+		// Same refusals as the prod manifest: never hand out the server bundle,
+		// the user's bundled hooks/config, or build metadata. Matched against the
+		// real directory listing, so no alternative spelling reaches those files.
+		const distPath = findOutDirFile(OUT_DIR, decodedPath);
 		if (distPath) {
 			const dist = Bun.file(distPath);
 			if (await dist.exists()) return new Response(dist);

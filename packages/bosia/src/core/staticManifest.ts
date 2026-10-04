@@ -11,10 +11,63 @@ const HASHED_BASENAME = /\-[a-z0-9]{8,}\.[a-z]+$/;
 const IMMUTABLE_CACHE = "public, max-age=31536000, immutable";
 const DEFAULT_CACHE = "no-cache";
 
-// Files/dirs at OUT_DIR root that the manifest must not surface — they're either
-// build metadata or re-merges already covered by the per-root walks.
-const OUT_DIR_SKIP_DIRS = new Set(["client", "static", "prerendered", "server"]);
-const OUT_DIR_SKIP_FILES = new Set(["manifest.json", "route-manifest.json"]);
+// Files/dirs at OUT_DIR root that must never be served — server code, build
+// metadata, or re-merges already covered by the per-root walks. `server/` and
+// `worker/` are server bundles; `hooks.server.js` and `bosia.config.js` are the
+// user's own server code bundled for the runtime (with their dev `.map`s).
+const OUT_DIR_SKIP_DIRS = new Set(["client", "static", "prerendered", "server", "worker"]);
+const OUT_DIR_SKIP_FILES = new Set([
+	"manifest.json",
+	"route-manifest.json",
+	"app-html.json",
+	"svelte-maps.json",
+	"hooks.server.js",
+	"hooks.server.js.map",
+	"bosia.config.js",
+	"bosia.config.js.map",
+]);
+
+/**
+ * Whether `rel` (a path relative to OUT_DIR, `/`-separated, no leading slash)
+ * is build output the server must not hand to a browser. Shared by the prod
+ * manifest and the dev per-request fallthrough so both refuse the same files.
+ */
+export function isPrivateOutPath(rel: string): boolean {
+	const slash = rel.indexOf("/");
+	return slash === -1 ? OUT_DIR_SKIP_FILES.has(rel) : OUT_DIR_SKIP_DIRS.has(rel.slice(0, slash));
+}
+
+/**
+ * Dev-mode lookup of a user file at the OUT_DIR root (the prod manifest covers
+ * this in production). `urlPath` is the decoded request path. Each segment must
+ * equal, exactly, a name `readdir` returns, and the joined real names must not
+ * be private. Matching the filesystem's own names instead of comparing request
+ * strings means no other spelling of a private file can get through: a
+ * different case, a trailing dot or space (Windows), an NTFS `::$DATA` stream,
+ * an 8.3 short name, or a Unicode case-folding twin like `ſerver` (macOS).
+ * Returns the absolute path, or null.
+ */
+export function findOutDirFile(outDir: string, urlPath: string): string | null {
+	const segments = urlPath.split("/").filter(Boolean);
+	if (segments.length === 0) return null;
+	if (isPrivateOutPath(segments.join("/"))) return null;
+	let dir = resolvePath(outDir);
+	for (let i = 0; i < segments.length; i++) {
+		let names: string[];
+		try {
+			names = readdirSync(dir);
+		} catch {
+			return null;
+		}
+		if (!names.includes(segments[i]!)) return null;
+		dir = join(dir, segments[i]!);
+	}
+	try {
+		return statSync(dir).isFile() ? dir : null;
+	} catch {
+		return null;
+	}
+}
 
 const RESERVED_PREFIX = "/__bosia/";
 
@@ -94,13 +147,13 @@ export function buildStaticManifest(outDir: string): StaticManifest {
 		}
 		for (const ent of rootEntries) {
 			if (ent.isDirectory()) {
-				if (OUT_DIR_SKIP_DIRS.has(ent.name)) continue;
+				if (isPrivateOutPath(`${ent.name}/`)) continue;
 				const sub = join(outAbs, ent.name);
 				for (const { abs, rel } of walk(sub, ent.name)) {
 					addOnce(manifest, `/${rel}`, { absPath: abs });
 				}
 			} else if (ent.isFile()) {
-				if (OUT_DIR_SKIP_FILES.has(ent.name)) continue;
+				if (isPrivateOutPath(ent.name)) continue;
 				addOnce(manifest, `/${ent.name}`, { absPath: join(outAbs, ent.name) });
 			}
 		}
