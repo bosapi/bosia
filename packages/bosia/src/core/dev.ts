@@ -1,5 +1,5 @@
 import { spawn, type Subprocess } from "bun";
-import { readdirSync, statSync, watch, type Dirent } from "fs";
+import { readdirSync, rmSync, statSync, watch, type Dirent } from "fs";
 import { join } from "path";
 import { loadEnv } from "./env.ts";
 import { BOSIA_NODE_PATH } from "./paths.ts";
@@ -11,6 +11,12 @@ import { affectsRouteManifest, shouldIgnoreForRebuild } from "./devWatch.ts";
 // not a dev knob; we pass it to spawned children to redirect build.ts/server output,
 // but dev.ts itself never reads it.
 const DEV_OUT_DIR = ".bosia/dev";
+
+// Compiled-component cache shared by every rebuild in this session (see
+// svelteCompiler.ts). Outside DEV_OUT_DIR, which each build clears. Emptied
+// here, once per `bosia dev`, so it only ever holds this session's entries.
+const SVELTE_CACHE_DIR = ".bosia/cache/svelte";
+rmSync(SVELTE_CACHE_DIR, { recursive: true, force: true });
 
 // Snapshot pure shell env BEFORE any loadEnv call pollutes process.env.
 // On `.env*` change we restore from this snapshot, then re-run loadEnv,
@@ -142,6 +148,10 @@ async function runBuild(): Promise<boolean> {
 			...process.env,
 			BOSIA_OUT_DIR: DEV_OUT_DIR,
 			BOSIA_SKIP_ROUTE_SCAN: skipScan ? "1" : "0",
+			// The dev server never serves prerendered pages or dist/static, so the
+			// build skips producing them (~25% of a rebuild on the demo).
+			BOSIA_DEV_BUILD: "1",
+			BOSIA_SVELTE_CACHE_DIR: SVELTE_CACHE_DIR,
 		},
 	});
 	return (await proc.exited) === 0;

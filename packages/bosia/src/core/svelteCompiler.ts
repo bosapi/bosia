@@ -1,4 +1,6 @@
-import { compile, compileModule } from "svelte/compiler";
+import { mkdirSync } from "fs";
+import { join } from "path";
+import { compile, compileModule, parse, VERSION as SVELTE_VERSION } from "svelte/compiler";
 import type { BunPlugin } from "bun";
 
 import { auditSvelteSource } from "./svelteAudit.ts";
@@ -95,6 +97,56 @@ export function rebaseSvelteMarkup(source: string): string {
 	);
 }
 
+// ─── Dev compile cache ───────────────────────────────────
+// Every dev rebuild is a fresh `bun run build.ts`, so each one used to compile
+// every component twice (client + server) from scratch — most of the bundle
+// step. `bosia dev` points BOSIA_SVELTE_CACHE_DIR at a directory it clears on
+// start; a component whose source and compile inputs are unchanged reuses the
+// stored output. Production builds never set it.
+//
+// The import audit still runs on every build: it reads other files' exports,
+// so its verdict can change while this file doesn't. A hit re-parses the
+// source for it (~10x cheaper than a compile) and replays stored warnings.
+
+// Bump when the cached shape or anything feeding `compile()` below changes.
+const COMPILE_CACHE_VERSION = 1;
+
+type CompileWarning = { code: string; message: string; start?: { line: number; column: number } };
+type CachedCompile = { code: string; map: unknown; css: string | null; warnings: CompileWarning[] };
+
+let madeDir: string | null = null;
+function compileCacheDir(): string | null {
+	const dir = process.env.BOSIA_SVELTE_CACHE_DIR || null;
+	if (dir && dir !== madeDir) {
+		mkdirSync(dir, { recursive: true });
+		madeDir = dir;
+	}
+	return dir;
+}
+
+/**
+ * `build()`'s result, from the dev compile cache when `key` was seen before in
+ * this `bosia dev` session. Without a cache dir (every non-dev build) it just
+ * calls `build()`. `key` must cover every input of the compile; the Svelte
+ * version and COMPILE_CACHE_VERSION are added here. The value must be JSON.
+ */
+export async function cachedCompile<T>(
+	key: unknown[],
+	build: () => T,
+): Promise<{ value: T; hit: boolean }> {
+	const dir = compileCacheDir();
+	if (!dir) return { value: build(), hit: false };
+	const hash = Bun.hash(JSON.stringify([COMPILE_CACHE_VERSION, SVELTE_VERSION, ...key]));
+	const path = join(dir, `${hash.toString(36)}.json`);
+	try {
+		return { value: (await Bun.file(path).json()) as T, hit: true };
+	} catch {
+		const value = build();
+		await Bun.write(path, JSON.stringify(value));
+		return { value, hit: false };
+	}
+}
+
 export function makeBosiaSvelteCompiler(target: "browser" | "bun"): BunPlugin {
 	const generate = target === "browser" ? "client" : "server";
 	const dev = process.env.NODE_ENV !== "production";
@@ -109,41 +161,59 @@ export function makeBosiaSvelteCompiler(target: "browser" | "bun"): BunPlugin {
 
 			build.onLoad({ filter: /\.svelte$/ }, async (args) => {
 				const source = await Bun.file(args.path).text();
-				const result = compile(rebaseSvelteMarkup(source), {
-					generate,
-					// External on both targets. The browser used to get "injected",
-					// which put every scoped rule inside the JS bundle — so an
-					// SSR'd page painted before its own layout CSS existed and
-					// snapped into place at hydration. `collectComponentCss` below
-					// gathers the rules into one stylesheet the head can link.
-					css: "external",
-					dev,
-					hmr: false,
-					cssHash: ({ css }) => `svelte-${svelteHash(css)}`,
-					filename: args.path,
-					// Modern AST shape (Svelte 5.x) — `fragment`, `instance`, `module`
-					// rather than the legacy `html`. The audit walker assumes modern.
-					modernAst: true,
-				});
+				const rebased = rebaseSvelteMarkup(source);
+				// Set on a fresh compile; a cache hit re-parses for the audit.
+				let ast: unknown = undefined;
+				const { value: compiled } = await cachedCompile<CachedCompile>(
+					["bosia", args.path, generate, dev, rebased],
+					() => {
+						const result = compile(rebased, {
+							generate,
+							// External on both targets. The browser used to get "injected",
+							// which put every scoped rule inside the JS bundle — so an
+							// SSR'd page painted before its own layout CSS existed and
+							// snapped into place at hydration. `collectComponentCss` below
+							// gathers the rules into one stylesheet the head can link.
+							css: "external",
+							dev,
+							hmr: false,
+							cssHash: ({ css }) => `svelte-${svelteHash(css)}`,
+							filename: args.path,
+							// Modern AST shape (Svelte 5.x) — `fragment`, `instance`, `module`
+							// rather than the legacy `html`. The audit walker assumes modern.
+							modernAst: true,
+						});
+						ast = (result as unknown as { ast?: unknown }).ast;
+						return {
+							code: result.js.code,
+							map: typeof result.js.map === "string" ? JSON.parse(result.js.map) : result.js.map,
+							css: result.css?.code ?? null,
+							warnings: (result.warnings ?? []).map((w) => ({
+								code: w.code,
+								message: w.message,
+								start: w.start ? { line: w.start.line, column: w.start.column } : undefined,
+							})),
+						};
+					},
+				);
 				// Browser only: both plugin instances share module state and the
 				// client and server builds run concurrently, so collecting from
 				// each would emit every rule twice.
-				if (target === "browser" && result.css?.code) {
-					collectComponentCss(args.path, result.css.code);
+				if (target === "browser" && compiled.css) {
+					collectComponentCss(args.path, compiled.css);
 				}
 				const existing = auditInflight.get(args.path);
 				if (existing) {
 					await existing;
 				} else {
+					const warnings = compiled.warnings;
 					const promise = (async () => {
 						const strict = await getStrictImportsOption();
 						const failure = await auditSvelteSource({
 							source,
 							filename: args.path,
-							ast: (result as unknown as { ast?: unknown }).ast,
-							warnings: (result.warnings ?? []) as unknown as Parameters<
-								typeof auditSvelteSource
-							>[0]["warnings"],
+							ast: ast ?? parse(rebased, { modern: true }),
+							warnings: warnings as unknown as Parameters<typeof auditSvelteSource>[0]["warnings"],
 							cwd: process.cwd(),
 							exportCache: auditExportCache,
 							strict,
@@ -157,11 +227,10 @@ export function makeBosiaSvelteCompiler(target: "browser" | "bun"): BunPlugin {
 				// resolver — browser-side stack frames are what we need to translate.
 				// Server (Bun) compile output has different line numbers and would
 				// clobber the client entry under the same cache key.
-				if (dev && target === "browser" && result.js.map) {
-					const m = typeof result.js.map === "string" ? JSON.parse(result.js.map) : result.js.map;
-					svelteMapCache.set(args.path, m);
+				if (dev && target === "browser" && compiled.map) {
+					svelteMapCache.set(args.path, compiled.map);
 				}
-				const contents = dev ? fixBindShadow(result.js.code) : result.js.code;
+				const contents = dev ? fixBindShadow(compiled.code) : compiled.code;
 				return { contents, loader: "ts" };
 			});
 

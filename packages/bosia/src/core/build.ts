@@ -393,11 +393,16 @@ writeAppHtmlSegments(appHtml);
 // so they resolve against the app's node_modules at runtime.
 await bundleRuntimeUserFiles(process.cwd());
 
+// `bosia dev` builds for its own server only, which serves neither prerendered
+// pages nor dist/static (server.ts reads both from disk in prod only). Skipping
+// them saves booting a second server to crawl routes on every rebuild.
+const devBuild = process.env.BOSIA_DEV_BUILD === "1";
+
 // 9. Prerender static routes
-await prerenderStaticRoutes(manifest);
+if (!devBuild) await prerenderStaticRoutes(manifest);
 
 // 10. Generate static site output (HTML + client assets + public → dist/static/)
-generateStaticSite();
+if (!devBuild) generateStaticSite();
 
 // 10b. Precompress client assets + prerendered HTML (.br/.gz siblings) for the
 // Bun server. Runs after the static mirror so dist/static — the Workers upload
