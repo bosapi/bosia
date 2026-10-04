@@ -20,6 +20,19 @@
 - [x] ⚪ `serveStatic` sends a strong `ETag` (size+mtime, per encoding) and answers `If-None-Match` with 304. ETag only: no `Last-Modified`, so no heuristic freshness on `public/`.
 - [ ] ⚪ ETags are cached per process (one stat per path). A file swapped in place while the server runs keeps its old ETag until restart.
 
+## bosia 1.1.4 (2026-10-04) — security audit fixes (#5)
+
+- [x] 🔴 Layout server loaders always run; the `_invalidated` mask only omits their data. Actions run after layout guards; `parent()` is server-only.
+- [x] 🔴 Never serve `dist/server|worker/`, hooks/config bundles or build metadata. Dev matches request segments against real `readdir` names.
+- [x] 🟠 CLI `add/block/page/feat/theme`: `containedPath` + `registrySource` (URL-checked) run before deps; files read before any write.
+
+## bosia 1.1.4 (2026-10-04) — perf (#6)
+
+- [x] Route thunks import once; SSR overlaps metadata/imports/plugins; `/__bosia/data` cached (URL + `CACHE_KEYS` + mask, `_fresh=1` after invalidate), ETag 304 on hits.
+- [x] zstd per request, `Bun.gzipSync`; hover/touch/focus prefetch loads page chunks; `Link` preload header; dev Svelte compile cache, no prerender in dev.
+- [ ] 🟡 Server tests' `afterAll` kills the child without `await child.exited`, so Windows `rmSync` hits EBUSY (flaky CI). 5 files: data-endpoint-cache, layout-guard, dev-static, hooks-redirect, preload-link.
+- [ ] ⚪ A redirect thrown from `hooks.server.ts` ships without security headers (X-Content-Type-Options etc.). Pre-existing on main.
+
 ## docs 0.8.19 (2026-10-03) — "Brand" in block previews
 
 - [x] 🟢 `docs/sync-docs.ts` copies `registry/blocks` → `docs/.bosia/blocks` with `__BRAND__` → `Brand`; `$blocks/*` + `$lib/blocks/*` aliases point there. Registry keeps the sentinel.

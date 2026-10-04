@@ -15,11 +15,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Deployment guide explains ETag re-checks and the two compression levels.
 - Environment variables guide lists `PRERENDER_CONCURRENCY`, `CSP_DIRECTIVES` and the `BOSIA_` prefix.
 - Security guide explains how a layout login check protects the pages and form actions under it.
-- Data invalidation guide says layout loaders still run on the server when the browser reuses their data.
+- Data invalidation guide says layout loaders still run when the browser reuses their data.
 
 ### Changed
 
-- Response cache guide covers the router's page data: it's cached like HTML, `invalidate()` reads past it, and when it isn't stored.
+- Response cache guide explains how page data is cached and how `invalidate()` gets past it.
 - Response cache and page shell skills describe how cached page data shows up when you test a write.
 
 ## [0.8.19] - 2026-10-03

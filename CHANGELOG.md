@@ -13,13 +13,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Static files and prebuilt pages are served from memory after the first visit, about 3× faster.
 - New `ASSET_CACHE_MAX_BYTES` and `ASSET_CACHE_MAX_FILE_BYTES` settings limit that memory use.
 - Pages that aren't cached are compressed faster, so the server handles more visits.
-- Pages that aren't cached render about 35% faster: each route's code is loaded once instead of on every visit.
-- Moving between pages in the browser is faster: the data the router fetches is cached on the server like page HTML. The fetch after `invalidate()` still gets fresh data.
-- Browsers that accept zstd get pages compressed with it, which takes about half the server time of brotli for the same size. gzip is faster too.
-- `metadata()`, plugin output and a page's code now load at the same time as its layout loaders, instead of one after another. Layout login checks still run before the page loader.
-- Hovering, tapping or tabbing to a link now also downloads that page's code, so the click doesn't wait for it.
-- Pages send a `Link` header for their styles and scripts, so a CDN with Early Hints (like Cloudflare) can start those downloads sooner.
-- `bosia dev` rebuilds about twice as fast after an edit: unchanged components aren't recompiled, and pages aren't prerendered in dev.
+- Uncached pages render about 35% faster: each route's code is loaded once, not on every visit.
+- Page data for in-app navigation is now cached like page HTML, so moving between pages is faster.
+- Cached page data is keyed by `CACHE_KEYS` too: list your session cookie or set `cache = false`.
+- Data fetched right after `invalidate()` skips the cache, so it is always fresh.
+- Browsers that accept zstd get it: same size as brotli for about half the server work.
+- `metadata()`, plugins and page code now load alongside layout loaders instead of after them.
+- Hovering, tapping or tabbing to a link also downloads that page's code before the click.
+- Pages send a `Link` header so CDNs with Early Hints (like Cloudflare) start downloads sooner.
+- `bosia dev` rebuilds about twice as fast: unchanged components aren't recompiled.
 - Each request does less work before it's sent, about 10% more visits per second.
 
 ### Fixed
@@ -28,15 +30,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The first visit to a cached page compresses it once instead of twice.
 - Bosia's own settings (like `CACHE_KEYS` or `BOSIA_*`) no longer show up in `$env`.
 - Browsers re-check cached pages and page data with the server instead of downloading them again.
-
-### Security
-
-- A `+layout.server.ts` login check now protects its pages on every visit. Before, a crafted link could skip it and read the page's data without signing in.
-- Form actions now run only after the layout login checks above them pass.
-- `parent()` only returns data the server produced. A browser can no longer supply it.
-- Your server code is no longer downloadable. A production server used to serve the bundled `src/hooks.server.ts` at `/hooks.server.js`, along with anything it imported.
+- A crafted link can no longer skip a `+layout.server.ts` login check to read page data.
+- Form actions run only after the layout login checks above them pass.
+- `parent()` only returns data from the server, never data sent by the browser.
+- Your server code (like `/hooks.server.js`) can no longer be downloaded in production.
 - The dev server no longer serves the built server code under `dist/`.
-- `bosia add` and `bosia feat` only write files inside your project. A registry entry pointing elsewhere (like `../.bashrc`) is refused.
+- `bosia add` and `bosia feat` refuse registry files that would land outside your project.
 
 ## [1.1.3] - 2026-10-03
 
