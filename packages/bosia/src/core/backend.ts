@@ -17,6 +17,8 @@ export interface HandlerContext {
 	 */
 	body: unknown;
 	query: Record<string, string>;
+	/** `request.url`, parsed once for the whole dispatch. */
+	url: URL;
 	set: ResponseSet;
 }
 
@@ -153,10 +155,15 @@ export class BosiaApp {
 		const route = this.match(method, url.pathname);
 		let response: unknown;
 		if (route) {
+			let query: Record<string, string> | undefined;
 			response = await route.handler({
 				request,
 				body: BODYLESS.has(method) || route.path === "*" ? undefined : await parseBody(request),
-				query: Object.fromEntries(url.searchParams),
+				// Built on first read: the framework's "*" route never reads it.
+				get query() {
+					return (query ??= Object.fromEntries(url.searchParams));
+				},
+				url,
 				set,
 			});
 		} else {

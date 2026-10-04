@@ -62,10 +62,18 @@ export function baseScript(nonce?: string): string {
  *  no buster (same reason as ENTRY). Unknown pattern or an older dist/ without
  *  the `preload` field → nothing, and the page loads as it did before. */
 export function routePreloadLinks(pattern?: string): string {
-	if (!pattern) return "";
-	return (distManifest.preload?.[pattern] ?? [])
-		.map((f) => `\n  <link rel="modulepreload" href="${DIST}/${f}">`)
-		.join("");
+	const preload = distManifest.preload;
+	if (!pattern || !preload) return "";
+	let byPattern = preloadLinks.get(preload);
+	if (!byPattern) preloadLinks.set(preload, (byPattern = new Map()));
+	let links = byPattern.get(pattern);
+	if (links === undefined) {
+		links = (preload[pattern] ?? [])
+			.map((f) => `\n  <link rel="modulepreload" href="${DIST}/${f}">`)
+			.join("");
+		byPattern.set(pattern, links);
+	}
+	return links;
 }
 
 // One header value per route pattern (plus "" for no pattern), built on first
@@ -113,12 +121,25 @@ export function withPreloadLink(
 	return { ...extra, link: own ? `${own}, ${link}` : link };
 }
 
+// The head fragments below are the same on every request, so each is built
+// once and reused for as long as the manifest field it reads stays the same
+// object (tests swap them out).
+const preloadLinks = new WeakMap<object, Map<string, string>>();
+
 /** Tailwind stylesheet link. Content-hashed name needs no cache buster — the
  *  hash IS the buster. Fallback keeps older dist/ artifacts (no `tw` field) styled. */
+let twLink: { tw: string | undefined; html: string } | null = null;
 function twCssLink(): string {
-	return distManifest.tw
-		? `<link rel="stylesheet" href="${DIST}/${distManifest.tw}">`
-		: `<link rel="stylesheet" href="${TW_CSS}${cacheBust}">`;
+	const tw = distManifest.tw;
+	if (!twLink || twLink.tw !== tw) {
+		twLink = {
+			tw,
+			html: tw
+				? `<link rel="stylesheet" href="${DIST}/${tw}">`
+				: `<link rel="stylesheet" href="${TW_CSS}${cacheBust}">`,
+		};
+	}
+	return twLink.html;
 }
 
 /** The build-time component stylesheet (scoped `<style>` blocks, concatenated).
@@ -128,10 +149,18 @@ function twCssLink(): string {
  *  is settled on source order. Linking before Tailwind would silently flip
  *  which one wins. Each entry carries its own indent and newline, so an app with
  *  no scoped styles at all contributes nothing rather than a blank line. */
+let cssLinks: { css: string[] | undefined; html: string } | null = null;
 function componentCssLinks(): string {
-	return (distManifest.css ?? [])
-		.map((f: string) => `  <link rel="stylesheet" href="${DIST}/${f}">\n`)
-		.join("");
+	const css = distManifest.css;
+	if (!cssLinks || cssLinks.css !== css) {
+		cssLinks = {
+			css,
+			html: (css ?? [])
+				.map((f: string) => `  <link rel="stylesheet" href="${DIST}/${f}">\n`)
+				.join(""),
+		};
+	}
+	return cssLinks.html;
 }
 
 /** Inline theme bootstrap — runs before paint to avoid FOUC. theme ∈ light|dark|system (missing = system). */

@@ -172,6 +172,24 @@ describe("a guard runs on client navigations too", () => {
 	});
 });
 
+describe("security headers", () => {
+	// Response.redirect() has immutable headers, so this is the one response
+	// handleRequest copies instead of setting headers on in place.
+	test("reach a hook's Response.redirect, whose headers can't be changed in place", async () => {
+		const res = await fetch(`${origin}/admin`, { redirect: "manual" });
+		expect(res.status).toBe(303);
+		expect(res.headers.get("location")).toContain("/login");
+		expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+		expect(res.headers.get("x-frame-options")).toBe("SAMEORIGIN");
+	});
+
+	test("reach an ordinary page response", async () => {
+		const res = await fetch(`${origin}/`);
+		expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+		expect(res.headers.get("referrer-policy")).toBe("strict-origin-when-cross-origin");
+	});
+});
+
 describe("a hook can redirect a data request", () => {
 	// `fetch` follows a raw 303, so the router used to receive the login page's
 	// HTML at status 200, fail to parse it, and render "500 Internal Server Error".

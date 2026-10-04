@@ -30,6 +30,7 @@ import {
 	PRECOMPRESSED,
 	type Encoded,
 	preloadLinkHeader,
+	compressionOn,
 } from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
@@ -1099,7 +1100,24 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 			}
 		}
 
-		const headers = new Headers(response.headers);
+		// Set on the response itself when its headers are mutable, which every
+		// Response the framework builds has. Copying them and rebuilding the
+		// Response cost a Headers copy plus a body re-wrap on every request.
+		// Responses with immutable headers (`fetch()`, `Response.redirect()`)
+		// still get the copy.
+		// On Workers (compressionOn is false only there) an already-encoded body
+		// is rebuilt as before, since the rebuild is what marks it PRECOMPRESSED.
+		let mutable: Headers | null = null;
+		if (compressionOn || !response.headers.has("content-encoding")) {
+			try {
+				response.headers.set("X-Content-Type-Options", SECURITY_HEADERS["X-Content-Type-Options"]!);
+				mutable = response.headers;
+			} catch {
+				// immutable — copied below
+			}
+		}
+		const inPlace = mutable !== null;
+		const headers = mutable ?? new Headers(response.headers);
 		// A handle can mark a response (e.g. a proxied embeddable preview) to opt
 		// out of the frame guard. Strip the internal marker so it never ships, and
 		// skip only X-Frame-Options for that response — other security headers stay.
@@ -1124,6 +1142,7 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		}
 		// Apply any Set-Cookie headers accumulated during the request
 		for (const cookie of cookieJar.outgoing) headers.append("Set-Cookie", cookie);
+		if (inPlace) return response;
 		return new Response(response.body, {
 			// A Content-Encoding here means the body is already compressed (cache
 			// hit, compress()); rebuilding drops that flag and Workers would
@@ -1328,8 +1347,10 @@ export type CreateAppOptions = {
 	handle?: Handle | null;
 };
 
-const frameworkHandler = ({ request }: { request: Request }) =>
-	handleRequest(request, new URL(request.url));
+// `url` is BosiaApp's own parse of `request.url`; handleRequest rewrites it in
+// place (BASE_PATH, X-Forwarded-*), which is safe because routing already ran.
+const frameworkHandler = ({ request, url }: { request: Request; url: URL }) =>
+	handleRequest(request, url);
 
 /** Build the backend app: plugins, the framework's catch-all routes, error handling. */
 export async function createApp(options: CreateAppOptions = {}): Promise<BosiaApp> {
