@@ -3,13 +3,7 @@
 	import { router, scrollToHash } from "./router.svelte.ts";
 	import { findMatch } from "../matcher.ts";
 	import { clientRoutes } from "bosia:routes";
-	import {
-		consumePrefetch,
-		prefetchCache,
-		dataUrl,
-		buildParentSnapshots,
-		readDataResponse,
-	} from "./prefetch.ts";
+	import { consumePrefetch, prefetchCache, dataUrl, readDataResponse } from "./prefetch.ts";
 	import { appState, clearDirty } from "./appState.svelte.ts";
 	import { captureSnapshot, liveContext, shouldRerun, type CacheEntry } from "./loaderCache.ts";
 	import { pickErrorPage } from "../errorMatch.ts";
@@ -209,10 +203,10 @@
 		}
 
 		// Build `_invalidated=<bits>` — char 0 = page, char i+1 = layouts[i].
-		// '1' = run, '0' = skip. Always sent so the server honors cached layers.
-		// We always issue the fetch (even when all loaders skip) so page-level
-		// metadata stays fresh on every navigation; only the loaders flagged in
-		// the mask actually run server-side.
+		// '1' = send, '0' = omit (the client renders that layer from its cache;
+		// the server still runs layout loaders, which may be guards).
+		// We always issue the fetch (even when every layer is cached) so page-level
+		// metadata stays fresh on every navigation.
 		const maskBits = (pageRun ? "1" : "0") + layoutRunFlags.map((b) => (b ? "1" : "0")).join("");
 
 		// Clear dirty set now — we've baked it into the mask.
@@ -222,25 +216,12 @@
 		// to avoid a flash of stale/empty data before the fetch completes.
 		const cached = match.route.hasServerData && !invalidated ? consumePrefetch(path) : null;
 		prefetchCache.clear(); // clear remaining entries on navigation — matches SvelteKit behavior
-		// Forward cached parent data for skipped layers so downstream loaders see
-		// real parent() data, not {}. POST only when there's something to carry —
-		// keeps the no-skip case a cacheable/dedupable GET.
-		// A prerendered route's data is a fixed file, so there is nothing to skip —
-		// and on Workers the asset server answers anything but GET with 405.
+		// A prerendered route's data is a fixed file, so there is nothing to omit.
 		const prerendered = match.route.prerender;
-		const snapshots = prerendered ? {} : buildParentSnapshots(path, maskBits);
-		const dataInit: RequestInit =
-			Object.keys(snapshots).length > 0
-				? {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ parentSnapshots: snapshots }),
-					}
-				: {};
 		const dataFetch = cached
 			? Promise.resolve(cached)
 			: match.route.hasServerData
-				? fetch(dataUrl(path, prerendered ? undefined : maskBits), dataInit)
+				? fetch(dataUrl(path, prerendered ? undefined : maskBits))
 						.then(readDataResponse)
 						// Only a failed request reaches here now — offline, DNS, aborted.
 						// A response that arrived is read for what it says, not discarded.

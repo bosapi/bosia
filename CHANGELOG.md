@@ -20,6 +20,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The first visit to a cached page compresses it once instead of twice.
 - Bosia's own settings (like `CACHE_KEYS` or `BOSIA_*`) no longer show up in `$env`.
 
+### Security
+
+- A `+layout.server.ts` login check now protects its pages on every visit. Before, a crafted link could skip it and read the page's data without signing in.
+- Form actions now run only after the layout login checks above them pass.
+- `parent()` only returns data the server produced. A browser can no longer supply it.
+
 ## [1.1.3] - 2026-10-03
 
 ### Fixed

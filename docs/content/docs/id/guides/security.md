@@ -175,6 +175,26 @@ BODY_SIZE_LIMIT=Infinity # no limit (not recommended)
 
 Mendukung sufiks `K` (kilobyte), `M` (megabyte), dan `G` (gigabyte).
 
+## Penjaga Rute di Layout
+
+`+layout.server.ts` yang mengarahkan pengunjung anonim ke halaman login melindungi setiap halaman dan form action di bawahnya:
+
+```ts
+// src/routes/(private)/+layout.server.ts
+import { redirect, type LoadEvent } from "bosia";
+
+export async function load({ locals }: LoadEvent) {
+	if (!locals.user) throw redirect(303, "/login");
+	return { user: locals.user };
+}
+```
+
+Loader server layout dijalankan pada setiap request ke halaman di bawahnya: muat halaman penuh, navigasi sisi klien, dan POST form action. Browser bisa meminta agar data layout yang sudah di-cache tidak disertakan di respons navigasi, tetapi tidak bisa mencegah loader dijalankan. Form action baru dijalankan setelah semua loader layout lolos.
+
+`parent()` selalu mengembalikan data yang dihasilkan di server. Browser tidak bisa menyuplainya.
+
+Untuk pemeriksaan yang juga harus mencakup rute API (`+server.ts`), gunakan [hook `handle`](/id/guides/middleware-hooks/). Rute API tidak punya layout.
+
 ## Proteksi Path Traversal
 
 Penayangan file statis dan halaman prerendered memvalidasi bahwa path file yang telah diselesaikan tetap berada dalam direktori yang diizinkan, mencegah serangan traversal `../`.
