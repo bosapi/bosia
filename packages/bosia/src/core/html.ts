@@ -464,15 +464,26 @@ export function disableCompression(): void {
 // Shared, stateless — one instance instead of a fresh allocation per response.
 const textEncoder = new TextEncoder();
 
-export type Encoding = "br" | "gzip";
+/** Encodings stored ahead of time — cache entries and build-time static files. */
+export type StoredEncoding = "br" | "gzip";
+export type Encoding = StoredEncoding | "zstd";
 
-/** Best encoding the client accepts — brotli over gzip, null for identity.
+/** Best stored encoding the client accepts — brotli over gzip, null for identity.
  *  A substring check, not q-value parsing: no browser sends `br;q=0`. */
-export function pickEncoding(accept: string | null): Encoding | null {
+export function pickEncoding(accept: string | null): StoredEncoding | null {
 	if (!accept) return null;
 	if (accept.includes("br")) return "br";
 	if (accept.includes("gzip")) return "gzip";
 	return null;
+}
+
+/** Best encoding for a body compressed on the spot. zstd comes first: at
+ *  level 3 it matches brotli q3's size on an HTML page in about half the CPU
+ *  (55µs vs 95µs for 7KB). Current Chrome and Firefox send it; everyone else
+ *  falls back to `pickEncoding`. */
+export function pickRequestEncoding(accept: string | null): Encoding | null {
+	if (accept?.includes("zstd")) return "zstd";
+	return pickEncoding(accept);
 }
 
 // Per-request brotli runs once per response, so it favors speed: q3 is ~2x
@@ -485,6 +496,10 @@ const BROTLI = {
 	cache: { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } },
 };
 
+// Bun's native gzip is ~40% faster than node:zlib's at the same level and
+// size. Workers has no `Bun`, but never compresses (see compressionOn).
+const hasBun = typeof Bun !== "undefined";
+
 /** The one place runtime compression quality is set — cache.ts builds its
  *  stored variants through here too. gzip keeps zlib's default level. */
 export function encodeBytes(
@@ -492,6 +507,9 @@ export function encodeBytes(
 	enc: Encoding,
 	quality: Quality = "request",
 ): Uint8Array<ArrayBuffer> {
+	if (enc === "zstd") return Bun.zstdCompressSync(bytes, { level: 3 }) as Uint8Array<ArrayBuffer>;
+	if (enc === "gzip" && hasBun)
+		return Bun.gzipSync(bytes as Uint8Array<ArrayBuffer>) as Uint8Array<ArrayBuffer>;
 	const out = enc === "br" ? brotliCompressSync(bytes, BROTLI[quality]) : gzipSync(bytes);
 	return new Uint8Array(out) as Uint8Array<ArrayBuffer>;
 }
@@ -504,7 +522,10 @@ export function encodeForRequest(
 	req: Request,
 	quality: Quality = "request",
 ): Encoded | null {
-	const enc = pickEncoding(req.headers.get("accept-encoding"));
+	const accept = req.headers.get("accept-encoding");
+	// A cache-quality body is also stored in the cache entry, which only keeps
+	// brotli and gzip copies — so it never picks zstd.
+	const enc = quality === "cache" ? pickEncoding(accept) : pickRequestEncoding(accept);
 	// Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
 	// responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
 	if (!compressionOn || isDev || !enc || bytes.length <= GZIP_MIN_BYTES) return null;
