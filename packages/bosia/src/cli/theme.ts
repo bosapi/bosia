@@ -1,6 +1,11 @@
 import { join } from "path";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
-import { resolveLocalRegistryOrExit, readRegistryJSON, readRegistryFile } from "./registry.ts";
+import {
+	containedPath,
+	resolveLocalRegistryOrExit,
+	readRegistryJSON,
+	readRegistryFile,
+} from "./registry.ts";
 import { mergeFontImports } from "./fonts.ts";
 
 // ─── bun x bosia@latest add theme <name> ─────────────────
@@ -46,7 +51,7 @@ export async function runAddTheme(name: string | undefined, flags: string[] = []
 	// Convention: first file is the tokens file, written as <name>.css.
 	const tokensFile = meta.files[0] ?? "tokens.css";
 	const content = await readRegistryFile(registryRoot, "themes", name, tokensFile);
-	const tokensDest = join(themesDir, `${name}.css`);
+	const tokensDest = containedPath(themesDir, `${name}.css`);
 	writeFileSync(tokensDest, content, "utf-8");
 	console.log(`   ✍️  src/lib/themes/${name}.css`);
 

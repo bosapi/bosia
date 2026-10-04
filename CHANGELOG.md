@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `parent()` only returns data the server produced. A browser can no longer supply it.
 - Your server code is no longer downloadable. A production server used to serve the bundled `src/hooks.server.ts` at `/hooks.server.js`, along with anything it imported.
 - The dev server no longer serves the built server code under `dist/`.
+- `bosia add` and `bosia feat` only write files inside your project. A registry entry pointing elsewhere (like `../.bashrc`) is refused.
 
 ## [1.1.3] - 2026-10-03
 

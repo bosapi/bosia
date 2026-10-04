@@ -2,12 +2,13 @@ import { join, dirname } from "path";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
 import * as p from "@clack/prompts";
 import {
+	checkRegistryFiles,
+	containedPath,
 	type InstallOptions,
 	REGISTRY_URL,
 	resolveLocalRegistryOrExit,
 	readRegistryJSON,
-	readRegistryFile,
-	writeRegistryFile,
+	installRegistryFiles,
 	mergePkgJson,
 	bunAdd,
 } from "./registry.ts";
@@ -128,13 +129,16 @@ export async function addComponent(name: string, root = false, options?: Install
 		"meta.json",
 	);
 
+	// Check this component's own paths before installing anything for it.
+	const destDir = containedPath(join(cwd, "src", "lib", "components"), fullPath);
+	checkRegistryFiles(registryRoot, "components", fullPath, meta.files, destDir);
+
 	// Install component dependencies first (recursive)
 	for (const dep of meta.dependencies) {
 		await addComponent(dep, false, options);
 	}
 
 	// Check if component already exists (skip check entirely in non-interactive mode)
-	const destDir = join(cwd, "src", "lib", "components", fullPath);
 	if (!options?.skipPrompts && existsSync(destDir)) {
 		const replace = await p.confirm({
 			message: `Component "${name}" already exists at src/lib/components/${fullPath}/. Replace it?`,
@@ -146,15 +150,14 @@ export async function addComponent(name: string, root = false, options?: Install
 	}
 
 	// Download/copy component files into src/lib/components/<fullPath>/
-	mkdirSync(destDir, { recursive: true });
-
-	for (const file of meta.files) {
-		const content = await readRegistryFile(registryRoot, "components", fullPath, file);
-		const dest = join(destDir, file);
-		if (file.includes("/")) mkdirSync(dirname(dest), { recursive: true });
-		writeRegistryFile(dest, content);
-		console.log(`   ✍️  src/lib/components/${fullPath}/${file}`);
-	}
+	await installRegistryFiles(
+		registryRoot,
+		"components",
+		fullPath,
+		meta.files,
+		destDir,
+		`src/lib/components/${fullPath}`,
+	);
 
 	// Install npm dependencies
 	if (Object.keys(meta.npmDeps).length > 0) {

@@ -1,12 +1,13 @@
-import { join, dirname } from "path";
-import { mkdirSync, existsSync } from "fs";
+import { join } from "path";
+import { existsSync } from "fs";
 import * as p from "@clack/prompts";
 import {
+	checkRegistryFiles,
+	containedPath,
 	type InstallOptions,
 	resolveLocalRegistryOrExit,
 	readRegistryJSON,
-	readRegistryFile,
-	writeRegistryFile,
+	installRegistryFiles,
 	mergePkgJson,
 	bunAdd,
 } from "./registry.ts";
@@ -69,6 +70,11 @@ export async function runAddBlock(
 
 	const meta = await readRegistryJSON<BlockMeta>(registryRoot, "blocks", name, "meta.json");
 
+	// Check this item's own paths before installing anything for it.
+	const cwd = resolvedOptions.cwd ?? process.cwd();
+	const destDir = containedPath(join(cwd, "src", "lib", "blocks"), name);
+	checkRegistryFiles(registryRoot, "blocks", name, meta.files, destDir);
+
 	// 1. Install primitive dependencies first.
 	// Component deps (e.g. "ui/button") go through addComponent.
 	// Block deps (e.g. "blocks/files/upload-area") recurse into runAddBlock.
@@ -81,9 +87,6 @@ export async function runAddBlock(
 	}
 
 	// 2. Copy block files to src/lib/blocks/<path>/
-	const cwd = resolvedOptions.cwd ?? process.cwd();
-	const destDir = join(cwd, "src", "lib", "blocks", name);
-
 	if (!resolvedOptions.skipPrompts && existsSync(destDir)) {
 		const replace = await p.confirm({
 			message: `Block "${name}" already exists at src/lib/blocks/${name}/. Replace it?`,
@@ -94,15 +97,14 @@ export async function runAddBlock(
 		}
 	}
 
-	mkdirSync(destDir, { recursive: true });
-
-	for (const file of meta.files) {
-		const content = await readRegistryFile(registryRoot, "blocks", name, file);
-		const dest = join(destDir, file);
-		if (file.includes("/")) mkdirSync(dirname(dest), { recursive: true });
-		writeRegistryFile(dest, content);
-		console.log(`   ✍️  src/lib/blocks/${name}/${file}`);
-	}
+	await installRegistryFiles(
+		registryRoot,
+		"blocks",
+		name,
+		meta.files,
+		destDir,
+		`src/lib/blocks/${name}`,
+	);
 
 	// 3. Merge font @imports into app.css (idempotent)
 	if (meta.fonts && Object.keys(meta.fonts).length > 0) {
