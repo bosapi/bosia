@@ -2,6 +2,7 @@ import { join } from "path";
 import { existsSync } from "fs";
 import * as p from "@clack/prompts";
 import {
+	checkRegistryFiles,
 	containedPath,
 	type InstallOptions,
 	resolveLocalRegistryOrExit,
@@ -69,6 +70,11 @@ export async function runAddPage(
 
 	const meta = await readRegistryJSON<PageMeta>(registryRoot, "pages", name, "meta.json");
 
+	// Check this item's own paths before installing anything for it.
+	const cwd = resolvedOptions.cwd ?? process.cwd();
+	const destDir = containedPath(join(cwd, "src", "lib", "pages"), name);
+	checkRegistryFiles(registryRoot, "pages", name, meta.files, destDir);
+
 	// 1. Install dependencies first.
 	// Block deps (e.g. "blocks/storefront/header") recurse into runAddBlock.
 	// Component deps (e.g. "ui/button") go through addComponent.
@@ -81,9 +87,6 @@ export async function runAddPage(
 	}
 
 	// 2. Copy page files to src/lib/pages/<path>/
-	const cwd = resolvedOptions.cwd ?? process.cwd();
-	const destDir = containedPath(join(cwd, "src", "lib", "pages"), name);
-
 	if (!resolvedOptions.skipPrompts && existsSync(destDir)) {
 		const replace = await p.confirm({
 			message: `Page "${name}" already exists at src/lib/pages/${name}/. Replace it?`,

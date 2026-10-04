@@ -68,6 +68,37 @@ export function containedPath(base: string, rel: string): string {
 
 // ─── Registry file readers ────────────────────────────────
 
+/**
+ * Where a registry file comes from: a path under the local registry's category
+ * folder, or a URL under the remote one. Throws when `name`/`file` would leave
+ * that folder.
+ *
+ * The remote case is checked as a URL, because a URL is what gets fetched. The
+ * URL parser reads `%2e%2e` as `..` (a path check sees a plain folder name), and
+ * `?` or `#` would cut the path short, so all three are refused, and the parsed
+ * pathname must still sit under the category.
+ */
+export function registrySource(
+	registryRoot: string | null,
+	category: string,
+	name: string,
+	file: string,
+): string {
+	const rel = `${name}/${file}`;
+	if (registryRoot) return containedPath(join(registryRoot, category), rel);
+
+	if (/[%?#]/.test(rel)) {
+		throw new Error(`Refusing to use "${rel}": registry paths can't contain "%", "?" or "#"`);
+	}
+	containedPath(category, rel);
+	const base = new URL(`${REGISTRY_URL}/${category}/`);
+	const url = new URL(rel, base);
+	if (url.origin !== base.origin || !url.pathname.startsWith(base.pathname)) {
+		throw new Error(`Refusing to use "${rel}": it resolves outside ${base.href}`);
+	}
+	return url.href;
+}
+
 /** Read and parse a JSON file from the registry (local or remote). */
 export async function readRegistryJSON<T>(
 	registryRoot: string | null,
@@ -75,18 +106,12 @@ export async function readRegistryJSON<T>(
 	name: string,
 	file: string,
 ): Promise<T> {
-	if (registryRoot) {
-		const path = containedPath(join(registryRoot, category), `${name}/${file}`);
-		if (!existsSync(path)) {
-			throw new Error(
-				`"${file}" not found for ${category.slice(0, -1)} "${name}" in local registry`,
-			);
-		}
-		return JSON.parse(readFileSync(path, "utf-8"));
+	const source = registrySource(registryRoot, category, name, file);
+	if (!registryRoot) return fetchJSON<T>(source);
+	if (!existsSync(source)) {
+		throw new Error(`"${file}" not found for ${category.slice(0, -1)} "${name}" in local registry`);
 	}
-	// Same check for the remote registry: no `../` out of the category folder.
-	containedPath(category, `${name}/${file}`);
-	return fetchJSON<T>(`${REGISTRY_URL}/${category}/${name}/${file}`);
+	return JSON.parse(readFileSync(source, "utf-8"));
 }
 
 /** Read a text file from the registry (local or remote). */
@@ -96,26 +121,41 @@ export async function readRegistryFile(
 	name: string,
 	file: string,
 ): Promise<string> {
-	if (registryRoot) {
-		const path = containedPath(join(registryRoot, category), `${name}/${file}`);
-		if (!existsSync(path)) {
-			throw new Error(
-				`File "${file}" not found for ${category.slice(0, -1)} "${name}" in local registry`,
-			);
-		}
-		return readFileSync(path, "utf-8");
+	const source = registrySource(registryRoot, category, name, file);
+	if (!registryRoot) return fetchText(source);
+	if (!existsSync(source)) {
+		throw new Error(
+			`File "${file}" not found for ${category.slice(0, -1)} "${name}" in local registry`,
+		);
 	}
-	// Same check for the remote registry: no `../` out of the category folder.
-	containedPath(category, `${name}/${file}`);
-	return fetchText(`${REGISTRY_URL}/${category}/${name}/${file}`);
+	return readFileSync(source, "utf-8");
 }
 
 // ─── Registry file installer ──────────────────────────────
 
 /**
- * Copy a registry item's `files` into `destDir`. Every destination is checked
- * and every file read before the first write, so a rejected path or a failed
- * download leaves nothing half-installed. `label` is the project-relative
+ * Check every source and destination path of a registry item without reading
+ * or writing anything. Installers call this right after reading `meta.json`,
+ * before installing any dependency, so a bad path stops the install before
+ * anything is written. Returns the checked destinations, in `files` order.
+ */
+export function checkRegistryFiles(
+	registryRoot: string | null,
+	category: string,
+	name: string,
+	files: string[],
+	destDir: string,
+): string[] {
+	return files.map((file) => {
+		registrySource(registryRoot, category, name, file);
+		return containedPath(destDir, file);
+	});
+}
+
+/**
+ * Copy a registry item's `files` into `destDir`. Every path is checked and
+ * every file read (in parallel) before the first write, so a rejected path or a
+ * failed download leaves nothing half-installed. `label` is the project-relative
  * `destDir` used in the log lines.
  */
 export async function installRegistryFiles(
@@ -126,22 +166,17 @@ export async function installRegistryFiles(
 	destDir: string,
 	label: string,
 ): Promise<void> {
-	const planned: { file: string; dest: string; content: string }[] = [];
-	for (const file of files) {
-		const dest = containedPath(destDir, file);
-		planned.push({
-			file,
-			dest,
-			content: await readRegistryFile(registryRoot, category, name, file),
-		});
-	}
+	const dests = checkRegistryFiles(registryRoot, category, name, files, destDir);
+	const contents = await Promise.all(
+		files.map((file) => readRegistryFile(registryRoot, category, name, file)),
+	);
 
 	mkdirSync(destDir, { recursive: true });
-	for (const { file, dest, content } of planned) {
-		if (file.includes("/")) mkdirSync(dirname(dest), { recursive: true });
-		writeRegistryFile(dest, content);
+	files.forEach((file, i) => {
+		if (file.includes("/")) mkdirSync(dirname(dests[i]!), { recursive: true });
+		writeRegistryFile(dests[i]!, contents[i]!);
 		console.log(`   ✍️  ${label}/${file}`);
-	}
+	});
 }
 
 // ─── Registry file writer ─────────────────────────────────

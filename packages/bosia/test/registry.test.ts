@@ -3,7 +3,10 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "os";
 import { join } from "path";
 import {
+	checkRegistryFiles,
 	containedPath,
+	REGISTRY_URL,
+	registrySource,
 	installRegistryFiles,
 	mergePkgJson,
 	readRegistryJSON,
@@ -11,6 +14,7 @@ import {
 	writeRegistryFile,
 } from "../src/cli/registry.ts";
 import { routeAdd, type AddRunners } from "../src/cli/addRouter.ts";
+import { runAddBlock } from "../src/cli/block.ts";
 import { toPosix } from "../src/core/paths.ts";
 
 let tmpDir: string;
@@ -267,9 +271,9 @@ describe("installRegistryFiles", () => {
 	let dest: string;
 
 	beforeEach(() => {
-		const root = mkdtempSync(join(tmpdir(), "bosia-install-"));
-		registry = join(root, "registry");
-		dest = join(root, "proj", "src", "lib", "blocks", "hero");
+		// Under the file-level tmpDir, which afterEach removes.
+		registry = join(tmpDir, "registry");
+		dest = join(tmpDir, "proj", "src", "lib", "blocks", "hero");
 		mkdirSync(join(registry, "blocks", "hero"), { recursive: true });
 		writeFileSync(join(registry, "blocks", "hero", "a.svelte"), "A");
 		writeFileSync(join(registry, "blocks", "hero", "b.svelte"), "B");
@@ -293,5 +297,70 @@ describe("installRegistryFiles", () => {
 			installRegistryFiles(registry, "blocks", "hero", ["a.svelte", "missing.svelte"], dest, "x"),
 		).rejects.toThrow(/not found/);
 		expect(existsSync(dest)).toBe(false);
+	});
+});
+
+describe("registrySource (remote)", () => {
+	test("builds the URL under the category", () => {
+		expect(registrySource(null, "components", "ui/button", "meta.json")).toBe(
+			`${REGISTRY_URL}/components/ui/button/meta.json`,
+		);
+	});
+
+	test("refuses percent-encoded dot segments, which fetch() reads as '..'", () => {
+		// `new URL()` turns this into github.com/bosapi/evil/repo/main/x.ts — a
+		// path check alone sees folders literally named "%2e%2e" and passes it.
+		const name = "%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/evil/repo/main";
+		expect(() => registrySource(null, "features", name, "x.ts")).toThrow(/"%"/);
+	});
+
+	test("refuses '?' and '#', which would cut the fetched path short", () => {
+		expect(() => registrySource(null, "blocks", "a/b", "../../x?y")).toThrow(/"\?"/);
+		expect(() => registrySource(null, "blocks", "a/b", "x#y")).toThrow(/"#"/);
+	});
+
+	test("the readers refuse before fetching", async () => {
+		await expect(readRegistryJSON(null, "features", "%2e%2e/x", "meta.json")).rejects.toThrow(
+			/"%"/,
+		);
+	});
+});
+
+describe("paths are checked before dependencies install", () => {
+	test("checkRegistryFiles throws on a bad destination without writing", () => {
+		const dest = join(tmpDir, "proj", "src", "lib", "blocks", "x");
+		expect(() =>
+			checkRegistryFiles(null, "blocks", "cards/x", ["ok.svelte", "../../../../../evil"], dest),
+		).toThrow(/outside/);
+		expect(existsSync(join(tmpDir, "proj"))).toBe(false);
+	});
+
+	test("a block with a bad file path installs none of its dependencies", async () => {
+		const registry = join(tmpDir, "registry");
+		const proj = join(tmpDir, "proj");
+		const meta = (m: object) => JSON.stringify({ files: [], npmDeps: {}, ...m });
+		mkdirSync(join(registry, "blocks", "cards", "dep-ok"), { recursive: true });
+		mkdirSync(join(registry, "blocks", "cards", "bad-path"), { recursive: true });
+		writeFileSync(
+			join(registry, "blocks", "cards", "dep-ok", "meta.json"),
+			meta({ files: ["block.svelte"] }),
+		);
+		writeFileSync(join(registry, "blocks", "cards", "dep-ok", "block.svelte"), "ok");
+		writeFileSync(
+			join(registry, "blocks", "cards", "bad-path", "meta.json"),
+			meta({ dependencies: ["blocks/cards/dep-ok"], files: ["../../../../../../evil"] }),
+		);
+		mkdirSync(join(proj, "src"), { recursive: true });
+		writeFileSync(join(proj, "package.json"), "{}");
+
+		await expect(
+			runAddBlock("cards/bad-path", [], {
+				cwd: proj,
+				registryRoot: registry,
+				skipPrompts: true,
+				skipInstall: true,
+			}),
+		).rejects.toThrow(/outside/);
+		expect(existsSync(join(proj, "src", "lib", "blocks", "cards", "dep-ok"))).toBe(false);
 	});
 });

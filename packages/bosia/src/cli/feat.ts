@@ -5,6 +5,7 @@ import { addComponent, initAddRegistry } from "./add.ts";
 import { runAddBlock } from "./block.ts";
 import {
 	containedPath,
+	registrySource,
 	type InstallOptions,
 	resolveLocalRegistryOrExit,
 	readRegistryJSON,
@@ -247,6 +248,13 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 		featureArgs: undefined, // already consumed by the root feature
 	};
 
+	// Check every target and source path before installing any dependency, so a
+	// bad path in this feature stops the install before anything is written.
+	for (const entry of meta.files) {
+		containedPath(cwd, entry.target);
+		registrySource(registryRoot, "features", name, entry.src);
+	}
+
 	// Install required feature dependencies first (recursive)
 	if (meta.features && meta.features.length > 0) {
 		for (const feat of meta.features) {
@@ -272,16 +280,16 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 		console.log("");
 	}
 
-	// Skip entries whose `when` clause doesn't match. Check every target and read
-	// every source before writing anything, so a rejected path or a failed
-	// download leaves no half-applied feature behind.
-	const planned: { entry: FileEntry; dest: string; content: string }[] = [];
-	for (const entry of meta.files) {
-		if (entry.when && !whenMatches(entry.when, myOptions)) continue;
-		const dest = containedPath(cwd, entry.target);
-		const content = await readRegistryFile(registryRoot, "features", name, entry.src);
-		planned.push({ entry, dest, content });
-	}
+	// Skip entries whose `when` clause doesn't match. Read every source (in
+	// parallel) before writing anything, so a failed download leaves this
+	// feature's files untouched.
+	const entries = meta.files.filter((e) => !e.when || whenMatches(e.when, myOptions));
+	const contents = await Promise.all(
+		entries.map((e) => readRegistryFile(registryRoot, "features", name, e.src)),
+	);
+	const planned: { entry: FileEntry; dest: string; content: string }[] = entries.map(
+		(entry, i) => ({ entry, dest: containedPath(cwd, entry.target), content: contents[i]! }),
+	);
 
 	// Apply each file entry per its strategy.
 	const createdDirs = new Set<string>();
