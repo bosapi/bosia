@@ -213,7 +213,9 @@ const dataRequests = new WeakMap<Request, DataRequest>();
 
 /**
  * Decode an `_invalidated` bitmask string. Char 0 = page, char i+1 = layout
- * depth i, '1' = run, '0' = skip. Missing/extra chars default to run.
+ * depth i. Page: '0' = skip its loader. Layout: '0' = omit its data from the
+ * response — the loader still runs, since it may be a guard. Missing/extra
+ * chars default to '1'.
  */
 function buildMaskFromBits(
 	bits: string,
