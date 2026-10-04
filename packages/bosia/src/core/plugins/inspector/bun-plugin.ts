@@ -2,7 +2,7 @@ import { parse, compile } from "svelte/compiler";
 import MagicString from "magic-string";
 import { relative } from "node:path";
 import type { BunPlugin } from "bun";
-import { svelteMapCache } from "../../svelteCompiler.ts";
+import { cachedCompile, svelteMapCache } from "../../svelteCompiler.ts";
 import { lineColFromOffset } from "../../sourceLoc.ts";
 import { toPosix } from "../../paths.ts";
 import { collectComponentCss } from "../../componentCss.ts";
@@ -133,21 +133,35 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 				const rel = toPosix(relative(cwd, args.path));
 				const transformed = injectLocs(source, rel);
 
-				const result = compile(transformed, {
-					filename: args.path,
-					generate,
-					dev,
-					hmr: dev,
-					// Mirror the prod compiler (svelteCompiler.ts): external on both
-					// targets, with the client's rules harvested into one stylesheet
-					// that the head links. This plugin registers ahead of the main
-					// compiler and its onLoad wins in dev, so letting the two drift
-					// here is how dev and prod stop agreeing about first paint.
-					css: "external",
-					preserveWhitespace: dev,
-					preserveComments: dev,
-					cssHash: ({ css }) => `svelte-${fnv(css)}`,
-				});
+				// Reused across `bosia dev` rebuilds when nothing it depends on changed
+				// (see cachedCompile in svelteCompiler.ts).
+				const { value: result } = await cachedCompile(
+					["inspector", args.path, generate, dev, transformed],
+					() => {
+						const out = compile(transformed, {
+							filename: args.path,
+							generate,
+							dev,
+							hmr: dev,
+							// Mirror the prod compiler (svelteCompiler.ts): external on both
+							// targets, with the client's rules harvested into one stylesheet
+							// that the head links. This plugin registers ahead of the main
+							// compiler and its onLoad wins in dev, so letting the two drift
+							// here is how dev and prod stop agreeing about first paint.
+							css: "external",
+							preserveWhitespace: dev,
+							preserveComments: dev,
+							cssHash: ({ css }) => `svelte-${fnv(css)}`,
+						});
+						return {
+							js: {
+								code: out.js.code,
+								map: typeof out.js.map === "string" ? JSON.parse(out.js.map) : out.js.map,
+							},
+							css: out.css ? { code: out.css.code } : null,
+						};
+					},
+				);
 
 				// Store Svelte's compile-step map. Bun's bundler doesn't chain
 				// onLoad sourcemaps, so the final bundle map resolves stack frames
@@ -164,8 +178,7 @@ export function createInspectorBunPlugin(opts: InspectorBunPluginOptions): BunPl
 				// line numbers differ. The resolver translates browser-side stack
 				// frames (delivered via SSE), which run client code.
 				if (dev && generate === "client" && result.js.map) {
-					const m = typeof result.js.map === "string" ? JSON.parse(result.js.map) : result.js.map;
-					svelteMapCache.set(args.path, m);
+					svelteMapCache.set(args.path, result.js.map);
 				}
 
 				// Client only — see the same guard in svelteCompiler.ts.

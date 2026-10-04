@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { makeSetHeaders } from "../src/core/hooks.ts";
 import { gunzipSync, brotliDecompressSync } from "node:zlib";
-import { compress, compressBytes, encodeBytes, pickEncoding } from "../src/core/html.ts";
+import {
+	compress,
+	compressBytes,
+	encodeBytes,
+	pickEncoding,
+	pickRequestEncoding,
+} from "../src/core/html.ts";
 
 describe("makeSetHeaders", () => {
 	test("accumulates lowercased keys across multiple calls", () => {
@@ -48,6 +54,18 @@ describe("pickEncoding / encodeBytes", () => {
 		expect(pickEncoding("gzip, deflate")).toBe("gzip");
 		expect(pickEncoding("identity")).toBeNull();
 		expect(pickEncoding(null)).toBeNull();
+	});
+
+	test("per-request compression prefers zstd, then the stored encodings", () => {
+		expect(pickRequestEncoding("gzip, deflate, br, zstd")).toBe("zstd");
+		expect(pickRequestEncoding("gzip, deflate, br")).toBe("br");
+		expect(pickRequestEncoding("gzip")).toBe("gzip");
+		expect(pickRequestEncoding(null)).toBeNull();
+	});
+
+	test("zstd round-trips", () => {
+		const body = new TextEncoder().encode("<p>hello</p>".repeat(500));
+		expect(new Uint8Array(Bun.zstdDecompressSync(encodeBytes(body, "zstd")))).toEqual(body);
 	});
 
 	test("both encodings round-trip", () => {

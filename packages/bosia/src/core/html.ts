@@ -62,18 +62,84 @@ export function baseScript(nonce?: string): string {
  *  no buster (same reason as ENTRY). Unknown pattern or an older dist/ without
  *  the `preload` field → nothing, and the page loads as it did before. */
 export function routePreloadLinks(pattern?: string): string {
-	if (!pattern) return "";
-	return (distManifest.preload?.[pattern] ?? [])
-		.map((f) => `\n  <link rel="modulepreload" href="${DIST}/${f}">`)
-		.join("");
+	const preload = distManifest.preload;
+	if (!pattern || !preload) return "";
+	let byPattern = preloadLinks.get(preload);
+	if (!byPattern) preloadLinks.set(preload, (byPattern = new Map()));
+	let links = byPattern.get(pattern);
+	if (links === undefined) {
+		links = (preload[pattern] ?? [])
+			.map((f) => `\n  <link rel="modulepreload" href="${DIST}/${f}">`)
+			.join("");
+		byPattern.set(pattern, links);
+	}
+	return links;
 }
+
+// One header value per route pattern (plus "" for no pattern), built on first
+// use. Bounded by the number of routes.
+const linkHeaders = new Map<string, string>();
+
+/**
+ * `Link` response header naming the stylesheets and, when the page hydrates,
+ * the client entry and the route's chunks. The document lists the same files,
+ * but a CDN that sends 103 Early Hints (Cloudflare) reads them off this header
+ * and lets the browser start downloading while the loaders still run.
+ * Prod only — dev URLs carry a cache buster and nothing sits in front.
+ */
+export function preloadLinkHeader(pattern: string | undefined, csr: boolean): string | null {
+	if (isDev) return null;
+	const key = `${csr ? "1" : "0"}${pattern ?? ""}`;
+	let value = linkHeaders.get(key);
+	if (value === undefined) {
+		const tw = distManifest.tw ? `${DIST}/${distManifest.tw}` : TW_CSS;
+		const parts = [tw, ...(distManifest.css ?? []).map((f) => `${DIST}/${f}`)].map(
+			(href) => `<${href}>; rel=preload; as=style`,
+		);
+		if (csr) {
+			const scripts = [
+				ENTRY,
+				...(distManifest.preload?.[pattern ?? ""] ?? []).map((f) => `${DIST}/${f}`),
+			];
+			for (const href of scripts) parts.push(`<${href}>; rel=modulepreload`);
+		}
+		value = parts.join(", ");
+		linkHeaders.set(key, value);
+	}
+	return value;
+}
+
+/** `extra` with the preload `Link` header added — after any `link` a loader set. */
+export function withPreloadLink(
+	extra: Record<string, string> | undefined,
+	pattern: string | undefined,
+	csr: boolean,
+): Record<string, string> | undefined {
+	const link = preloadLinkHeader(pattern, csr);
+	if (!link) return extra;
+	const own = extra?.["link"];
+	return { ...extra, link: own ? `${own}, ${link}` : link };
+}
+
+// The head fragments below are the same on every request, so each is built
+// once and reused for as long as the manifest field it reads stays the same
+// object (tests swap them out).
+const preloadLinks = new WeakMap<object, Map<string, string>>();
 
 /** Tailwind stylesheet link. Content-hashed name needs no cache buster — the
  *  hash IS the buster. Fallback keeps older dist/ artifacts (no `tw` field) styled. */
+let twLink: { tw: string | undefined; html: string } | null = null;
 function twCssLink(): string {
-	return distManifest.tw
-		? `<link rel="stylesheet" href="${DIST}/${distManifest.tw}">`
-		: `<link rel="stylesheet" href="${TW_CSS}${cacheBust}">`;
+	const tw = distManifest.tw;
+	if (!twLink || twLink.tw !== tw) {
+		twLink = {
+			tw,
+			html: tw
+				? `<link rel="stylesheet" href="${DIST}/${tw}">`
+				: `<link rel="stylesheet" href="${TW_CSS}${cacheBust}">`,
+		};
+	}
+	return twLink.html;
 }
 
 /** The build-time component stylesheet (scoped `<style>` blocks, concatenated).
@@ -83,10 +149,18 @@ function twCssLink(): string {
  *  is settled on source order. Linking before Tailwind would silently flip
  *  which one wins. Each entry carries its own indent and newline, so an app with
  *  no scoped styles at all contributes nothing rather than a blank line. */
+let cssLinks: { css: string[] | undefined; html: string } | null = null;
 function componentCssLinks(): string {
-	return (distManifest.css ?? [])
-		.map((f: string) => `  <link rel="stylesheet" href="${DIST}/${f}">\n`)
-		.join("");
+	const css = distManifest.css;
+	if (!cssLinks || cssLinks.css !== css) {
+		cssLinks = {
+			css,
+			html: (css ?? [])
+				.map((f: string) => `  <link rel="stylesheet" href="${DIST}/${f}">\n`)
+				.join(""),
+		};
+	}
+	return cssLinks.html;
 }
 
 /** Inline theme bootstrap — runs before paint to avoid FOUC. theme ∈ light|dark|system (missing = system). */
@@ -464,15 +538,26 @@ export function disableCompression(): void {
 // Shared, stateless — one instance instead of a fresh allocation per response.
 const textEncoder = new TextEncoder();
 
-export type Encoding = "br" | "gzip";
+/** Encodings stored ahead of time — cache entries and build-time static files. */
+export type StoredEncoding = "br" | "gzip";
+export type Encoding = StoredEncoding | "zstd";
 
-/** Best encoding the client accepts — brotli over gzip, null for identity.
+/** Best stored encoding the client accepts — brotli over gzip, null for identity.
  *  A substring check, not q-value parsing: no browser sends `br;q=0`. */
-export function pickEncoding(accept: string | null): Encoding | null {
+export function pickEncoding(accept: string | null): StoredEncoding | null {
 	if (!accept) return null;
 	if (accept.includes("br")) return "br";
 	if (accept.includes("gzip")) return "gzip";
 	return null;
+}
+
+/** Best encoding for a body compressed on the spot. zstd comes first: at
+ *  level 3 it matches brotli q3's size on an HTML page in about half the CPU
+ *  (55µs vs 95µs for 7KB). Current Chrome and Firefox send it; everyone else
+ *  falls back to `pickEncoding`. */
+export function pickRequestEncoding(accept: string | null): Encoding | null {
+	if (accept?.includes("zstd")) return "zstd";
+	return pickEncoding(accept);
 }
 
 // Per-request brotli runs once per response, so it favors speed: q3 is ~2x
@@ -485,6 +570,10 @@ const BROTLI = {
 	cache: { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } },
 };
 
+// Bun's native gzip is ~40% faster than node:zlib's at the same level and
+// size. Workers has no `Bun`, but never compresses (see compressionOn).
+const hasBun = typeof Bun !== "undefined";
+
 /** The one place runtime compression quality is set — cache.ts builds its
  *  stored variants through here too. gzip keeps zlib's default level. */
 export function encodeBytes(
@@ -492,6 +581,9 @@ export function encodeBytes(
 	enc: Encoding,
 	quality: Quality = "request",
 ): Uint8Array<ArrayBuffer> {
+	if (enc === "zstd") return Bun.zstdCompressSync(bytes, { level: 3 }) as Uint8Array<ArrayBuffer>;
+	if (enc === "gzip" && hasBun)
+		return Bun.gzipSync(bytes as Uint8Array<ArrayBuffer>) as Uint8Array<ArrayBuffer>;
 	const out = enc === "br" ? brotliCompressSync(bytes, BROTLI[quality]) : gzipSync(bytes);
 	return new Uint8Array(out) as Uint8Array<ArrayBuffer>;
 }
@@ -504,7 +596,10 @@ export function encodeForRequest(
 	req: Request,
 	quality: Quality = "request",
 ): Encoded | null {
-	const enc = pickEncoding(req.headers.get("accept-encoding"));
+	const accept = req.headers.get("accept-encoding");
+	// A cache-quality body is also stored in the cache entry, which only keeps
+	// brotli and gzip copies — so it never picks zstd.
+	const enc = quality === "cache" ? pickEncoding(accept) : pickRequestEncoding(accept);
 	// Skip compression in dev — the dev proxy's fetch() auto-decompresses gzip
 	// responses but keeps the Content-Encoding header, causing ERR_CONTENT_DECODING_FAILED.
 	if (!compressionOn || isDev || !enc || bytes.length <= GZIP_MIN_BYTES) return null;

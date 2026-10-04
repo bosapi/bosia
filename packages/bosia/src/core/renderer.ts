@@ -15,7 +15,6 @@ import {
 	coalesceMiss,
 	collectTags,
 	computeCacheKey,
-	concatChunks,
 	deferCacheWrite,
 	serveCached,
 } from "./cache.ts";
@@ -35,6 +34,7 @@ import {
 	compressBytes,
 	encodeForRequest,
 	isDev,
+	withPreloadLink,
 	type Encoded,
 } from "./html.ts";
 import type { Metadata } from "./hooks.ts";
@@ -380,7 +380,7 @@ export async function loadRouteData(
 	locals: Record<string, any>,
 	req: Request,
 	cookies: Cookies,
-	metadataData: Record<string, any> | null = null,
+	metadataData: Record<string, any> | null | Promise<Record<string, any> | null> = null,
 	match?: RouteMatch<(typeof serverRoutes)[number]> | null,
 	mask?: LoaderMask,
 ) {
@@ -486,7 +486,7 @@ export async function loadRouteData(
 							cookies: trackedCookies(cookies, deps),
 							parent,
 							fetch: trackedFetch(fetch, origin, deps),
-							metadata: metadataData,
+							metadata: await metadataData,
 							depends: makeDepends(deps),
 							platform: getPlatform(),
 							setHeaders,
@@ -633,12 +633,53 @@ export async function renderSSRStream(
 	// below must stay inside this try; the cache-write path hands the release
 	// off to its deferred cacheSet by nulling releaseMiss first.
 	try {
-		// ── Pre-stream phase: resolve metadata before committing to a 200 ──
-		// Errors here return a proper error response with correct status code.
+		// ── Pre-stream phase: metadata(), loaders, module imports and plugin
+		// fragments all start together, and all settle before committing to a 200,
+		// so a Redirect/HttpError from any of them still gets a proper response.
+		// Layout loaders still run in order before the page load(), which also
+		// waits for metadata.data (see loadRouteData).
+		const metadataP = loadMetadata(route, params, url, locals, cookies, req).then(
+			(value) => ({ ok: true as const, value }),
+			(err: unknown) => ({ ok: false as const, err }),
+		);
+		const dataP = Promise.all([
+			loadRouteData(
+				url,
+				locals,
+				req,
+				cookies,
+				// A failed metadata() hands load() null, as before — and when the
+				// failure ends the request, the result below is never read.
+				metadataP.then((m) => (m.ok ? (m.value?.data ?? null) : null)),
+				match,
+			),
+			Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
+			// pageMod is already loaded when the cache flag was unknown.
+			pageMod ?? route.pageModule(),
+		]);
+		// Settled by the early returns below without being read.
+		dataP.catch(() => {});
+		const fragmentsP = metadataP.then((m) => {
+			const renderCtx: RenderContext = {
+				request: req,
+				url,
+				route: { pattern: route.pattern },
+				metadata: m.ok ? m.value : null,
+			};
+			return Promise.all([
+				pluginRenderFragments("head", renderCtx),
+				pluginRenderFragments("bodyEnd", renderCtx),
+			]);
+		});
+		fragmentsP.catch(() => {});
+
+		// Metadata errors return a proper error response with correct status code.
 		let metadata: Metadata | null = null;
-		try {
-			metadata = await loadMetadata(route, params, url, locals, cookies, req);
-		} catch (err) {
+		const meta = await metadataP;
+		if (meta.ok) {
+			metadata = meta.value;
+		} else {
+			const err = meta.err;
 			if (isRedirect(err)) {
 				// Not Response.redirect(): it rejects relative URLs on Workers.
 				return new Response(null, { status: err.status, headers: { Location: err.location } });
@@ -662,21 +703,12 @@ export async function renderSSRStream(
 			// Continue with null metadata — don't break the page for a metadata failure
 		}
 
-		// ── Pre-stream phase: run load() + module imports in parallel before committing to a 200 ──
-		// This ensures HttpError/Redirect from load() can return a proper response before any bytes are sent.
-		const metadataData = metadata?.data ?? null;
 		let data: Awaited<ReturnType<typeof loadRouteData>>;
 		let layoutMods: any[];
 
 		try {
-			// pageMod is already loaded when the cache flag was unknown; otherwise
-			// fold its import into this parallel block instead of a serial await.
 			let pm: any;
-			[data, layoutMods, pm] = await Promise.all([
-				loadRouteData(url, locals, req, cookies, metadataData, match),
-				Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
-				pageMod ?? route.pageModule(),
-			]);
+			[data, layoutMods, pm] = await dataP;
 			pageMod = pm;
 		} catch (err) {
 			if (isRedirect(err))
@@ -728,16 +760,7 @@ export async function renderSSRStream(
 				nonce,
 			);
 
-		const renderCtx: RenderContext = {
-			request: req,
-			url,
-			route: { pattern: route.pattern },
-			metadata,
-		};
-		const [headExtras, bodyEndExtras] = await Promise.all([
-			pluginRenderFragments("head", renderCtx),
-			pluginRenderFragments("bodyEnd", renderCtx),
-		]);
+		const [headExtras, bodyEndExtras] = await fragmentsP;
 
 		// SSR always runs every loader, so coerce types from the optional sparse shape.
 		const layoutDataFull = (data.layoutData as Record<string, any>[]).map((d) => d ?? {});
@@ -768,7 +791,13 @@ export async function renderSSRStream(
 					data.layoutDeps,
 					appHtmlSegments,
 				);
-			return compress(html, "text/html; charset=utf-8", req, 200, data.loaderHeaders);
+			return compress(
+				html,
+				"text/html; charset=utf-8",
+				req,
+				200,
+				withPreloadLink(data.loaderHeaders, route.pattern, true),
+			);
 		}
 
 		// Render-first: run render() before committing to a 200. Failure → proper error page
@@ -810,17 +839,15 @@ export async function renderSSRStream(
 		// compressed — a stream here never streamed, it only skipped compression.
 		// Truly progressive SSR (ROADMAP) would pipe a stream through
 		// CompressionStream instead.
-		const chunks: Uint8Array[] = [
-			enc.encode(
-				buildHtmlShellOpen(
-					metadata?.lang,
-					nonce,
-					appHtmlSegments,
-					data.csr ? route.pattern : undefined,
-				),
-			),
-			enc.encode(buildMetadataChunk(metadata, headExtras, appHtmlSegments)),
-			enc.encode(
+		// One string, encoded once: three encodes plus a concat copied every byte twice.
+		const fullBody = enc.encode(
+			buildHtmlShellOpen(
+				metadata?.lang,
+				nonce,
+				appHtmlSegments,
+				data.csr ? route.pattern : undefined,
+			) +
+				buildMetadataChunk(metadata, headExtras, appHtmlSegments) +
 				buildHtmlTail(
 					body,
 					head,
@@ -835,10 +862,9 @@ export async function renderSSRStream(
 					data.layoutDeps,
 					appHtmlSegments,
 				),
-			),
-		];
-
-		const fullBody = concatChunks(chunks);
+		) as Uint8Array<ArrayBuffer>;
+		// Stored with the cache entry too, so hits carry the same Link header.
+		const headers = withPreloadLink(data.loaderHeaders, route.pattern, data.csr) ?? {};
 		// Set only on a cache write: the client's variant, encoded once at cache
 		// quality and shared by the response and the cache entry.
 		let sent: Encoded | null | undefined;
@@ -877,7 +903,7 @@ export async function renderSSRStream(
 								brotli,
 								contentType: "text/html; charset=utf-8",
 								status: 200,
-								extraHeaders: data.loaderHeaders,
+								extraHeaders: headers,
 								tags,
 							},
 							cookies,
@@ -889,7 +915,7 @@ export async function renderSSRStream(
 			}
 		}
 
-		return compressBytes(fullBody, "text/html; charset=utf-8", req, 200, data.loaderHeaders, sent);
+		return compressBytes(fullBody, "text/html; charset=utf-8", req, 200, headers, sent);
 	} finally {
 		releaseMiss?.();
 	}

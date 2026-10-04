@@ -3,7 +3,7 @@ title: Response Cache
 description: Lewati load() + render() + kompresi saat cache hit. Aman per-user lewat identity hash. Invalidasi dari server action dengan invalidate(key) / invalidateAll(prefix).
 ---
 
-Sejak v0.6 Bosia menyimpan **response cache** di memori yang menyajikan HTML SSR dan response GET `+server.ts` langsung dari byte terkompresi saat URL yang sama diminta lagi. Saat cache hit tidak ada `load()`, tidak ada `render()`, dan tidak ada kompresi — biasanya response di bawah satu milidetik.
+Sejak v0.6 Bosia menyimpan **response cache** di memori yang menyajikan HTML SSR, JSON yang diambil router klien saat navigasi (`/__bosia/data/…`), dan response GET `+server.ts` langsung dari byte terkompresi saat URL yang sama diminta lagi. Saat cache hit tidak ada `load()`, tidak ada `render()`, dan tidak ada kompresi — biasanya response di bawah satu milidetik.
 
 Cache ini **aman untuk user yang login** karena key menyertakan hash dari cookie dan header yang namanya terdaftar di `CACHE_KEYS`. Dua user dengan session cookie berbeda mendapat entry cache berbeda.
 
@@ -36,15 +36,18 @@ Kalau konten per-user sebuah rute tidak dikunci oleh apa pun di `CACHE_KEYS`, ma
 
 ## Kelayakan
 
-| Kondisi                                | Hasil                    |
-| -------------------------------------- | ------------------------ |
-| `export const cache = false` pada rute | Lewati read + write      |
-| Method request ≠ `GET`                 | Lewati read + write      |
-| `CSP_DIRECTIVES` terset (CSP aktif)    | Lewati read + write      |
-| `CACHE_MAX_ENTRIES=0`                  | Lewati read + write      |
-| Status response ≠ 200                  | Lewati write             |
-| Handler memanggil `cookies.set()`      | Lewati write             |
-| `?_invalidated=…` di query             | Lewati read; tetap write |
+| Kondisi                                                                             | Hasil                    |
+| ----------------------------------------------------------------------------------- | ------------------------ |
+| `export const cache = false` pada rute                                              | Lewati read + write      |
+| Method request ≠ `GET`                                                              | Lewati read + write      |
+| `CSP_DIRECTIVES` terset (CSP aktif)                                                 | Lewati read + write      |
+| `CACHE_MAX_ENTRIES=0`                                                               | Lewati read + write      |
+| Status response ≠ 200                                                               | Lewati write             |
+| Handler memanggil `cookies.set()`                                                   | Lewati write             |
+| `?_invalidated=…` di query                                                          | Lewati read; tetap write |
+| Request data dengan `_fresh=1`                                                      | Lewati read; tetap write |
+| Request data dikirim sebagai `POST`                                                 | Lewati read + write      |
+| Loader mengatur `Cache-Control: no-store`, `no-cache` atau `private` (request data) | Lewati write             |
 
 Skip tidak akan merusak response — sekadar jatuh ke jalur render normal.
 

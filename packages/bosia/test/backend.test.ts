@@ -26,6 +26,16 @@ describe("BosiaApp", () => {
 		expect(await raw.text()).toBe("raw");
 	});
 
+	test("handlers get the parsed url and the query", async () => {
+		let seen: { path: string; query: Record<string, string> } | null = null;
+		const app = new BosiaApp().get("/q", ({ url, query }) => {
+			seen = { path: url.pathname, query };
+			return "ok";
+		});
+		await app.fetch(req("/q?a=1&b=2"));
+		expect(seen!).toEqual({ path: "/q", query: { a: "1", b: "2" } });
+	});
+
 	test("merges set.status and set.headers", async () => {
 		const app = new BosiaApp().get("/", ({ set }) => {
 			set.status = 418;

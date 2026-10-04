@@ -42,8 +42,11 @@ export function buildMaskBits(path: string): string | null {
 	return (pageRun ? "1" : "0") + layoutRunFlags.map((b) => (b ? "1" : "0")).join("");
 }
 
-/** Builds the `/__bosia/data/…` URL for a given client path. */
-export function dataUrl(path: string, invalidatedBits?: string): string {
+/**
+ * Builds the `/__bosia/data/…` URL for a given client path. `fresh` marks a
+ * fetch that follows an `invalidate()`, so the server skips its cached copy.
+ */
+export function dataUrl(path: string, invalidatedBits?: string, fresh = false): string {
 	const url = new URL(path, window.location.origin);
 	let p = url.pathname.replace(/\/$/, "");
 	let qs = url.search;
@@ -51,6 +54,7 @@ export function dataUrl(path: string, invalidatedBits?: string): string {
 		const sep = qs ? "&" : "?";
 		qs = `${qs}${sep}_invalidated=${invalidatedBits}`;
 	}
+	if (fresh) qs = `${qs}${qs ? "&" : "?"}_fresh=1`;
 	// The one place a path is still taken apart, and it is URL construction rather
 	// than navigation: the data endpoint is `<base>/__bosia/data` + the *app* path,
 	// so the mount prefix moves from the front of the route to the front of the
@@ -122,15 +126,31 @@ export function consumePrefetch(path: string): any | null {
 
 /** Prefetches data for a path and stores in cache. No-op if already cached/in-flight. */
 export async function prefetchPath(path: string): Promise<void> {
+	// Nothing to fetch for the page we're on. A click also focuses its link, so
+	// the focusin trigger fires ~100ms after the navigation it belongs to.
+	if (path === window.location.pathname + window.location.search) return;
 	// Warm the route's +loading.svelte chunk alongside its data, so the skeleton
 	// paints instantly on click instead of cold-importing after the old page lingers.
 	const warmMatch = findMatch(clientRoutes, new URL(path, window.location.origin).pathname);
-	(warmMatch?.route as { loading?: (() => Promise<unknown>) | null } | undefined)?.loading?.();
+	// Also warm the page and layout chunks: a route not visited yet otherwise
+	// downloads its code only after the click. Errors are swallowed — a stale
+	// chunk is the click's to report, not the hover's (hydrate.ts reloads on it).
+	if (warmMatch) {
+		const route = warmMatch.route as typeof warmMatch.route & {
+			loading?: (() => Promise<unknown>) | null;
+		};
+		for (const load of [route.loading, route.page, ...route.layouts]) {
+			load?.().catch(() => {});
+		}
+	}
 
 	const existing = prefetchCache.get(path);
 	if (existing && Date.now() - existing.ts <= 30_000) return;
 	if (existing) prefetchCache.delete(path);
 	if (pending.has(path)) return;
+
+	// A route without server data never fetches on click either.
+	if (!warmMatch?.route.hasServerData) return;
 
 	pending.add(path);
 	try {
@@ -187,23 +207,39 @@ function observeViewportLinks(container: Element | Document = document) {
 	return observer;
 }
 
+/** The link a hover/touch/focus event is on, when it sits under `data-bosia-preload="hover"`. */
+function hoverLinkHref(target: EventTarget | null): string | null {
+	if (!(target instanceof Element)) return null;
+	// Early exit: skip if no [data-bosia-preload="hover"] ancestor exists
+	const preloadEl = target.closest("[data-bosia-preload]");
+	if (!preloadEl || preloadEl.getAttribute("data-bosia-preload") !== "hover") return null;
+	const anchor = target.closest("a") as HTMLAnchorElement | null;
+	return anchor ? getLinkHref(anchor) : null;
+}
+
 export function initPrefetch(): void {
-	// ── Hover strategy (event delegation, 20ms debounce) ─────
+	// ── Hover strategy (event delegation, 100ms debounce) ────
 	let hoverTimer: ReturnType<typeof setTimeout> | null = null;
 
-	document.addEventListener("mouseover", (e) => {
-		if (!(e.target instanceof Element)) return;
-		// Early exit: skip if no [data-bosia-preload="hover"] ancestor exists
-		const preloadEl = e.target.closest("[data-bosia-preload]");
-		if (!preloadEl || preloadEl.getAttribute("data-bosia-preload") !== "hover") return;
-		const anchor = e.target.closest("a") as HTMLAnchorElement | null;
-		if (!anchor) return;
-		const href = getLinkHref(anchor);
+	const onIntent = (e: Event) => {
+		const href = hoverLinkHref(e.target);
 		if (!href) return;
-
 		if (hoverTimer) clearTimeout(hoverTimer);
 		hoverTimer = setTimeout(() => prefetchPath(href), 100);
-	});
+	};
+	document.addEventListener("mouseover", onIntent);
+	// Keyboard users tab onto a link before pressing Enter — same signal.
+	document.addEventListener("focusin", onIntent);
+	// Touch screens have no hover; a touch is followed by the click within
+	// ~100ms or not at all, so start right away instead of debouncing.
+	document.addEventListener(
+		"touchstart",
+		(e) => {
+			const href = hoverLinkHref(e.target);
+			if (href) prefetchPath(href);
+		},
+		{ passive: true },
+	);
 
 	document.addEventListener("mouseout", () => {
 		if (hoverTimer) {

@@ -3,7 +3,7 @@ title: Response Cache
 description: Skip load() + render() + compression on cache hit. Per-user safe via identity hash. Invalidate from server actions with invalidate(key) / invalidateAll(prefix).
 ---
 
-Since v0.6, Bosia keeps an in-memory **response cache** that serves SSR HTML and `+server.ts` GET responses directly from compressed bytes when the same URL is requested again. On a cache hit there is no `load()`, no `render()`, and no compression — typically a sub-millisecond response.
+Since v0.6, Bosia keeps an in-memory **response cache** that serves SSR HTML, the JSON the client router fetches on navigation (`/__bosia/data/…`), and `+server.ts` GET responses directly from compressed bytes when the same URL is requested again. On a cache hit there is no `load()`, no `render()`, and no compression — typically a sub-millisecond response.
 
 The cache is **safe for logged-in users** because the key includes a hash of cookies and headers named in `CACHE_KEYS`. Two users with different session cookies get different cache entries.
 
@@ -18,7 +18,7 @@ The identity hash here is the same one [request deduplication](./request-dedupli
 
 ## Per-user isolation
 
-The cache key is:
+The cache key is (data requests add `|data` and the loader mask):
 
 ```
 <normalized-path>?<sorted-query>|i=<identity-hash>
@@ -45,15 +45,18 @@ If a route's per-user content is not keyed by anything in `CACHE_KEYS`, opt it o
 
 ## Eligibility
 
-| Condition                                 | Result                 |
-| ----------------------------------------- | ---------------------- |
-| `export const cache = false` on the route | Skip read + write      |
-| Request method ≠ `GET`                    | Skip read + write      |
-| `CSP_DIRECTIVES` set (CSP enabled)        | Skip read + write      |
-| `CACHE_MAX_ENTRIES=0`                     | Skip read + write      |
-| Response status ≠ 200                     | Skip write             |
-| Handler called `cookies.set()`            | Skip write             |
-| `?_invalidated=…` query present           | Skip read; still write |
+| Condition                                                                     | Result                 |
+| ----------------------------------------------------------------------------- | ---------------------- |
+| `export const cache = false` on the route                                     | Skip read + write      |
+| Request method ≠ `GET`                                                        | Skip read + write      |
+| `CSP_DIRECTIVES` set (CSP enabled)                                            | Skip read + write      |
+| `CACHE_MAX_ENTRIES=0`                                                         | Skip read + write      |
+| Response status ≠ 200                                                         | Skip write             |
+| Handler called `cookies.set()`                                                | Skip write             |
+| `?_invalidated=…` query present                                               | Skip read; still write |
+| Data request with `_fresh=1`                                                  | Skip read; still write |
+| Data request sent as `POST`                                                   | Skip read + write      |
+| Loader set `Cache-Control: no-store`, `no-cache` or `private` (data requests) | Skip write             |
 
 A skip never breaks the response — it just falls back to the normal render path.
 
@@ -106,11 +109,13 @@ The failure looks like this, and it is easy to misread as a client bug:
 2. Press F5. **The deleted row is back.** ❌
 
 Both steps are working as designed. Step 1 goes through the client `invalidate()` path,
-which requests `?_invalidated=…` — and per the eligibility table above, that **skips the
-cache read**. Step 2 is a plain `GET` with no such param, so it is served from cache.
+whose data request carries `_fresh=1` — and per the eligibility table above, that **skips
+the cache read**. Step 2 is a plain `GET` with no such param, so it is served from cache.
+Navigating away and back by link is served from cache too: the client router's data
+requests are cached like page HTML.
 
-That asymmetry is the trap: **clicking around the app never reveals the staleness — only a
-hard refresh does.** Under normal development you can easily ship this.
+The trap is that **the page you just changed always looks right**, because the write
+path's own `invalidate()` refetched it. Every other way back to it can show the old copy.
 
 Two ways out:
 

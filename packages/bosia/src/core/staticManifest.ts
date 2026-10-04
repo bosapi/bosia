@@ -2,6 +2,7 @@ import { existsSync, readdirSync, statSync } from "fs";
 import { basename, join, resolve as resolvePath } from "path";
 import { PRECOMPRESSED, pickEncoding } from "./html.ts";
 import { AssetCache, assetCache } from "./assetCache.ts";
+import { matchesEtag } from "./etag.ts";
 
 /** `br`/`gz`: absolute paths of build-time precompressed siblings (precompress.ts). */
 export type StaticEntry = { absPath: string; cacheControl?: string; br?: string; gz?: string };
@@ -266,15 +267,6 @@ function etagFor(path: string, encoding: string | undefined): string | null {
 		etags.set(path, tag);
 	}
 	return tag;
-}
-
-function matchesEtag(header: string | null, etag: string): boolean {
-	if (!header) return false;
-	for (const raw of header.split(",")) {
-		const t = raw.trim();
-		if (t === "*" || t === etag || (t.startsWith("W/") && t.slice(2) === etag)) return true;
-	}
-	return false;
 }
 
 export function lookupStatic(manifest: StaticManifest, urlPath: string): StaticEntry | null {

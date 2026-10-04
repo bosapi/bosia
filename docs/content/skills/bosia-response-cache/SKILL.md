@@ -119,7 +119,7 @@ The symptom is reliably misread as a client bug:
 1. Delete a row → it vanishes from the sidebar ✅
 2. Refresh → **the row is back** ❌
 
-Both are working as designed. Step 1 goes through client `invalidate()`, which appends `?_invalidated=…` and therefore **skips the cache read**. Step 2 is a plain GET and is served from cache. So clicking through the app never exposes the staleness — only a hard refresh does, which is why this ships.
+Both are working as designed. Step 1 goes through client `invalidate()`, whose data request carries `_fresh=1` and therefore **skips the cache read**. Step 2 is a plain GET and is served from cache. Link navigation back to the page is served from cache too (client-router data requests are cached like HTML), but the page you just mutated always looks right because its own `invalidate()` refetched it — which is why this ships.
 
 Tag the layout with `depends()` and evict from **every** write path — that is what tags are for, and a tag on a layout loader covers every page beneath it. Opting out (`export const cache = false` on each `+page.svelte`) is the fallback for pages with no natural tag boundary, or where the writers cannot be enumerated with confidence.
 
@@ -172,8 +172,9 @@ R6. **CSP disables the cache.** Operators who set `CSP_DIRECTIVES` forfeit the c
 
 ## How to test it (the click-through will lie to you)
 
-Client-side navigation appends `?_invalidated=…`, which bypasses the cache — so the app
-always looks correct while you click. Every cache check must therefore use a **hard reload**:
+The page you mutate refetches with `_fresh=1`, which bypasses the cache — so it always
+looks correct right after the write. Every cache check must therefore use a **hard reload**
+(or a link navigation away and back):
 
 1. Mutate the data.
 2. Confirm the UI updated (this only proves the client path works).
