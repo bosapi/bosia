@@ -194,6 +194,26 @@ BODY_SIZE_LIMIT=Infinity # no limit (not recommended)
 
 Supports `K` (kilobytes), `M` (megabytes), and `G` (gigabytes) suffixes.
 
+## Route Guards in Layouts
+
+A `+layout.server.ts` that redirects anonymous visitors protects every page and form action under it:
+
+```ts
+// src/routes/(private)/+layout.server.ts
+import { redirect, type LoadEvent } from "bosia";
+
+export async function load({ locals }: LoadEvent) {
+	if (!locals.user) throw redirect(303, "/login");
+	return { user: locals.user };
+}
+```
+
+Layout server loaders run on every request to a page under them: full page loads, client-side navigations and form action POSTs. The browser can ask for a cached layout's data to be left out of a navigation response, but it can't stop the loader from running. Form actions run only after every layout loader has passed.
+
+`parent()` always returns data produced on the server. The browser can't supply it.
+
+For checks that should cover API routes (`+server.ts`) too, use a [`handle` hook](/guides/middleware-hooks/). API routes have no layouts.
+
 ## Path Traversal Protection
 
 Static file and prerendered page serving validates that resolved file paths stay within their allowed directories, preventing `../` traversal attacks.

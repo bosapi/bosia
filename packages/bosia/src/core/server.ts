@@ -28,6 +28,7 @@ import { currentBase } from "./appBase.ts";
 import {
 	buildPrerenderManifest,
 	buildStaticManifest,
+	findOutDirFile,
 	lookupStatic,
 	serveStatic,
 } from "./staticManifest.ts";
@@ -213,7 +214,11 @@ const dataRequests = new WeakMap<Request, DataRequest>();
 
 /**
  * Decode an `_invalidated` bitmask string. Char 0 = page, char i+1 = layout
- * depth i, '1' = run, '0' = skip. Missing/extra chars default to run.
+ * depth i. Only '0' has a meaning; any other char counts as '1'.
+ *   - Page '0': skip the page loader.
+ *   - Layout '0': omit its data from the response. The loader still runs,
+ *     since it may be a guard.
+ * Missing chars count as '1'. Chars past the route's layout count are ignored.
  */
 function buildMaskFromBits(
 	bits: string,
@@ -265,8 +270,9 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		const { routeUrl, invalidatedBits } = dataReq;
 		try {
 			const pageMatch = findMatch(serverRoutes, routeUrl.pathname);
-			// Build mask from `?_invalidated=<bits>` where char 0 = page,
-			// char i+1 = layout depth i, '1' = run, '0' = skip. Absent → run all.
+			// Build mask from `?_invalidated=<bits>` — see buildMaskFromBits. A page
+			// '0' skips the page loader; a layout '0' still runs the loader (it may
+			// be a guard) and only leaves its data out. Absent → run and send all.
 			// Mask is sized to the total layout count (matching client `layoutIds`),
 			// not the count of layout servers, so depths without a server loader
 			// still occupy a bit position and stay aligned with the client.
@@ -276,32 +282,8 @@ async function resolve(event: RequestEvent): Promise<Response> {
 						pageMatch?.route ? ((pageMatch.route as any).layoutModules?.length ?? 0) : 0,
 					)
 				: undefined;
-			// Client forwards each skipped layout layer's cached data as
-			// parentSnapshots (depth → data) so downstream loaders see real
-			// parent() data instead of {}. Perf hint only — never authoritative;
-			// authz must read locals. Guarded: undefined for GET / malformed body.
-			let parentSnapshots: Record<number, Record<string, any>> | undefined;
-			if (method !== "GET") {
-				try {
-					const body = await request.json();
-					if (body && typeof body === "object" && body.parentSnapshots) {
-						parentSnapshots = body.parentSnapshots as Record<number, Record<string, any>>;
-					}
-				} catch {
-					parentSnapshots = undefined;
-				}
-			}
 			const runLoad = async () => {
-				const data = await loadRouteData(
-					routeUrl,
-					locals,
-					request,
-					cookies,
-					null,
-					pageMatch,
-					mask,
-					parentSnapshots,
-				);
+				const data = await loadRouteData(routeUrl, locals, request, cookies, null, pageMatch, mask);
 
 				let metadata = null;
 				if (pageMatch) {
@@ -619,7 +601,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			const pub = Bun.file(pubPath);
 			if (await pub.exists()) return new Response(pub);
 		}
-		const distPath = safePath(OUT_DIR, decodedPath);
+		// Same refusals as the prod manifest: never hand out the server bundle,
+		// the user's bundled hooks/config, or build metadata. Matched against the
+		// real directory listing, so no alternative spelling reaches those files.
+		const distPath = findOutDirFile(OUT_DIR, decodedPath);
 		if (distPath) {
 			const dist = Bun.file(distPath);
 			if (await dist.exists()) return new Response(dist);
@@ -677,6 +662,15 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			try {
 				const mod = await pageMatch.route.pageServer();
 				if (mod.actions && typeof mod.actions === "object") {
+					// Layout loaders gate route groups (`(private)/+layout.server.ts`
+					// redirecting anonymous visitors), so they run before any action:
+					// a POST must not reach code the same visitor could not GET.
+					// Their data is discarded; a redirect or error() they throw is
+					// handled by the catch below exactly like one from the action.
+					await loadRouteData(url, locals, request, cookies, null, pageMatch, {
+						page: false,
+						layouts: [],
+					});
 					const actionName = parseActionName(url);
 					const action = mod.actions[actionName];
 					if (!action) {

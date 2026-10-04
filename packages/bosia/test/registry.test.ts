@@ -1,14 +1,20 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import {
+	checkRegistryFiles,
+	containedPath,
+	REGISTRY_URL,
+	registrySource,
+	installRegistryFiles,
 	mergePkgJson,
 	readRegistryJSON,
 	resolveLocalRegistry,
 	writeRegistryFile,
 } from "../src/cli/registry.ts";
 import { routeAdd, type AddRunners } from "../src/cli/addRouter.ts";
+import { runAddBlock } from "../src/cli/block.ts";
 import { toPosix } from "../src/core/paths.ts";
 
 let tmpDir: string;
@@ -217,5 +223,144 @@ describe("routeAdd() — dispatch", () => {
 			{ name: "runAddBlock", args: ["cards/x", []] },
 			{ name: "runAddPage", args: ["storefront/home", []] },
 		]);
+	});
+});
+
+describe("containedPath", () => {
+	const base = join(tmpdir(), "bosia-proj");
+
+	test("keeps registry paths inside the project", () => {
+		expect(containedPath(base, "src/lib/features/auth/index.ts")).toBe(
+			join(base, "src/lib/features/auth/index.ts"),
+		);
+		expect(containedPath(join(base, "src/lib/components"), "ui/button")).toBe(
+			join(base, "src/lib/components/ui/button"),
+		);
+	});
+
+	test("refuses a target that climbs out of the project", () => {
+		expect(() => containedPath(base, "../.bashrc")).toThrow(/outside/);
+		expect(() => containedPath(base, "src/../../.ssh/authorized_keys")).toThrow(/outside/);
+	});
+
+	test("places an absolute target under the base, never at the real path", () => {
+		expect(containedPath(base, "/etc/passwd")).toBe(join(base, "etc/passwd"));
+	});
+
+	test("the remote registry reader refuses a traversing file name before fetching", async () => {
+		await expect(readRegistryJSON(null, "features", "auth", "../../../x.json")).rejects.toThrow(
+			/outside/,
+		);
+	});
+
+	test("refuses a target that is the base itself", () => {
+		expect(() => containedPath(base, ".")).toThrow(/outside/);
+		expect(() => containedPath(base, "")).toThrow(/outside/);
+	});
+
+	test("refuses a backslash, which fetch() would read as a path separator", async () => {
+		expect(() => containedPath(base, "..\\..\\x")).toThrow(/not "\\"/);
+		await expect(readRegistryJSON(null, "features", "auth", "..\\..\\x.json")).rejects.toThrow(
+			/not "\\"/,
+		);
+	});
+});
+
+describe("installRegistryFiles", () => {
+	let registry: string;
+	let dest: string;
+
+	beforeEach(() => {
+		// Under the file-level tmpDir, which afterEach removes.
+		registry = join(tmpDir, "registry");
+		dest = join(tmpDir, "proj", "src", "lib", "blocks", "hero");
+		mkdirSync(join(registry, "blocks", "hero"), { recursive: true });
+		writeFileSync(join(registry, "blocks", "hero", "a.svelte"), "A");
+		writeFileSync(join(registry, "blocks", "hero", "b.svelte"), "B");
+	});
+
+	test("writes every file once all paths are checked", async () => {
+		await installRegistryFiles(registry, "blocks", "hero", ["a.svelte", "b.svelte"], dest, "x");
+		expect(readFileSync(join(dest, "a.svelte"), "utf-8")).toBe("A");
+		expect(readFileSync(join(dest, "b.svelte"), "utf-8")).toBe("B");
+	});
+
+	test("a rejected path later in the list leaves nothing written", async () => {
+		await expect(
+			installRegistryFiles(registry, "blocks", "hero", ["a.svelte", "../../../evil"], dest, "x"),
+		).rejects.toThrow(/outside/);
+		expect(existsSync(dest)).toBe(false);
+	});
+
+	test("a missing source later in the list leaves nothing written", async () => {
+		await expect(
+			installRegistryFiles(registry, "blocks", "hero", ["a.svelte", "missing.svelte"], dest, "x"),
+		).rejects.toThrow(/not found/);
+		expect(existsSync(dest)).toBe(false);
+	});
+});
+
+describe("registrySource (remote)", () => {
+	test("builds the URL under the category", () => {
+		expect(registrySource(null, "components", "ui/button", "meta.json")).toBe(
+			`${REGISTRY_URL}/components/ui/button/meta.json`,
+		);
+	});
+
+	test("refuses percent-encoded dot segments, which fetch() reads as '..'", () => {
+		// `new URL()` turns this into github.com/bosapi/evil/repo/main/x.ts — a
+		// path check alone sees folders literally named "%2e%2e" and passes it.
+		const name = "%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/evil/repo/main";
+		expect(() => registrySource(null, "features", name, "x.ts")).toThrow(/"%"/);
+	});
+
+	test("refuses '?' and '#', which would cut the fetched path short", () => {
+		expect(() => registrySource(null, "blocks", "a/b", "../../x?y")).toThrow(/"\?"/);
+		expect(() => registrySource(null, "blocks", "a/b", "x#y")).toThrow(/"#"/);
+	});
+
+	test("the readers refuse before fetching", async () => {
+		await expect(readRegistryJSON(null, "features", "%2e%2e/x", "meta.json")).rejects.toThrow(
+			/"%"/,
+		);
+	});
+});
+
+describe("paths are checked before dependencies install", () => {
+	test("checkRegistryFiles throws on a bad destination without writing", () => {
+		const dest = join(tmpDir, "proj", "src", "lib", "blocks", "x");
+		expect(() =>
+			checkRegistryFiles(null, "blocks", "cards/x", ["ok.svelte", "../../../../../evil"], dest),
+		).toThrow(/outside/);
+		expect(existsSync(join(tmpDir, "proj"))).toBe(false);
+	});
+
+	test("a block with a bad file path installs none of its dependencies", async () => {
+		const registry = join(tmpDir, "registry");
+		const proj = join(tmpDir, "proj");
+		const meta = (m: object) => JSON.stringify({ files: [], npmDeps: {}, ...m });
+		mkdirSync(join(registry, "blocks", "cards", "dep-ok"), { recursive: true });
+		mkdirSync(join(registry, "blocks", "cards", "bad-path"), { recursive: true });
+		writeFileSync(
+			join(registry, "blocks", "cards", "dep-ok", "meta.json"),
+			meta({ files: ["block.svelte"] }),
+		);
+		writeFileSync(join(registry, "blocks", "cards", "dep-ok", "block.svelte"), "ok");
+		writeFileSync(
+			join(registry, "blocks", "cards", "bad-path", "meta.json"),
+			meta({ dependencies: ["blocks/cards/dep-ok"], files: ["../../../../../../evil"] }),
+		);
+		mkdirSync(join(proj, "src"), { recursive: true });
+		writeFileSync(join(proj, "package.json"), "{}");
+
+		await expect(
+			runAddBlock("cards/bad-path", [], {
+				cwd: proj,
+				registryRoot: registry,
+				skipPrompts: true,
+				skipInstall: true,
+			}),
+		).rejects.toThrow(/outside/);
+		expect(existsSync(join(proj, "src", "lib", "blocks", "cards", "dep-ok"))).toBe(false);
 	});
 });

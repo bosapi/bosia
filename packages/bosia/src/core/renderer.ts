@@ -358,20 +358,17 @@ function makeDepends(deps: LoaderDeps): (...keys: string[]) => void {
 // Runs layout + page server loaders for a given URL.
 // Used by both SSR and the /__bosia/data JSON endpoint.
 //
-// `mask` controls selective re-runs from the client data endpoint:
-//   - undefined → run everything (SSR, first nav)
-//   - layouts[i] === true → run that layout; false → skip, emit null
-//   - page === true → run page; false → skip, emit null
-// When skipped, the parent() chain still receives the *combined parent
-// data* contributed by previously-cached layers. The client already holds
-// each skipped layer's data in its loader cache and forwards it as
-// `parentSnapshots` (depth → data) in the request body, so downstream
-// loaders that DO re-run see real parent() data, not `{}`. The response
-// slot stays `null` (client renders that layer from its cache).
+// `mask` controls which layers' data the client data endpoint sends back:
+//   - undefined → send everything (SSR, first nav)
+//   - layouts[i] === false → the layout still RUNS, but its slot is emitted as
+//     null (the client renders that layer from its loader cache)
+//   - page === false → page loader is skipped, emit null
 //
-// Trust boundary: parentSnapshots are a client-supplied perf hint, never
-// authoritative. Anything authz-related must read `event.locals` (populated
-// in hooks.server.ts), never `parent()`.
+// Layout loaders are never skipped on the server. They are where apps gate a
+// route group (`if (!locals.user) throw redirect(...)`), and the mask comes from
+// the client — honouring it would let any caller switch a guard off with
+// `?_invalidated=…`. Their output also feeds `parent()` for the loaders below,
+// so it has to be the server's own, never data the client sends.
 
 export type LoaderMask = {
 	page: boolean;
@@ -386,7 +383,6 @@ export async function loadRouteData(
 	metadataData: Record<string, any> | null = null,
 	match?: RouteMatch<(typeof serverRoutes)[number]> | null,
 	mask?: LoaderMask,
-	parentSnapshots?: Record<number, Record<string, any>>,
 ) {
 	match ??= findMatch(serverRoutes, url.pathname);
 	if (!match) return null;
@@ -404,18 +400,9 @@ export async function loadRouteData(
 
 	// Run layout server loaders root → leaf, each gets parent() data
 	for (const ls of route.layoutServers) {
-		const skip = mask && mask.layouts[ls.depth] === false;
+		// Runs regardless of the mask — see the trust note above loadRouteData.
+		const omit = mask && mask.layouts[ls.depth] === false;
 		try {
-			if (skip) {
-				layoutData[ls.depth] = null;
-				layoutDeps[ls.depth] = null;
-				// Skipped layers contribute their client-cached data (forwarded as
-				// parentSnapshots) to the parent chain, so downstream loaders that DO
-				// re-run see real parent() data. Falls back to {} when no snapshot was
-				// sent. Perf hint only — never authoritative for authz (use locals).
-				parentData = { ...parentData, ...(parentSnapshots?.[ls.depth] ?? {}) };
-				continue;
-			}
 			const mod = await ls.loader();
 			if (typeof mod.load === "function" && !warmingUp) {
 				// Snapshot per layer so loaders cannot mutate the shared accumulator,
@@ -440,12 +427,12 @@ export async function loadRouteData(
 						LOAD_TIMEOUT,
 						`layout load (depth=${ls.depth}, ${url.pathname})`,
 					)) ?? {};
-				layoutData[ls.depth] = result;
-				layoutDeps[ls.depth] = deps;
+				layoutData[ls.depth] = omit ? null : result;
+				layoutDeps[ls.depth] = omit ? null : deps;
 				parentData = { ...parentData, ...result };
 			} else {
-				layoutData[ls.depth] = {};
-				layoutDeps[ls.depth] = emptyDeps();
+				layoutData[ls.depth] = omit ? null : {};
+				layoutDeps[ls.depth] = omit ? null : emptyDeps();
 			}
 		} catch (err) {
 			if (isRedirect(err)) throw err;
