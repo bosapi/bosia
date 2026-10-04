@@ -12,6 +12,7 @@ import type { Cookies, LoaderDeps } from "./hooks.ts";
 import type { CookieJar } from "./cookies.ts";
 import { dedupKey } from "./dedup.ts";
 import { compressionOn, encodeBytes, PRECOMPRESSED } from "./html.ts";
+import { matchesEtag } from "./etag.ts";
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -76,6 +77,9 @@ export type CacheEntry = {
 	status: number;
 	extraHeaders: Record<string, string>;
 	tags: string[];
+	/** Digest of `raw`, filled in by `cacheSet`; the ETag is built from it per
+	 *  encoding so a gzip and a brotli copy are never mistaken for each other. */
+	etag?: string;
 };
 
 // ─── Tiny LRU ────────────────────────────────────────────
@@ -218,6 +222,8 @@ export function cacheSet(key: string, entry: CacheEntry, cookies?: Cookies): voi
 	if (!CACHE_ENABLED) return;
 	if (CACHE_MAX_BODY_BYTES > 0 && entry.raw.length > CACHE_MAX_BODY_BYTES) return;
 	if (cookies) warnUncoveredCookies(cookies);
+	// Runs in the deferred write, after the response went out — never on a hit.
+	entry.etag ??= createHash("sha1").update(entry.raw).digest("base64url").slice(0, 22);
 	// Drop any existing entry's index pointers first
 	cacheDeleteKey(key);
 	const evicted = htmlCache.set(key, entry);
@@ -378,15 +384,31 @@ export function serveCached(entry: CacheEntry, req: Request): Response {
 		"x-bosia-cache": "HIT",
 		...entry.extraHeaders,
 	};
+	let body: Bytes = entry.raw;
+	let encoding: "br" | "gzip" | null = null;
 	if (entry.brotli && accept.includes("br")) {
-		headers["content-encoding"] = "br";
-		return new Response(entry.brotli, { ...PRECOMPRESSED, status: entry.status, headers });
+		body = entry.brotli;
+		encoding = "br";
+	} else if (entry.gzip && accept.includes("gzip")) {
+		body = entry.gzip;
+		encoding = "gzip";
 	}
-	if (entry.gzip && accept.includes("gzip")) {
-		headers["content-encoding"] = "gzip";
-		return new Response(entry.gzip, { ...PRECOMPRESSED, status: entry.status, headers });
+	if (entry.etag) {
+		const suffix = encoding === "br" ? "-br" : encoding === "gzip" ? "-gz" : "";
+		const etag = `"${entry.etag}${suffix}"`;
+		headers["etag"] = etag;
+		// A browser or CDN re-checking a copy it already holds gets a 304 with
+		// no body instead of the whole page again.
+		if (entry.status === 200 && matchesEtag(req.headers.get("if-none-match"), etag)) {
+			delete headers["content-type"];
+			return new Response(null, { status: 304, headers });
+		}
 	}
-	return new Response(entry.raw, { status: entry.status, headers });
+	if (encoding) {
+		headers["content-encoding"] = encoding;
+		return new Response(body, { ...PRECOMPRESSED, status: entry.status, headers });
+	}
+	return new Response(body, { status: entry.status, headers });
 }
 
 // ─── Invalidation API ────────────────────────────────────

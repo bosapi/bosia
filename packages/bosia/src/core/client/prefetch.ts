@@ -42,8 +42,11 @@ export function buildMaskBits(path: string): string | null {
 	return (pageRun ? "1" : "0") + layoutRunFlags.map((b) => (b ? "1" : "0")).join("");
 }
 
-/** Builds the `/__bosia/data/…` URL for a given client path. */
-export function dataUrl(path: string, invalidatedBits?: string): string {
+/**
+ * Builds the `/__bosia/data/…` URL for a given client path. `fresh` marks a
+ * fetch that follows an `invalidate()`, so the server skips its cached copy.
+ */
+export function dataUrl(path: string, invalidatedBits?: string, fresh = false): string {
 	const url = new URL(path, window.location.origin);
 	let p = url.pathname.replace(/\/$/, "");
 	let qs = url.search;
@@ -51,6 +54,7 @@ export function dataUrl(path: string, invalidatedBits?: string): string {
 		const sep = qs ? "&" : "?";
 		qs = `${qs}${sep}_invalidated=${invalidatedBits}`;
 	}
+	if (fresh) qs = `${qs}${qs ? "&" : "?"}_fresh=1`;
 	// The one place a path is still taken apart, and it is URL construction rather
 	// than navigation: the data endpoint is `<base>/__bosia/data` + the *app* path,
 	// so the mount prefix moves from the front of the route to the front of the

@@ -20,7 +20,16 @@ import type { CsrfConfig } from "./csrf.ts";
 import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
 import { buildCspHeader, CSP_DIRECTIVES_TEMPLATE, CSP_ENABLED, generateNonce } from "./csp.ts";
-import { isDev, compress, isStaticPath, distManifest, PRECOMPRESSED } from "./html.ts";
+import {
+	isDev,
+	compress,
+	compressBytes,
+	encodeForRequest,
+	isStaticPath,
+	distManifest,
+	PRECOMPRESSED,
+	type Encoded,
+} from "./html.ts";
 import { dev500WithPlugins } from "./dev-500.ts";
 import { OUT_DIR } from "./paths.ts";
 import { stripBase, withBase } from "./basePath.ts";
@@ -40,6 +49,7 @@ import {
 	cacheGet,
 	cacheSet,
 	coalesceMiss,
+	collectTags,
 	computeCacheKey,
 	deferCacheWrite,
 	serveCached,
@@ -164,7 +174,7 @@ function isValidRoutePath(path: string, origin: string): boolean {
 	}
 }
 
-type DataRequest = { routeUrl: URL; invalidatedBits: string | null };
+type DataRequest = { routeUrl: URL; invalidatedBits: string | null; fresh: boolean };
 
 /**
  * Decode `/__bosia/data/<route>.json` into the page URL it stands for.
@@ -189,14 +199,21 @@ function parseDataRequest(url: URL): DataRequest | "invalid" | null {
 
 	const routeUrl = new URL(routePathStr, url.origin);
 	let invalidatedBits: string | null = null;
+	let fresh = false;
 	for (const [key, val] of url.searchParams.entries()) {
 		if (key === "_invalidated") {
 			invalidatedBits = val;
 			continue;
 		}
+		// Set by the client router when the fetch follows an invalidate():
+		// skip the cached copy, as `?_invalidated` does for page HTML.
+		if (key === "_fresh") {
+			fresh = true;
+			continue;
+		}
 		routeUrl.searchParams.append(key, val);
 	}
-	return { routeUrl, invalidatedBits };
+	return { routeUrl, invalidatedBits, fresh };
 }
 
 /**
@@ -211,6 +228,16 @@ function parseDataRequest(url: URL): DataRequest | "invalid" | null {
  * `test/hooks-redirect.test.ts`.
  */
 const dataRequests = new WeakMap<Request, DataRequest>();
+
+const jsonEncoder = new TextEncoder();
+
+/** A page route's `export const cache` flag: the build-time read when it has
+ *  one, otherwise the compiled page module's own export (see renderer.ts). */
+async function pageRouteCacheable(route: (typeof serverRoutes)[number]): Promise<boolean> {
+	const flag = (route as { cache?: boolean | null }).cache;
+	if (flag === true || flag === false) return flag;
+	return (await route.pageModule()).cache !== false;
+}
 
 /**
  * Decode an `_invalidated` bitmask string. Char 0 = page, char i+1 = layout
@@ -267,7 +294,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 	// the parse handleRequest parked before the hooks ran is what identifies it.
 	const dataReq = dataRequests.get(request);
 	if (dataReq) {
-		const { routeUrl, invalidatedBits } = dataReq;
+		const { routeUrl, invalidatedBits, fresh } = dataReq;
+		// INVARIANT: once set, releaseDataMiss must fire exactly once — see the
+		// API-route cache below for the same contract.
+		let releaseDataMiss: (() => void) | null = null;
 		try {
 			const pageMatch = findMatch(serverRoutes, routeUrl.pathname);
 			// Build mask from `?_invalidated=<bits>` — see buildMaskFromBits. A page
@@ -314,6 +344,34 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				return { data, metadata, cookiesAccessed: (cookies as CookieJar).accessed };
 			};
 
+			// ── Response cache for client-navigation data ──
+			// Same contract as page HTML: keyed by URL + identity, plus the mask
+			// (different masks return different slots), tag/path invalidation, and
+			// no CSP. Only GETs use it (the client router only sends GETs); a
+			// `_fresh` fetch after invalidate() skips the read only.
+			const cacheKey =
+				computeCacheKey(routeUrl, request, cookies as CookieJar) +
+				`|data${invalidatedBits ? `|m=${invalidatedBits}` : ""}`;
+			const dataCacheable =
+				CACHE_ENABLED &&
+				!CSP_ENABLED &&
+				!warmingUp &&
+				method === "GET" &&
+				pageMatch !== null &&
+				(await pageRouteCacheable(pageMatch.route));
+			if (dataCacheable && !fresh) {
+				const hit = cacheGet(cacheKey);
+				if (hit) return serveCached(hit, request);
+				const gate = coalesceMiss(cacheKey);
+				if (gate.wait) {
+					await gate.wait;
+					const rehit = cacheGet(cacheKey);
+					if (rehit) return serveCached(rehit, request);
+				} else {
+					releaseDataMiss = gate.release;
+				}
+			}
+
 			// Dedup concurrent identical requests. The key includes the CACHE_KEYS
 			// identity hash, so different users never share a loader result — same
 			// isolation contract as the response cache. The mask is part of the key
@@ -345,13 +403,53 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			// Privacy beats intent: cookie-derived responses stay private even if
 			// a loader set its own cache-control.
 			if (cookiesWereAccessed) extra["cache-control"] = cc;
-			return compress(
-				JSON.stringify({ ...payload, metadata: result.metadata }),
-				"application/json",
-				request,
-				200,
-				extra,
-			);
+			const body = jsonEncoder.encode(JSON.stringify({ ...payload, metadata: result.metadata }));
+
+			// A loader that said not to store its response is taken at its word.
+			const loaderCc = (loaderHeaders["cache-control"] ?? "").toLowerCase();
+			const loaderOptOut = /no-store|no-cache|private/.test(loaderCc);
+			let sent: Encoded | null | undefined;
+			if (
+				dataCacheable &&
+				!loaderOptOut &&
+				(cookies as CookieJar).outgoing.length === 0 &&
+				(CACHE_MAX_BODY_BYTES === 0 || body.length <= CACHE_MAX_BODY_BYTES)
+			) {
+				const tags = collectTags(result.data.layoutDeps ?? null, result.data.pageDeps ?? null);
+				const rel = releaseDataMiss;
+				releaseDataMiss = null;
+				// Encoded once at cache quality and shared by response and entry.
+				const encoded = encodeForRequest(body, request, "cache");
+				sent = encoded;
+				deferCacheWrite(() => {
+					try {
+						const { gzip, brotli } = buildCompressedVariants(
+							body,
+							encoded?.enc === "br"
+								? { brotli: encoded.encoded }
+								: encoded
+									? { gzip: encoded.encoded }
+									: {},
+						);
+						cacheSet(
+							cacheKey,
+							{
+								raw: body,
+								gzip,
+								brotli,
+								contentType: "application/json",
+								status: 200,
+								extraHeaders: extra,
+								tags,
+							},
+							cookies,
+						);
+					} finally {
+						rel?.();
+					}
+				});
+			}
+			return compressBytes(body, "application/json", request, 200, extra, sent);
 		} catch (err) {
 			if (isRedirect(err)) {
 				return compress(
@@ -389,6 +487,8 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				});
 			}
 			return Response.json({ error: "Internal Server Error" }, { status: 500 });
+		} finally {
+			releaseDataMiss?.();
 		}
 	}
 
