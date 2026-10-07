@@ -9,6 +9,7 @@
 
 - [x] 🟠 Static hits served in `handleRequest` before `handle` (same order as `resolve()`: framework prefixes, then API shadows files). Misses still go through hooks → 404.
 - [x] Route matched once before hooks, parked per request, reused by `resolve()` (re-matched if a hook rewrites the URL). Hooks get real `params`.
+- [x] ⚪ A static miss is remembered per request, so `resolve()` 404s without a second file lookup (ultrareview nit).
 - [x] Demo, hook with 1ms fake session lookup: hydrate chunk 6.4k → 45.7k rps, favicon 40k → 66k. Pages unchanged (noise band 34–41k both).
 - [ ] 🟠 PR 2: `route.id` (groups kept) on RequestEvent/LoadEvent/MetadataEvent; docs + skills teach guards in hooks, drop layout guards.
 

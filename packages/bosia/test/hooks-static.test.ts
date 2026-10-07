@@ -61,6 +61,7 @@ beforeAll(async () => {
 			`\tconst mode = event.request.headers.get("x-mode");\n` +
 			`\tif (mode === "params") return Response.json(event.params, { headers: { "x-hooked": "1" } });\n` +
 			`\tif (mode === "rewrite") event.url = new URL("/blog/rewritten", event.url);\n` +
+			`\tif (mode === "rewrite-static") event.url = new URL("/robots.txt", event.url);\n` +
 			`\tconst res = await resolve(event);\n` +
 			`\tres.headers.set("x-hooked", "1");\n` +
 			`\treturn res;\n` +
@@ -139,6 +140,13 @@ describe("static files skip the hooks", () => {
 		const res = await fetch(`${origin}/nope.txt`);
 		expect(res.status).toBe(404);
 		expect(res.headers.get("x-hooked")).toBe("1");
+	});
+
+	// The miss is remembered for /nope.txt only, so a rewritten path is looked up.
+	test("a hook can rewrite a missing file to one that exists", async () => {
+		const res = await fetch(`${origin}/nope.txt`, { headers: { "x-mode": "rewrite-static" } });
+		expect(res.status).toBe(200);
+		expect(await res.text()).toContain("User-agent");
 	});
 });
 

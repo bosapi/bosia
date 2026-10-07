@@ -236,6 +236,8 @@ type RouteMatches = {
 	pageOnly: boolean;
 	api: RouteMatch<(typeof apiRoutes)[number]> | null;
 	page: RouteMatch<(typeof serverRoutes)[number]> | null;
+	/** handleRequest already looked for a static file at `path` and found none. */
+	staticMiss?: boolean;
 };
 
 /**
@@ -757,9 +759,14 @@ async function resolve(event: RequestEvent): Promise<Response> {
 
 	// Static files — fallthrough after API routes so explicit handlers win.
 	// handleRequest already served hits before the hooks; this answers a URL a
-	// hook rewrote, and the 404 for a miss.
+	// hook rewrote, and the 404 for a miss (without looking a second time).
 	if (isStaticPath(path)) {
-		return (await serveStaticFile(path, request)) ?? new Response("Not Found", { status: 404 });
+		const parked = routeMatches.get(request);
+		const missed = parked?.staticMiss && parked.path === path;
+		return (
+			(missed ? null : await serveStaticFile(path, request)) ??
+			new Response("Not Found", { status: 404 })
+		);
 	}
 
 	// Prerendered pages — serve static HTML built at build time.
@@ -1126,15 +1133,18 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		// unshadowable), then a user `+server.ts` wins over a same-path file.
 		const path = event.url.pathname;
 		let response: Response | null = null;
+		let staticTried = false;
 		if (!dataReq && staticManifest && (path.startsWith("/dist/") || path.startsWith("/__bosia/"))) {
 			response = await serveStaticFile(path, request);
+			staticTried = true;
 		}
 		if (!response) {
 			const routes = await matchRoutes(path, dataReq !== null);
 			routeMatches.set(request, routes);
 			event.params = (routes.api ?? routes.page)?.params ?? {};
 			if (!dataReq && !routes.api && isStaticPath(path)) {
-				response = await serveStaticFile(path, request);
+				if (!staticTried) response = await serveStaticFile(path, request);
+				routes.staticMiss = !response;
 			}
 		}
 		response ??=
