@@ -59,6 +59,26 @@ beforeAll(async () => {
 			`};\n`,
 	);
 
+	// The old pattern: a layout guard. Hooks are the rule; this pins why.
+	const legacy = join(routes, "(legacy)");
+	mkdirSync(join(legacy, "old"), { recursive: true });
+	writeFileSync(
+		join(legacy, "+layout.server.ts"),
+		`import { redirect } from "bosia";\n\n` +
+			`export function load({ locals }) {\n` +
+			`\tif (!locals.user) throw redirect(303, "/login");\n` +
+			`}\n`,
+	);
+	writeFileSync(join(legacy, "old", "+page.svelte"), `<h1>Lama</h1>\n`);
+	writeFileSync(
+		join(legacy, "old", "+page.server.ts"),
+		`import { runs } from "$lib/counter";\n\n` +
+			`export function metadata() {\n` +
+			`\truns.metadata++;\n` +
+			`\treturn { title: "lama" };\n` +
+			`}\n`,
+	);
+
 	const count = join(routes, "api", "(stats)", "count");
 	mkdirSync(count, { recursive: true });
 	writeFileSync(
@@ -164,6 +184,20 @@ describe("a hook guard keyed on route.id", () => {
 		const res = await fetch(`${origin}/dashboard/7`, { headers: { "x-user": "u1" } });
 		expect(res.status).toBe(200);
 		expect(await res.text()).toContain("leaked");
+	});
+});
+
+// Guarding in hooks is the rule. metadata() starts alongside the layout loaders,
+// so a layout redirect still sends the visitor away but cannot stop metadata()
+// from running first. If this ever fails, the docs' "never gate in a layout"
+// note can be revisited.
+describe("a layout guard (not the rule)", () => {
+	test("redirects, but metadata() has already run", async () => {
+		const before = await metadataRuns();
+		const res = await fetch(`${origin}/old`, { redirect: "manual" });
+		expect(res.status).toBe(303);
+		expect(res.headers.get("location")).toBe("/login");
+		expect(await metadataRuns()).toBe(before + 1);
 	});
 });
 

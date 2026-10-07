@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Security guide: protect signed-in pages in `hooks.server.ts` with `event.route.id`, not in a layout.
 - Hooks guide, auth, page-shell and shop skills use the same `route.id` hook check.
 - Metadata guide example no longer checks sign-in inside `metadata()`.
+- Security and metadata guides: guarding in hooks is the rule, a layout can't stop `metadata()`.
 
 ### Added
 

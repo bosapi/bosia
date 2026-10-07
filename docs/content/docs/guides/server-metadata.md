@@ -130,7 +130,7 @@ export async function metadata({ params }: MetadataEvent) {
 }
 ```
 
-Sign-in checks belong in a [hook guard](/guides/security/#route-guards-in-hooks), which runs before `metadata()`.
+Sign-in checks belong in a [hook guard](/guides/security/#route-guards-in-hooks), which runs before `metadata()`. A `+layout.server.ts` can't stop `metadata()`: the two start at the same time.
 
 Any other error inside `metadata()` is logged and the page renders without metadata, rather than failing the request.
 

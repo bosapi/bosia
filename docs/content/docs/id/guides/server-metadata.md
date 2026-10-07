@@ -130,7 +130,7 @@ export async function metadata({ params }: MetadataEvent) {
 }
 ```
 
-Pengecekan login tempatnya di [guard hook](/id/guides/security/#penjaga-rute-di-hook), yang berjalan sebelum `metadata()`.
+Pengecekan login tempatnya di [guard hook](/id/guides/security/#penjaga-rute-di-hook), yang berjalan sebelum `metadata()`. `+layout.server.ts` tidak bisa menghentikan `metadata()`: keduanya mulai bersamaan.
 
 Error lain di dalam `metadata()` dicatat ke log dan halaman dirender tanpa metadata, bukan menggagalkan request.
 
