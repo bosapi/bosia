@@ -59,7 +59,7 @@ return fail(400, { email, errors: { email: "Required" } });
 
 ### RequestEvent
 
-Tersedia di rute API (`+server.ts`) dan form actions.
+Tersedia di hook `handle`, rute API (`+server.ts`), dan form actions.
 
 ```ts
 type RequestEvent = {
@@ -67,12 +67,14 @@ type RequestEvent = {
 	url: URL;
 	locals: Record<string, any>;
 	params: Record<string, string>;
+	route: { id: string | null };
 	cookies: Cookies;
+	isDataRequest: boolean;
 	platform?: { env: PlatformEnv };
 };
 ```
 
-`platform` hanya terisi di Cloudflare Workers: `platform.env` berisi binding. Lihat [Deployment › Cloudflare Workers](/id/reference/deployment/#cloudflare-workers).
+`route.id` adalah folder route yang cocok di bawah `src/routes`, grup tetap disertakan, misal `/(private)/dashboard/[id]`; `null` di hook jika tidak ada yang cocok. `platform` hanya terisi di Cloudflare Workers: `platform.env` berisi binding. Lihat [Deployment › Cloudflare Workers](/id/reference/deployment/#cloudflare-workers).
 
 ### LoadEvent
 
@@ -82,6 +84,7 @@ Tersedia di fungsi `load()` dalam `+page.server.ts` dan `+layout.server.ts`.
 type LoadEvent = {
 	url: URL;
 	params: Record<string, string>;
+	route: { id: string };
 	locals: Record<string, any>;
 	cookies: Cookies;
 	platform?: { env: PlatformEnv };
@@ -98,6 +101,7 @@ Tersedia di fungsi `metadata()` dalam `+page.server.ts`.
 ```ts
 type MetadataEvent = {
 	params: Record<string, string>;
+	route: { id: string };
 	url: URL;
 	locals: Record<string, any>;
 	cookies: Cookies;

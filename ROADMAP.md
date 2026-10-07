@@ -11,7 +11,11 @@
 - [x] Route matched once before hooks, parked per request, reused by `resolve()` (re-matched if a hook rewrites the URL). Hooks get real `params`.
 - [x] ⚪ A static miss is remembered per request, so `resolve()` 404s without a second file lookup (ultrareview nit).
 - [x] Demo, hook with 1ms fake session lookup: hydrate chunk 6.4k → 45.7k rps, favicon 40k → 66k. Pages unchanged (noise band 34–41k both).
-- [ ] 🟠 PR 2: `route.id` (groups kept) on RequestEvent/LoadEvent/MetadataEvent; docs + skills teach guards in hooks, drop layout guards.
+- [x] 🟠 `route.id` = folder path with groups (`/(private)/x/[id]`) on RequestEvent (null if no match), LoadEvent, MetadataEvent, API + actions. Scanner + codegen emit it.
+- [x] Docs (en/id) + skills teach the hook gate `route.id?.startsWith("/(private)")`; layout-guard section removed. Shop/store templates moved their gate to `guardHandle`.
+- [x] `test/route-id.test.ts`: hook guard stops SSR, client nav, form POST; `metadata()` counter proves it never ran.
+- [ ] 🟡 `page.route.id` on the client page store (SvelteKit parity).
+- [ ] ⚪ Layout guards still work in code (`layout-guard.test.ts`) but are undocumented; SSR `metadata()` can run before them.
 
 ## bosia 1.1.4 (2026-10-04) — static files from memory
 

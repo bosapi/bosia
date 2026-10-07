@@ -414,6 +414,7 @@ export async function loadRouteData(
 					(await withTimeout(
 						mod.load({
 							params: trackedParams(params, deps),
+							route: { id: route.id },
 							url: trackedUrl(url, deps),
 							locals,
 							cookies: trackedCookies(cookies, deps),
@@ -481,6 +482,7 @@ export async function loadRouteData(
 					(await withTimeout(
 						mod.load({
 							params: trackedParams(params, deps),
+							route: { id: route.id },
 							url: trackedUrl(url, deps),
 							locals,
 							cookies: trackedCookies(cookies, deps),
@@ -551,7 +553,15 @@ export async function loadMetadata(
 			const fetch = makeFetch(req, url);
 			return (
 				(await withTimeout(
-					mod.metadata({ params, url, locals, cookies, fetch, platform: getPlatform() }),
+					mod.metadata({
+						params,
+						route: { id: route.id },
+						url,
+						locals,
+						cookies,
+						fetch,
+						platform: getPlatform(),
+					}),
 					METADATA_TIMEOUT,
 					`metadata (${url.pathname})`,
 				)) ?? null

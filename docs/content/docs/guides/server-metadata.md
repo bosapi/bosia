@@ -120,14 +120,17 @@ All properties are optional.
 You can throw `redirect()` or `error()` from inside `metadata()` — they behave exactly as they do in `load()`:
 
 ```ts
-import { redirect } from "bosia";
+import { error } from "bosia";
 import type { MetadataEvent } from "bosia";
 
-export function metadata({ locals }: MetadataEvent) {
-	if (!locals.user) redirect(303, "/login");
-	return { title: "Dashboard" };
+export async function metadata({ params }: MetadataEvent) {
+	const post = await db.getPost(params.slug);
+	if (!post) error(404, "Post not found");
+	return { title: post.title };
 }
 ```
+
+Sign-in checks belong in a [hook guard](/guides/security/#route-guards-in-hooks), which runs before `metadata()`.
 
 Any other error inside `metadata()` is logged and the page renders without metadata, rather than failing the request.
 

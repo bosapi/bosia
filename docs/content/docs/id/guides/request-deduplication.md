@@ -17,7 +17,7 @@ Ketika N request bersamaan mengakses URL yang sama **dari identitas yang sama**,
 Ini **aktif secara default** untuk setiap route. Kunci dedup adalah URL (pathname + query string yang diurutkan) **ditambah hash identitas yang sama dengan yang dipakai [response cache](./response-cache)**: hash dari setiap cookie dan header yang namanya ada di `CACHE_KEYS`. Dua pengguna dengan session cookie berbeda tidak pernah berbagi hasil loader; dua pengguna anonim (tanpa nilai `CACHE_KEYS`) berbagi.
 
 :::warning[Breaking change di 0.8.4]
-Grup route `(private)` **tidak lagi mematikan deduplikasi** — dedup kini sadar identitas di mana pun, dan konsep `scope` route sudah dihapus. `(private)` berperilaku seperti folder `(group)` lainnya: tidak muncul di URL, berguna untuk berbagi layout auth.
+Grup route `(private)` **tidak lagi mematikan deduplikasi** — dedup kini sadar identitas di mana pun, dan konsep `scope` route sudah dihapus. `(private)` berperilaku seperti folder `(group)` lainnya: tidak muncul di URL, berguna untuk guard hook lewat `event.route.id` dan layout bersama.
 
 Jika aplikasi Anda autentikasi dengan **nama cookie atau header kustom**, tambahkan ke `CACHE_KEYS` (lihat di bawah) — itu kini satu-satunya kontrak yang menjaga isolasi route per-user, untuk response cache maupun dedup.
 :::

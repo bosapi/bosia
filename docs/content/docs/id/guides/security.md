@@ -175,25 +175,38 @@ BODY_SIZE_LIMIT=Infinity # no limit (not recommended)
 
 Mendukung sufiks `K` (kilobyte), `M` (megabyte), dan `G` (gigabyte).
 
-## Penjaga Rute di Layout
+## Penjaga Rute di Hook
 
-`+layout.server.ts` yang mengarahkan pengunjung anonim ke halaman login melindungi setiap halaman dan form action di bawahnya:
+Lindungi halaman yang butuh login di `src/hooks.server.ts`, berdasarkan id route:
 
 ```ts
-// src/routes/(private)/+layout.server.ts
-import { redirect, type LoadEvent } from "bosia";
+// src/hooks.server.ts
+import { redirect, type Handle } from "bosia";
 
-export async function load({ locals }: LoadEvent) {
-	if (!locals.user) throw redirect(303, "/login");
-	return { user: locals.user };
-}
+export const handle: Handle = async ({ event, resolve }) => {
+	event.locals.user = await getUser(event.cookies.get("session"));
+	if (event.route.id?.startsWith("/(private)") && !event.locals.user) {
+		throw redirect(303, "/login");
+	}
+	return resolve(event);
+};
 ```
 
-Loader server layout dijalankan pada setiap request ke halaman di bawahnya: muat halaman penuh, navigasi sisi klien, dan POST form action. Browser bisa meminta agar data layout yang sudah di-cache tidak disertakan di respons navigasi, tetapi tidak bisa mencegah loader dijalankan. Form action baru dijalankan setelah semua loader layout lolos.
+`event.route.id` adalah folder route di bawah `src/routes`, grup tetap disertakan: halaman di
+`src/routes/(private)/dashboard/[id]/+page.svelte` punya id `/(private)/dashboard/[id]`. Halaman
+baru di bawah `(private)` otomatis terlindungi tanpa mengubah hook. Periksa id-nya, bukan
+`event.url.pathname`: grup tidak muncul di URL.
+
+`handle` berjalan sebelum semua hal lain pada request: `metadata()`, setiap loader, form action,
+dan handler API. Pengunjung yang ditolak tidak menjalankan kode halaman sama sekali. Pengecekan
+yang sama mencakup muat halaman penuh, navigasi sisi klien, POST form action, dan rute API
+(`/api/(admin)/users`).
+
+Jangan jadikan `+layout.server.ts` sebagai penjaga: `metadata()` dan kode halaman bisa mulai
+sebelum layout selesai. Pengecekan yang bergantung pada datanya ("apakah user ini pemilik post
+ini?") tempatnya di loader atau action yang membaca data tersebut.
 
 `parent()` selalu mengembalikan data yang dihasilkan di server. Browser tidak bisa menyuplainya.
-
-Untuk pemeriksaan yang juga harus mencakup rute API (`+server.ts`), gunakan [hook `handle`](/id/guides/middleware-hooks/). Rute API tidak punya layout.
 
 ## Proteksi Path Traversal
 

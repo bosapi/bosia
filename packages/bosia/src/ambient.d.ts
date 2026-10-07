@@ -16,6 +16,7 @@ declare module "bosia:routes" {
 
 	export const serverRoutes: Array<{
 		pattern: string;
+		id: string;
 		pageModule: Loader;
 		layoutModules: Loader[];
 		pageServer: Loader | null;
@@ -25,6 +26,7 @@ declare module "bosia:routes" {
 
 	export const apiRoutes: Array<{
 		pattern: string;
+		id: string;
 		module: Loader;
 	}>;
 

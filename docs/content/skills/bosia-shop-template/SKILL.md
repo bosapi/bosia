@@ -49,7 +49,7 @@ bosia:
 | Features    | `auth`, `rbac`, `file-upload`, `shop` (`shop` template → sqlite-file, `store` template → postgres; set per-feature in `template.json#featureOptions`)             |
 | Auth routes | `(public)/login`, `(public)/register`, `POST /logout` (303 → `/`)                                                                                                 |
 | API routes  | `POST /api/files`, `GET /uploads/[...path]/+server.ts`                                                                                                            |
-| Auth gate   | `src/routes/(private)/+layout.server.ts` redirects to `/login?next=…` when `locals.user` is null                                                                  |
+| Auth gate   | `guardHandle` in `src/hooks.server.ts` redirects `/(private)` route ids to `/login?next=…` when `locals.user` is null                                             |
 | Layouts     | `(public)/+layout.svelte` wraps with `PublicNavbar`; `(private)/+layout.svelte` renders `AdminSidebar` + path-derived `<Breadcrumb>` above `{@render children()}` |
 | Components  | `PublicNavbar.svelte`, `AdminSidebar.svelte` (theme-aware logo, brand row, collapse trigger, avatar→DropdownMenu with POST-form Sign out)                         |
 | Domain      | `src/features/shop/` — `product` / `order` / `cart` × `repository.ts` + `service.ts`, plus per-dialect schemas under `schemas/`                                   |
@@ -96,7 +96,7 @@ const items: Item[] = [
 
 ### R3 — New routes go under `(private)/dashboard/`, not `(private)/`
 
-The auth gate is on `(private)/+layout.server.ts`, but the `AdminSidebar` + breadcrumb shell sits on `(private)/+layout.svelte`. New admin pages MUST live under `(private)/dashboard/<segment>/+page.svelte` so they get the sidebar, the breadcrumb derivation, and the gate — all three at once.
+The auth gate is `guardHandle` in `hooks.server.ts` (by `route.id`), but the `AdminSidebar` + breadcrumb shell sits on `(private)/+layout.svelte`. New admin pages MUST live under `(private)/dashboard/<segment>/+page.svelte` so they get the sidebar, the breadcrumb derivation, and the gate — all three at once.
 
 ### R4 — Append new RBAC resources to `src/lib/rbac/resources.ts`
 

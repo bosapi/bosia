@@ -37,7 +37,7 @@ berjalan sekali per aset. Request file yang tidak ditemukan tetap melewati hooks
 type Handle = (input: { event: RequestEvent; resolve: ResolveFunction }) => MaybePromise<Response>;
 ```
 
-- `event` — event request dengan `request`, `url`, `params`, `locals`, `cookies`
+- `event` — event request dengan `request`, `url`, `params`, `route`, `locals`, `cookies`
 - `resolve` — panggil ini untuk melanjutkan ke handler berikutnya atau ke route
 
 ## Menyusun dengan sequence()
@@ -142,23 +142,22 @@ const logger: Handle = async ({ event, resolve }) => {
 import { redirect } from "bosia";
 
 const guard: Handle = async ({ event, resolve }) => {
-	if (event.url.pathname.startsWith("/admin") && !event.locals.user) {
+	if (event.route.id?.startsWith("/(private)") && !event.locals.user) {
 		throw redirect(303, "/login");
 	}
 	return resolve(event);
 };
 ```
 
-Satu pengecekan menutup kedua cara halaman diakses. Saat router klien bernavigasi,
-yang diambil adalah data loader halaman, bukan dokumennya — tapi `event.url` tetap
-URL halaman: `/admin`, bukan path transport internal. `event.isDataRequest`
-membedakan keduanya kalau kamu memang perlu tahu; otorisasi seharusnya tidak peduli.
+`event.route.id` adalah folder route yang cocok di bawah `src/routes`, grup tetap disertakan:
+halaman di `src/routes/(private)/dashboard/[id]/+page.svelte` punya id `/(private)/dashboard/[id]`.
+Taruh halaman yang butuh login di bawah `(private)` dan satu pengecekan ini melindungi semuanya,
+termasuk halaman yang ditambahkan nanti. Nilainya `null` jika tidak ada route yang cocok.
 
-> **⚠️ Sebelum 0.9.5 pengecekan ini tidak berjalan pada navigasi klien.** Guard yang
-> membaca `event.url.pathname` melihat path transport internal saat sebuah link
-> diklik, bukan `/admin` — jadi route yang "diproteksi" begini tetap mengirim data
-> loader-nya ke pengunjung yang belum login. Kalau kamu menyalin contoh versi lama,
-> naikkan versinya — tidak ada yang perlu ditambal di sisi aplikasimu.
+Satu pengecekan menutup semua cara masuk ke halaman: muat halaman penuh, navigasi sisi klien
+(router mengambil data loader halaman, dan `event.route` adalah route halaman tersebut), dan POST
+form action. `event.isDataRequest` membedakan navigasi kalau kamu memang perlu tahu; otorisasi
+seharusnya tidak peduli. Lihat [Keamanan › Penjaga Rute di Hook](/id/guides/security/#penjaga-rute-di-hook).
 
 `throw redirect()` lebih disarankan daripada mengembalikan `Response.redirect(...)`:
 bosia mengubahnya menjadi bentuk yang tepat untuk kedua jenis permintaan, dan

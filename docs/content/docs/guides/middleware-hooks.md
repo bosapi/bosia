@@ -37,7 +37,7 @@ once per asset. A file request that matches nothing still goes through the hooks
 type Handle = (input: { event: RequestEvent; resolve: ResolveFunction }) => MaybePromise<Response>;
 ```
 
-- `event` — the request event with `request`, `url`, `params`, `locals`, `cookies`
+- `event` — the request event with `request`, `url`, `params`, `route`, `locals`, `cookies`
 - `resolve` — call this to continue to the next handler or the route
 
 ## Composing with sequence()
@@ -140,23 +140,22 @@ const logger: Handle = async ({ event, resolve }) => {
 import { redirect } from "bosia";
 
 const guard: Handle = async ({ event, resolve }) => {
-	if (event.url.pathname.startsWith("/admin") && !event.locals.user) {
+	if (event.route.id?.startsWith("/(private)") && !event.locals.user) {
 		throw redirect(303, "/login");
 	}
 	return resolve(event);
 };
 ```
 
-One check covers both ways of reaching a page. When the client router navigates it
-fetches the page's loader data instead of the document, but `event.url` is the page
-URL either way — `/admin`, never the internal transport path. `event.isDataRequest`
-tells the two apart when you need to know; authorization should not care.
+`event.route.id` is the matched route's folder under `src/routes`, with groups kept: a page at
+`src/routes/(private)/dashboard/[id]/+page.svelte` has the id `/(private)/dashboard/[id]`. Put
+signed-in pages under `(private)` and this one check covers all of them, including pages added
+later. It is `null` when no route matched.
 
-> **⚠️ Before 0.9.5 this check did not run on client navigations.** A guard reading
-> `event.url.pathname` saw the internal transport path on a link click, never
-> `/admin`, so a route protected this way still returned its loader data to a
-> signed-out visitor. If you copied the earlier version of this example, upgrade —
-> there is nothing to patch on your side.
+One check covers every way into a page: a full page load, a client-side navigation (the router
+fetches the page's loader data, and `event.route` is that page's route) and a form action POST.
+`event.isDataRequest` tells a navigation apart when you need to know; authorization should not
+care. See [Security › Route Guards in Hooks](/guides/security/#route-guards-in-hooks).
 
 `throw redirect()` is preferred over returning `Response.redirect(...)`: it is
 turned into the right thing for both request kinds, and it applies your

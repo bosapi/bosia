@@ -69,7 +69,7 @@ return fail(400, { email, errors: { email: "Required" } });
 
 ### RequestEvent
 
-Available in API routes (`+server.ts`) and form actions.
+Available in `handle` hooks, API routes (`+server.ts`) and form actions.
 
 ```ts
 type RequestEvent = {
@@ -77,12 +77,14 @@ type RequestEvent = {
 	url: URL;
 	locals: Record<string, any>;
 	params: Record<string, string>;
+	route: { id: string | null };
 	cookies: Cookies;
+	isDataRequest: boolean;
 	platform?: { env: PlatformEnv };
 };
 ```
 
-`platform` is set only on Cloudflare Workers: `platform.env` holds the bindings. See [Deployment › Cloudflare Workers](/reference/deployment/#cloudflare-workers).
+`route.id` is the matched route's folder under `src/routes` with groups kept, e.g. `/(private)/dashboard/[id]`; `null` in a hook when nothing matched. `platform` is set only on Cloudflare Workers: `platform.env` holds the bindings. See [Deployment › Cloudflare Workers](/reference/deployment/#cloudflare-workers).
 
 ### LoadEvent
 
@@ -92,6 +94,7 @@ Available in `load()` functions in `+page.server.ts` and `+layout.server.ts`.
 type LoadEvent = {
 	url: URL;
 	params: Record<string, string>;
+	route: { id: string };
 	locals: Record<string, any>;
 	cookies: Cookies;
 	platform?: { env: PlatformEnv };
@@ -108,6 +111,7 @@ Available in `metadata()` functions in `+page.server.ts`.
 ```ts
 type MetadataEvent = {
 	params: Record<string, string>;
+	route: { id: string };
 	url: URL;
 	locals: Record<string, any>;
 	cookies: Cookies;

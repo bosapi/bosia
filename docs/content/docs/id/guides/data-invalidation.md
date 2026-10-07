@@ -3,7 +3,7 @@ title: Invalidasi Data
 description: Gunakan depends(), invalidate(), dan invalidateAll() untuk mengontrol kapan loader server dijalankan ulang saat navigasi sisi klien.
 ---
 
-Secara default, Bosia menyimpan hasil setiap `load()` dari `+page.server.ts` dan `+layout.server.ts` di browser setelah pemanggilan pertama. Pada navigasi sisi klien berikutnya, sebuah loader hanya dijalankan ulang ketika sesuatu yang benar-benar dibacanya berubah — parameter rute, parameter pencarian, URL yang dilacak, atau kunci yang dideklarasikan loader melalui `depends()`. Layout yang secara konseptual tidak berubah (misal navbar yang hanya membaca `locals.user`) tidak dikirim ulang: browser memakai salinan cache-nya. Di server, loader layout tetap dijalankan pada setiap navigasi, karena sering menjadi penjaga sebuah grup rute. Hanya datanya yang tidak disertakan di respons.
+Secara default, Bosia menyimpan hasil setiap `load()` dari `+page.server.ts` dan `+layout.server.ts` di browser setelah pemanggilan pertama. Pada navigasi sisi klien berikutnya, sebuah loader hanya dijalankan ulang ketika sesuatu yang benar-benar dibacanya berubah — parameter rute, parameter pencarian, URL yang dilacak, atau kunci yang dideklarasikan loader melalui `depends()`. Layout yang secara konseptual tidak berubah (misal navbar yang hanya membaca `locals.user`) tidak dikirim ulang: browser memakai salinan cache-nya. Di server, loader layout tetap dijalankan pada setiap navigasi; hanya datanya yang tidak disertakan di respons.
 
 Model ini identik dengan SvelteKit: opt-in, dapat diprediksi, dan eksplisit.
 

@@ -89,7 +89,9 @@ describe("scanRoutes()", () => {
 	test("discovers +server.ts as API route", () => {
 		write("api/hello/+server.ts", "export const GET = () => new Response('hi')");
 		const m = scanRoutes();
-		expect(m.apis).toEqual([{ pattern: "/api/hello", server: "api/hello/+server.ts" }]);
+		expect(m.apis).toEqual([
+			{ pattern: "/api/hello", id: "/api/hello", server: "api/hello/+server.ts" },
+		]);
 	});
 
 	test("route groups are invisible in URL but still walked", () => {
@@ -160,6 +162,18 @@ describe("scanRoutes()", () => {
 		expect(route.layoutServers).toHaveLength(2);
 		expect(route.layoutServers[0].path).toBe("+layout.server.ts");
 		expect(route.layoutServers[1].path).toBe("admin/+layout.server.ts");
+	});
+
+	test("route id is the folder path with groups and params kept", () => {
+		write("+page.svelte");
+		write("(private)/dashboard/[id]/+page.svelte");
+		write("api/(admin)/users/+server.ts");
+		const m = scanRoutes();
+		const ids = Object.fromEntries(m.pages.map((p) => [p.pattern, p.id]));
+		expect(ids["/"]).toBe("/");
+		expect(ids["/dashboard/[id]"]).toBe("/(private)/dashboard/[id]");
+		expect(m.apis[0].pattern).toBe("/api/users");
+		expect(m.apis[0].id).toBe("/api/(admin)/users");
 	});
 });
 

@@ -142,6 +142,7 @@ export function scanRoutes(): RouteManifest {
 		if (items.some((i) => i.isFile() && i.name === "+server.ts")) {
 			apis.push({
 				pattern: toUrlPath(urlSegments),
+				id: `/${dir}`,
 				server: rel("+server.ts"),
 			});
 		}
@@ -158,6 +159,7 @@ export function scanRoutes(): RouteManifest {
 			const pageFile = rel("+page.svelte");
 			pages.push({
 				pattern: toUrlPath(urlSegments),
+				id: `/${dir}`,
 				page: pageFile,
 				layouts: [...currentLayouts],
 				pageServer: pageServerFile,

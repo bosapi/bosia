@@ -111,6 +111,7 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 	// serverRoutes
 	lines.push("export const serverRoutes: Array<{");
 	lines.push("  pattern: string;");
+	lines.push("  id: string;");
 	lines.push("  pageModule: () => Promise<any>;");
 	lines.push("  layoutModules: (() => Promise<any>)[];");
 	lines.push("  pageServer: (() => Promise<any>) | null;");
@@ -129,6 +130,7 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 			.join(", ");
 		lines.push("  {");
 		lines.push(`    pattern: ${JSON.stringify(r.pattern)},`);
+		lines.push(`    id: ${JSON.stringify(r.id)},`);
 		lines.push(`    pageModule: ${serverImport(r.page)},`);
 		lines.push(`    layoutModules: [${layoutImports}],`);
 		lines.push(`    pageServer: ${r.pageServer ? serverImport(r.pageServer) : "null"},`);
@@ -143,11 +145,13 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 	// apiRoutes
 	lines.push("export const apiRoutes: Array<{");
 	lines.push("  pattern: string;");
+	lines.push("  id: string;");
 	lines.push("  module: () => Promise<any>;");
 	lines.push("}> = [");
 	for (const r of apis) {
 		lines.push("  {");
 		lines.push(`    pattern: ${JSON.stringify(r.pattern)},`);
+		lines.push(`    id: ${JSON.stringify(r.id)},`);
 		lines.push(`    module: ${serverImport(r.server)},`);
 		lines.push("  },");
 	}

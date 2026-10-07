@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Static files skip `hooks.server.ts`, so a session check no longer runs once per JS/CSS file.
 - Hooks now see the route's `params` (they were always empty before).
+- Shop and store templates check sign-in in `hooks.server.ts` instead of the `(private)` layout.
+
+### Added
+
+- `event.route.id` in hooks, loaders and `metadata()`: the route folder, e.g. `/(private)/dashboard`.
 
 ## [1.1.4] - 2026-10-04
 

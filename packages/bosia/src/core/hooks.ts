@@ -58,6 +58,19 @@ export type RequestEvent = {
 	 */
 	locals: Record<string, any> & { nonce?: string };
 	params: Record<string, string>;
+	/**
+	 * The matched route. `id` is its folder under `src/routes` with groups kept,
+	 * e.g. `"/(private)/dashboard/[id]"`; `null` when nothing matched. Set before
+	 * `handle` runs, for page, client-navigation data, form and API requests
+	 * alike, so one check guards a whole group:
+	 *
+	 * ```ts
+	 * if (event.route.id?.startsWith("/(private)") && !event.locals.user) {
+	 * 	throw redirect(303, "/login");
+	 * }
+	 * ```
+	 */
+	route: { id: string | null };
 	cookies: Cookies;
 	/**
 	 * True when the client router is fetching this page's loader data for a
@@ -79,6 +92,8 @@ export type RequestEvent = {
 export type LoadEvent = {
 	url: URL;
 	params: Record<string, string>;
+	/** The route being rendered; see `RequestEvent.route`. */
+	route: { id: string };
 	locals: Record<string, any>;
 	cookies: Cookies;
 	fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -169,6 +184,8 @@ export type Handle = (input: {
 
 export type MetadataEvent = {
 	params: Record<string, string>;
+	/** The route being rendered; see `RequestEvent.route`. */
+	route: { id: string };
 	url: URL;
 	locals: Record<string, any>;
 	cookies: Cookies;

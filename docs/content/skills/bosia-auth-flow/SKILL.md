@@ -45,7 +45,7 @@ A full auth surface wired to Drizzle + session cookies.
 - `features/auth/password.ts` — Argon2id hash + verify via `Bun.password`
 - `features/auth/tokens.ts` — session token mint + verify (opaque random 32 bytes, base64url)
 - `features/auth/session-resolver.ts` — resolve session → `locals.user`, `locals.can`
-- `features/auth/auth-handle.ts` — hook wiring the resolver into every request
+- `features/auth/auth-handle.ts` — hook wiring the resolver into every request, and the gate: `event.route.id?.startsWith("/(private)") && !locals.user` → `throw redirect(303, "/login")` (bosia-hooks)
 - `(public)/login/+page.{svelte,server.ts}` — form + `actions` (validate, verify, set cookie, redirect)
 - `(public)/register/+page.{svelte,server.ts}` — validate, hash, insert user, RBAC bootstrap, redirect
 - `(public)/forgot/+page.{svelte,server.ts}` — request reset, mint token, email (or log in dev)
@@ -91,7 +91,7 @@ export async function load({ locals }: LoadEvent) {
 
 Mirror in `(public)/register/+page.server.ts`. Target must match R8's so the loop is symmetric.
 
-R10 — A login page implies a dashboard page. When you scaffold `(public)/login/+page.svelte`, also scaffold the post-login landing (typically `(private)/dashboard/+page.svelte`) plus `(private)/+layout.server.ts` gating the group (`if (!locals.user) throw redirect(303, "/login")`). Otherwise R8's redirect 404s and login looks broken. The dashboard can start minimal (heading + Log out form) but must exist.
+R10 — A login page implies a dashboard page. When you scaffold `(public)/login/+page.svelte`, also scaffold the post-login landing (typically `(private)/dashboard/+page.svelte`) gated by the hook in `auth-handle.ts` (`event.route.id?.startsWith("/(private)")`) — NOT by `(private)/+layout.server.ts`. Otherwise R8's redirect 404s and login looks broken. The dashboard can start minimal (heading + Log out form) but must exist.
 
 ## Checklist gate
 
@@ -103,7 +103,7 @@ P0:
 - [ ] Logout is `POST` via `+server.ts`.
 - [ ] Login/register redirect via server-side `throw redirect(303, …)` — never `use:enhance` + client `goto()`.
 - [ ] `(public)/login` and `(public)/register` `+page.server.ts` redirect signed-in visitors to the dashboard (R9).
-- [ ] Post-login destination exists + `(private)/+layout.server.ts` gates the group (R10).
+- [ ] Post-login destination exists + the auth hook gates `/(private)/` route ids (R10).
 - [ ] All form actions validate input at the boundary.
 - [ ] bosia-security-review pass.
 

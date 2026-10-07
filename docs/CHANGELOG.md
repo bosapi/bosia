@@ -11,6 +11,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Hooks guide says static files are served before hooks, and that hooks see route params.
+- Security guide: protect signed-in pages in `hooks.server.ts` with `event.route.id`, not in a layout.
+- Hooks guide, auth, page-shell and shop skills use the same `route.id` hook check.
+- Metadata guide example no longer checks sign-in inside `metadata()`.
+
+### Added
+
+- API reference lists `route` on `RequestEvent`, `LoadEvent` and `MetadataEvent`.
 
 ## [0.8.20] - 2026-10-04
 

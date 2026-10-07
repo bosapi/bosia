@@ -194,25 +194,37 @@ BODY_SIZE_LIMIT=Infinity # no limit (not recommended)
 
 Supports `K` (kilobytes), `M` (megabytes), and `G` (gigabytes) suffixes.
 
-## Route Guards in Layouts
+## Route Guards in Hooks
 
-A `+layout.server.ts` that redirects anonymous visitors protects every page and form action under it:
+Guard signed-in pages in `src/hooks.server.ts`, by route id:
 
 ```ts
-// src/routes/(private)/+layout.server.ts
-import { redirect, type LoadEvent } from "bosia";
+// src/hooks.server.ts
+import { redirect, type Handle } from "bosia";
 
-export async function load({ locals }: LoadEvent) {
-	if (!locals.user) throw redirect(303, "/login");
-	return { user: locals.user };
-}
+export const handle: Handle = async ({ event, resolve }) => {
+	event.locals.user = await getUser(event.cookies.get("session"));
+	if (event.route.id?.startsWith("/(private)") && !event.locals.user) {
+		throw redirect(303, "/login");
+	}
+	return resolve(event);
+};
 ```
 
-Layout server loaders run on every request to a page under them: full page loads, client-side navigations and form action POSTs. The browser can ask for a cached layout's data to be left out of a navigation response, but it can't stop the loader from running. Form actions run only after every layout loader has passed.
+`event.route.id` is the route's folder under `src/routes`, with groups kept: a page at
+`src/routes/(private)/dashboard/[id]/+page.svelte` has the id `/(private)/dashboard/[id]`. A page
+added under `(private)` later is guarded without touching the hook. Check the id, not
+`event.url.pathname`: groups don't appear in the URL.
+
+`handle` runs before anything else for the request: `metadata()`, every loader, form actions and
+API handlers. A refused visitor runs none of the page's code. The same check covers full page
+loads, client-side navigations, form action POSTs and API routes (`/api/(admin)/users`).
+
+Don't use `+layout.server.ts` as the gate: `metadata()` and page code can start before it.
+Checks that depend on the data itself ("does this user own this post?") belong in the loader or
+action that reads it.
 
 `parent()` always returns data produced on the server. The browser can't supply it.
-
-For checks that should cover API routes (`+server.ts`) too, use a [`handle` hook](/guides/middleware-hooks/). API routes have no layouts.
 
 ## Path Traversal Protection
 

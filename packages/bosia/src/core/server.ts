@@ -648,6 +648,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			const handlerResult = await handler({
 				request,
 				params: apiMatch.params,
+				route: { id: apiMatch.route.id },
 				url,
 				locals,
 				cookies,
@@ -854,6 +855,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 					}
 
 					event.params = pageMatch.params;
+					event.route = { id: pageMatch.route.id };
 					let result: any;
 					try {
 						result = await action(event);
@@ -1121,6 +1123,7 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 			url: dataReq ? dataReq.routeUrl : url,
 			locals: { nonce },
 			params: {},
+			route: { id: null },
 			cookies: cookieJar,
 			isDataRequest: dataReq !== null,
 			platform: getPlatform(),
@@ -1141,7 +1144,11 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		if (!response) {
 			const routes = await matchRoutes(path, dataReq !== null);
 			routeMatches.set(request, routes);
-			event.params = (routes.api ?? routes.page)?.params ?? {};
+			const matched = routes.api ?? routes.page;
+			if (matched) {
+				event.params = matched.params;
+				event.route = { id: matched.route.id };
+			}
 			if (!dataReq && !routes.api && isStaticPath(path)) {
 				if (!staticTried) response = await serveStaticFile(path, request);
 				routes.staticMiss = !response;
@@ -1399,6 +1406,7 @@ function loadBuiltManifest(): RouteManifest {
 	return {
 		pages: serverRoutes.map((r: any) => ({
 			pattern: r.pattern,
+			id: r.id,
 			page: "",
 			layouts: [],
 			pageServer: r.pageServer ? "" : null,
@@ -1409,7 +1417,7 @@ function loadBuiltManifest(): RouteManifest {
 			cache: r.cache ?? null,
 			prerender: false,
 		})),
-		apis: apiRoutes.map((r: any) => ({ pattern: r.pattern, server: "" })),
+		apis: apiRoutes.map((r: any) => ({ pattern: r.pattern, id: r.id, server: "" })),
 		errorPage: null,
 	};
 }

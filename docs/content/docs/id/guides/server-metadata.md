@@ -120,14 +120,17 @@ Semua properti opsional.
 Kamu bisa melempar `redirect()` atau `error()` dari dalam `metadata()` — perilakunya sama seperti di `load()`:
 
 ```ts
-import { redirect } from "bosia";
+import { error } from "bosia";
 import type { MetadataEvent } from "bosia";
 
-export function metadata({ locals }: MetadataEvent) {
-	if (!locals.user) redirect(303, "/masuk");
-	return { title: "Dashboard" };
+export async function metadata({ params }: MetadataEvent) {
+	const post = await db.getPost(params.slug);
+	if (!post) error(404, "Post tidak ditemukan");
+	return { title: post.title };
 }
 ```
+
+Pengecekan login tempatnya di [guard hook](/id/guides/security/#penjaga-rute-di-hook), yang berjalan sebelum `metadata()`.
 
 Error lain di dalam `metadata()` dicatat ke log dan halaman dirender tanpa metadata, bukan menggagalkan request.
 

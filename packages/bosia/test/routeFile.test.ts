@@ -27,6 +27,7 @@ const manifest = (pageServer: string | null): RouteManifest => ({
 	pages: [
 		{
 			pattern: "/blog",
+			id: "/(app)/blog",
 			page: "blog/+page.ts",
 			layouts: ["+layout.ts"],
 			pageServer,
@@ -35,7 +36,7 @@ const manifest = (pageServer: string | null): RouteManifest => ({
 			trailingSlash: "never",
 		} as any,
 	],
-	apis: [{ pattern: "/", server: "+server.ts" }],
+	apis: [{ pattern: "/", id: "/", server: "+server.ts" }],
 	errorPage: null,
 });
 
@@ -64,6 +65,13 @@ describe("generateRoutesFile() — server import thunks", () => {
 		);
 		const mod = await route.pageServer();
 		expect(typeof mod.load).toBe("function");
+	});
+
+	test("server and API routes carry their route id", async () => {
+		generateRoutesFile(manifest(null));
+		const { serverRoutes, apiRoutes } = await import(join(tmpDir, ".bosia", "routes.ts") + "?id");
+		expect(serverRoutes[0].id).toBe("/(app)/blog");
+		expect(apiRoutes[0].id).toBe("/");
 	});
 
 	test("client routes keep plain import thunks", () => {

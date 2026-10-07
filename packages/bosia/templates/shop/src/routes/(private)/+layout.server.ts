@@ -1,10 +1,6 @@
-import { redirect } from "bosia";
 import type { LoadEvent } from "bosia";
 
-export async function load({ locals, url }: LoadEvent) {
-	if (!locals.user) {
-		const next = encodeURIComponent(url.pathname + url.search);
-		throw redirect(303, `/login?next=${next}`);
-	}
+// Sign-in is checked in hooks.server.ts, before this loader runs.
+export async function load({ locals }: LoadEvent) {
 	return { user: locals.user };
 }

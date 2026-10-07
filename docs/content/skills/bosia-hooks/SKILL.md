@@ -42,7 +42,7 @@ Import `redirect`/`error`/`fail`/`sequence`/`Handle` from `"bosia"`, never `"@sv
 
 ## `event`
 
-`{ request: Request, url: URL, locals: Record<string, any> & { nonce? }, params: Record<string, string>, cookies: Cookies, isDataRequest: boolean }`. `locals` is per-request scratch (write `event.locals.user`; loaders read it). `params` is empty at root-hook time. `cookies` → [[bosia-cookies]].
+`{ request: Request, url: URL, locals: Record<string, any> & { nonce? }, params: Record<string, string>, route: { id: string | null }, cookies: Cookies, isDataRequest: boolean }`. `locals` is per-request scratch (write `event.locals.user`; loaders read it). `params` and `route` are already filled: `route.id` is the route folder with groups kept (`/(private)/dashboard/[id]`), `null` when nothing matched. `cookies` → [[bosia-cookies]].
 
 `url` is ALWAYS the page URL — the same value whether the browser loaded the document or the client router fetched that page's loader data. `isDataRequest` distinguishes the two (bosia ≥ 0.9.5); never branch authorization on it.
 
@@ -52,12 +52,14 @@ Import `redirect`/`error`/`fail`/`sequence`/`Handle` from `"bosia"`, never `"@sv
 import { redirect, type Handle } from "bosia";
 
 const guard: Handle = async ({ event, resolve }) => {
-	if (event.url.pathname.startsWith("/admin") && !event.locals.user) {
+	if (event.route.id?.startsWith("/(private)") && !event.locals.user) {
 		throw redirect(303, "/login");
 	}
 	return resolve(event);
 };
 ```
+
+This hook IS the auth gate: signed-in pages live under `(private)`, and one `route.id` check covers page loads, client navs, form POSTs and API routes before `metadata()`/loaders run. Match on `route.id`, never `url.pathname` (groups aren't in the URL). NEVER gate in `+layout.server.ts` — `metadata()` and page code can start before it.
 
 Prefer `throw redirect(303, …)` over `return Response.redirect(…)`: it is converted correctly for both request kinds and rebases `BASE_PATH` for you. A returned `Response.redirect` works too, but its `Location` ships verbatim — under a base path you write the prefix yourself. Pass on the `event.request` you were given; a fabricated `Request` detaches the event from its per-request state.
 

@@ -7,6 +7,8 @@ export type TrailingSlash = "never" | "always" | "ignore";
 export interface PageRoute {
 	/** URL pattern, e.g. "/" or "/blog/[slug]" or "/[...rest]" */
 	pattern: string;
+	/** Folder path under src/routes with groups kept, e.g. "/(private)/blog/[slug]" */
+	id: string;
 	/** Path to +page.svelte, relative to src/routes/ */
 	page: string;
 	/** Chain of +layout.svelte paths root → leaf, relative to src/routes/ */
@@ -42,6 +44,8 @@ export interface PageRoute {
 export interface ApiRoute {
 	/** URL pattern, e.g. "/api/hello" or "/api/users/[id]" */
 	pattern: string;
+	/** Folder path under src/routes with groups kept, e.g. "/api/(admin)/users" */
+	id: string;
 	/** Path to +server.ts, relative to src/routes/ */
 	server: string;
 }

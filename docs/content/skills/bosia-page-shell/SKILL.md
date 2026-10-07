@@ -81,10 +81,9 @@ R2 — Layout depth = scope. Pick the shallowest layout that needs the chrome: r
 R3 — Authenticated layout MUST pass `user` to `ui/navbar`, else signed-in users have no avatar dropdown and no way to Log out. Public and private chrome are SEPARATE components configured separately — the moment `(private)/+layout.svelte` exists it needs its own auth-aware chrome; do NOT defer it to a future turn ("dropdown will appear later"). Thread `user` from `(private)/+layout.server.ts`:
 
 ```ts
-// src/routes/(private)/+layout.server.ts
-import { redirect, type LoadEvent } from "bosia";
+// src/routes/(private)/+layout.server.ts — data only; the sign-in gate is the hook (bosia-hooks)
+import type { LoadEvent } from "bosia";
 export async function load({ locals, parent }: LoadEvent) {
-	if (!locals.user) throw redirect(303, "/login");
 	const u = locals.user;
 	return {
 		...(await parent()), // R5.5 — preserve inherited keys

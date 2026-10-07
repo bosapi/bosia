@@ -17,7 +17,7 @@ When N concurrent requests hit the same URL **from the same identity**, Bosia ru
 This is **on by default** for every route. The dedup key is the URL (pathname + sorted query string) **plus the same identity hash the [response cache](./response-cache) uses**: a hash of every cookie and header named in `CACHE_KEYS`. Two users with different session cookies never share a loader result; two anonymous users (no `CACHE_KEYS` values) do.
 
 :::warning[Breaking change in 0.8.4]
-`(private)` route groups **no longer switch off deduplication** — dedup is now identity-aware everywhere, and the route `scope` concept is gone. `(private)` behaves like any other `(group)` folder: invisible in the URL, useful for sharing auth layouts.
+`(private)` route groups **no longer switch off deduplication** — dedup is now identity-aware everywhere, and the route `scope` concept is gone. `(private)` behaves like any other `(group)` folder: invisible in the URL, useful for a hook guard on `event.route.id` and for shared layouts.
 
 If your app authenticates with a **custom cookie or header name**, add it to `CACHE_KEYS` (see below) — that is now the one contract that keeps per-user routes isolated, for both the response cache and dedup.
 :::
