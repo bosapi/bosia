@@ -140,7 +140,7 @@ R5.5 — Child layout `load` MUST spread parent data, not replace it. Layout dat
 
 For dynamic per-route data (cart/notification count), prefer fetching from `/api/...` via a client `$effect` over threading through layout data.
 
-R6 — Active link state comes from the layout: source `currentPath` from `page.url.pathname` (imported from `bosia/client`) inside the layout — never hardcode.
+R6 — Active link state comes from the layout: source `currentPath` from `page.url.pathname` (imported from `bosia/client`) inside the layout — never hardcode. To branch on the section rather than the URL, read `page.route.id` (groups kept, e.g. `/(private)/dashboard`; `null` on 404). Never use it for access control — that's the hook's job.
 
 ## Workflow
 

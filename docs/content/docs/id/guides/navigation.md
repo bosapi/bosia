@@ -62,6 +62,24 @@ Saat development, navigasi yang seharusnya cocok **dengan** prefix akan mencatat
 [bosia] "/dashboard" matched no route and is leaving the app — it is mounted at "/sso". Use "/sso/dashboard".
 ```
 
+## Halaman saat ini
+
+`page` dari `bosia/client` memberi tahu komponen di mana ia berada. Nilainya berubah di setiap navigasi dan sudah benar sejak SSR.
+
+```svelte
+<script lang="ts">
+	import { page } from "bosia/client";
+</script>
+
+<a href="/admin" class:active={page.url.pathname.startsWith("/admin")}>Admin</a>
+{#if page.route.id?.startsWith("/(private)")}<SignOutButton />{/if}
+```
+
+- `page.url` — `URL` saat ini.
+- `page.route.id` — folder rute dengan grup dan parameter tetap ada, mis. `/(private)/dashboard/[id]`. Id yang sama dengan yang dilihat hook dan loader. `null` bila tidak ada rute yang cocok (halaman 404).
+
+Parameter rute datang sebagai prop `params`, bukan di `page`.
+
 ## Perilaku scroll
 
 - **Navigasi maju** (link, `goto()`, redirect form) scroll ke atas — atau ke elemen `#hash` jika URL tujuan memilikinya. `goto(url, { noScroll: true })` melewatinya untuk satu navigasi.

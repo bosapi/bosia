@@ -7,6 +7,7 @@ declare module "bosia:routes" {
 
 	export const clientRoutes: Array<{
 		pattern: string;
+		id: string;
 		page: Loader;
 		layouts: Loader[];
 		hasServerData: boolean;

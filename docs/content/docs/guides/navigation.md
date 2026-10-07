@@ -62,6 +62,24 @@ In development, a navigation that would have matched **with** the prefix logs a 
 [bosia] "/dashboard" matched no route and is leaving the app — it is mounted at "/sso". Use "/sso/dashboard".
 ```
 
+## The current page
+
+`page` from `bosia/client` tells a component where it is. It updates on every navigation and is correct during SSR too.
+
+```svelte
+<script lang="ts">
+	import { page } from "bosia/client";
+</script>
+
+<a href="/admin" class:active={page.url.pathname.startsWith("/admin")}>Admin</a>
+{#if page.route.id?.startsWith("/(private)")}<SignOutButton />{/if}
+```
+
+- `page.url` — the current `URL`.
+- `page.route.id` — the route's folder with groups and params kept, e.g. `/(private)/dashboard/[id]`. The same id hooks and loaders see. `null` when no route matches (the 404 page).
+
+Route params arrive as the `params` prop, not on `page`.
+
 ## Scroll behavior
 
 - **Forward navigation** (link, `goto()`, form redirect) scrolls to the top — or to the `#hash` element if the destination URL has one. `goto(url, { noScroll: true })` skips this for one navigation.

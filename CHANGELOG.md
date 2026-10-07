@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - `event.route.id` in hooks, loaders and `metadata()`: the route folder, e.g. `/(private)/dashboard`.
+- `page.route.id` from `bosia/client` gives components the same route folder.
 
 ## [1.1.4] - 2026-10-04
 

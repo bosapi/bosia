@@ -56,6 +56,7 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 	// clientRoutes
 	lines.push("export const clientRoutes: Array<{");
 	lines.push("  pattern: string;");
+	lines.push("  id: string;");
 	lines.push("  page: () => Promise<any>;");
 	lines.push("  layouts: (() => Promise<any>)[];");
 	lines.push("  errorPages: { loader: () => Promise<any>; depth: number }[];");
@@ -92,6 +93,7 @@ export function generateRoutesFile(manifest: RouteManifest): void {
 			.join(", ");
 		lines.push("  {");
 		lines.push(`    pattern: ${JSON.stringify(clientPattern(r.pattern))},`);
+		lines.push(`    id: ${JSON.stringify(r.id)},`);
 		lines.push(`    page: () => import(${JSON.stringify(toImportPath(r.page))}),`);
 		lines.push(`    layouts: [${layoutImports}],`);
 		lines.push(`    errorPages: [${errorPageImports}],`);
@@ -189,6 +191,7 @@ function generateClientRoutesFile(
 
 	lines.push("export const clientRoutes: Array<{");
 	lines.push("  pattern: string;");
+	lines.push("  id: string;");
 	lines.push("  page: () => Promise<any>;");
 	lines.push("  layouts: (() => Promise<any>)[];");
 	lines.push("  errorPages: { loader: () => Promise<any>; depth: number }[];");
@@ -219,6 +222,7 @@ function generateClientRoutesFile(
 			.join(", ");
 		lines.push("  {");
 		lines.push(`    pattern: ${JSON.stringify(clientPattern(r.pattern))},`);
+		lines.push(`    id: ${JSON.stringify(r.id)},`);
 		lines.push(`    page: () => import(${JSON.stringify(toImportPath(r.page))}),`);
 		lines.push(`    layouts: [${layoutImports}],`);
 		lines.push(`    errorPages: [${errorPageImports}],`);

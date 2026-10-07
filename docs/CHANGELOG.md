@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - API reference lists `route` on `RequestEvent`, `LoadEvent` and `MetadataEvent`.
+- Navigation guide explains the `page` object: `page.url` and `page.route.id`.
 
 ## [0.8.20] - 2026-10-04
 

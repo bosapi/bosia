@@ -42,7 +42,7 @@ Import `redirect`/`error`/`fail`/`sequence`/`Handle` from `"bosia"`, never `"@sv
 
 ## `event`
 
-`{ request: Request, url: URL, locals: Record<string, any> & { nonce? }, params: Record<string, string>, route: { id: string | null }, cookies: Cookies, isDataRequest: boolean }`. `locals` is per-request scratch (write `event.locals.user`; loaders read it). `params` and `route` are already filled: `route.id` is the route folder with groups kept (`/(private)/dashboard/[id]`), `null` when nothing matched. `cookies` → [[bosia-cookies]].
+`{ request: Request, url: URL, locals: Record<string, any> & { nonce? }, params: Record<string, string>, route: { id: string | null }, cookies: Cookies, isDataRequest: boolean }`. `locals` is per-request scratch (write `event.locals.user`; loaders read it). `params` and `route` are already filled: `route.id` is the route folder with groups kept (`/(private)/dashboard/[id]`), `null` when nothing matched; components read the same id from `page.route.id` (`bosia/client`). `cookies` → [[bosia-cookies]].
 
 `url` is ALWAYS the page URL — the same value whether the browser loaded the document or the client router fetched that page's loader data. `isDataRequest` distinguishes the two (bosia ≥ 0.9.5); never branch authorization on it.
 

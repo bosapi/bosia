@@ -14,7 +14,7 @@
 - [x] 🟠 `route.id` = folder path with groups (`/(private)/x/[id]`) on RequestEvent (null if no match), LoadEvent, MetadataEvent, API + actions. Scanner + codegen emit it.
 - [x] Docs (en/id) + skills teach the hook gate `route.id?.startsWith("/(private)")`; layout-guard section removed. Shop/store templates moved their gate to `guardHandle`.
 - [x] `test/route-id.test.ts`: hook guard stops SSR, client nav, form POST; `metadata()` counter proves it never ran.
-- [ ] 🟡 `page.route.id` on the client page store (SvelteKit parity).
+- [x] 🟡 `page.route.id` on the client `page` (SvelteKit parity): `clientRoutes` emit `id`, derived from `page.url` via `findMatch`. `null` on 404. Tested in `ssr-page-url.test.ts`.
 - [ ] ⚪ Layout guards still work in code (`layout-guard.test.ts`) but are undocumented; SSR `metadata()` can run before them.
 
 ## bosia 1.1.4 (2026-10-04) — static files from memory

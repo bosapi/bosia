@@ -67,11 +67,16 @@ describe("generateRoutesFile() — server import thunks", () => {
 		expect(typeof mod.load).toBe("function");
 	});
 
-	test("server and API routes carry their route id", async () => {
+	test("server, API and client routes carry their route id", async () => {
 		generateRoutesFile(manifest(null));
-		const { serverRoutes, apiRoutes } = await import(join(tmpDir, ".bosia", "routes.ts") + "?id");
+		const { serverRoutes, apiRoutes, clientRoutes } = await import(
+			join(tmpDir, ".bosia", "routes.ts") + "?id"
+		);
 		expect(serverRoutes[0].id).toBe("/(app)/blog");
 		expect(apiRoutes[0].id).toBe("/");
+		expect(clientRoutes[0].id).toBe("/(app)/blog");
+		const client = readFileSync(join(tmpDir, ".bosia", "routes.client.ts"), "utf-8");
+		expect(client).toContain('id: "/(app)/blog"');
 	});
 
 	test("client routes keep plain import thunks", () => {

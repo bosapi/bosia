@@ -46,7 +46,8 @@ beforeAll(async () => {
 			`\tlet { children } = $props();\n` +
 			`</script>\n\n` +
 			`<nav data-home-active={page.url.pathname === "/"}\n` +
-			`     data-audit-active={page.url.pathname === "/admin/audit"}></nav>\n` +
+			`     data-audit-active={page.url.pathname === "/admin/audit"}\n` +
+			`     data-route={page.route.id}></nav>\n` +
 			`{@render children()}\n`,
 	);
 
@@ -61,7 +62,8 @@ beforeAll(async () => {
 			`\timport { page } from "bosia/client";\n` +
 			`\tlet { error, params } = $props();\n` +
 			`</script>\n\n` +
-			`<p data-path={page.url.pathname} data-status={error.status} data-id={params.id}>Aduh</p>\n`,
+			`<p data-path={page.url.pathname} data-status={error.status} data-id={params.id}\n` +
+			`   data-route={String(page.route.id)}>Aduh</p>\n`,
 	);
 
 	const urlProbe =
@@ -86,6 +88,10 @@ beforeAll(async () => {
 			`</script>\n\n` +
 			`<p data-path={page.url.pathname} data-slug={params.slug}>probe</p>\n`,
 	);
+
+	// A page inside a route group, for page.route.id.
+	mkdirSync(join(routes, "(app)", "grup"), { recursive: true });
+	writeFileSync(join(routes, "(app)", "grup", "+page.svelte"), `<h1>Grup</h1>\n`);
 
 	// A nested +error.svelte, so the error render goes through the boundary
 	// branch of renderErrorPage rather than the global root fallback.
@@ -199,6 +205,25 @@ describe("params prop during SSR", () => {
 		const html = await (await fetch(`${origin}/blog/halo-dunia`)).text();
 		expect(attr(html, "data-path")).toBe("/blog/halo-dunia");
 		expect(attr(html, "data-slug")).toBe("halo-dunia");
+	});
+});
+
+describe("page.route.id during SSR", () => {
+	test("is the route's folder path", async () => {
+		const html = await (await fetch(`${origin}/admin/audit`)).text();
+		expect(attr(html, "data-route")).toBe("/admin/audit");
+	});
+
+	test("keeps params and route groups", async () => {
+		const blog = await (await fetch(`${origin}/blog/halo`)).text();
+		expect(attr(blog, "data-route")).toBe("/blog/[slug]");
+		const grup = await (await fetch(`${origin}/grup`)).text();
+		expect(attr(grup, "data-route")).toBe("/(app)/grup");
+	});
+
+	test("is null on a 404", async () => {
+		const html = await (await fetch(`${origin}/tidak-ada`)).text();
+		expect(attr(html, "data-route")).toBe("null");
 	});
 });
 
