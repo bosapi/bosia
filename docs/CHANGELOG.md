@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.21] - 2026-10-07
+
+### Changed
+
+- Hooks guide says static files are served before hooks, and that hooks see route params.
+
 ## [0.8.20] - 2026-10-04
 
 ### Added

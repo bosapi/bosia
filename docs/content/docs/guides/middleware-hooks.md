@@ -25,7 +25,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 ```
 
-The `handle` function intercepts **every request** — pages, API routes, and static assets.
+The `handle` function intercepts **every page and API request**. Static files (JS/CSS chunks,
+`public/` files) are served before the hooks run, so a session lookup in `handle` never runs
+once per asset. A file request that matches nothing still goes through the hooks before its 404.
+
+`event.params` already holds the matched route's params when `handle` runs.
 
 ## Handle Type
 

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.5] - 2026-10-07
+
+### Changed
+
+- Static files skip `hooks.server.ts`, so a session check no longer runs once per JS/CSS file.
+- Hooks now see the route's `params` (they were always empty before).
+
 ## [1.1.4] - 2026-10-04
 
 ### Changed

@@ -6,7 +6,7 @@ import { apiRoutes, serverRoutes } from "bosia:routes";
 import { loadPlugins } from "./config.ts";
 import { readArtifact } from "./artifacts.ts";
 import { getPlatform, warmingUp } from "./platform.ts";
-import type { RouteManifest } from "./types.ts";
+import type { RouteManifest, RouteMatch } from "./types.ts";
 
 // Pre-compile route patterns into RegExp at startup (shared by renderer.ts via module reference)
 compileRoutes(apiRoutes);
@@ -231,6 +231,43 @@ function parseDataRequest(url: URL): DataRequest | "invalid" | null {
  */
 const dataRequests = new WeakMap<Request, DataRequest>();
 
+type RouteMatches = {
+	path: string;
+	pageOnly: boolean;
+	api: RouteMatch<(typeof apiRoutes)[number]> | null;
+	page: RouteMatch<(typeof serverRoutes)[number]> | null;
+};
+
+/**
+ * Match `path` in resolve()'s order: an API route first (it shadows static
+ * files), then a page unless the path is a static file. A data request only
+ * ever routes to a page.
+ */
+async function matchRoutes(path: string, pageOnly: boolean): Promise<RouteMatches> {
+	if (pageOnly) return { path, pageOnly, api: null, page: findMatch(serverRoutes, path) };
+	const apiMaybe = resolveApiMatch(apiRoutes, path);
+	const api = apiMaybe instanceof Promise ? await apiMaybe : apiMaybe;
+	const page = api || isStaticPath(path) ? null : findMatch(serverRoutes, path);
+	return { path, pageOnly, api, page };
+}
+
+/**
+ * handleRequest matches before the hooks run (so they see `params`) and parks
+ * the result here, keyed like `dataRequests`. resolve() reuses it unless a hook
+ * rewrote the URL, in which case it matches again.
+ */
+const routeMatches = new WeakMap<Request, RouteMatches>();
+
+function routesFor(
+	request: Request,
+	path: string,
+	pageOnly: boolean,
+): RouteMatches | Promise<RouteMatches> {
+	const parked = routeMatches.get(request);
+	if (parked && parked.path === path && parked.pageOnly === pageOnly) return parked;
+	return matchRoutes(path, pageOnly);
+}
+
 const jsonEncoder = new TextEncoder();
 
 /** A page route's `export const cache` flag: the build-time read when it has
@@ -277,6 +314,56 @@ function parseActionName(url: URL): string {
 const staticManifest = isDev ? null : buildStaticManifest(OUT_DIR);
 const prerenderManifest = isDev ? null : buildPrerenderManifest(OUT_DIR);
 
+/** Serve `path` as a static file, or `null` when there is no such file. */
+async function serveStaticFile(path: string, request: Request): Promise<Response | null> {
+	// Prod fast path: single Map lookup, no per-request stat calls.
+	if (staticManifest) {
+		const hit = lookupStatic(staticManifest, path);
+		return hit ? serveStatic(hit, request) : null;
+	}
+	// Dev: keep the per-request fallthrough so files dropped into `public/`
+	// mid-session are served without a restart. Decode once — filenames on
+	// disk are raw; safePath still runs after so traversal stays blocked.
+	let decodedPath: string;
+	try {
+		decodedPath = decodeURIComponent(path);
+	} catch {
+		return null;
+	}
+	if (decodedPath.startsWith("/dist/client/")) {
+		const resolved = safePath(
+			`${OUT_DIR}/client`,
+			decodedPath.split("?")[0].slice("/dist/client".length),
+		);
+		if (resolved) {
+			const file = Bun.file(resolved);
+			if (await file.exists()) {
+				return new Response(file, { headers: { "Cache-Control": "no-cache" } });
+			}
+		}
+		return null;
+	}
+	const pubPath = safePath("./public", decodedPath);
+	if (pubPath) {
+		const pub = Bun.file(pubPath);
+		if (await pub.exists()) return new Response(pub);
+	}
+	// Same refusals as the prod manifest: never hand out the server bundle,
+	// the user's bundled hooks/config, or build metadata. Matched against the
+	// real directory listing, so no alternative spelling reaches those files.
+	const distPath = findOutDirFile(OUT_DIR, decodedPath);
+	if (distPath) {
+		const dist = Bun.file(distPath);
+		if (await dist.exists()) return new Response(dist);
+	}
+	const staticPath = safePath(`${OUT_DIR}/static`, decodedPath);
+	if (staticPath) {
+		const staticFile = Bun.file(staticPath);
+		if (await staticFile.exists()) return new Response(staticFile);
+	}
+	return null;
+}
+
 async function resolve(event: RequestEvent): Promise<Response> {
 	const { request, url, locals, cookies } = event;
 	const path = url.pathname;
@@ -301,7 +388,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		// API-route cache below for the same contract.
 		let releaseDataMiss: (() => void) | null = null;
 		try {
-			const pageMatch = findMatch(serverRoutes, routeUrl.pathname);
+			const pageMatch = (await routesFor(request, routeUrl.pathname, true)).page;
 			// Build mask from `?_invalidated=<bits>` — see buildMaskFromBits. A page
 			// '0' skips the page loader; a layout '0' still runs the loader (it may
 			// be a guard) and only leaves its data out. Absent → run and send all.
@@ -507,8 +594,8 @@ async function resolve(event: RequestEvent): Promise<Response> {
 	// Matched BEFORE static fallthrough so explicit handlers shadow extension-
 	// based static detection (e.g. `/uploads/[...path]/+server.ts` can serve
 	// `.webp` URLs that would otherwise be intercepted by isStaticPath).
-	const apiMaybe = resolveApiMatch(apiRoutes, path);
-	const apiMatch = apiMaybe instanceof Promise ? await apiMaybe : apiMaybe;
+	const routes = await routesFor(request, path, false);
+	const apiMatch = routes.api;
 	if (apiMatch) {
 		if (warmingUp) return new Response(null, { status: 404 });
 		// INVARIANT: once set, releaseApiMiss must fire exactly once — a missed
@@ -669,54 +756,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 	}
 
 	// Static files — fallthrough after API routes so explicit handlers win.
+	// handleRequest already served hits before the hooks; this answers a URL a
+	// hook rewrote, and the 404 for a miss.
 	if (isStaticPath(path)) {
-		// Prod fast path: single Map lookup, no per-request stat calls.
-		if (staticManifest) {
-			const hit = lookupStatic(staticManifest, path);
-			if (hit) return serveStatic(hit, request);
-			return new Response("Not Found", { status: 404 });
-		}
-		// Dev: keep the per-request fallthrough so files dropped into `public/`
-		// mid-session are served without a restart. Decode once — filenames on
-		// disk are raw; safePath still runs after so traversal stays blocked.
-		let decodedPath: string;
-		try {
-			decodedPath = decodeURIComponent(path);
-		} catch {
-			return new Response("Not Found", { status: 404 });
-		}
-		if (decodedPath.startsWith("/dist/client/")) {
-			const resolved = safePath(
-				`${OUT_DIR}/client`,
-				decodedPath.split("?")[0].slice("/dist/client".length),
-			);
-			if (resolved) {
-				const file = Bun.file(resolved);
-				if (await file.exists()) {
-					return new Response(file, { headers: { "Cache-Control": "no-cache" } });
-				}
-			}
-			return new Response("Not Found", { status: 404 });
-		}
-		const pubPath = safePath("./public", decodedPath);
-		if (pubPath) {
-			const pub = Bun.file(pubPath);
-			if (await pub.exists()) return new Response(pub);
-		}
-		// Same refusals as the prod manifest: never hand out the server bundle,
-		// the user's bundled hooks/config, or build metadata. Matched against the
-		// real directory listing, so no alternative spelling reaches those files.
-		const distPath = findOutDirFile(OUT_DIR, decodedPath);
-		if (distPath) {
-			const dist = Bun.file(distPath);
-			if (await dist.exists()) return new Response(dist);
-		}
-		const staticPath = safePath(`${OUT_DIR}/static`, decodedPath);
-		if (staticPath) {
-			const staticFile = Bun.file(staticPath);
-			if (await staticFile.exists()) return new Response(staticFile);
-		}
-		return new Response("Not Found", { status: 404 });
+		return (await serveStaticFile(path, request)) ?? new Response("Not Found", { status: 404 });
 	}
 
 	// Prerendered pages — serve static HTML built at build time.
@@ -742,8 +785,8 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		}
 	}
 
-	// Resolve the page route once; reuse for trailing-slash, form-action, and SSR phases.
-	const pageMatch = findMatch(serverRoutes, path);
+	// Matched once before the hooks; reused for trailing-slash, form-action, and SSR phases.
+	const pageMatch = routes.page;
 
 	// Trailing-slash canonicalization — 308 preserves method (form POSTs included)
 	if (pageMatch) {
@@ -1075,7 +1118,26 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 			isDataRequest: dataReq !== null,
 			platform: getPlatform(),
 		};
-		let response =
+
+		// Static files are answered before the hooks: a session-lookup hook would
+		// otherwise cost a DB query per chunk. A miss falls through to the hooks
+		// and resolve(), which 404s. Prerendered pages are pages and stay behind
+		// the hooks. Order mirrors resolve(): framework prefixes first (prod only,
+		// unshadowable), then a user `+server.ts` wins over a same-path file.
+		const path = event.url.pathname;
+		let response: Response | null = null;
+		if (!dataReq && staticManifest && (path.startsWith("/dist/") || path.startsWith("/__bosia/"))) {
+			response = await serveStaticFile(path, request);
+		}
+		if (!response) {
+			const routes = await matchRoutes(path, dataReq !== null);
+			routeMatches.set(request, routes);
+			event.params = (routes.api ?? routes.page)?.params ?? {};
+			if (!dataReq && !routes.api && isStaticPath(path)) {
+				response = await serveStaticFile(path, request);
+			}
+		}
+		response ??=
 			userHandle && !warmingUp ? await userHandle({ event, resolve }) : await resolve(event);
 
 		// A hook that short-circuits a data request with a redirect is answering

@@ -25,7 +25,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 ```
 
-Fungsi `handle` menginterspsi **setiap request** — halaman, API route, dan aset statis.
+Fungsi `handle` mengintersepsi **setiap request halaman dan API**. File statis (chunk JS/CSS,
+file `public/`) dilayani sebelum hooks berjalan, sehingga pencarian sesi di `handle` tidak
+berjalan sekali per aset. Request file yang tidak ditemukan tetap melewati hooks sebelum 404.
+
+`event.params` sudah berisi params dari route yang cocok saat `handle` berjalan.
 
 ## Tipe Handle
 

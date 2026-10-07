@@ -27,7 +27,7 @@ bosia:
 
 # bosia-hooks
 
-`src/hooks.server.ts` runs on every request. The ONLY correct signature is `{ event, resolve }` — NOT `{ request, cookies }`:
+`src/hooks.server.ts` runs on every page and API request (static files are served before it; `event.params` is already filled). The ONLY correct signature is `{ event, resolve }` — NOT `{ request, cookies }`:
 
 ```ts
 import { sequence, redirect, error, fail, type Handle } from "bosia";

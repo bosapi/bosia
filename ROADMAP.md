@@ -1,9 +1,16 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.1.4**
+> Current version: **1.1.5**
 
 ---
+
+## bosia 1.1.5 (2026-10-07) — static files skip hooks
+
+- [x] 🟠 Static hits served in `handleRequest` before `handle` (same order as `resolve()`: framework prefixes, then API shadows files). Misses still go through hooks → 404.
+- [x] Route matched once before hooks, parked per request, reused by `resolve()` (re-matched if a hook rewrites the URL). Hooks get real `params`.
+- [x] Demo, hook with 1ms fake session lookup: hydrate chunk 6.4k → 45.7k rps, favicon 40k → 66k. Pages unchanged (noise band 34–41k both).
+- [ ] 🟠 PR 2: `route.id` (groups kept) on RequestEvent/LoadEvent/MetadataEvent; docs + skills teach guards in hooks, drop layout guards.
 
 ## bosia 1.1.4 (2026-10-04) — static files from memory
 
@@ -45,7 +52,7 @@
 - [x] 🟠 Static assets uncompressed. Fixed 1.1.3: build writes `.br`/`.gz` for `dist/client` + `dist/prerendered`; `serveStatic` negotiates. Hydrate chunk 108KB → 31KB br.
 - [ ] ⚪ `public/` text files (svg/txt/json) still ship raw — the precompress pass skips the app's source dir. Precompress into `dist/static` if it matters.
 - [ ] ⚪ `compress()` is untestable for encoding under `bun test` (`isDev` read at import). Integration coverage is `apps/demo` curl + `ui.e2e.ts`; add a built-server encoding test.
-- [ ] 🟠 User `handle` hook runs for every static asset: static branches live inside `resolve()`. A session-lookup hook = one DB query per chunk. Serve manifest hits in `handleRequest` before hooks.
+- [x] 🟠 User `handle` hook runs for every static asset: static branches live inside `resolve()`. A session-lookup hook = one DB query per chunk. Serve manifest hits in `handleRequest` before hooks.
 - [x] 🟡 Cache-write compression blocked the first byte (microtask). Fixed 1.1.3: `deferCacheWrite` uses `setImmediate` on Bun, microtask on Workers (no compression there). Order test added.
 - [ ] 🟡 Layout loaders run serially root→leaf even when none call `parent()`. Start all in parallel; make `parent()` await the earlier layers (SvelteKit's model).
 - [ ] 🟡 `metadata()` adds a serial step: before loaders on SSR (needed only if it returns `data`), after loaders on the data endpoint (`data` unused there). Also check: page `load` gets `metadata: null` on client nav.
