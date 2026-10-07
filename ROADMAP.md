@@ -16,6 +16,8 @@
 - [x] `test/route-id.test.ts`: hook guard stops SSR, client nav, form POST; `metadata()` counter proves it never ran.
 - [x] 🟡 `page.route.id` on the client `page` (SvelteKit parity): `clientRoutes` emit `id`, derived from `page.url` via `findMatch`. `null` on 404. Tested in `ssr-page-url.test.ts`.
 - [x] ⚪ Rule: guard in hooks. `metadata()` stays parallel with layout loaders (no wait); a layout redirect can't stop it. Pinned in `route-id.test.ts`; security + metadata guides say so.
+- [x] 🔴 Chrome e2e found: `bosia_session` not in `CACHE_KEYS` → signed-in pages cacheable across users. `auth` feature + shop/store `.env.example` set it; `bosia feat` ignores `# KEY=` lines.
+- [ ] ⚪ Registry auth sets `secure: NODE_ENV === "production"` (Bosia warns; skill says omit). Shop sidebar links to missing `/dashboard/*` pages.
 
 ## bosia 1.1.4 (2026-10-04) — static files from memory
 

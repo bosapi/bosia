@@ -116,6 +116,7 @@
 		"drizzle-valibot": "^0.4.0"
 	},
 	"envVars": {
-		"SESSION_SECRET": "change-me-in-production"
+		"SESSION_SECRET": "change-me-in-production",
+		"CACHE_KEYS": "session,sid,auth,token,jwt,Authorization,bosia_session"
 	}
 }

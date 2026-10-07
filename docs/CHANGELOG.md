@@ -21,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - API reference lists `route` on `RequestEvent`, `LoadEvent` and `MetadataEvent`.
 - Navigation guide explains the `page` object: `page.url` and `page.route.id`.
 
+### Fixed
+
+- `auth` feature adds its sign-in cookie to `CACHE_KEYS`, so cached pages stay per user.
+
 ## [0.8.20] - 2026-10-04
 
 ### Added

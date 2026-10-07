@@ -19,6 +19,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `event.route.id` in hooks, loaders and `metadata()`: the route folder, e.g. `/(private)/dashboard`.
 - `page.route.id` from `bosia/client` gives components the same route folder.
 
+### Fixed
+
+- Shop and store templates list the sign-in cookie in `CACHE_KEYS`, so cached pages stay per user.
+- `bosia feat` now adds an env var even when `.env` only has it commented out.
+
 ## [1.1.4] - 2026-10-04
 
 ### Changed

@@ -93,6 +93,8 @@ Mirror in `(public)/register/+page.server.ts`. Target must match R8's so the loo
 
 R10 — A login page implies a dashboard page. When you scaffold `(public)/login/+page.svelte`, also scaffold the post-login landing (typically `(private)/dashboard/+page.svelte`) gated by the hook in `auth-handle.ts` (`event.route.id?.startsWith("/(private)")`) — NOT by `(private)/+layout.server.ts`. Otherwise R8's redirect 404s and login looks broken. The dashboard can start minimal (heading + Log out form) but must exist.
 
+R11 — The session cookie's name MUST be in `CACHE_KEYS` (the `auth` feature's `bosia_session` isn't in the default list). Otherwise the response cache can't tell users apart and serves one user's page to another. `bosia feat auth` and the shop/store templates set `CACHE_KEYS=session,sid,auth,token,jwt,Authorization,bosia_session`; keep it in every deployed env.
+
 ## Checklist gate
 
 P0:
@@ -104,6 +106,7 @@ P0:
 - [ ] Login/register redirect via server-side `throw redirect(303, …)` — never `use:enhance` + client `goto()`.
 - [ ] `(public)/login` and `(public)/register` `+page.server.ts` redirect signed-in visitors to the dashboard (R9).
 - [ ] Post-login destination exists + the auth hook gates `/(private)/` route ids (R10).
+- [ ] Session cookie name is in `CACHE_KEYS` in every env (R11).
 - [ ] All form actions validate input at the boundary.
 - [ ] bosia-security-review pass.
 

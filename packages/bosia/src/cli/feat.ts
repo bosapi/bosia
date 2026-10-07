@@ -348,12 +348,7 @@ export async function installFeature(name: string, isRoot: boolean, options?: In
 	if (envEntries.length > 0) {
 		const envPath = join(cwd, ".env");
 		const existing = existsSync(envPath) ? readFileSync(envPath, "utf-8") : "";
-		const toAdd: string[] = [];
-		for (const [key, val] of envEntries) {
-			if (!existing.includes(`${key}=`)) {
-				toAdd.push(`${key}=${val}`);
-			}
-		}
+		const toAdd = missingEnvLines(existing, envEntries);
 		if (toAdd.length > 0) {
 			const nl = existing.length > 0 && !existing.endsWith("\n") ? "\n" : "";
 			writeFileSync(envPath, existing + nl + toAdd.join("\n") + "\n", "utf-8");
@@ -511,6 +506,14 @@ function blockDelim(ext: string): { start: string; end: string } {
 	if (ext === ".html" || ext === ".svelte") return { start: "<!--", end: "-->" };
 	if (ext === ".css") return { start: "/*", end: "*/" };
 	return { start: "//", end: "" };
+}
+
+/** `KEY=value` lines for the entries `.env` doesn't set yet. A commented-out
+ *  `# KEY=` (the default template documents CACHE_KEYS that way) doesn't count. */
+export function missingEnvLines(existing: string, entries: [string, string][]): string[] {
+	return entries
+		.filter(([key]) => !new RegExp(`^\\s*${escapeRegex(key)}=`, "m").test(existing))
+		.map(([key, val]) => `${key}=${val}`);
 }
 
 function escapeRegex(s: string): string {
