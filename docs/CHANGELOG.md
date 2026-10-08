@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.23] - 2026-10-09
+
+### Changed
+
+- Loaders guide explains that loaders run in parallel and how `parent()` waits.
+- Security guide notes page loaders start alongside layouts; guard in hooks.
+- Routing skill: do independent work before `await parent()`.
+
+### Fixed
+
+- Auth sign-in and sign-up no longer pass `secure` to cookies; Bosia sets it over HTTPS.
+
 ## [0.8.22] - 2026-10-08
 
 ### Changed

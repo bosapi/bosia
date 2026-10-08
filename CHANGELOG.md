@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.0] - 2026-10-09
+
+### Changed
+
+- Layout and page loaders now start at the same time, so nested pages load faster.
+- `parent()` waits for the layouts above, so only loaders that call it wait for them.
+- Page loaders no longer wait for `metadata()` unless they use its data.
+- Shop and store templates include starter pages for every dashboard sidebar link.
+
+### Fixed
+
+- Page `load()` now gets `metadata` data during client-side navigation too, not just on full loads.
+- Redirects and errors thrown from `hooks.server.ts` now carry the security headers.
+- Windows CI no longer fails when cleaning up after server tests.
+
 ## [1.1.6] - 2026-10-08
 
 ### Fixed

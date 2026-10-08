@@ -1,7 +1,19 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.1.6**
+> Current version: **1.2.0**
+
+---
+
+## bosia 1.2.0 (2026-10-09) — parallel loaders
+
+- [x] 🟡 Layout + page loaders start at once; `parent()` awaits the layers above. Settled root → leaf, so the root-most failure still decides the response. Demo test: 3×150ms loaders 455ms → under 400ms.
+- [x] 🟡 Data endpoint runs `metadata()` alongside the loaders and hands its `data` to page `load()` (was `null` on client nav). Form re-render overlaps them too, like SSR.
+- [x] ⚪ Hook-thrown `redirect()`/`error()` now go through `finalizeResponse` (security headers, CSP, CORS, cookies). 4 new cases in `hooks-redirect.test.ts`.
+- [x] ⚪ Registry auth drops `secure:` on the session cookie. Shop/store templates get stub pages for every admin-sidebar link.
+- [x] Docs (en/id): loaders guide "Loaders run in parallel", security note; routing skill R3a. Test: `parallel-loaders.test.ts`.
+- [ ] 🟡 Page code before `await parent()` runs even when a layout guard redirects (SvelteKit's model). Docs say guard in hooks; consider a dev warning if a layout throws redirect while the page loader ran.
+- [ ] ⚪ Cross-loader duplicate `setHeaders()` still throws, but which loader throws now depends on timing, not depth.
 
 ---
 
@@ -26,7 +38,7 @@
 - [x] 🟡 `page.route.id` on the client `page` (SvelteKit parity): `clientRoutes` emit `id`, derived from `page.url` via `findMatch`. `null` on 404. Tested in `ssr-page-url.test.ts`.
 - [x] ⚪ Rule: guard in hooks. `metadata()` stays parallel with layout loaders (no wait); a layout redirect can't stop it. Pinned in `route-id.test.ts`; security + metadata guides say so.
 - [x] 🔴 Chrome e2e found: `bosia_session` not in `CACHE_KEYS` → signed-in pages cacheable across users. `auth` feature + shop/store `.env.example` set it; `bosia feat` ignores `# KEY=` lines.
-- [ ] ⚪ Registry auth sets `secure: NODE_ENV === "production"` (Bosia warns; skill says omit). Shop sidebar links to missing `/dashboard/*` pages.
+- [x] ⚪ Registry auth sets `secure: NODE_ENV === "production"` (Bosia warns; skill says omit). Shop sidebar links to missing `/dashboard/*` pages.
 
 ## bosia 1.1.4 (2026-10-04) — static files from memory
 
@@ -53,8 +65,8 @@
 
 - [x] Route thunks import once; SSR overlaps metadata/imports/plugins; `/__bosia/data` cached (URL + `CACHE_KEYS` + mask, `_fresh=1` after invalidate), ETag 304 on hits.
 - [x] zstd per request, `Bun.gzipSync`; hover/touch/focus prefetch loads page chunks; `Link` preload header; dev Svelte compile cache, no prerender in dev.
-- [ ] 🟡 Server tests' `afterAll` kills the child without `await child.exited`, so Windows `rmSync` hits EBUSY (flaky CI). 5 files: data-endpoint-cache, layout-guard, dev-static, hooks-redirect, preload-link.
-- [ ] ⚪ A redirect thrown from `hooks.server.ts` ships without security headers (X-Content-Type-Options etc.). Pre-existing on main.
+- [x] 🟡 Server tests' `afterAll` kills the child without `await child.exited`, so Windows `rmSync` hits EBUSY (flaky CI). 5 files: data-endpoint-cache, layout-guard, dev-static, hooks-redirect, preload-link.
+- [x] ⚪ A redirect thrown from `hooks.server.ts` ships without security headers (X-Content-Type-Options etc.). Pre-existing on main.
 
 ## docs 0.8.19 (2026-10-03) — "Brand" in block previews
 
@@ -70,8 +82,8 @@
 - [ ] ⚪ `compress()` is untestable for encoding under `bun test` (`isDev` read at import). Integration coverage is `apps/demo` curl + `ui.e2e.ts`; add a built-server encoding test.
 - [x] 🟠 User `handle` hook runs for every static asset: static branches live inside `resolve()`. A session-lookup hook = one DB query per chunk. Serve manifest hits in `handleRequest` before hooks.
 - [x] 🟡 Cache-write compression blocked the first byte (microtask). Fixed 1.1.3: `deferCacheWrite` uses `setImmediate` on Bun, microtask on Workers (no compression there). Order test added.
-- [ ] 🟡 Layout loaders run serially root→leaf even when none call `parent()`. Start all in parallel; make `parent()` await the earlier layers (SvelteKit's model).
-- [ ] 🟡 `metadata()` adds a serial step: before loaders on SSR (needed only if it returns `data`), after loaders on the data endpoint (`data` unused there). Also check: page `load` gets `metadata: null` on client nav.
+- [x] 🟡 Layout loaders run serially root→leaf even when none call `parent()`. Start all in parallel; make `parent()` await the earlier layers (SvelteKit's model).
+- [x] 🟡 `metadata()` adds a serial step: before loaders on SSR (needed only if it returns `data`), after loaders on the data endpoint (`data` unused there). Also check: page `load` gets `metadata: null` on client nav.
 - [ ] ⚪ `public/` files ship with no Cache-Control (heuristic caching). Prerendered HTML `max-age=3600` can outlive a deploy and point at deleted hashed chunks.
 
 ---
