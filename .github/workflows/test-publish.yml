@@ -1,8 +1,8 @@
 name: Test & Publish
 
 # Tests + a scaffold/build/start smoke run on Linux and Windows, on every
-# push / PR. A push to main that changes packages/bosia/package.json also
-# publishes, only after every test job is green on both OSes:
+# push / PR. A push to main whose packages/bosia/package.json version isn't on
+# npm yet also publishes, only after every test job is green on both OSes:
 #
 #   test ─┬─ smoke ─────┐
 #         └─ dev-smoke ─┤
@@ -10,7 +10,7 @@ name: Test & Publish
 #
 # Publish = build templates, npm publish, then the GitHub Release with the
 # prebuilt artifacts. `decide` skips versions npm already has, so a bump
-# blocked by failing tests is retried with "Run workflow" after the fix.
+# blocked by failing tests publishes on the next green push to main.
 
 # Docs-only changes skip this workflow — docs.yml builds and deploys those.
 # A push that mixes docs and code still runs (paths-ignore needs every file
@@ -139,7 +139,7 @@ jobs:
         working-directory: ../devsmoke
         run: bash "$GITHUB_WORKSPACE/.github/scripts/dev-smoke.sh" "$GITHUB_WORKSPACE/packages/bosia"
 
-  # ── Publish: push to main that changed package.json, or "Run workflow" ──
+  # ── Publish: push to main or "Run workflow", when npm lacks the version ──
   decide:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
@@ -149,30 +149,25 @@ jobs:
       tag: ${{ steps.decide.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0 # diff against the push's `before` commit
 
       - name: Decide what to do
         id: decide
-        env:
-          BEFORE: ${{ github.event.before }}
         run: |
           VERSION=$(jq -r '.version' packages/bosia/package.json)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          # Push: only when package.json changed. `before` missing from history
-          # (force push) counts as changed — the npm check below still guards.
-          CHANGED=true
-          if [ "${{ github.event_name }}" = "push" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            git diff --quiet "$BEFORE" HEAD -- packages/bosia/package.json && CHANGED=false
-          fi
-
-          # Publish only a version npm doesn't have yet.
-          if [ "$CHANGED" = "true" ] && ! npm view "bosia@$VERSION" version >/dev/null 2>&1; then
-            echo "publish=true" >> "$GITHUB_OUTPUT"
+          # Publish whenever npm lacks this version, not only when this push
+          # changed package.json: a bump whose run failed then ships with the
+          # next green push. Only a real 404 counts — an npm outage skips.
+          if OUT=$(npm view "bosia@$VERSION" version 2>&1); then
+            [ -n "$OUT" ] && PUBLISH=false || PUBLISH=true
+          elif grep -q E404 <<<"$OUT"; then
+            PUBLISH=true
           else
-            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::npm view failed, skipping publish: $OUT"
+            PUBLISH=false
           fi
+          echo "publish=$PUBLISH" >> "$GITHUB_OUTPUT"
 
           # Prerelease → next, stable → latest.
           if [[ "$VERSION" =~ -(rc|beta|alpha) ]]; then
