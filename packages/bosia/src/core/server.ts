@@ -404,33 +404,39 @@ async function resolve(event: RequestEvent): Promise<Response> {
 					)
 				: undefined;
 			const runLoad = async () => {
-				const data = await loadRouteData(routeUrl, locals, request, cookies, null, pageMatch, mask);
-
-				let metadata = null;
-				if (pageMatch) {
-					try {
-						const meta = await loadMetadata(
+				// metadata() runs alongside the loaders; the page load() gets its
+				// `data`, as on SSR. A failure stays non-fatal here.
+				const metaP = pageMatch
+					? loadMetadata(
 							pageMatch.route,
 							pageMatch.params,
 							routeUrl,
 							locals,
 							cookies,
 							request,
-						);
-						// Explicit whitelist, not a spread: `metadata.data` feeds load() on the
-						// server and may hold secrets — it must not reach the client.
-						if (meta)
-							metadata = {
-								title: meta.title,
-								description: meta.description,
-								meta: meta.meta,
-								link: meta.link,
-								lang: meta.lang,
-							};
-					} catch {
-						/* non-fatal */
-					}
-				}
+						).catch(() => null)
+					: Promise.resolve(null);
+				const data = await loadRouteData(
+					routeUrl,
+					locals,
+					request,
+					cookies,
+					metaP.then((m) => m?.data ?? null),
+					pageMatch,
+					mask,
+				);
+				const meta = await metaP;
+				// Explicit whitelist, not a spread: `metadata.data` feeds load() on the
+				// server and may hold secrets — it must not reach the client.
+				const metadata = meta
+					? {
+							title: meta.title,
+							description: meta.description,
+							meta: meta.meta,
+							link: meta.link,
+							lang: meta.lang,
+						}
+					: null;
 
 				return { data, metadata, cookiesAccessed: (cookies as CookieJar).accessed };
 			};

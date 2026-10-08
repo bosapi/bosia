@@ -972,11 +972,34 @@ export async function renderPageWithFormData(
 
 	const { route, params } = match;
 
-	// Serial, not parallel: metadata.data feeds the loader below.
+	// Same overlap as the GET path: metadata() and the loaders start together,
+	// and only the page load() waits for metadata.data. A metadata redirect or
+	// error() still answers first.
+	const metadataP = loadMetadata(route, params, url, locals, cookies, req).then(
+		(value) => ({ ok: true as const, value }),
+		(err: unknown) => ({ ok: false as const, err }),
+	);
+	const loadP = Promise.all([
+		loadRouteData(
+			url,
+			locals,
+			req,
+			cookies,
+			metadataP.then((m) => (m.ok ? (m.value?.data ?? null) : null)),
+			match,
+		),
+		route.pageModule(),
+		Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
+	]);
+	// Settled by the early returns below without being read.
+	loadP.catch(() => {});
+
 	let metadata: Metadata | null = null;
-	try {
-		metadata = await loadMetadata(route, params, url, locals, cookies, req);
-	} catch (err) {
+	const meta = await metadataP;
+	if (meta.ok) {
+		metadata = meta.value;
+	} else {
+		const err = meta.err;
 		if (isRedirect(err))
 			return new Response(null, { status: err.status, headers: { Location: err.location } });
 		if (isHttpError(err)) {
@@ -998,12 +1021,7 @@ export async function renderPageWithFormData(
 		// Continue with null metadata — don't break the page for a metadata failure
 	}
 
-	// Load components + data in parallel
-	const [data, pageMod, layoutMods] = await Promise.all([
-		loadRouteData(url, locals, req, cookies, metadata?.data ?? null, match),
-		route.pageModule(),
-		Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
-	]);
+	const [data, pageMod, layoutMods] = await loadP;
 
 	if (!data)
 		return renderErrorPage(
