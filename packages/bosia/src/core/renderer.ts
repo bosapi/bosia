@@ -358,6 +358,14 @@ function makeDepends(deps: LoaderDeps): (...keys: string[]) => void {
 // Runs layout + page server loaders for a given URL.
 // Used by both SSR and the /__bosia/data JSON endpoint.
 //
+// Every loader starts at once (SvelteKit's model). `parent()` is what orders
+// them: it waits for the layers above and returns their merged data, so only a
+// loader that asks for it waits. Results are still settled root → leaf, so the
+// root-most failure decides the response, exactly as when they ran in turn.
+// The cost: page code that runs before `await parent()` runs even when a layout
+// guard redirects — its output never ships, but its side effects happen. Guard
+// in hooks, or `await parent()` first.
+//
 // `mask` controls which layers' data the client data endpoint sends back:
 //   - undefined → send everything (SSR, first nav)
 //   - layouts[i] === false → the layout still RUNS, but its slot is emitted as
@@ -374,6 +382,8 @@ export type LoaderMask = {
 	page: boolean;
 	layouts: boolean[];
 };
+
+type LayerResult = { data: Record<string, any>; deps: LoaderDeps };
 
 export async function loadRouteData(
 	url: URL,
@@ -392,25 +402,61 @@ export async function loadRouteData(
 	const origin = url.origin;
 	const layoutData: (Record<string, any> | null)[] = [];
 	const layoutDeps: (LoaderDeps | null)[] = [];
-	let parentData: Record<string, any> = {};
 	// Shared across layout + page loaders so cross-loader duplicate
 	// setHeaders() calls throw. Keys stored lowercased.
 	const loaderHeaders: Record<string, string> = {};
 	const setHeaders = makeSetHeaders(loaderHeaders);
 
-	// Run layout server loaders root → leaf, each gets parent() data
+	// Merged data of the first `n` layout layers. A fresh object per call, so
+	// loaders cannot mutate what the others see.
+	const layers: Promise<LayerResult>[] = [];
+	const parentOf = (n: number) => async () => {
+		const above = await Promise.all(layers.slice(0, n));
+		return Object.assign({}, ...above.map((l) => l.data));
+	};
+
 	for (const ls of route.layoutServers) {
-		// Runs regardless of the mask — see the trust note above loadRouteData.
-		const omit = mask && mask.layouts[ls.depth] === false;
-		try {
+		const parent = parentOf(layers.length);
+		const layer = (async (): Promise<LayerResult> => {
 			const mod = await ls.loader();
-			if (typeof mod.load === "function" && !warmingUp) {
-				// Snapshot per layer so loaders cannot mutate the shared accumulator,
-				// preserving the same isolation semantics as the previous merge-on-call code.
-				const snapshot = { ...parentData };
-				const parent = async () => snapshot;
+			if (typeof mod.load !== "function" || warmingUp) return { data: {}, deps: emptyDeps() };
+			const deps = emptyDeps();
+			const data =
+				(await withTimeout(
+					mod.load({
+						params: trackedParams(params, deps),
+						route: { id: route.id },
+						url: trackedUrl(url, deps),
+						locals,
+						cookies: trackedCookies(cookies, deps),
+						parent,
+						fetch: trackedFetch(fetch, origin, deps),
+						metadata: null,
+						depends: makeDepends(deps),
+						platform: getPlatform(),
+						setHeaders,
+					}),
+					LOAD_TIMEOUT,
+					`layout load (depth=${ls.depth}, ${url.pathname})`,
+				)) ?? {};
+			return { data, deps };
+		})();
+		// Settled in order below; a rejection must not be reported as unhandled
+		// while an earlier layer is still being awaited.
+		layer.catch(() => {});
+		layers.push(layer);
+	}
+
+	const skipPage = mask && mask.page === false;
+	const pageP = route.pageServer
+		? (async () => {
+				const mod = await route.pageServer!();
+				const flags = { csr: mod.csr !== false, ssr: mod.ssr !== false };
+				if (skipPage) return { ...flags, data: null, deps: null };
+				if (typeof mod.load !== "function" || warmingUp)
+					return { ...flags, data: {}, deps: emptyDeps() };
 				const deps = emptyDeps();
-				const result =
+				const data =
 					(await withTimeout(
 						mod.load({
 							params: trackedParams(params, deps),
@@ -418,23 +464,35 @@ export async function loadRouteData(
 							url: trackedUrl(url, deps),
 							locals,
 							cookies: trackedCookies(cookies, deps),
-							parent,
+							parent: parentOf(layers.length),
 							fetch: trackedFetch(fetch, origin, deps),
-							metadata: null,
+							metadata: await metadataData,
 							depends: makeDepends(deps),
 							platform: getPlatform(),
 							setHeaders,
 						}),
 						LOAD_TIMEOUT,
-						`layout load (depth=${ls.depth}, ${url.pathname})`,
+						`page load (${url.pathname})`,
 					)) ?? {};
-				layoutData[ls.depth] = omit ? null : result;
-				layoutDeps[ls.depth] = omit ? null : deps;
-				parentData = { ...parentData, ...result };
-			} else {
-				layoutData[ls.depth] = omit ? null : {};
-				layoutDeps[ls.depth] = omit ? null : emptyDeps();
-			}
+				return {
+					...flags,
+					data: data as Record<string, any> | null,
+					deps: deps as LoaderDeps | null,
+				};
+			})()
+		: null;
+	pageP?.catch(() => {});
+
+	// Settle root → leaf. The first failure wins, carrying the data of the
+	// layers above it — the same error a serial run would have produced.
+	for (let i = 0; i < route.layoutServers.length; i++) {
+		const ls = route.layoutServers[i]!;
+		// Runs regardless of the mask — see the trust note above loadRouteData.
+		const omit = mask && mask.layouts[ls.depth] === false;
+		try {
+			const { data, deps } = await layers[i]!;
+			layoutData[ls.depth] = omit ? null : data;
+			layoutDeps[ls.depth] = omit ? null : deps;
 		} catch (err) {
 			if (isRedirect(err)) throw err;
 			if (isHttpError(err)) {
@@ -460,47 +518,13 @@ export async function loadRouteData(
 		}
 	}
 
-	// Run page server loader
-	let pageData: Record<string, any> | null = null;
-	let pageDeps: LoaderDeps | null = null;
+	let pageData: Record<string, any> | null = {};
+	let pageDeps: LoaderDeps | null = emptyDeps();
 	let csr = true;
 	let ssr = true;
-	const skipPage = mask && mask.page === false;
-	if (route.pageServer) {
+	if (pageP) {
 		try {
-			const mod = await route.pageServer();
-			if (mod.csr === false) csr = false;
-			if (mod.ssr === false) ssr = false;
-			if (skipPage) {
-				pageData = null;
-				pageDeps = null;
-			} else if (typeof mod.load === "function" && !warmingUp) {
-				const snapshot = { ...parentData };
-				const parent = async () => snapshot;
-				const deps = emptyDeps();
-				pageData =
-					(await withTimeout(
-						mod.load({
-							params: trackedParams(params, deps),
-							route: { id: route.id },
-							url: trackedUrl(url, deps),
-							locals,
-							cookies: trackedCookies(cookies, deps),
-							parent,
-							fetch: trackedFetch(fetch, origin, deps),
-							metadata: await metadataData,
-							depends: makeDepends(deps),
-							platform: getPlatform(),
-							setHeaders,
-						}),
-						LOAD_TIMEOUT,
-						`page load (${url.pathname})`,
-					)) ?? {};
-				pageDeps = deps;
-			} else {
-				pageData = {};
-				pageDeps = emptyDeps();
-			}
+			({ data: pageData, deps: pageDeps, csr, ssr } = await pageP);
 		} catch (err) {
 			if (isRedirect(err)) throw err;
 			if (isHttpError(err)) {
@@ -524,9 +548,6 @@ export async function loadRouteData(
 			);
 			throw wrapped;
 		}
-	} else {
-		pageData = {};
-		pageDeps = emptyDeps();
 	}
 
 	// `params` are always attached to pageData for client-side router consumption.
@@ -655,8 +676,7 @@ export async function renderSSRStream(
 		// ── Pre-stream phase: metadata(), loaders, module imports and plugin
 		// fragments all start together, and all settle before committing to a 200,
 		// so a Redirect/HttpError from any of them still gets a proper response.
-		// Layout loaders still run in order before the page load(), which also
-		// waits for metadata.data (see loadRouteData).
+		// The page load() alone waits for metadata.data (see loadRouteData).
 		const metadataP = loadMetadata(route, params, url, locals, cookies, req).then(
 			(value) => ({ ok: true as const, value }),
 			(err: unknown) => ({ ok: false as const, err }),

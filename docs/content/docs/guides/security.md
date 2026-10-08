@@ -222,7 +222,7 @@ loads, client-side navigations, form action POSTs and API routes (`/api/(admin)/
 
 **Guarding in hooks is the rule.** Don't use `+layout.server.ts` as the gate. `metadata()` starts at
 the same time as the layout loaders, so a redirect thrown from a layout still sends the visitor
-away, but the page's `metadata()` has already run for them. Checks that depend on the data itself ("does this user own this post?") belong in the loader or
+away, but the page's `metadata()` has already run for them. So has the page's `load()`, up to its first `await parent()`: all loaders start together. Checks that depend on the data itself ("does this user own this post?") belong in the loader or
 action that reads it.
 
 `parent()` always returns data produced on the server. The browser can't supply it.

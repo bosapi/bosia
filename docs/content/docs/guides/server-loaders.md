@@ -55,8 +55,8 @@ Child loaders can access data from parent layout loaders:
 import type { LoadEvent } from "bosia";
 
 export async function load({ params, parent }: LoadEvent) {
+	const post = await db.getPost(params.slug); // runs while the layouts load
 	const parentData = await parent();
-	const post = await db.getPost(params.slug);
 
 	return {
 		post,
@@ -66,6 +66,12 @@ export async function load({ params, parent }: LoadEvent) {
 ```
 
 Data flows top-down through **loaders**: root layout → group layout → page layout → page. Each loader sees its ancestors' returns via `parent()`, but nothing is merged into the component `data` prop automatically — re-return the keys you want (like `appName` above) for the page to read them. A page without a `load()` can't call `parent()`; add a minimal loader that returns `await parent()` to forward layout data.
+
+### Loaders run in parallel
+
+Every layout and page loader for a request starts at the same time. `parent()` waits for the layouts above it to finish, so only a loader that calls it waits. Do independent work (like the `db.getPost` above) **before** `await parent()`, so it overlaps the layout loaders.
+
+If a layout throws (`redirect()`, `error()` or a crash), the response comes from the top-most layout that failed. Nothing from the page reaches the visitor. But page code that ran before `await parent()` has already run. Guard routes in [hooks](/guides/security#route-guards-in-hooks), or call `await parent()` first in a loader that must stay behind a layout's check.
 
 ## Metadata
 

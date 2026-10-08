@@ -55,8 +55,8 @@ Loader anak dapat mengakses data dari loader layout induknya:
 import type { LoadEvent } from "bosia";
 
 export async function load({ params, parent }: LoadEvent) {
+	const post = await db.getPost(params.slug); // berjalan selagi layout dimuat
 	const parentData = await parent();
-	const post = await db.getPost(params.slug);
 
 	return {
 		post,
@@ -66,6 +66,12 @@ export async function load({ params, parent }: LoadEvent) {
 ```
 
 Data mengalir dari atas ke bawah melalui **loader**: layout root → layout grup → layout halaman → halaman. Setiap loader melihat hasil induknya via `parent()`, tetapi tidak ada yang otomatis digabung ke prop `data` komponen — kembalikan ulang key yang Anda perlukan (seperti `appName` di atas) agar halaman bisa membacanya. Halaman tanpa `load()` tidak bisa memanggil `parent()`; tambahkan loader minimal yang mengembalikan `await parent()` untuk meneruskan data layout.
+
+### Loader berjalan paralel
+
+Semua loader layout dan halaman untuk satu request mulai bersamaan. `parent()` menunggu layout di atasnya selesai, jadi hanya loader yang memanggilnya yang menunggu. Kerjakan hal yang tidak bergantung (seperti `db.getPost` di atas) **sebelum** `await parent()`, agar berjalan bersamaan dengan loader layout.
+
+Jika sebuah layout melempar (`redirect()`, `error()`, atau crash), respons berasal dari layout paling atas yang gagal. Tidak ada data halaman yang sampai ke pengunjung. Tetapi kode halaman sebelum `await parent()` sudah terlanjur berjalan. Jaga rute di [hook](/guides/security#penjaga-rute-di-hook), atau panggil `await parent()` lebih dulu di loader yang harus tetap di belakang pengecekan layout.
 
 ## Metadata
 

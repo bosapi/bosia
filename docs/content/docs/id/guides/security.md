@@ -204,7 +204,7 @@ yang sama mencakup muat halaman penuh, navigasi sisi klien, POST form action, da
 
 **Aturannya: jaga di hook.** Jangan jadikan `+layout.server.ts` sebagai penjaga. `metadata()` mulai
 bersamaan dengan loader layout, jadi redirect dari layout tetap memindahkan pengunjung, tetapi
-`metadata()` halaman sudah terlanjur berjalan untuk mereka. Pengecekan yang bergantung pada datanya ("apakah user ini pemilik post
+`metadata()` halaman sudah terlanjur berjalan untuk mereka. Begitu juga `load()` halaman, sampai `await parent()` pertamanya: semua loader mulai bersamaan. Pengecekan yang bergantung pada datanya ("apakah user ini pemilik post
 ini?") tempatnya di loader atau action yang membaca data tersebut.
 
 `parent()` selalu mengembalikan data yang dihasilkan di server. Browser tidak bisa menyuplainya.
