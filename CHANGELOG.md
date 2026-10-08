@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.6] - 2026-10-08
+
+### Fixed
+
+- API routes that export GET now answer HEAD requests too, instead of a 405 error.
+- HEAD requests reuse cached pages and API responses instead of running loaders again.
+
 ## [1.1.5] - 2026-10-07
 
 ### Changed

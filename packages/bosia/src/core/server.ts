@@ -606,15 +606,16 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		let releaseApiMiss: (() => void) | null = null;
 		try {
 			const mod = await apiMatch.route.module();
-			const handler = mod[method];
+			// HEAD falls back to GET (an explicit HEAD export still wins). BosiaApp
+			// strips the body on the way out, for every route kind.
+			const handler = mod[method] ?? (method === "HEAD" ? mod.GET : undefined);
 
 			if (!handler) {
-				const allowed = Object.keys(mod)
-					.filter((k) => /^[A-Z]+$/.test(k))
-					.join(", ");
+				const allowed = Object.keys(mod).filter((k) => /^[A-Z]+$/.test(k));
+				if (allowed.includes("GET") && !allowed.includes("HEAD")) allowed.push("HEAD");
 				return Response.json(
 					{ error: `Method ${method} not allowed` },
-					{ status: 405, headers: { Allow: allowed } },
+					{ status: 405, headers: { Allow: allowed.join(", ") } },
 				);
 			}
 
@@ -623,15 +624,23 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			// ── Response cache for +server.ts GET handlers ──
 			// CSP is skipped because cached responses would ship with a stale
 			// nonce (see renderer.ts for the same gate). The cache key includes
-			// URL + identity so per-user responses stay isolated.
-			const apiCacheable =
-				CACHE_ENABLED && !CSP_ENABLED && (mod as any).cache !== false && method === "GET";
+			// URL + identity so per-user responses stay isolated. HEAD reads the GET
+			// entry but never coalesces or writes: it isn't a leader that fills it.
+			// An explicit HEAD export skips the cache so it always runs.
+			const apiCacheRead =
+				CACHE_ENABLED &&
+				!CSP_ENABLED &&
+				(mod as any).cache !== false &&
+				(method === "GET" || (method === "HEAD" && !mod.HEAD));
+			const apiCacheable = apiCacheRead && method === "GET";
 			let apiCacheKey: string | null = null;
-			if (apiCacheable) {
+			if (apiCacheRead) {
 				apiCacheKey = computeCacheKey(url, request, cookies as CookieJar);
 				if (!url.searchParams.has("_invalidated")) {
 					const hit = cacheGet(apiCacheKey);
 					if (hit) return serveCached(hit, request);
+				}
+				if (apiCacheable && !url.searchParams.has("_invalidated")) {
 					// Miss coalescing: first miss runs the handler; concurrent misses
 					// wait, re-check the cache, and on a still-miss run independently.
 					const gate = coalesceMiss(apiCacheKey);

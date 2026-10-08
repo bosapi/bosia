@@ -83,6 +83,8 @@ export function DELETE({ params }: RequestEvent) {
 
 Jika sebuah request mengenai `+server.ts` yang tidak mengekspor method yang diminta, Bosia merespons dengan `405 Method Not Allowed` dan header `Allow` yang mencantumkan method yang didukung.
 
+Ekspor `GET` juga menjawab request `HEAD` (header sama, tanpa body), jadi tidak perlu `export const HEAD = GET`. Ekspor `HEAD` sendiri hanya jika perilakunya harus berbeda.
+
 ## Mengakses Locals
 
 Data yang disetel di `hooks.server.ts` tersedia di setiap handler API:

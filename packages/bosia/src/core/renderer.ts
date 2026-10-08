@@ -615,15 +615,24 @@ export async function renderSSRStream(
 	// into the cached HTML but the CSP header is re-derived each request, so a
 	// cached page would ship with a dead nonce and the browser would block its
 	// inline scripts. Operators who turn on CSP_DIRECTIVES forfeit the cache.
-	const cacheable =
-		CACHE_ENABLED && !CSP_ENABLED && !warmingUp && routeCacheable && req.method === "GET";
+	// HEAD reads the GET entry but never coalesces or writes: it isn't a leader
+	// that fills it.
+	const cacheRead =
+		CACHE_ENABLED &&
+		!CSP_ENABLED &&
+		!warmingUp &&
+		routeCacheable &&
+		(req.method === "GET" || req.method === "HEAD");
+	const cacheable = cacheRead && req.method === "GET";
 	let cacheKey: string | null = null;
 	let releaseMiss: (() => void) | null = null;
-	if (cacheable) {
+	if (cacheRead) {
 		cacheKey = computeCacheKey(url, req, cookies as CookieJar);
 		if (!cacheBypass) {
 			const hit = cacheGet(cacheKey);
 			if (hit) return serveCached(hit, req);
+		}
+		if (cacheable && !cacheBypass) {
 			// Miss coalescing: the first miss leads the build; concurrent misses
 			// wait, then re-check the cache. A waiter that still misses (leader
 			// skipped the write) builds independently — no re-leadering.

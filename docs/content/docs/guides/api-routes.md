@@ -83,6 +83,8 @@ export function DELETE({ params }: RequestEvent) {
 
 If a request hits a `+server.ts` that doesn't export the requested method, Bosia responds with `405 Method Not Allowed` and an `Allow` header listing the supported methods.
 
+A `GET` export also answers `HEAD` requests (same headers, no body), so you don't need `export const HEAD = GET`. Export `HEAD` yourself only if it should do something different.
+
 ## Accessing Locals
 
 Data set in `hooks.server.ts` is available in every API handler:

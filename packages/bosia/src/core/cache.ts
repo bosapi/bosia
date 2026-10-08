@@ -404,6 +404,9 @@ export function serveCached(entry: CacheEntry, req: Request): Response {
 			return new Response(null, { status: 304, headers });
 		}
 	}
+	// BosiaApp drops HEAD bodies, and a null body would report Content-Length 0.
+	// GET leaves it to the runtime, so a hook that rewrites the body stays valid.
+	if (req.method === "HEAD") headers["content-length"] = String(body.byteLength);
 	if (encoding) {
 		headers["content-encoding"] = encoding;
 		return new Response(body, { ...PRECOMPRESSED, status: entry.status, headers });

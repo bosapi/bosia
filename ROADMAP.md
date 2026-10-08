@@ -1,7 +1,16 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.1.5**
+> Current version: **1.1.6**
+
+---
+
+## bosia 1.1.6 (2026-10-08) — HEAD = GET
+
+- [x] 🟡 `+server.ts` exporting only `GET` answers HEAD (was JSON 405). `Allow` lists HEAD with GET. An explicit `HEAD` export still wins.
+- [x] 🟡 HEAD reads the GET cache entry on pages and API routes (never coalesces or writes), so `curl -I` no longer reruns loaders.
+- [x] ⚪ Cache-hit HEAD sends the real `Content-Length` (`BosiaApp` nulls HEAD bodies, which made it 0).
+- [ ] 🟢 HEAD misses still report `Content-Length: 0`: `BosiaApp` nulls the body. Fix if a crawler cares (needs Workers HEAD check).
 
 ---
 
