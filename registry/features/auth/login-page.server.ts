@@ -20,7 +20,6 @@ export const actions = {
 				path: "/",
 				httpOnly: true,
 				sameSite: "Lax",
-				secure: process.env.NODE_ENV === "production",
 				maxAge: Math.floor(SESSION_TTL_MS / 1000),
 				expires: session.expiresAt,
 			});
