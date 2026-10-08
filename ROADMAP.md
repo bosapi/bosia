@@ -14,6 +14,7 @@
 - [x] Docs (en/id): loaders guide "Loaders run in parallel", security note; routing skill R3a. Test: `parallel-loaders.test.ts`.
 - [ ] 🟡 Page code before `await parent()` runs even when a layout guard redirects (SvelteKit's model). Docs say guard in hooks; consider a dev warning if a layout throws redirect while the page loader ran.
 - [ ] ⚪ Cross-loader duplicate `setHeaders()` still throws, but which loader throws now depends on timing, not depth.
+- [ ] 🟡 Fresh scaffolds fail `check`: templates ask `prettier ^3.3.0`, so new apps get 3.9.x, which wraps union types unlike the repo's locked 3.8.3 (navbar, sonner). Pin or reformat.
 
 ---
 
