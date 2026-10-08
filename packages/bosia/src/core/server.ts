@@ -1041,6 +1041,69 @@ if (_xfoDisabled) {
 	console.log("🪟  X-Frame-Options disabled (DISABLE_X_FRAME_OPTIONS=true)");
 }
 
+// Security headers, CSP, CORS and the request's Set-Cookie headers, applied to
+// every response handleRequest hands back — resolved ones and the ones a hook
+// threw (redirect / error()).
+function finalizeResponse(
+	response: Response,
+	request: Request,
+	nonce: string,
+	cookieJar: CookieJar,
+): Response {
+	// Set on the response itself when its headers are mutable, which every
+	// Response the framework builds has. Copying them and rebuilding the
+	// Response cost a Headers copy plus a body re-wrap on every request.
+	// Responses with immutable headers (`fetch()`, `Response.redirect()`)
+	// still get the copy.
+	// On Workers (compressionOn is false only there) an already-encoded body
+	// is rebuilt as before, since the rebuild is what marks it PRECOMPRESSED.
+	let mutable: Headers | null = null;
+	if (compressionOn || !response.headers.has("content-encoding")) {
+		try {
+			response.headers.set("X-Content-Type-Options", SECURITY_HEADERS["X-Content-Type-Options"]!);
+			mutable = response.headers;
+		} catch {
+			// immutable — copied below
+		}
+	}
+	const inPlace = mutable !== null;
+	const headers = mutable ?? new Headers(response.headers);
+	// A handle can mark a response (e.g. a proxied embeddable preview) to opt
+	// out of the frame guard. Strip the internal marker so it never ships, and
+	// skip only X-Frame-Options for that response — other security headers stay.
+	const skipFrameGuard = headers.has(NO_FRAME_GUARD_HEADER);
+	headers.delete(NO_FRAME_GUARD_HEADER);
+	for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
+		if (skipFrameGuard && k === "X-Frame-Options") continue;
+		headers.set(k, v);
+	}
+	const cspHeader = buildCspHeader(nonce);
+	if (cspHeader) headers.set("Content-Security-Policy", cspHeader);
+	// Apply CORS headers for allowed origins. `Vary: Origin` is set whenever
+	// CORS is configured — even on responses to non-allowed origins — so
+	// downstream caches (CDNs, browser HTTP cache) key on the Origin header
+	// instead of serving an Access-Control-Allow-Origin response across origins.
+	if (CORS_CONFIG) {
+		applyCorsVary(headers);
+		const corsHeaders = getCorsHeaders(request, CORS_CONFIG);
+		if (corsHeaders) {
+			for (const [k, v] of Object.entries(corsHeaders)) headers.set(k, v);
+		}
+	}
+	// Apply any Set-Cookie headers accumulated during the request
+	for (const cookie of cookieJar.outgoing) headers.append("Set-Cookie", cookie);
+	if (inPlace) return response;
+	return new Response(response.body, {
+		// A Content-Encoding here means the body is already compressed (cache
+		// hit, compress()); rebuilding drops that flag and Workers would
+		// compress it again.
+		...(headers.has("content-encoding") ? PRECOMPRESSED : {}),
+		status: response.status,
+		statusText: response.statusText,
+		headers,
+	});
+}
+
 async function handleRequest(request: Request, url: URL): Promise<Response> {
 	// Behind a trusted proxy the inbound `Host`/scheme is the proxy's inner hop
 	// (e.g. `localhost:PORT` over plain HTTP), so `url` built from `request.url`
@@ -1188,58 +1251,7 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 			}
 		}
 
-		// Set on the response itself when its headers are mutable, which every
-		// Response the framework builds has. Copying them and rebuilding the
-		// Response cost a Headers copy plus a body re-wrap on every request.
-		// Responses with immutable headers (`fetch()`, `Response.redirect()`)
-		// still get the copy.
-		// On Workers (compressionOn is false only there) an already-encoded body
-		// is rebuilt as before, since the rebuild is what marks it PRECOMPRESSED.
-		let mutable: Headers | null = null;
-		if (compressionOn || !response.headers.has("content-encoding")) {
-			try {
-				response.headers.set("X-Content-Type-Options", SECURITY_HEADERS["X-Content-Type-Options"]!);
-				mutable = response.headers;
-			} catch {
-				// immutable — copied below
-			}
-		}
-		const inPlace = mutable !== null;
-		const headers = mutable ?? new Headers(response.headers);
-		// A handle can mark a response (e.g. a proxied embeddable preview) to opt
-		// out of the frame guard. Strip the internal marker so it never ships, and
-		// skip only X-Frame-Options for that response — other security headers stay.
-		const skipFrameGuard = headers.has(NO_FRAME_GUARD_HEADER);
-		headers.delete(NO_FRAME_GUARD_HEADER);
-		for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
-			if (skipFrameGuard && k === "X-Frame-Options") continue;
-			headers.set(k, v);
-		}
-		const cspHeader = buildCspHeader(nonce);
-		if (cspHeader) headers.set("Content-Security-Policy", cspHeader);
-		// Apply CORS headers for allowed origins. `Vary: Origin` is set whenever
-		// CORS is configured — even on responses to non-allowed origins — so
-		// downstream caches (CDNs, browser HTTP cache) key on the Origin header
-		// instead of serving an Access-Control-Allow-Origin response across origins.
-		if (CORS_CONFIG) {
-			applyCorsVary(headers);
-			const corsHeaders = getCorsHeaders(request, CORS_CONFIG);
-			if (corsHeaders) {
-				for (const [k, v] of Object.entries(corsHeaders)) headers.set(k, v);
-			}
-		}
-		// Apply any Set-Cookie headers accumulated during the request
-		for (const cookie of cookieJar.outgoing) headers.append("Set-Cookie", cookie);
-		if (inPlace) return response;
-		return new Response(response.body, {
-			// A Content-Encoding here means the body is already compressed (cache
-			// hit, compress()); rebuilding drops that flag and Workers would
-			// compress it again.
-			...(headers.has("content-encoding") ? PRECOMPRESSED : {}),
-			status: response.status,
-			statusText: response.statusText,
-			headers,
-		});
+		return finalizeResponse(response, request, nonce, cookieJar);
 	} catch (err) {
 		// `throw redirect()` / `throw error()` from a hook lands here — the same
 		// escape hatch loaders have always had. Without these branches both fall
@@ -1273,13 +1285,10 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 							undefined,
 							nonce,
 						);
-			// A hook that expires the session before throwing must not lose the
-			// Set-Cookie that does it — the redirect above is a fresh Response,
-			// so the jar is re-applied by hand here.
-			if (cookieJar) {
-				for (const cookie of cookieJar.outgoing) out.headers.append("Set-Cookie", cookie);
-			}
-			return out;
+			// The same finishing pass as a resolved response: security headers,
+			// CSP, CORS, and the jar's Set-Cookie — a hook that expires the session
+			// before throwing must not lose the cookie that does it.
+			return cookieJar ? finalizeResponse(out, request, nonce, cookieJar) : out;
 		}
 		if (isDev) console.error("Unhandled request error:", err);
 		else console.error("Unhandled request error:", (err as Error).message ?? err);

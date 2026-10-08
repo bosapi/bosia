@@ -185,6 +185,24 @@ describe("security headers", () => {
 		expect(res.headers.get("x-frame-options")).toBe("SAMEORIGIN");
 	});
 
+	// A thrown redirect()/error() skips the normal finishing pass and used to
+	// ship bare. One case per response the catch builds.
+	test.each([
+		["thrown redirect, page request", "/admin", "throw-redirect", 303],
+		["thrown redirect, data request", "/__bosia/data/admin.json", "throw-redirect", 200],
+		["thrown error(), page request", "/admin", "throw-error", 404],
+		["thrown error(), data request", "/__bosia/data/admin.json", "throw-error", 404],
+	])("reach a hook's %s", async (_name, path, guard, status) => {
+		const res = await fetch(`${origin}${path}`, {
+			headers: { "x-guard": guard },
+			redirect: "manual",
+		});
+		expect(res.status).toBe(status);
+		expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+		expect(res.headers.get("x-frame-options")).toBe("SAMEORIGIN");
+		expect(res.headers.get("referrer-policy")).toBe("strict-origin-when-cross-origin");
+	});
+
 	test("reach an ordinary page response", async () => {
 		const res = await fetch(`${origin}/`);
 		expect(res.headers.get("x-content-type-options")).toBe("nosniff");
