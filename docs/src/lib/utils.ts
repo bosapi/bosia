@@ -3,14 +3,7 @@ import { twMerge } from "tailwind-merge";
 type ClassDictionary = Record<string, any>;
 type ClassArray = ClassValue[];
 type ClassValue =
-	| ClassArray
-	| ClassDictionary
-	| string
-	| number
-	| bigint
-	| null
-	| boolean
-	| undefined;
+	ClassArray | ClassDictionary | string | number | bigint | null | boolean | undefined;
 
 function clsx(...inputs: ClassValue[]): string {
 	let str = "";

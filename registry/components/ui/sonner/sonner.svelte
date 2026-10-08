@@ -4,12 +4,7 @@
 	import type { ToastType } from "./toast.svelte.ts";
 
 	type Position =
-		| "top-left"
-		| "top-right"
-		| "bottom-left"
-		| "bottom-right"
-		| "top-center"
-		| "bottom-center";
+		"top-left" | "top-right" | "bottom-left" | "bottom-right" | "top-center" | "bottom-center";
 
 	let {
 		class: className = "",

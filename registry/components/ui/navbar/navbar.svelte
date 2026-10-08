@@ -20,8 +20,7 @@
 		links = [] as { label: string; href: string }[],
 		currentPath = "/",
 		user = undefined as
-			| { name: string; email: string; initials: string; avatar?: string }
-			| undefined,
+			{ name: string; email: string; initials: string; avatar?: string } | undefined,
 		children,
 		...restProps
 	}: {

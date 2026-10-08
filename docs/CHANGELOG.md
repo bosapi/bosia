@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Components reformatted with Prettier 3.9.9, so they pass `check` in new projects.
 - Auth sign-in and sign-up no longer pass `secure` to cookies; Bosia sets it over HTTPS.
 
 ## [0.8.22] - 2026-10-08

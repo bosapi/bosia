@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Page `load()` now gets `metadata` data during client-side navigation too, not just on full loads.
 - Redirects and errors thrown from `hooks.server.ts` now carry the security headers.
 - Windows CI no longer fails when cleaning up after server tests.
+- New projects pass `check` again: templates pin Prettier 3.9.9, the same version Bosia uses.
 
 ## [1.1.6] - 2026-10-08
 

@@ -16,8 +16,8 @@
 		"test:coverage": "bun test --coverage"
 	},
 	"devDependencies": {
-		"prettier": "^3.3.0",
-		"prettier-plugin-svelte": "^3.2.0"
+		"prettier": "3.9.9",
+		"prettier-plugin-svelte": "3.5.2"
 	},
 	"dependencies": {
 		"svelte": "^5.56.3"

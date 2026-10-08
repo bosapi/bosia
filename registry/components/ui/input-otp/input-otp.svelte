@@ -12,14 +12,7 @@
 		id = undefined as string | undefined,
 		autocomplete = "one-time-code",
 		inputmode = "numeric" as
-			| "none"
-			| "text"
-			| "tel"
-			| "url"
-			| "email"
-			| "numeric"
-			| "decimal"
-			| "search",
+			"none" | "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search",
 		onComplete = undefined as ((value: string) => void) | undefined,
 		class: className = "",
 		containerClass = "",

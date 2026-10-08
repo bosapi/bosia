@@ -177,9 +177,7 @@ than rewriting them — one file, and the originals stay next to the code they g
 for (const file of SELF_CHECKS) {
 	test(`self-check: ${file}`, async () => {
 		const proc = Bun.spawn(["bun", "run", file], {
-			env: {
-				/* explicit */
-			},
+			env: {/* explicit */},
 			stderr: "pipe",
 		});
 		expect(`${await proc.exited} ${await new Response(proc.stderr).text()}`.trim()).toBe("0");

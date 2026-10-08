@@ -90,8 +90,7 @@ export const router = new (class Router {
 	pendingScroll: { x: number; y: number } | null = null;
 	/** Set by App.svelte; returns the mounted page's `export const snapshot` (if any) at capture time. */
 	getPageSnapshot:
-		| (() => { capture: () => unknown; restore: (v: any) => void } | undefined)
-		| null = null;
+		(() => { capture: () => unknown; restore: (v: any) => void } | undefined) | null = null;
 	/** Captured snapshot for the entry a popstate/reload landed on; consumed once by App.svelte. `undefined` = nothing to restore. */
 	pendingSnapshot: unknown = undefined;
 
