@@ -1882,6 +1882,7 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 ### Open
 
 - [ ] 🟠 **Truly progressive SSR streaming** — `renderSSRStream` is blocking before first byte (load → render → enqueue). The real blocker is a parallel-aware loader runner that flushes chunks as each loader resolves.
+- [ ] 🟠 **Deferred loader data (Remix `defer`-style)** — `load()` returns unawaited promises; SSR renders `{#await}` pending, streams resolved data as `<script>` chunks, client resolves. Needs early-flush first; check cache + compression.
 - [x] 🟡 **Reduce `safeJsonStringify` cost on large loader payloads** — done in v0.5.0 by moving page/layout/form data to `<script type="application/json">` islands read via `JSON.parse(...textContent)`
 
 > Reference: `backup/PERFORM_ISSUES.md` (full request-pipeline review, 2026-05-08).
