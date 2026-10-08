@@ -112,8 +112,10 @@ beforeAll(async () => {
 	throw new Error("server under BASE_PATH never became ready");
 }, 180_000);
 
-afterAll(() => {
+afterAll(async () => {
 	child?.kill();
+	// Windows keeps the server's files locked until it has exited (EBUSY).
+	await child?.exited;
 	rmSync(tmpDir, { recursive: true, force: true });
 });
 
