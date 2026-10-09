@@ -461,11 +461,37 @@ function headSplit(segments: AppHtmlSegments): HeadSplit {
  *  <title> with attributes too. Ignores one in a comment, a script or JSON-LD
  *  string, <noscript>, <template>, or an inline <svg> (which only labels the icon). */
 export function hasTitle(html: string): boolean {
-	const visible = html.replace(
-		/<!--[\s\S]*?-->|<(script|noscript|template|svg)\b[\s\S]*?<\/\1>/gi,
-		"",
-	);
-	return /<title[\s>]/i.test(visible);
+	// A single forward scan, not a regex: a lazy `<script…</script>` match retries
+	// from every unclosed `<script` and goes quadratic on hostile {@html} output.
+	// Lowercasing is safe here since only a yes/no comes back, never an index.
+	const s = html.toLowerCase();
+	let i = 0;
+	while ((i = s.indexOf("<", i)) !== -1) {
+		if (s.startsWith("<!--", i)) {
+			const end = s.indexOf("-->", i + 4);
+			if (end === -1) return false; // unclosed comment runs to the end
+			i = end + 3;
+			continue;
+		}
+		const tag = SKIPPED_TAGS.find(
+			(t) => s.startsWith(t, i + 1) && !isWordChar(s[i + 1 + t.length]),
+		);
+		if (tag) {
+			const end = s.indexOf(`</${tag}>`, i);
+			if (end === -1) return false; // unclosed block runs to the end
+			i = end + tag.length + 3;
+			continue;
+		}
+		if (s.startsWith("<title", i) && /[\s>]/.test(s[i + 6] ?? "")) return true;
+		i++;
+	}
+	return false;
+}
+
+const SKIPPED_TAGS = ["script", "noscript", "template", "svg"];
+
+function isWordChar(c: string | undefined): boolean {
+	return c !== undefined && /\w/.test(c);
 }
 
 /** Plugin `head` fragments, one per line, empty ones skipped. */

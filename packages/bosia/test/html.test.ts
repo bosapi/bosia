@@ -267,6 +267,16 @@ describe("metadataTags", () => {
 		expect(hasTitle(`<!-- <title>Old</title> -->`)).toBe(false);
 		expect(hasTitle(`<script type="application/ld+json">{"x":"<title>"}</script>`)).toBe(false);
 		expect(hasTitle(`<noscript><title>x</title></noscript>`)).toBe(false);
+		expect(hasTitle(`<script>x</script><title>Real</title>`)).toBe(true);
+		expect(hasTitle(`<scripts><title>Real</title>`)).toBe(true);
+		expect(hasTitle(`<!-- open comment <title>x</title>`)).toBe(false);
+	});
+
+	test("hasTitle stays linear on many unclosed <script openings", () => {
+		const hostile = "<script ".repeat(20_000) + "<title>x</title>";
+		const start = performance.now();
+		hasTitle(hostile);
+		expect(performance.now() - start).toBeLessThan(50);
 	});
 
 	test("streaming and buildHtml order metadata, headExtras, <svelte:head> the same", () => {
