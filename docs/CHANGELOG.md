@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Security guide and SEO skill: escape `<` in JSON-LD, since `<svelte:head>` now runs as page HTML.
 - Metadata guide: only head tags belong in `<svelte:head>`; a `<div>` there breaks hydration.
 - SEO skill: a page's `<svelte:head>` updates on navigation; only a layout's stays mounted.
+- Metadata guide and SEO skill: explain the "Bosia App" and error-page fallback titles.
 
 ### Fixed
 

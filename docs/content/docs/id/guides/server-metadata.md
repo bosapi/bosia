@@ -154,6 +154,8 @@ Router hanya mengganti tag yang dihasilkan `metadata()` (ditandai `data-bosia-me
 
 Halaman yang `metadata()`-nya tidak mengembalikan `title` akan mempertahankan judul halaman sebelumnya, bukan berkedip ke fallback `Bosia App`. Beri setiap rute sebuah `title` kalau itu penting buatmu.
 
+Kalau tidak ada yang mengatur judul (bukan `metadata()`, `<svelte:head>`, plugin, maupun `app.html`), server menambahkan `<title>Bosia App</title>` sebagai tag terakhir di `<head>`. Halaman error memakai `404 — Not Found` (status dan pesan) dengan cara yang sama, jadi `<svelte:head><title>` di `+error.svelte` tetap menang. `<title>` di `app.html` mematikan fallback `Bosia App`; di halaman error, judul status tetap ditaruh sebelum `<title>` `app.html` yang ada setelah `%bosia.head%`.
+
 ## Timeout
 
 Fungsi `metadata()` punya timeout yang bisa dikonfigurasi melalui variabel environment `METADATA_TIMEOUT` (dalam milidetik). Jika `metadata()` terlalu lama, ia timeout dengan anggun dan halaman dirender tanpa metadata.

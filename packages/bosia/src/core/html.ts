@@ -250,7 +250,7 @@ export function buildHtml(
 	metadata?: Metadata | null,
 	pattern?: string,
 	headExtras?: string[],
-	fallbackTitle = "Bosia App",
+	fallbackTitle = DEFAULT_TITLE,
 ): string {
 	// An app writes <a href="/masuk">; under a base the browser has to be handed
 	// /sso/masuk or it walks off this app entirely. Only the rendered markup is
@@ -569,6 +569,9 @@ function headExtraTags(headExtras?: string[]): string {
 	return out;
 }
 
+/** The title a page gets when nothing else sets one. */
+const DEFAULT_TITLE = "Bosia App";
+
 /** `<title>{text}</title>` unless app.html or one of the head parts already
  *  has a title. Shared by buildHtml and buildMetadataChunk so both paths make
  *  the same call; each passes every part it writes into <head> (metadata,
@@ -614,7 +617,7 @@ export function buildMetadataChunk(
 	// plugin extras, app.html's own head markup, then <svelte:head>.
 	const metaTags = metadataTags(metadata);
 	const extras = headExtraTags(headExtras);
-	const fallbackTitle = titleFallback(segments, metadata, "Bosia App", extras, head);
+	const fallbackTitle = titleFallback(segments, metadata, DEFAULT_TITLE, extras, head);
 	let out = "\n" + metaTags + extras;
 	const late = lateHead(head, fallbackTitle);
 

@@ -154,6 +154,8 @@ The router only replaces the tags `metadata()` produced (marked `data-bosia-meta
 
 A page whose `metadata()` returns no `title` keeps the previous page's title rather than flashing the `Bosia App` fallback. Give every route a `title` if that matters to you.
 
+When nothing sets a title (not `metadata()`, `<svelte:head>`, a plugin or `app.html`), the server adds `<title>Bosia App</title>` as the last tag in `<head>`. Error pages use `404 — Not Found` (status and message) the same way, so a `<svelte:head><title>` in `+error.svelte` still wins. A `<title>` in `app.html` turns the `Bosia App` fallback off; on error pages the status title still goes ahead of an `app.html` title placed after `%bosia.head%`.
+
 ## Timeouts
 
 The `metadata()` function has a configurable timeout via the `METADATA_TIMEOUT` environment variable (in milliseconds). If `metadata()` takes too long, it times out gracefully and the page renders without metadata.

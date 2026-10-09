@@ -21,6 +21,7 @@
 - [x] 🟡 `app.html` `<title>` now suppresses the fallback; `findHeadEnd` scans for the first real `</head …>` (else `<body`), skipping comments and script/style; split cached per segments in a WeakMap. `errMeta` uses shared `hasTitle()`. Docs: escape `<` in JSON-LD.
 - [x] ⚪ `buildHtml` takes `headExtras`; `buildMetadataChunk` takes options. `hasTitle` is one linear scan (skips comments, script, style, svg). The fallback title goes last, so a missed real title still wins.
 - [ ] 🟢 Share one head scanner between `findHeadEnd` (appHtml.ts) and `hasTitle` (html.ts); their rules differ (e.g. `<script-loader>`, svg/noscript/template, unclosed tags).
+- [ ] 🟢 `buildHtml` takes an options object (17 positional params; a misplaced `undefined` goes unnoticed) and decides the error-page title slot itself, instead of the renderer (`errMeta`).
 - [ ] ⚪ Error pages never render plugin `head` fragments, so a plugin `<title>` or tag is missing on 404/500 (`renderErrorPage`).
 
 ---
