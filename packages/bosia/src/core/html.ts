@@ -5,7 +5,7 @@ import { nonceAttr } from "./csp.ts";
 import { rebaseHtmlAttrs } from "./basePath.ts";
 import { currentBase } from "./appBase.ts";
 import type { AppHtmlSegments } from "./appHtml.ts";
-import { interpolateSegment } from "./appHtml.ts";
+import { findHeadEnd, interpolateSegment } from "./appHtml.ts";
 import type { Metadata } from "./hooks.ts";
 
 // Workers compresses any body sent with a Content-Encoding header — again, if it
@@ -249,6 +249,7 @@ export function buildHtml(
 	segments?: AppHtmlSegments,
 	metadata?: Metadata | null,
 	pattern?: string,
+	headExtras?: string[],
 ): string {
 	// An app writes <a href="/masuk">; under a base the browser has to be handed
 	// /sso/masuk or it walks off this app entirely. Only the rendered markup is
@@ -258,11 +259,11 @@ export function buildHtml(
 	head = rebaseHtmlAttrs(B, head);
 
 	// Metadata goes in before `head`: the first <title> in the document wins, and
-	// the streaming path already puts metadata() ahead of <svelte:head> content
-	// (which arrives later via buildHtmlTail). Same order = same winner on both paths.
+	// buildMetadataChunk uses the same order on the streaming path, so both paths
+	// pick the same winner.
 	const metaTags = rebaseHtmlAttrs(B, metadataTags(metadata ?? null));
-	const fallbackTitle =
-		metaTags.includes("<title>") || head.includes("<title>") ? "" : "<title>Bosia App</title>";
+	const extras = rebaseHtmlAttrs(B, headExtraTags(headExtras));
+	const fallbackTitle = titleFallback(segments, metadata, extras, head);
 
 	const n = nonceAttr(nonce);
 	const publicEnv = getPublicDynamicEnv();
@@ -307,7 +308,6 @@ export function buildHtml(
 			lang: safeKey,
 			nonce,
 		});
-		const headCloseInterpolated = interpolateSegment(segments.headClose, { nonce });
 		const tailInterpolated = interpolateSegment(segments.tail, { nonce });
 		const faviconLine = segments.hasCustomFavicon
 			? ""
@@ -319,8 +319,8 @@ export function buildHtml(
 			componentCssLinks() +
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
 			preloads +
-			`  ${fallbackTitle}${metaTags}${head}` +
-			headCloseInterpolated +
+			`  ${fallbackTitle}${metaTags}${extras}` +
+			closeHead(segments, head ? `  ${head}\n` : "", nonce) +
 			(body ? "" : `\n${SPINNER}`) +
 			`\n  <div id="app">${body}</div>${scripts}${bodyEnd}` +
 			tailInterpolated
@@ -334,7 +334,7 @@ export function buildHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   ${fallbackTitle}
   <link rel="icon" type="image/svg+xml" href="${FAVICON}">
-${metaTags}  ${head}
+${metaTags}${extras}  ${head}
   ${twCssLink()}
 ${componentCssLinks()}  <script${n}>${THEME_INIT_JS}</script>
 ${preloads}</head>
@@ -424,29 +424,106 @@ export function metadataTags(metadata: Metadata | null): string {
 	return out;
 }
 
+/** app.html's headClose with `late` inserted just before its `</head>`, after any
+ *  markup the app put after %bosia.head%, so <svelte:head> stays last in <head>
+ *  and a page's styles and meta win over app.html's, as they did when it was
+ *  injected client-side. No `</head>` in the segment → `late` goes first. */
+function closeHead(segments: AppHtmlSegments, late: string, nonce?: string): string {
+	const { before, after } = headSplit(segments);
+	return (
+		(before ? interpolateSegment(before, { nonce }) : "") +
+		late +
+		interpolateSegment(after, { nonce })
+	);
+}
+
+type HeadSplit = { before: string; after: string; hasTitle: boolean };
+
+// app.html never changes after it is parsed, so split it and check it for a
+// title once per segments object instead of on every render. Kept in memory,
+// not in dist/app-html.json, so it can't go stale against headClose.
+const headSplits = new WeakMap<AppHtmlSegments, HeadSplit>();
+
+function headSplit(segments: AppHtmlSegments): HeadSplit {
+	let split = headSplits.get(segments);
+	if (!split) {
+		const { headOpen, headClose } = segments;
+		const i = findHeadEnd(headClose);
+		const before = i < 0 ? "" : headClose.slice(0, i);
+		const after = i < 0 ? headClose : headClose.slice(i);
+		split = { before, after, hasTitle: hasTitle(headOpen) || hasTitle(before) };
+		headSplits.set(segments, split);
+	}
+	return split;
+}
+
+/** Whether a chunk of head markup already sets the document title. Matches a
+ *  <title> with attributes too. Ignores one in a comment, a script or JSON-LD
+ *  string, <noscript>, <template>, or an inline <svg> (which only labels the icon). */
+export function hasTitle(html: string): boolean {
+	const visible = html.replace(
+		/<!--[\s\S]*?-->|<(script|noscript|template|svg)\b[\s\S]*?<\/\1>/gi,
+		"",
+	);
+	return /<title[\s>]/i.test(visible);
+}
+
+/** Plugin `head` fragments, one per line, empty ones skipped. */
+function headExtraTags(headExtras?: string[]): string {
+	let out = "";
+	for (const fragment of headExtras ?? []) {
+		if (fragment) out += `  ${fragment}\n`;
+	}
+	return out;
+}
+
+/** "<title>Bosia App</title>" unless app.html or one of the head parts already
+ *  has a title. Shared by buildHtml and buildMetadataChunk so both paths make
+ *  the same call; each passes every part it writes into <head> (metadata,
+ *  plugin extras, <svelte:head>). */
+function titleFallback(
+	segments: AppHtmlSegments | undefined,
+	metadata: Metadata | null | undefined,
+	...parts: string[]
+): string {
+	if (metadata?.title || (segments && headSplit(segments).hasTitle)) return "";
+	return parts.some(hasTitle) ? "" : "<title>Bosia App</title>";
+}
+
+export type MetadataChunkOptions = {
+	/** Plugin `head` fragments; they go right after the metadata() tags. */
+	headExtras?: string[];
+	segments?: AppHtmlSegments;
+	/** <svelte:head> output; it goes last, just before app.html's </head>. */
+	head?: string;
+	nonce?: string;
+};
+
 /** Chunk 2: metadata tags + close </head> + open <body> + spinner */
 export function buildMetadataChunk(
 	metadata: Metadata | null,
-	headExtras?: string[],
-	segments?: AppHtmlSegments,
+	{ headExtras, segments, head = "", nonce }: MetadataChunkOptions = {},
 ): string {
+	// `head` goes in the real <head>, not in a script, so crawlers that don't run
+	// JS still see JSON-LD, icons and og tags. Same order as buildHtml: metadata,
+	// plugin extras, app.html's own head markup, then <svelte:head>.
+	const metaTags = metadataTags(metadata);
+	const extras = headExtraTags(headExtras);
+	const fallbackTitle = titleFallback(segments, metadata, extras, head);
 	let out = "\n";
-	out += metadata ? metadataTags(metadata) : `  <title>Bosia App</title>\n`;
-	if (headExtras?.length) {
-		for (const fragment of headExtras) {
-			if (fragment) out += `  ${fragment}\n`;
-		}
-	}
+	if (fallbackTitle) out += `  ${fallbackTitle}\n`;
+	out += metaTags + extras;
+	const late = head ? `  ${head}\n` : "";
 
 	if (segments) {
-		const headCloseInterpolated = interpolateSegment(segments.headClose, {});
-		out += headCloseInterpolated + `\n${SPINNER}`;
+		out += closeHead(segments, late, nonce) + `\n${SPINNER}`;
 	} else {
-		out += `</head>\n<body>\n${SPINNER}`;
+		out += `${late}</head>\n<body>\n${SPINNER}`;
 	}
 
-	// All markup, no data islands — safe to rebase wholesale, which is what picks
-	// up an app's own headExtras (a canonical link, an og:image on a local file).
+	// No loader data islands here, so it's safe to rebase wholesale. That picks up
+	// an app's own headExtras (a canonical link, an og:image on a local file) and
+	// <svelte:head> output, which buildHtml rebases the same way.
 	return rebaseHtmlAttrs(B, out);
 }
 
@@ -464,7 +541,6 @@ export function escapeAttr(s: string): string {
 
 export function buildHtmlTail(
 	body: string,
-	head: string,
 	pageData: any,
 	layoutData: any[],
 	csr: boolean,
@@ -478,13 +554,10 @@ export function buildHtmlTail(
 ): string {
 	// Same rebase as buildHtml — the streamed tail carries the identical markup.
 	body = rebaseHtmlAttrs(B, body);
-	head = rebaseHtmlAttrs(B, head);
 
 	const n = nonceAttr(nonce);
 	let out = `<script${n}>document.getElementById('__bs__').remove()</script>`;
 	out += `\n<div id="app">${body}</div>`;
-	if (head)
-		out += `\n<script${n}>document.head.insertAdjacentHTML('beforeend',${safeJsonStringify(head)})</script>`;
 	if (csr) {
 		out += baseScript(nonce);
 		const publicEnv = getPublicDynamicEnv();

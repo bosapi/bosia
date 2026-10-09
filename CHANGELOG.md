@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `parent()` waits for the layouts above, so only loaders that call it wait for them.
 - Page loaders no longer wait for `metadata()` unless they use its data.
 - Shop and store templates include starter pages for every dashboard sidebar link.
+- Scripts in `<svelte:head>` now run on first load; a strict CSP blocks them (they lack the nonce).
+- Pages with no title from `metadata()`, `<svelte:head>` or a plugin get the "Bosia App" title.
 
 ### Fixed
 
@@ -21,6 +23,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Redirects and errors thrown from `hooks.server.ts` now carry the security headers.
 - Windows CI no longer fails when cleaning up after server tests.
 - New projects pass `check` again: templates pin Prettier 3.9.9, the same version Bosia uses.
+- `<svelte:head>` tags like JSON-LD are now in the page HTML, so crawlers without JS see them.
+- `%bosia.nonce%` after `%bosia.head%` in `app.html` is now filled in on normal page loads.
+- `<svelte:head>` tags come last in `<head>` again, so page styles still beat `app.html` ones.
+- A `<title>` written in `app.html` is no longer replaced by the "Bosia App" fallback.
+- A `</head>` inside a comment in `app.html` no longer confuses where page head tags go.
+- `app.html` without `</head>`, or with `</head >` or letters like `İ`, now places head tags right.
+- A `<title>` with attributes now counts; one in an `<svg>`, comment or script no longer does.
 
 ## [1.1.6] - 2026-10-08
 

@@ -33,6 +33,7 @@ import {
 	compress,
 	compressBytes,
 	encodeForRequest,
+	hasTitle,
 	isDev,
 	withPreloadLink,
 	type Encoded,
@@ -815,9 +816,8 @@ export async function renderSSRStream(
 			}
 			const html =
 				buildHtmlShellOpen(metadata?.lang, nonce, appHtmlSegments, route.pattern) +
-				buildMetadataChunk(metadata, headExtras, appHtmlSegments) +
+				buildMetadataChunk(metadata, { headExtras, segments: appHtmlSegments, nonce }) +
 				buildHtmlTail(
-					"",
 					"",
 					pageDataFull,
 					layoutDataFull,
@@ -886,10 +886,9 @@ export async function renderSSRStream(
 				appHtmlSegments,
 				data.csr ? route.pattern : undefined,
 			) +
-				buildMetadataChunk(metadata, headExtras, appHtmlSegments) +
+				buildMetadataChunk(metadata, { headExtras, segments: appHtmlSegments, head, nonce }) +
 				buildHtmlTail(
 					body,
-					head,
 					pageDataFull,
 					layoutDataFull,
 					data.csr,
@@ -1066,13 +1065,6 @@ export async function renderPageWithFormData(
 		pluginRenderFragments("head", renderCtx),
 		pluginRenderFragments("bodyEnd", renderCtx),
 	]);
-	// buildHtml has no headExtras slot; fold them in ahead of the SSR head, which
-	// is where buildMetadataChunk puts them on the streaming path.
-	const headWithExtras = (ssrHead: string) => {
-		const extras = headExtras.filter(Boolean);
-		return extras.length ? `${extras.join("\n  ")}\n  ${ssrHead}` : ssrHead;
-	};
-
 	// Form-action re-render always runs every loader (no client mask).
 	const layoutDataFull = (data.layoutData as Record<string, any>[]).map((d) => d ?? {});
 	const pageDataFull = data.pageData ?? {};
@@ -1085,7 +1077,7 @@ export async function renderPageWithFormData(
 		}
 		const html = buildHtml(
 			"",
-			headWithExtras(""),
+			"",
 			pageDataFull,
 			layoutDataFull,
 			true,
@@ -1099,6 +1091,7 @@ export async function renderPageWithFormData(
 			appHtmlSegments,
 			metadata,
 			route.pattern,
+			headExtras,
 		);
 		return compress(html, "text/html; charset=utf-8", req, status, data.loaderHeaders);
 	}
@@ -1120,7 +1113,7 @@ export async function renderPageWithFormData(
 
 	const html = buildHtml(
 		body,
-		headWithExtras(head),
+		head,
 		pageDataFull,
 		layoutDataFull,
 		data.csr,
@@ -1134,6 +1127,7 @@ export async function renderPageWithFormData(
 		appHtmlSegments,
 		metadata,
 		route.pattern,
+		headExtras,
 	);
 	return compress(html, "text/html; charset=utf-8", req, status, data.loaderHeaders);
 }
@@ -1164,7 +1158,7 @@ export async function renderErrorPage(
 	// when the error component didn't set one, so <svelte:head><title> in a custom
 	// +error.svelte still wins.
 	const errMeta = (head: string): Metadata | null =>
-		head.includes("<title>") ? null : { title: `${status} — ${message}` };
+		hasTitle(head) ? null : { title: `${status} — ${message}` };
 
 	// Inspector overlay and other plugin bodyEnd fragments must be injected
 	// on error pages too — otherwise SSE never connects and runtime errors

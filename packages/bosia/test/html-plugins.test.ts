@@ -3,10 +3,15 @@ import { buildMetadataChunk, buildHtmlTail } from "../src/core/html.ts";
 
 describe("buildMetadataChunk — plugin head fragments", () => {
 	test("injects head extras before </head>, after metadata", () => {
-		const out = buildMetadataChunk({ title: "X" }, [
-			`<meta name="generator" content="alpha">`,
-			`<meta name="generator" content="beta">`,
-		]);
+		const out = buildMetadataChunk(
+			{ title: "X" },
+			{
+				headExtras: [
+					`<meta name="generator" content="alpha">`,
+					`<meta name="generator" content="beta">`,
+				],
+			},
+		);
 		expect(out).toContain("<title>X</title>");
 		const headClose = out.indexOf("</head>");
 		const alpha = out.indexOf("alpha");
@@ -19,14 +24,14 @@ describe("buildMetadataChunk — plugin head fragments", () => {
 
 	test("no head extras → output unchanged from base behavior", () => {
 		const a = buildMetadataChunk({ title: "X" });
-		const b = buildMetadataChunk({ title: "X" }, []);
+		const b = buildMetadataChunk({ title: "X" }, { headExtras: [] });
 		expect(a).toBe(b);
 	});
 });
 
 describe("buildHtmlTail — plugin bodyEnd fragments", () => {
 	test("injects bodyEnd extras before </body>, after hydration script", () => {
-		const out = buildHtmlTail("<p>hi</p>", "", {}, [], true, null, true, [
+		const out = buildHtmlTail("<p>hi</p>", {}, [], true, null, true, [
 			`<script>window.A=1</script>`,
 			`<script>window.B=2</script>`,
 		]);
@@ -40,7 +45,7 @@ describe("buildHtmlTail — plugin bodyEnd fragments", () => {
 	});
 
 	test("hydration script still appears before bodyEnd extras when csr=true", () => {
-		const out = buildHtmlTail("", "", {}, [], true, null, true, [`<!--plugin-->`]);
+		const out = buildHtmlTail("", {}, [], true, null, true, [`<!--plugin-->`]);
 		const hydrate = out.indexOf("__bosia-page-data__");
 		const plugin = out.indexOf("<!--plugin-->");
 		expect(hydrate).toBeGreaterThan(0);

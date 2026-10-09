@@ -134,6 +134,14 @@ export async function load({ locals }) {
 }
 ```
 
+This includes inline scripts in `<svelte:head>`: they ship in the server HTML and run on first load, so without the nonce the policy blocks them.
+
+Escape `<` when you put data into a script with `{@html}`, for example JSON-LD. Otherwise a value containing `</script>` closes the block early and whatever follows runs as a real script:
+
+```ts
+const ld = JSON.stringify(data).replace(/</g, "\\u003c");
+```
+
 ## Cookie Security
 
 Every `cookies.set()` call applies secure defaults automatically — no need to specify them manually:

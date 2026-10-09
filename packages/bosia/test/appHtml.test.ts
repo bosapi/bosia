@@ -7,6 +7,7 @@ import {
 	getAppHtmlSegments,
 	invalidateAppHtmlCache,
 	interpolateSegment,
+	findHeadEnd,
 } from "../src/core/appHtml.ts";
 
 const testDir = join(tmpdir(), `bosia-test-${Date.now()}`);
@@ -189,6 +190,35 @@ describe("appHtml", () => {
 		const result = loadAppHtmlTemplate(testDir);
 		expect(result).not.toBeNull();
 		expect(result!.hasCustomFavicon).toBe(true);
+	});
+
+	it("findHeadEnd skips a </head> in body markup before %bosia.body%", () => {
+		const headClose = `\n</head>\n<body>\n<!-- not </head> -->\n  `;
+		expect(findHeadEnd(headClose)).toBe(1);
+		const commented = `\n  <!-- </head> -->\n</HEAD><body>`;
+		expect(findHeadEnd(commented)).toBe(commented.indexOf("</HEAD>"));
+		expect(findHeadEnd(`<body>`)).toBe(0);
+		expect(findHeadEnd(`\n  <meta name="x">\n`)).toBe(-1);
+	});
+
+	it("findHeadEnd indexes the original string, even when lowercasing changes length", () => {
+		const hc = `\n  <meta content="İstanbul">\n</head>\n<body>`;
+		expect(findHeadEnd(hc)).toBe(hc.indexOf("</head>"));
+	});
+
+	it("findHeadEnd falls back to <body when </head> is left out", () => {
+		const hc = `\n  <title>Shop</title>\n<body class="x">`;
+		expect(findHeadEnd(hc)).toBe(hc.indexOf("<body"));
+	});
+
+	it("findHeadEnd skips <body and </head> inside head comments and scripts", () => {
+		const hc = `\n<!-- goes before <body> -->\n<script>document.write('</head><body ')</script>\n</head>\n<body>`;
+		expect(findHeadEnd(hc)).toBe(hc.lastIndexOf("</head>"));
+	});
+
+	it("findHeadEnd accepts whitespace in the end tag", () => {
+		const hc = `\n  <link rel="stylesheet" href="/a.css">\n</head\n>\n<body>`;
+		expect(findHeadEnd(hc)).toBe(hc.indexOf("</head"));
 	});
 
 	it("interpolateSegment replaces %bosia.lang%", () => {

@@ -150,6 +150,8 @@ Selama navigasi sisi-klien, Bosia mengirim `title`, `description`, `meta`, `link
 
 Router hanya mengganti tag yang dihasilkan `metadata()` (ditandai `data-bosia-meta` di HTML). Tag yang kamu tambahkan lewat `<svelte:head>` atau fragmen `head` sebuah plugin tidak disentuh.
 
+`<svelte:head>` dirender di server ke dalam `<head>` mentah, di bagian akhir, setelah markup `app.html`-mu. Script dan stylesheet di sana dimuat seperti yang lain di `<head>`: `<script src>` biasa menahan tampilan pertama sampai selesai diunduh, jadi tambahkan `async` atau `defer` pada script pihak ketiga. Inline script di sana juga butuh nonce CSP saat policy aktif, dan data di dalam script `{@html}` seperti JSON-LD wajib meng-escape `<` (lihat [Keamanan](/guides/security)). Isi hanya dengan tag head (`title`, `meta`, `link`, `style`, `script`, `noscript`): `<div>`, `<img>`, atau teks biasa di sana membuat browser menutup `<head>` lebih awal dan merusak hydration.
+
 Halaman yang `metadata()`-nya tidak mengembalikan `title` akan mempertahankan judul halaman sebelumnya, bukan berkedip ke fallback `Bosia App`. Beri setiap rute sebuah `title` kalau itu penting buatmu.
 
 ## Timeout

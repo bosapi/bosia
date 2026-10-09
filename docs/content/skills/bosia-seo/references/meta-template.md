@@ -2,7 +2,7 @@
 
 Copy-paste blocks. Replace `{{NAME}}`, `{{TAGLINE}}`, `{{DESCRIPTION}}`, `{{LOCALE}}`, `{{LANG}}`, `{{THEME_COLOR}}`, `{{OG_IMAGE_PATH}}` from BRIEF.md.
 
-> Bosia note: share-critical meta is built per-route by `metadata()` (server-rendered raw `<head>`), NOT in the layout `<svelte:head>` (client-injected, scrapers miss it). See SKILL.md R1.
+> Bosia note: share-critical meta is built per-route by `metadata()` (server-rendered raw `<head>`), NOT in the layout `<svelte:head>` (stays mounted across client nav and can't see page data). See SKILL.md R1.
 
 ## 0. SEO lib — `src/lib/seo/site.ts`
 

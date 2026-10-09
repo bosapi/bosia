@@ -132,7 +132,7 @@ Pull these — do not invent:
 In Bosia there are **two different head channels with different visibility**:
 
 1. **`metadata()`** exported from `+page.server.ts` → bosia renders its return as **raw `<head>` tags during SSR** (`renderer.ts` → `buildMetadataChunk`) and rebuilds the whole `<head>` from it on client nav (`App.svelte`). This is what non-JS crawlers and share scrapers actually read.
-2. **`<svelte:head>`** in a `+layout.svelte` / `+page.svelte` → bosia ships it as a **client-side hydration script** (`html.ts`: `document.head.insertAdjacentHTML(...)`). It only materializes once JS runs. **WhatsApp, Facebook, Slack, Twitter/X, and other link-preview scrapers do NOT run JS — so any OG/Twitter tag placed in `<svelte:head>` is invisible to them.** Googlebot does render JS, so JSON-LD survives there.
+2. **`<svelte:head>`** in a `+layout.svelte` / `+page.svelte` → its SSR output is written into the **raw `<head>`** too (after `metadata()` tags), so non-JS scrapers see JSON-LD and icons. Older bosia versions injected it with a script, which scrapers never saw. But Svelte, not the router, manages it on navigation: a layout's stays mounted, and a `<svelte:head><title>` overrides `document.title` (below).
 
 Therefore every **share-critical** tag — `<title>`, `description`, `canonical`, all `og:*`, all `twitter:*`, per-page `robots` — must come from `metadata()`. The root layout `<svelte:head>` keeps only browser/PWA chrome (`theme-color`, `apple-*`, manifest, favicon) and JSON-LD.
 
@@ -142,7 +142,7 @@ Three Bosia facts that rule out the old "site-wide meta in the layout + per-page
 
 - **Layouts never receive a child page's data.** `App.svelte` renders each layout with `data = layoutData[index]` — its OWN depth only. A page `load()` returning `{ seo }` never reaches the root layout. (`$page.data` doesn't exist in Bosia either — `page` exposes only `url` + deprecated `params`.)
 - **`page.url` is real during SSR as of 0.9.4** — pathname, query and origin all reflect the request (before that it was stubbed to `http://localhost/`). It is still the wrong source for a canonical: `page.url.origin` is the incoming request host (see R2), and on a **prerendered** page it is the build-time prerender server's origin — `http://localhost:<port>`. Build canonicals from `SITE.origin` + `url.pathname` in `metadata()`, never from `page.url`.
-- **`<svelte:head>` is client-injected** (above) — wrong channel for scrapers.
+- **A layout's `<svelte:head>` stays mounted across navigation.** A page's `<svelte:head>` is swapped on client nav, but the layout's isn't, and the layout can't see the page's data (above) — so per-page share tags put there go stale.
 
 `metadata()` runs on every server render of the route: GET, and the re-render that follows a plain (non-`enhance`) `<form method="POST">` submit. A route with form actions keeps its title, OG tags, `lang` and `metadata().data` after a submit — nothing extra to wire. (Before 0.9.2 the POST path skipped `metadata()` entirely; if you are on an older bosia, that is the bug, not your code.)
 
@@ -412,7 +412,7 @@ The 512×512 maskable icon enables Android adaptive icons; rasterize from the br
 
 ### R6 — JSON-LD `Organization` + `WebSite` at layout, page-specific schemas on leaves
 
-Use `{@html}` with `<script type="application/ld+json">` inside `<svelte:head>` — escape user-controlled strings to prevent XSS. JSON-LD is the ONE SEO payload that's fine in `<svelte:head>`: it's only consumed by Googlebot, which renders JS (unlike the share scrapers in R1).
+Use `{@html}` with `<script type="application/ld+json">` inside `<svelte:head>`, and ALWAYS build the string with `jsonLd()` below. `<svelte:head>` ships in the raw server HTML, so an unescaped `</script>` in any value (a post title, a product name) ends the block and runs as a real script for every visitor. JSON-LD is the ONE SEO payload that's fine in `<svelte:head>`: site-wide JSON-LD doesn't change between pages, and page-level JSON-LD in a `+page.svelte` `<svelte:head>` is swapped on client nav.
 
 Helper:
 
@@ -472,7 +472,7 @@ For auth-gated apps:
 
 Use the built-in `process.env.NODE_ENV` — Bosia's bundler inlines it at build time (via `define`), so it's safe on BOTH the SSR pass and the client bundle. Do NOT introduce a separate `PUBLIC_ENV` user var; that's a duplicate of what the framework already provides and risks drifting from `NODE_ENV`.
 
-Emit the `noindex` from `metadata()`, NOT a layout `<svelte:head>` `{#if}` block — the staging gate has to reach non-JS crawlers, and (per R1) `<svelte:head>` is client-injected. The `buildPageMeta()` helper in R1 already bakes this in:
+Emit the `noindex` from `metadata()`, NOT a layout `<svelte:head>` `{#if}` block — the staging gate has to reach non-JS crawlers on every route, and (per R1) a layout `<svelte:head>` stays mounted across client nav. The `buildPageMeta()` helper in R1 already bakes this in:
 
 ```ts
 // inside buildPageMeta() — runs server-side, so NODE_ENV is correct
@@ -569,24 +569,24 @@ export async function metadata({ params }) {
 
 ## Anti-patterns
 
-| ❌ Anti-pattern                                           | ✅ Correct                                                                                        |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| OG/Twitter tags in `+layout.svelte` `<svelte:head>`       | Emit them from per-route `metadata()` — `<svelte:head>` is client-injected, scrapers miss it (R1) |
-| `<title>Welcome</title>` only — no description            | Title + description + canonical at minimum                                                        |
-| `og:image` is relative `/og.png`                          | Absolute `https://app.example.com/og.png`                                                         |
-| Canonical / `og:url` from the request host                | From `SITE.origin` (`PUBLIC_STATIC_SITE_ORIGIN`) + `url.pathname`                                 |
-| Per-page `seo` returned from `load()` for the root layout | Layout never sees page data — use `metadata()` in `+page.server.ts`                               |
-| `metadata()` in `+page.ts`                                | Must be `+page.server.ts` — bosia ignores universal-module metadata                               |
-| Description > 160 chars                                   | ≤ 160 chars (Google truncates)                                                                    |
-| Title > 60 chars                                          | ≤ 60 chars (Google truncates)                                                                     |
-| OG image without declared width/height                    | Always include `og:image:width` / `og:image:height`                                               |
-| Hardcoded host in `robots.txt` / `sitemap.xml`            | Origin from `SITE.origin`                                                                         |
-| Staging deploys indexed by Google                         | `metadata()` emits `noindex` off-prod + `robots: Disallow: /` (R3/R9)                             |
-| JSON-LD with user content not escaped                     | `JSON.stringify(...).replace(/</g, "\\u003c")` helper                                             |
-| Marketing-quality OG image (5MB) shipped to every share   | ≤ 300KB                                                                                           |
-| `og:locale=id` (wrong)                                    | `og:locale=id_ID` (BCP 47-ish; underscore, country code)                                          |
-| `hreflang="id"` with no `x-default`                       | Always pair with `x-default` when multilingual                                                    |
-| Skipping SEO because app is auth-gated                    | Tier 1 still required — share previews                                                            |
+| ❌ Anti-pattern                                           | ✅ Correct                                                                                                         |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| OG/Twitter tags in `+layout.svelte` `<svelte:head>`       | Emit them from per-route `metadata()` — a layout `<svelte:head>` can't see page data and stays mounted on nav (R1) |
+| `<title>Welcome</title>` only — no description            | Title + description + canonical at minimum                                                                         |
+| `og:image` is relative `/og.png`                          | Absolute `https://app.example.com/og.png`                                                                          |
+| Canonical / `og:url` from the request host                | From `SITE.origin` (`PUBLIC_STATIC_SITE_ORIGIN`) + `url.pathname`                                                  |
+| Per-page `seo` returned from `load()` for the root layout | Layout never sees page data — use `metadata()` in `+page.server.ts`                                                |
+| `metadata()` in `+page.ts`                                | Must be `+page.server.ts` — bosia ignores universal-module metadata                                                |
+| Description > 160 chars                                   | ≤ 160 chars (Google truncates)                                                                                     |
+| Title > 60 chars                                          | ≤ 60 chars (Google truncates)                                                                                      |
+| OG image without declared width/height                    | Always include `og:image:width` / `og:image:height`                                                                |
+| Hardcoded host in `robots.txt` / `sitemap.xml`            | Origin from `SITE.origin`                                                                                          |
+| Staging deploys indexed by Google                         | `metadata()` emits `noindex` off-prod + `robots: Disallow: /` (R3/R9)                                              |
+| JSON-LD with user content not escaped                     | `JSON.stringify(...).replace(/</g, "\\u003c")` helper                                                              |
+| Marketing-quality OG image (5MB) shipped to every share   | ≤ 300KB                                                                                                            |
+| `og:locale=id` (wrong)                                    | `og:locale=id_ID` (BCP 47-ish; underscore, country code)                                                           |
+| `hreflang="id"` with no `x-default`                       | Always pair with `x-default` when multilingual                                                                     |
+| Skipping SEO because app is auth-gated                    | Tier 1 still required — share previews                                                                             |
 
 ## Workflow
 
@@ -599,14 +599,14 @@ export async function metadata({ params }) {
 7. **Add Tier 2 routes** — `src/routes/robots.txt/+server.ts` (R3), `src/routes/sitemap.xml/+server.ts` (R3).
 8. **Add JSON-LD** — Organization + WebSite at layout (R6); per-page schemas in the content page's `<svelte:head>`.
 9. **Run checklist** — `references/checklist.md`. Cannot mark skill done until every box ticked.
-10. **Verify** — see "Verification" below; confirm OG tags appear in the RAW HTML, not just the hydration script.
+10. **Verify** — see "Verification" below; confirm OG tags appear in the RAW HTML with `data-bosia-meta` (from `metadata()`).
 
 ## Verification
 
 After applying:
 
 - **Source check** — `curl -s https://app/login | grep -E 'og:|twitter:|canonical|description'` returns ≥ 10 lines.
-- **Raw-head check (Bosia-critical)** — the OG/Twitter tags must be real `<meta …>` in the served HTML, not escaped inside the `document.head.insertAdjacentHTML(...)` hydration script. `curl -s https://app/ | grep -oE '<meta property="og:image" content="[^"\\]*"'` must return a line (real quotes). If it only shows up as `content=\"…\"`, the tags are in `<svelte:head>` and scrapers can't see them — move them to `metadata()` (R1).
+- **Raw-head check (Bosia-critical)** — the OG/Twitter tags must be real `<meta …>` in the served HTML. `curl -s https://app/ | grep -oE '<meta property="og:image" content="[^"\\]*"'` must return a line. Check it carries `data-bosia-meta`; without it the tag comes from `<svelte:head>`, which can disagree with `metadata()` — move it to `metadata()` (R1).
 - **Open Graph validator** — paste prod URL into [opengraph.xyz](https://www.opengraph.xyz) → preview renders with image + tagline.
 - **Twitter Card validator** — [cards-dev.twitter.com/validator](https://cards-dev.twitter.com/validator) (or post to a test thread) → large-image card renders.
 - **Schema validator** — paste JSON-LD into [validator.schema.org](https://validator.schema.org) → zero errors.

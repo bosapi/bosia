@@ -13,6 +13,7 @@ import {
 	metadataTags,
 	distManifest,
 	getPublicDynamicEnv,
+	hasTitle,
 } from "../src/core/html.ts";
 import type { AppHtmlSegments } from "../src/core/appHtml.ts";
 import type { Metadata } from "../src/core/hooks.ts";
@@ -179,7 +180,7 @@ describe("buildHtml — JSON-island loader payloads", () => {
 
 describe("buildHtmlTail — JSON-island loader payloads", () => {
 	test("emits page+layout+form islands before the module hydration script", () => {
-		const tail = buildHtmlTail("", "", { a: 1 }, [{ b: 2 }], true, { formField: "v" }, true);
+		const tail = buildHtmlTail("", { a: 1 }, [{ b: 2 }], true, { formField: "v" }, true);
 		const pageIdx = tail.indexOf(`id="__bosia-page-data__"`);
 		const layoutIdx = tail.indexOf(`id="__bosia-layout-data__"`);
 		const formIdx = tail.indexOf(`id="__bosia-form-data__"`);
@@ -237,6 +238,70 @@ describe("metadataTags", () => {
 	test("buildMetadataChunk output is unchanged by the extraction", () => {
 		expect(buildMetadataChunk(null).startsWith("\n  <title>Bosia App</title>\n</head>")).toBe(true);
 		expect(buildMetadataChunk(full).startsWith("\n" + metadataTags(full))).toBe(true);
+	});
+
+	test("<svelte:head> output lands in the real <head>, not a script", () => {
+		const ld = `<script type="application/ld+json">{"@type":"Organization"}</script>`;
+		const chunk = buildMetadataChunk({ title: "X" }, { head: ld });
+		expect(chunk.indexOf(ld)).toBeGreaterThan(-1);
+		expect(chunk.indexOf(ld)).toBeLessThan(chunk.indexOf("</head>"));
+		expect(buildHtmlTail("", {}, [], true)).not.toContain("insertAdjacentHTML");
+	});
+
+	test("fallback title only when neither metadata() nor <svelte:head> has one", () => {
+		expect(buildMetadataChunk(null, { head: "<title>Head</title>" })).not.toContain("Bosia App");
+		expect(buildMetadataChunk({ description: "d" })).toContain("<title>Bosia App</title>");
+	});
+
+	test("a plugin head title suppresses the fallback", () => {
+		const chunk = buildMetadataChunk({ description: "d" }, { headExtras: ["<title>Shop</title>"] });
+		expect(chunk).not.toContain("Bosia App");
+		expect(chunk).toContain("<title>Shop</title>");
+	});
+
+	test("hasTitle sees attributed titles but not an inline SVG's", () => {
+		expect(hasTitle(`<title data-x="1">Shop</title>`)).toBe(true);
+		expect(hasTitle(`<TITLE>Shop</TITLE>`)).toBe(true);
+		expect(hasTitle(`<svg><title>icon</title></svg>`)).toBe(false);
+		expect(hasTitle(`<meta name="titles" content="x">`)).toBe(false);
+		expect(hasTitle(`<!-- <title>Old</title> -->`)).toBe(false);
+		expect(hasTitle(`<script type="application/ld+json">{"x":"<title>"}</script>`)).toBe(false);
+		expect(hasTitle(`<noscript><title>x</title></noscript>`)).toBe(false);
+	});
+
+	test("streaming and buildHtml order metadata, headExtras, <svelte:head> the same", () => {
+		const meta: Metadata = { title: "T", description: "D" };
+		const extra = `<link rel="canonical" href="https://x.test/">`;
+		const head = `<meta name="from-head" content="1">`;
+		const order = (html: string) =>
+			["<title>T</title>", 'name="description"', extra, head].map((s) => html.indexOf(s));
+		const streamed = order(
+			buildHtmlShellOpen("en") + buildMetadataChunk(meta, { headExtras: [extra], head }),
+		);
+		const buffered = order(
+			buildHtml(
+				"",
+				head,
+				{},
+				[],
+				true,
+				null,
+				"en",
+				true,
+				undefined,
+				null,
+				null,
+				undefined,
+				undefined,
+				meta,
+				undefined,
+				[extra],
+			),
+		);
+		for (const o of [streamed, buffered]) {
+			expect(o.every((i) => i > -1)).toBe(true);
+			expect([...o].sort((a, b) => a - b)).toEqual(o);
+		}
 	});
 });
 
@@ -355,7 +420,7 @@ describe("client entry URL", () => {
 		for (const html of [
 			buildHtml("", "", {}, [], true, null, "en", true),
 			buildHtmlShellOpen("en"),
-			buildHtmlTail("", "", {}, [], true),
+			buildHtmlTail("", {}, [], true),
 		]) {
 			const urls = [...html.matchAll(/(?:src|href)="([^"]*hydrate[^"]*)"/g)].map((m) => m[1]);
 			expect(urls.length).toBeGreaterThan(0);
@@ -506,15 +571,143 @@ describe("buildHtml — template segments", () => {
 	});
 
 	test("buildMetadataChunk uses segments headClose", () => {
-		const html = buildMetadataChunk({ title: "Test" }, undefined, segments);
+		const html = buildMetadataChunk({ title: "Test" }, { segments });
 		expect(html).toContain(segments.headClose);
 		expect(html).toContain("Test");
+	});
+
+	test("plugin extras come before app.html's post-head markup, <svelte:head> after it", () => {
+		const withTheme: AppHtmlSegments = {
+			...segments,
+			headClose: `\n  <link rel="stylesheet" href="/theme.css">\n</head>\n<body>`,
+		};
+		const extra = `<link rel="canonical" href="https://x.test/">`;
+		const head = `<style>body{background:red}</style>`;
+		const check = (html: string) => {
+			const theme = html.indexOf("/theme.css");
+			expect(html.indexOf(extra)).toBeGreaterThan(-1);
+			expect(theme).toBeGreaterThan(html.indexOf(extra));
+			expect(html.indexOf(head)).toBeGreaterThan(theme);
+			expect(html.indexOf(head)).toBeLessThan(html.indexOf("</head>"));
+		};
+		check(buildMetadataChunk({ title: "T" }, { headExtras: [extra], segments: withTheme, head }));
+		check(
+			buildHtml(
+				"",
+				head,
+				{},
+				[],
+				true,
+				null,
+				"en",
+				true,
+				undefined,
+				null,
+				null,
+				undefined,
+				withTheme,
+				{ title: "T" },
+				undefined,
+				[extra],
+			),
+		);
+	});
+
+	test("an app.html <title> suppresses the fallback on both paths", () => {
+		const titled: AppHtmlSegments = {
+			...segments,
+			headClose: `\n  <title>My Shop</title>\n</head>\n<body>`,
+		};
+		expect(buildMetadataChunk({ description: "d" }, { segments: titled })).not.toContain(
+			"Bosia App",
+		);
+		const html = buildHtml(
+			"",
+			"",
+			{},
+			[],
+			true,
+			null,
+			"en",
+			true,
+			undefined,
+			null,
+			null,
+			undefined,
+			titled,
+			{
+				description: "d",
+			},
+		);
+		expect(html).not.toContain("Bosia App");
+		// A <title> placed after </head> is not a head title.
+		const bodyTitle: AppHtmlSegments = {
+			...segments,
+			headClose: `\n</head>\n<body><title>x</title>`,
+		};
+		expect(buildMetadataChunk({ description: "d" }, { segments: bodyTitle })).toContain(
+			"Bosia App",
+		);
+	});
+
+	test("an app.html title without </head> still suppresses the fallback", () => {
+		const noHeadEnd: AppHtmlSegments = {
+			...segments,
+			headClose: `\n  <title>Shop</title>\n<body>`,
+		};
+		const html = buildMetadataChunk(
+			{ description: "d" },
+			{ segments: noHeadEnd, head: "<style>x</style>" },
+		);
+		expect(html).not.toContain("Bosia App");
+		expect(html.indexOf("<style>x</style>")).toBeGreaterThan(html.indexOf("<title>Shop</title>"));
+	});
+
+	test("a </head> inside an app.html comment is not taken as the close tag", () => {
+		const commented: AppHtmlSegments = {
+			...segments,
+			headClose: `\n  <!-- keep before </head> -->\n</head>\n<body>`,
+		};
+		const head = `<meta name="from-head" content="1">`;
+		for (const html of [
+			buildMetadataChunk({ title: "T" }, { segments: commented, head }),
+			buildHtml(
+				"",
+				head,
+				{},
+				[],
+				true,
+				null,
+				"en",
+				true,
+				undefined,
+				null,
+				null,
+				undefined,
+				commented,
+				{
+					title: "T",
+				},
+			),
+		]) {
+			expect(html).toContain("<!-- keep before </head> -->");
+			expect(html.indexOf(head)).toBeGreaterThan(html.indexOf("-->"));
+		}
+	});
+
+	test("buildMetadataChunk fills %bosia.nonce% in headClose, like buildHtml", () => {
+		const nonced: AppHtmlSegments = {
+			...segments,
+			headClose: `<script nonce="%bosia.nonce%">x()</script>\n</head>\n<body>`,
+		};
+		const html = buildMetadataChunk({ title: "T" }, { segments: nonced, nonce: "abc123" });
+		expect(html).toContain('nonce="abc123"');
+		expect(html).not.toContain("%bosia.nonce%");
 	});
 
 	test("buildHtmlTail uses segments tail", () => {
 		const html = buildHtmlTail(
 			"<div>content</div>",
-			"",
 			{},
 			[],
 			false,

@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Loaders guide explains that loaders run in parallel and how `parent()` waits.
 - Security guide notes page loaders start alongside layouts; guard in hooks.
 - Routing skill: do independent work before `await parent()`.
+- SEO skill: `<svelte:head>` tags are now in the page HTML; keep share meta in `metadata()`.
+- Metadata and security guides: `<svelte:head>` scripts block first paint and need the CSP nonce.
+- Security guide and SEO skill: escape `<` in JSON-LD, since `<svelte:head>` now runs as page HTML.
+- Metadata guide: only head tags belong in `<svelte:head>`; a `<div>` there breaks hydration.
+- SEO skill: a page's `<svelte:head>` updates on navigation; only a layout's stays mounted.
 
 ### Fixed
 

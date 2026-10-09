@@ -150,6 +150,8 @@ During client-side navigation, Bosia sends `title`, `description`, `meta`, `link
 
 The router only replaces the tags `metadata()` produced (marked `data-bosia-meta` in the HTML). Tags you add through `<svelte:head>` or a plugin's `head` fragment are left alone.
 
+`<svelte:head>` is server-rendered into the raw `<head>`, at the end, after your `app.html` markup. Scripts and stylesheets there load like any in `<head>`: a plain `<script src>` blocks the first paint until it downloads, so add `async` or `defer` to third-party scripts. Inline scripts there also need the CSP nonce when a policy is on, and data inside `{@html}` scripts such as JSON-LD must escape `<` (see [Security](/guides/security)). Keep it to head tags (`title`, `meta`, `link`, `style`, `script`, `noscript`): a `<div>`, `<img>` or bare text there ends `<head>` early in the browser and breaks hydration.
+
 A page whose `metadata()` returns no `title` keeps the previous page's title rather than flashing the `Bosia App` fallback. Give every route a `title` if that matters to you.
 
 ## Timeouts

@@ -76,7 +76,6 @@ describe("buildHtmlTail — nonce on every emitted <script>", () => {
 	test("hydration + spinner-remove + data scripts all carry the nonce", () => {
 		const tail = buildHtmlTail(
 			"<p>hi</p>",
-			"<meta name='x'>",
 			{ a: 1 },
 			[{ b: 2 }],
 			true,
@@ -85,7 +84,7 @@ describe("buildHtmlTail — nonce on every emitted <script>", () => {
 			undefined,
 			"TAIL_NONCE",
 		);
-		// Spinner-remove + head-insert + page-data + module hydration → 4 framework scripts
+		// Spinner-remove + page-data + layout-data + module hydration → 4 framework scripts
 		const matches = tail.match(/<script\s+nonce="TAIL_NONCE"/g) ?? [];
 		expect(matches.length).toBeGreaterThanOrEqual(4);
 		// No bare framework <script> tags
@@ -94,7 +93,6 @@ describe("buildHtmlTail — nonce on every emitted <script>", () => {
 
 	test("bodyEnd plugin fragments are NOT rewritten — they are user-controlled", () => {
 		const tail = buildHtmlTail(
-			"",
 			"",
 			{},
 			[],

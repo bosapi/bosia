@@ -15,6 +15,12 @@
 - [ ] 🟡 Page code before `await parent()` runs even when a layout guard redirects (SvelteKit's model). Docs say guard in hooks; consider a dev warning if a layout throws redirect while the page loader ran.
 - [ ] ⚪ Cross-loader duplicate `setHeaders()` still throws, but which loader throws now depends on timing, not depth.
 - [x] 🟡 Fresh scaffolds fail `check` (Prettier mismatch) — repo and all 4 templates pin `prettier 3.9.9` + `prettier-plugin-svelte 3.5.2` exactly; repo reformatted. Bump all five together.
+- [x] 🟠 `<svelte:head>` SSR output goes in the raw `<head>` via `buildMetadataChunk`. The `insertAdjacentHTML` script and `buildHtmlTail`'s `head` param are gone, so JSON-LD and icons reach non-JS crawlers. Its scripts now run, without a nonce.
+- [x] 🟡 Streaming title fallback ignored plugin `<title>`s and `headClose` skipped `%bosia.nonce%`. Both builders now share `titleFallback()`; `buildMetadataChunk` takes `nonce`.
+- [x] 🟡 `<svelte:head>` now goes just before app.html `</head>` on both paths (`closeHead`), so page tags win again. Its scripts block paint and need a nonce — documented, kept.
+- [x] 🟡 `app.html` `<title>` now suppresses the fallback; `findHeadEnd` scans for the first real `</head …>` (else `<body`), skipping comments and script/style; split cached per segments in a WeakMap. `errMeta` uses shared `hasTitle()`. Docs: escape `<` in JSON-LD.
+- [x] ⚪ `buildHtml` takes `headExtras` (no more renderer folding): plugin tags go back before app.html head markup. `buildMetadataChunk` takes an options object. `hasTitle` handles attrs; skips SVG, comments, scripts.
+- [ ] ⚪ Error pages never render plugin `head` fragments, so a plugin `<title>` or tag is missing on 404/500 (`renderErrorPage`).
 
 ---
 

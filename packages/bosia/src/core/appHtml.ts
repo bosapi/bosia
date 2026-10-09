@@ -62,6 +62,23 @@ export function loadAppHtmlTemplate(cwd: string = process.cwd()): AppHtmlSegment
 	};
 }
 
+// Comments and <script>/<style> bodies are matched only to be skipped; the
+// first real `</head …>` or, when the optional </head> is left out, `<body`
+// is where the head ends.
+const HEAD_END_RE =
+	/<!--[\s\S]*?(?:-->|$)|<(script|style)\b[\s\S]*?(?:<\/\1\s*>|$)|<\/head\s*>|<body[\s>/]/gi;
+
+/** Index in headClose (which runs on to %bosia.body%) where the head ends, or -1.
+ *  Matches case-insensitively on the original string: lowercasing a copy can
+ *  change its length (`İ`) and shift the index. */
+export function findHeadEnd(headClose: string): number {
+	for (const m of headClose.matchAll(HEAD_END_RE)) {
+		if (m[0].startsWith("<!--") || m[1]) continue;
+		return m.index;
+	}
+	return -1;
+}
+
 function replaceStaticPlaceholders(template: string): string {
 	// Replace %bosia.assets% with BOSIA_ASSETS_BASE env var
 	const assetsBase = process.env.BOSIA_ASSETS_BASE || "";

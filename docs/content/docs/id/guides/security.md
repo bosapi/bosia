@@ -134,6 +134,14 @@ export async function load({ locals }) {
 }
 ```
 
+Ini termasuk inline script di `<svelte:head>`: script itu dikirim di HTML server dan jalan saat muat pertama, jadi tanpa nonce policy akan memblokirnya.
+
+Escape `<` saat memasukkan data ke dalam script lewat `{@html}`, misalnya JSON-LD. Kalau tidak, nilai yang berisi `</script>` menutup blok lebih awal dan sisanya jalan sebagai script sungguhan:
+
+```ts
+const ld = JSON.stringify(data).replace(/</g, "\\u003c");
+```
+
 ## Keamanan Cookie
 
 API cookie menyertakan beberapa proteksi:
