@@ -458,57 +458,95 @@ function headSplit(segments: AppHtmlSegments): HeadSplit {
 }
 
 /** Whether a chunk of head markup already sets the document title. Matches a
- *  <title> with attributes too. Ignores one in a comment, a script or JSON-LD
- *  string, <style>, <noscript>, <template>, or an inline <svg> (which only labels the icon). */
+ *  <title> with attributes too. Ignores one in a comment, an attribute value, a
+ *  script or JSON-LD string, <style>, <noscript>, <template>, or an inline <svg>
+ *  (which only labels the icon). */
 export function hasTitle(html: string): boolean {
 	// A single forward scan, not a regex: a lazy `<script…</script>` match retries
 	// from every unclosed `<script` and goes quadratic on hostile {@html} output.
-	// An opener with no closer is read as a plain tag, and remembered, so later
-	// openers of that tag don't search to the end again.
+	// Each tag is skipped whole, quotes included, so nothing inside an attribute
+	// looks like a tag. This is a heuristic, not a full HTML tokenizer.
 	let unclosed: Set<string> | undefined;
 	let i = 0;
 	while ((i = html.indexOf("<", i)) !== -1) {
 		if (html.startsWith("<!--", i)) {
-			const end = html.indexOf("-->", i + 4);
-			if (end === -1) return false; // unclosed comment runs to the end
-			i = end + 3;
+			i = commentEnd(html, i);
+			if (i === -1) return false; // unclosed comment runs to the end
 			continue;
 		}
-		const name = tagNameAt(html, i + 1);
-		if (name === "title") return true;
-		const close = SKIPPED_TAGS.get(name);
-		if (close && !unclosed?.has(name)) {
-			close.lastIndex = i;
-			if (close.exec(html)) {
-				i = close.lastIndex;
-				continue;
-			}
-			(unclosed ??= new Set()).add(name);
+		if (!isAsciiAlpha(html.charCodeAt(i + 1))) {
+			i++;
+			continue;
 		}
-		i++;
+		const nameEnd = tagNameEnd(html, i + 1);
+		const tagEnd = openTagEnd(html, nameEnd);
+		if (tagEnd === -1) return false; // the rest is inside an unfinished tag
+		const name = nameEnd - i <= 9 ? html.slice(i + 1, nameEnd).toLowerCase() : "";
+		if (name === "title") return true;
+		i = tagEnd;
+		const close = SKIPPED_TAGS.get(name);
+		// Only foreign content like <svg/> honors the self-closing slash.
+		const selfClosed = name === "svg" && html.charCodeAt(tagEnd - 2) === 47;
+		if (!close || selfClosed || unclosed?.has(name)) continue;
+		// An opener with no closer is read as a plain tag, and remembered, so
+		// later openers of that tag don't search to the end again.
+		close.lastIndex = tagEnd;
+		const gt = close.exec(html) ? html.indexOf(">", close.lastIndex) : -1;
+		if (gt === -1) (unclosed ??= new Set()).add(name);
+		else i = gt + 1;
 	}
 	return false;
 }
 
+/** `</tag` followed by whitespace, `/` or `>`; the caller finds the `>` itself,
+ *  since a `[^>]*>` here would rescan to the end for every candidate. */
 const SKIPPED_TAGS = new Map(
 	["script", "style", "noscript", "template", "svg"].map((t) => [
 		t,
-		new RegExp(`</${t}\\s*>`, "gi"),
+		new RegExp(`</${t}(?=[\\s/>])`, "gi"),
 	]),
 );
 
-/** Lowercased tag name starting at `start`, or "" when it is longer than any
- *  tag hasTitle cares about or runs into the end of the input. */
-function tagNameAt(html: string, start: number): string {
-	let j = start;
-	while (j < html.length && j - start < 9 && !isTagNameEnd(html.charCodeAt(j))) j++;
-	if (j === html.length || !isTagNameEnd(html.charCodeAt(j))) return "";
-	return html.slice(start, j).toLowerCase();
+/** Index just past the comment opening at `start`, or -1 when it never closes.
+ *  `<!-->` and `<!--->` are complete empty comments. */
+function commentEnd(html: string, start: number): number {
+	if (html.startsWith(">", start + 4)) return start + 5;
+	if (html.startsWith("->", start + 4)) return start + 6;
+	const end = html.indexOf("-->", start + 4);
+	return end === -1 ? -1 : end + 3;
 }
 
-/** Whitespace, `/`, `>` or `<` (the last keeps the name scan linear). */
-function isTagNameEnd(c: number): boolean {
-	return c === 32 || (c >= 9 && c <= 13) || c === 47 || c === 62 || c === 60;
+/** End of the tag name starting at `start`: the first whitespace, `/` or `>`. */
+function tagNameEnd(html: string, start: number): number {
+	let j = start;
+	while (j < html.length) {
+		const c = html.charCodeAt(j);
+		if (c === 32 || (c >= 9 && c <= 13) || c === 47 || c === 62) break;
+		j++;
+	}
+	return j;
+}
+
+/** Index just past the `>` closing a start tag, skipping quoted attribute
+ *  values, or -1 when the tag never closes. */
+function openTagEnd(html: string, from: number): number {
+	for (let j = from; j < html.length; j++) {
+		const c = html.charCodeAt(j);
+		if (c === 62) return j + 1;
+		if (c !== 61) continue; // `=` starts a value
+		do j++;
+		while (j < html.length && /\s/.test(html[j]!));
+		const q = html.charCodeAt(j);
+		if (q === 34 || q === 39) {
+			j = html.indexOf(html[j]!, j + 1);
+			if (j === -1) return -1;
+		} else j--;
+	}
+	return -1;
+}
+
+function isAsciiAlpha(c: number): boolean {
+	return (c >= 65 && c <= 90) || (c >= 97 && c <= 122);
 }
 
 /** Plugin `head` fragments, one per line, empty ones skipped. */

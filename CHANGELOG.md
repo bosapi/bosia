@@ -28,7 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `<svelte:head>` tags come last in `<head>` again, so page styles still beat `app.html` ones.
 - A `<title>` written in `app.html` is no longer replaced by the "Bosia App" fallback.
 - A `</head>` inside a comment in `app.html` no longer confuses where page head tags go.
-- The title check is fast on any input, and a stray `<script` no longer hides a real `<title>`.
+- The title check is fast on any input, and odd markup (like `<script` in an attribute) no longer hides a `<title>`.
+- A `<title>` inside a `<style>` block no longer counts as the page title.
 - `app.html` without `</head>`, or with `</head >` or letters like `İ`, now places head tags right.
 - A `<title>` with attributes now counts; one in an `<svg>`, comment or script no longer does.
 

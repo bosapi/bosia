@@ -282,14 +282,36 @@ describe("metadataTags", () => {
 		expect(hasTitle(`<title`)).toBe(false);
 	});
 
+	test("hasTitle ignores tags and comments inside attribute values", () => {
+		const t = "<title>T</title>";
+		expect(hasTitle(`<meta content="<script>">${t}<script>x</script>`)).toBe(true);
+		expect(hasTitle(`<meta content='<!--'>${t}`)).toBe(true);
+		expect(hasTitle(`<meta content="<title>">`)).toBe(false);
+		expect(hasTitle(`<meta content="a>b">${t}`)).toBe(true);
+		expect(hasTitle(`<meta content="unclosed>${t}`)).toBe(false);
+	});
+
+	test("hasTitle follows HTML for empty comments, <svg/> and end tags", () => {
+		const t = "<title>T</title>";
+		expect(hasTitle(`<!-->${t}`)).toBe(true);
+		expect(hasTitle(`<!--->${t}`)).toBe(true);
+		expect(hasTitle(`<svg class="i"/>${t}<svg></svg>`)).toBe(true);
+		expect(hasTitle(`<script/>"<title>"</script>`)).toBe(false);
+		expect(hasTitle(`<script>"<title>"</script/>`)).toBe(false);
+		expect(hasTitle(`<script>"<title>"</script foo>`)).toBe(false);
+		expect(hasTitle(`<script<title>x</title></script>`)).toBe(false);
+		expect(hasTitle(`<title<>x`)).toBe(false);
+	});
+
 	test("hasTitle stays linear on hostile input", () => {
 		const hostile =
-			"<script>x</script><!--c--><a ".repeat(20_000) +
-			"<script ".repeat(20_000) +
+			"<script>x</script><!--c--><a b='c'>".repeat(50_000) +
+			"<script>".repeat(50_000) +
 			"<title>x</title>";
+		// The old regex took many seconds on this; a linear scan takes milliseconds.
 		const start = performance.now();
 		expect(hasTitle(hostile)).toBe(true);
-		expect(performance.now() - start).toBeLessThan(500);
+		expect(performance.now() - start).toBeLessThan(2000);
 	});
 
 	test("streaming and buildHtml order metadata, headExtras, <svelte:head> the same", () => {
