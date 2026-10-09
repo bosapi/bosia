@@ -19,7 +19,7 @@
 - [x] 🟡 Streaming title fallback ignored plugin `<title>`s and `headClose` skipped `%bosia.nonce%`. Both builders now share `titleFallback()`; `buildMetadataChunk` takes `nonce`.
 - [x] 🟡 `<svelte:head>` now goes just before app.html `</head>` on both paths (`closeHead`), so page tags win again. Its scripts block paint and need a nonce — documented, kept.
 - [x] 🟡 `app.html` `<title>` now suppresses the fallback; `findHeadEnd` scans for the first real `</head …>` (else `<body`), skipping comments and script/style; split cached per segments in a WeakMap. `errMeta` uses shared `hasTitle()`. Docs: escape `<` in JSON-LD.
-- [x] ⚪ `buildHtml` takes `headExtras` (no more renderer folding): plugin tags go back before app.html head markup. `buildMetadataChunk` takes an options object. `hasTitle` handles attrs; skips SVG, comments, scripts — one linear scan (a lazy regex went quadratic on unclosed `<script`).
+- [x] ⚪ `buildHtml` takes `headExtras`: plugin tags go before app.html head markup. `buildMetadataChunk` takes options. `hasTitle` is one linear scan (skips comments, script, style, svg; unclosed tags read as plain).
 - [ ] ⚪ Error pages never render plugin `head` fragments, so a plugin `<title>` or tag is missing on 404/500 (`renderErrorPage`).
 
 ---

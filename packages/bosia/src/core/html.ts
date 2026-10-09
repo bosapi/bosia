@@ -459,39 +459,56 @@ function headSplit(segments: AppHtmlSegments): HeadSplit {
 
 /** Whether a chunk of head markup already sets the document title. Matches a
  *  <title> with attributes too. Ignores one in a comment, a script or JSON-LD
- *  string, <noscript>, <template>, or an inline <svg> (which only labels the icon). */
+ *  string, <style>, <noscript>, <template>, or an inline <svg> (which only labels the icon). */
 export function hasTitle(html: string): boolean {
 	// A single forward scan, not a regex: a lazy `<script…</script>` match retries
 	// from every unclosed `<script` and goes quadratic on hostile {@html} output.
-	// Lowercasing is safe here since only a yes/no comes back, never an index.
-	const s = html.toLowerCase();
+	// An opener with no closer is read as a plain tag, and remembered, so later
+	// openers of that tag don't search to the end again.
+	let unclosed: Set<string> | undefined;
 	let i = 0;
-	while ((i = s.indexOf("<", i)) !== -1) {
-		if (s.startsWith("<!--", i)) {
-			const end = s.indexOf("-->", i + 4);
+	while ((i = html.indexOf("<", i)) !== -1) {
+		if (html.startsWith("<!--", i)) {
+			const end = html.indexOf("-->", i + 4);
 			if (end === -1) return false; // unclosed comment runs to the end
 			i = end + 3;
 			continue;
 		}
-		const tag = SKIPPED_TAGS.find(
-			(t) => s.startsWith(t, i + 1) && !isWordChar(s[i + 1 + t.length]),
-		);
-		if (tag) {
-			const end = s.indexOf(`</${tag}>`, i);
-			if (end === -1) return false; // unclosed block runs to the end
-			i = end + tag.length + 3;
-			continue;
+		const name = tagNameAt(html, i + 1);
+		if (name === "title") return true;
+		const close = SKIPPED_TAGS.get(name);
+		if (close && !unclosed?.has(name)) {
+			close.lastIndex = i;
+			if (close.exec(html)) {
+				i = close.lastIndex;
+				continue;
+			}
+			(unclosed ??= new Set()).add(name);
 		}
-		if (s.startsWith("<title", i) && /[\s>]/.test(s[i + 6] ?? "")) return true;
 		i++;
 	}
 	return false;
 }
 
-const SKIPPED_TAGS = ["script", "noscript", "template", "svg"];
+const SKIPPED_TAGS = new Map(
+	["script", "style", "noscript", "template", "svg"].map((t) => [
+		t,
+		new RegExp(`</${t}\\s*>`, "gi"),
+	]),
+);
 
-function isWordChar(c: string | undefined): boolean {
-	return c !== undefined && /\w/.test(c);
+/** Lowercased tag name starting at `start`, or "" when it is longer than any
+ *  tag hasTitle cares about or runs into the end of the input. */
+function tagNameAt(html: string, start: number): string {
+	let j = start;
+	while (j < html.length && j - start < 9 && !isTagNameEnd(html.charCodeAt(j))) j++;
+	if (j === html.length || !isTagNameEnd(html.charCodeAt(j))) return "";
+	return html.slice(start, j).toLowerCase();
+}
+
+/** Whitespace, `/`, `>` or `<` (the last keeps the name scan linear). */
+function isTagNameEnd(c: number): boolean {
+	return c === 32 || (c >= 9 && c <= 13) || c === 47 || c === 62 || c === 60;
 }
 
 /** Plugin `head` fragments, one per line, empty ones skipped. */

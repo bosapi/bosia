@@ -272,11 +272,24 @@ describe("metadataTags", () => {
 		expect(hasTitle(`<!-- open comment <title>x</title>`)).toBe(false);
 	});
 
-	test("hasTitle stays linear on many unclosed <script openings", () => {
-		const hostile = "<script ".repeat(20_000) + "<title>x</title>";
+	test("hasTitle reads past stray, unclosed or look-alike tags", () => {
+		expect(hasTitle(`<meta content="use <script> safely"><title>Real</title>`)).toBe(true);
+		expect(hasTitle(`<script>a</script ><title>Real</title>`)).toBe(true);
+		expect(hasTitle(`<script>a</SCRIPT\n><title>Real</title>`)).toBe(true);
+		expect(hasTitle(`<svg-icon></svg-icon><title>Real</title>`)).toBe(true);
+		expect(hasTitle(`<script-loader><title>Real</title>`)).toBe(true);
+		expect(hasTitle(`<style>/* <title> */</style>`)).toBe(false);
+		expect(hasTitle(`<title`)).toBe(false);
+	});
+
+	test("hasTitle stays linear on hostile input", () => {
+		const hostile =
+			"<script>x</script><!--c--><a ".repeat(20_000) +
+			"<script ".repeat(20_000) +
+			"<title>x</title>";
 		const start = performance.now();
-		hasTitle(hostile);
-		expect(performance.now() - start).toBeLessThan(50);
+		expect(hasTitle(hostile)).toBe(true);
+		expect(performance.now() - start).toBeLessThan(500);
 	});
 
 	test("streaming and buildHtml order metadata, headExtras, <svelte:head> the same", () => {
