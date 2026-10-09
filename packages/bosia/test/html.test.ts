@@ -253,6 +253,26 @@ describe("metadataTags", () => {
 		expect(buildMetadataChunk({ description: "d" })).toContain("<title>Bosia App</title>");
 	});
 
+	test("the fallback title goes last in <head> on both paths", () => {
+		const head = `<meta name="from-head" content="1">`;
+		const segments: AppHtmlSegments = {
+			headOpen: `<!DOCTYPE html>\n<html>\n<head>\n`,
+			headClose: `\n  <meta name="app" content="1">\n</head>\n<body>\n`,
+			tail: `\n</body>\n</html>`,
+			hasCustomFavicon: false,
+		};
+		for (const html of [
+			buildMetadataChunk({ description: "d" }, { head }),
+			buildMetadataChunk({ description: "d" }, { head, segments }),
+			buildHtml("", head, {}, [], true, null, "en", true),
+			// prettier-ignore
+			buildHtml("", head, {}, [], true, null, "en", true, undefined, null, null, undefined, segments),
+		]) {
+			expect(html.indexOf("<title>Bosia App</title>")).toBeGreaterThan(html.indexOf(head));
+			expect(html.indexOf("<title>Bosia App</title>")).toBeLessThan(html.indexOf("</head>"));
+		}
+	});
+
 	test("a plugin head title suppresses the fallback", () => {
 		const chunk = buildMetadataChunk({ description: "d" }, { headExtras: ["<title>Shop</title>"] });
 		expect(chunk).not.toContain("Bosia App");
@@ -289,6 +309,8 @@ describe("metadataTags", () => {
 		expect(hasTitle(`<meta content="<title>">`)).toBe(false);
 		expect(hasTitle(`<meta content="a>b">${t}`)).toBe(true);
 		expect(hasTitle(`<meta content="unclosed>${t}`)).toBe(false);
+		expect(hasTitle(`<meta content=a="b>${t}<x a=">`)).toBe(true);
+		expect(hasTitle(`<meta content=\u00a0"b>${t}<x a=">`)).toBe(true);
 	});
 
 	test("hasTitle follows HTML for empty comments, <svg/> and end tags", () => {

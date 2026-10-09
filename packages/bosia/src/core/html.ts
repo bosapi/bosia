@@ -319,8 +319,8 @@ export function buildHtml(
 			componentCssLinks() +
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
 			preloads +
-			`  ${fallbackTitle}${metaTags}${extras}` +
-			closeHead(segments, head ? `  ${head}\n` : "", nonce) +
+			`  ${metaTags}${extras}` +
+			closeHead(segments, lateHead(head, fallbackTitle), nonce) +
 			(body ? "" : `\n${SPINNER}`) +
 			`\n  <div id="app">${body}</div>${scripts}${bodyEnd}` +
 			tailInterpolated
@@ -332,10 +332,8 @@ export function buildHtml(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${fallbackTitle}
   <link rel="icon" type="image/svg+xml" href="${FAVICON}">
-${metaTags}${extras}  ${head}
-  ${twCssLink()}
+${metaTags}${extras}${lateHead(head, fallbackTitle)}  ${twCssLink()}
 ${componentCssLinks()}  <script${n}>${THEME_INIT_JS}</script>
 ${preloads}</head>
 <body>
@@ -503,7 +501,7 @@ export function hasTitle(html: string): boolean {
 const SKIPPED_TAGS = new Map(
 	["script", "style", "noscript", "template", "svg"].map((t) => [
 		t,
-		new RegExp(`</${t}(?=[\\s/>])`, "gi"),
+		new RegExp(`</${t}(?=[\\t\\n\\f\\r />])`, "gi"),
 	]),
 );
 
@@ -521,7 +519,7 @@ function tagNameEnd(html: string, start: number): number {
 	let j = start;
 	while (j < html.length) {
 		const c = html.charCodeAt(j);
-		if (c === 32 || (c >= 9 && c <= 13) || c === 47 || c === 62) break;
+		if (isHtmlSpace(c) || c === 47 || c === 62) break;
 		j++;
 	}
 	return j;
@@ -535,14 +533,23 @@ function openTagEnd(html: string, from: number): number {
 		if (c === 62) return j + 1;
 		if (c !== 61) continue; // `=` starts a value
 		do j++;
-		while (j < html.length && /\s/.test(html[j]!));
+		while (j < html.length && isHtmlSpace(html.charCodeAt(j)));
 		const q = html.charCodeAt(j);
 		if (q === 34 || q === 39) {
 			j = html.indexOf(html[j]!, j + 1);
 			if (j === -1) return -1;
-		} else j--;
+			continue;
+		}
+		// Unquoted: runs to whitespace or `>`, quotes and `=` included.
+		while (j < html.length && !isHtmlSpace(html.charCodeAt(j)) && html.charCodeAt(j) !== 62) j++;
+		j--;
 	}
 	return -1;
+}
+
+/** HTML whitespace: tab, LF, FF, CR, space. Not \s, which also matches NBSP. */
+function isHtmlSpace(c: number): boolean {
+	return c === 32 || c === 9 || c === 10 || c === 12 || c === 13;
 }
 
 function isAsciiAlpha(c: number): boolean {
@@ -571,6 +578,13 @@ function titleFallback(
 	return parts.some(hasTitle) ? "" : "<title>Bosia App</title>";
 }
 
+/** <svelte:head>, then the fallback title, for the very end of <head>. The
+ *  fallback goes last so that if hasTitle ever misses a real <title>, the real
+ *  one still comes first and wins; the cost is a spare tag, not a wrong title. */
+function lateHead(head: string, fallbackTitle: string): string {
+	return (head ? `  ${head}\n` : "") + (fallbackTitle ? `  ${fallbackTitle}\n` : "");
+}
+
 export type MetadataChunkOptions = {
 	/** Plugin `head` fragments; they go right after the metadata() tags. */
 	headExtras?: string[];
@@ -591,10 +605,8 @@ export function buildMetadataChunk(
 	const metaTags = metadataTags(metadata);
 	const extras = headExtraTags(headExtras);
 	const fallbackTitle = titleFallback(segments, metadata, extras, head);
-	let out = "\n";
-	if (fallbackTitle) out += `  ${fallbackTitle}\n`;
-	out += metaTags + extras;
-	const late = head ? `  ${head}\n` : "";
+	let out = "\n" + metaTags + extras;
+	const late = lateHead(head, fallbackTitle);
 
 	if (segments) {
 		out += closeHead(segments, late, nonce) + `\n${SPINNER}`;
