@@ -88,6 +88,23 @@ beforeAll(async () => {
 	mkdirSync(join(routes, "daftar"), { recursive: true });
 	writeFileSync(join(routes, "daftar", "+page.svelte"), `<h1>Daftar</h1>\n`);
 
+	// A custom error title the hasTitle heuristic misses (a `--!>` comment end):
+	// the synthesized status title must come after it so the real one still wins.
+	mkdirSync(join(routes, "rusak"), { recursive: true });
+	writeFileSync(join(routes, "rusak", "+page.svelte"), `<h1>Rusak</h1>\n`);
+	writeFileSync(
+		join(routes, "rusak", "+layout.svelte"),
+		`<script>let { children } = $props();</script>\n{@render children()}\n`,
+	);
+	writeFileSync(
+		join(routes, "rusak", "+page.server.ts"),
+		`import { error } from "bosia";\nexport function load() {\n\terror(410, "Hilang");\n}\n`,
+	);
+	writeFileSync(
+		join(routes, "rusak", "+error.svelte"),
+		`<svelte:head>{@html '<!-- x --!><title>Oops</title>'}</svelte:head>\n<h1>Oops</h1>\n`,
+	);
+
 	const build = Bun.spawn(["bun", "run", join(import.meta.dir, "..", "src", "core", "build.ts")], {
 		cwd: tmpDir,
 		env: { ...process.env, NODE_ENV: "production", NODE_PATH: BOSIA_NODE_PATH },
@@ -189,5 +206,14 @@ describe("error pages", () => {
 		expect(html).toContain("404");
 		expect(html).toContain("<title>404 — Not Found</title>");
 		expect(html).not.toContain("Bosia App");
+	});
+
+	test("a custom error title the title check misses still comes first", async () => {
+		const res = await fetch(`${origin}/rusak`);
+		expect(res.status).toBe(410);
+		const html = await res.text();
+		const own = html.indexOf("<title>Oops</title>");
+		expect(own).toBeGreaterThan(-1);
+		expect(own).toBeLessThan(html.indexOf("<title>410 — Hilang</title>"));
 	});
 });

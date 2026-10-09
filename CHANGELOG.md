@@ -29,7 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - A `<title>` written in `app.html` is no longer replaced by the "Bosia App" fallback.
 - A `</head>` inside a comment in `app.html` no longer confuses where page head tags go.
 - Page titles are found reliably and quickly, even in unusual head markup.
-- The "Bosia App" fallback title now goes last in `<head>`, so a page's own title always wins.
+- Fallback titles ("Bosia App", or a 404 title on error pages) now go last, so your title wins.
 - A `<title>` inside a `<style>` block no longer counts as the page title.
 - `app.html` without `</head>`, or with `</head >` or letters like `İ`, now places head tags right.
 - A `<title>` with attributes now counts; one in an `<svg>`, comment or script no longer does.

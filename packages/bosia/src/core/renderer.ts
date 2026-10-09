@@ -35,6 +35,7 @@ import {
 	encodeForRequest,
 	hasTitle,
 	isDev,
+	metadataTags,
 	withPreloadLink,
 	type Encoded,
 } from "./html.ts";
@@ -1156,9 +1157,11 @@ export async function renderErrorPage(
 	// The route's own metadata() is deliberately NOT run here — the route may be
 	// what failed, and a 404 has no route at all. Synthesize a status title only
 	// when the error component didn't set one, so <svelte:head><title> in a custom
-	// +error.svelte still wins.
-	const errMeta = (head: string): Metadata | null =>
-		hasTitle(head) ? null : { title: `${status} — ${message}` };
+	// +error.svelte still wins. It goes after the component's head, like the
+	// "Bosia App" fallback, so a real title hasTitle misses still comes first.
+	const statusTitle = `${status} — ${message}`;
+	const errHead = (head: string): string =>
+		hasTitle(head) ? head : `${head}\n  ${metadataTags({ title: statusTitle }).trim()}`;
 
 	// Inspector overlay and other plugin bodyEnd fragments must be injected
 	// on error pages too — otherwise SSE never connects and runtime errors
@@ -1167,7 +1170,7 @@ export async function renderErrorPage(
 		request: req,
 		url,
 		route: route ? { pattern: route.pattern } : { pattern: "" },
-		metadata: errMeta(""),
+		metadata: { title: statusTitle },
 	};
 	const bodyEndExtras = await pluginRenderFragments("bodyEnd", renderCtx);
 
@@ -1211,7 +1214,7 @@ export async function renderErrorPage(
 				// csr=false: no client hydration on the error page itself.
 				const html = buildHtml(
 					body,
-					head,
+					errHead(head),
 					{ status, message },
 					layoutData,
 					false,
@@ -1223,7 +1226,6 @@ export async function renderErrorPage(
 					null,
 					bodyEndExtras,
 					appHtmlSegments,
-					errMeta(head),
 				);
 				return compress(html, "text/html; charset=utf-8", req, status);
 			} catch (err) {
@@ -1249,7 +1251,7 @@ export async function renderErrorPage(
 			);
 			const html = buildHtml(
 				body,
-				head,
+				errHead(head),
 				{ status, message },
 				[],
 				false,
@@ -1261,7 +1263,6 @@ export async function renderErrorPage(
 				null,
 				bodyEndExtras,
 				appHtmlSegments,
-				errMeta(head),
 			);
 			return compress(html, "text/html; charset=utf-8", req, status);
 		} catch (err) {
