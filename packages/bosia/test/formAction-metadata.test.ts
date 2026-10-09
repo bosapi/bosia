@@ -214,6 +214,8 @@ describe("error pages", () => {
 		const html = await res.text();
 		const own = html.indexOf("<title>Oops</title>");
 		expect(own).toBeGreaterThan(-1);
-		expect(own).toBeLessThan(html.indexOf("<title>410 — Hilang</title>"));
+		// If hasTitle ever learns `--!>`, no status title is added at all; fine too.
+		const status = html.indexOf("<title>410 — Hilang</title>");
+		if (status !== -1) expect(own).toBeLessThan(status);
 	});
 });

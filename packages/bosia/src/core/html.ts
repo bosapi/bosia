@@ -250,6 +250,7 @@ export function buildHtml(
 	metadata?: Metadata | null,
 	pattern?: string,
 	headExtras?: string[],
+	fallbackTitle = "Bosia App",
 ): string {
 	// An app writes <a href="/masuk">; under a base the browser has to be handed
 	// /sso/masuk or it walks off this app entirely. Only the rendered markup is
@@ -263,7 +264,7 @@ export function buildHtml(
 	// pick the same winner.
 	const metaTags = rebaseHtmlAttrs(B, metadataTags(metadata ?? null));
 	const extras = rebaseHtmlAttrs(B, headExtraTags(headExtras));
-	const fallbackTitle = titleFallback(segments, metadata, extras, head);
+	const fallback = titleFallback(segments, metadata, fallbackTitle, extras, head);
 
 	const n = nonceAttr(nonce);
 	const publicEnv = getPublicDynamicEnv();
@@ -320,7 +321,7 @@ export function buildHtml(
 			`  <script${n}>${THEME_INIT_JS}</script>\n` +
 			preloads +
 			`  ${metaTags}${extras}` +
-			closeHead(segments, lateHead(head, fallbackTitle), nonce) +
+			closeHead(segments, lateHead(head, fallback), nonce) +
 			(body ? "" : `\n${SPINNER}`) +
 			`\n  <div id="app">${body}</div>${scripts}${bodyEnd}` +
 			tailInterpolated
@@ -333,7 +334,7 @@ export function buildHtml(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="${FAVICON}">
-${metaTags}${extras}${lateHead(head, fallbackTitle)}  ${twCssLink()}
+${metaTags}${extras}${lateHead(head, fallback)}  ${twCssLink()}
 ${componentCssLinks()}  <script${n}>${THEME_INIT_JS}</script>
 ${preloads}</head>
 <body>
@@ -479,7 +480,7 @@ export function hasTitle(html: string): boolean {
 		const nameEnd = tagNameEnd(html, i + 1);
 		const tagEnd = openTagEnd(html, nameEnd);
 		if (tagEnd === -1) return false; // the rest is inside an unfinished tag
-		const name = nameEnd - i <= 9 ? html.slice(i + 1, nameEnd).toLowerCase() : "";
+		const name = nameEnd - i - 1 <= MAX_NAME ? html.slice(i + 1, nameEnd).toLowerCase() : "";
 		if (name === "title") return true;
 		i = tagEnd;
 		const close = SKIPPED_TAGS.get(name);
@@ -504,6 +505,9 @@ const SKIPPED_TAGS = new Map(
 		new RegExp(`</${t}(?=[\\t\\n\\f\\r />])`, "gi"),
 	]),
 );
+
+/** Longest tag name hasTitle needs to tell apart; longer names are never sliced. */
+const MAX_NAME = Math.max("title".length, ...[...SKIPPED_TAGS.keys()].map((t) => t.length));
 
 /** Index just past the comment opening at `start`, or -1 when it never closes.
  *  `<!-->` and `<!--->` are complete empty comments. */
@@ -565,17 +569,23 @@ function headExtraTags(headExtras?: string[]): string {
 	return out;
 }
 
-/** "<title>Bosia App</title>" unless app.html or one of the head parts already
+/** `<title>{text}</title>` unless app.html or one of the head parts already
  *  has a title. Shared by buildHtml and buildMetadataChunk so both paths make
  *  the same call; each passes every part it writes into <head> (metadata,
  *  plugin extras, <svelte:head>). */
 function titleFallback(
 	segments: AppHtmlSegments | undefined,
 	metadata: Metadata | null | undefined,
+	text: string,
 	...parts: string[]
 ): string {
-	if (metadata?.title || (segments && headSplit(segments).hasTitle)) return "";
-	return parts.some(hasTitle) ? "" : "<title>Bosia App</title>";
+	if (metadata?.title || (segments && appHtmlHasTitle(segments))) return "";
+	return parts.some(hasTitle) ? "" : `<title>${escapeHtml(text)}</title>`;
+}
+
+/** Whether app.html sets its own <title> in its head. */
+export function appHtmlHasTitle(segments: AppHtmlSegments): boolean {
+	return headSplit(segments).hasTitle;
 }
 
 /** <svelte:head>, then the fallback title, for the very end of <head>. The
@@ -604,7 +614,7 @@ export function buildMetadataChunk(
 	// plugin extras, app.html's own head markup, then <svelte:head>.
 	const metaTags = metadataTags(metadata);
 	const extras = headExtraTags(headExtras);
-	const fallbackTitle = titleFallback(segments, metadata, extras, head);
+	const fallbackTitle = titleFallback(segments, metadata, "Bosia App", extras, head);
 	let out = "\n" + metaTags + extras;
 	const late = lateHead(head, fallbackTitle);
 

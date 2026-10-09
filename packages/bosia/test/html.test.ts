@@ -14,6 +14,7 @@ import {
 	distManifest,
 	getPublicDynamicEnv,
 	hasTitle,
+	appHtmlHasTitle,
 } from "../src/core/html.ts";
 import type { AppHtmlSegments } from "../src/core/appHtml.ts";
 import type { Metadata } from "../src/core/hooks.ts";
@@ -678,6 +679,22 @@ describe("buildHtml — template segments", () => {
 				[extra],
 			),
 		);
+	});
+
+	test("buildHtml takes a custom fallback title, escaped and placed last", () => {
+		const head = `<meta name="from-head" content="1">`;
+		// prettier-ignore
+		const html = buildHtml("", head, {}, [], true, null, "en", true, undefined, null, null, undefined, segments, null, undefined, undefined, "404 — <Nope>");
+		const at = html.indexOf("<title>404 — &lt;Nope&gt;</title>");
+		expect(at).toBeGreaterThan(html.indexOf(head));
+		expect(html).not.toContain("Bosia App");
+	});
+
+	test("appHtmlHasTitle reports app.html's own <title>", () => {
+		expect(appHtmlHasTitle(segments)).toBe(false);
+		expect(
+			appHtmlHasTitle({ ...segments, headClose: `\n  <title>My Shop</title>\n</head>\n<body>` }),
+		).toBe(true);
 	});
 
 	test("an app.html <title> suppresses the fallback on both paths", () => {
