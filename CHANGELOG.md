@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased]
+## [1.2.6] - 2026-10-16
 
 ### Added
 
@@ -32,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - A `+server.ts` GET that returns an already-gzipped body is no longer served broken from cache.
 - One loader or `+server.ts` GET that never finished no longer made its URL hang for everyone until a restart.
 - A page whose `metadata()` failed or timed out is no longer cached without its title and meta tags.
+- New projects pass `bun run check` in a monorepo or with isolated installs (bun-types not found).
 
 ## [1.2.5] - 2026-10-15
 
