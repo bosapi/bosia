@@ -8,15 +8,22 @@ import type { Cookies, LoaderDeps } from "./hooks.ts";
 import { CSP_ENABLED } from "./csp.ts";
 import {
 	CACHE_ENABLED,
-	CACHE_MAX_BODY_BYTES,
+	bodyFitsCache,
 	buildCompressedVariants,
 	cacheGet,
 	cacheSet,
-	coalesceMiss,
+	claimMiss,
 	collectTags,
+	depsReadIgnoredParams,
+	markWholeQueryRead,
+	LOAD_TIMEOUT,
+	METADATA_TIMEOUT,
+	stripIgnoredParams,
 	computeCacheKey,
 	deferCacheWrite,
+	isNoStoreCacheControl,
 	serveCached,
+	varyBlocksCache,
 } from "./cache.ts";
 import type { CookieJar } from "./cookies.ts";
 import { HttpError, Redirect, isHttpError, isRedirect } from "./errors.ts";
@@ -137,15 +144,6 @@ class LoadTimeoutError extends Error {
 	}
 }
 
-function parseTimeout(raw: string | undefined, fallback: number): number {
-	if (!raw || raw === "Infinity") return 0;
-	const n = parseInt(raw, 10);
-	return Number.isFinite(n) && n > 0 ? n : fallback;
-}
-
-const LOAD_TIMEOUT = parseTimeout(process.env.LOAD_TIMEOUT, 5000);
-const METADATA_TIMEOUT = parseTimeout(process.env.METADATA_TIMEOUT, 3000);
-
 // A plain-function load() hands back a value, not a promise; wrap it first.
 function withTimeout<T>(value: T | Promise<T>, ms: number, label: string): Promise<T> {
 	const promise = Promise.resolve(value);
@@ -254,7 +252,7 @@ function stampErrorContext(
 // cache uses these records to skip re-runs on subsequent navigations
 // when none of the tracked inputs changed.
 
-function emptyDeps(): LoaderDeps {
+export function emptyDeps(): LoaderDeps {
 	return {
 		keys: [],
 		urls: [],
@@ -282,13 +280,16 @@ function trackedUrl(url: URL, deps: LoaderDeps): URL {
 	const trackedSearch = new Proxy(url.searchParams, {
 		get(target, prop) {
 			if (prop === "get" || prop === "has" || prop === "getAll") {
-				return (key: string) => {
+				// All arguments: `has(name, value)` checks the value too.
+				return (key: string, ...rest: unknown[]) => {
 					if (typeof key === "string" && !deps.searchParams.includes(key)) {
 						deps.searchParams.push(key);
 					}
-					return (target as any)[prop](key);
+					return (target as any)[prop](key, ...rest);
 				};
 			}
+			// entries(), size, toString(), iteration…: may depend on any param.
+			markWholeQueryRead(deps);
 			const value = Reflect.get(target, prop);
 			return typeof value === "function" ? value.bind(target) : value;
 		},
@@ -299,7 +300,11 @@ function trackedUrl(url: URL, deps: LoaderDeps): URL {
 			if (prop === "search") {
 				// Whole search string read → treat as broad searchParams dep
 				deps.uses_url = true;
+				markWholeQueryRead(deps);
 				return target.search;
+			}
+			if (prop === "href" || prop === "toString" || prop === "toJSON") {
+				markWholeQueryRead(deps);
 			}
 			if (typeof prop === "string" && URL_TRACKED_PROPS.has(prop)) {
 				deps.uses_url = true;
@@ -532,6 +537,7 @@ export async function loadRouteData(
 
 	// Settle root → leaf. The first failure wins, carrying the data of the
 	// layers above it — the same error a serial run would have produced.
+	let omittedReadIgnored = false;
 	for (let i = 0; i < route.layoutServers.length; i++) {
 		const ls = route.layoutServers[i]!;
 		// Runs regardless of the mask — see the trust note above loadRouteData.
@@ -540,6 +546,10 @@ export async function loadRouteData(
 			const { data, deps } = await layers[i]!;
 			layoutData[ls.depth] = omit ? null : data;
 			layoutDeps[ls.depth] = omit ? null : deps;
+			// A left-out layout still feeds the layers below it via parent(): its
+			// ignored-param reads count for every one that is sent.
+			if (omit && depsReadIgnoredParams(null, deps)) omittedReadIgnored = true;
+			else if (!omit && omittedReadIgnored) markWholeQueryRead(deps);
 		} catch (err) {
 			// Loaders below this one already started; dev warns about the guard.
 			const thrown = isDev ? guardLabel(err) : null;
@@ -606,6 +616,8 @@ export async function loadRouteData(
 		}
 	}
 
+	if (omittedReadIgnored && pageDeps) markWholeQueryRead(pageDeps);
+
 	// `params` are always attached to pageData for client-side router consumption.
 	// When pageData is skipped, the client merges its cached pageData with current
 	// route params separately, so we keep the `null` sentinel here.
@@ -615,6 +627,14 @@ export async function loadRouteData(
 
 // ─── Metadata Loader ─────────────────────────────────────
 
+/** metadata() calls that failed or timed out (keyed by their deps): the page
+ *  still renders, without title/meta/canonical, but isn't cached that way. */
+const failedMetadata = new WeakSet<LoaderDeps>();
+
+export function metadataFailed(deps: LoaderDeps): boolean {
+	return failedMetadata.has(deps);
+}
+
 export async function loadMetadata(
 	route: any,
 	params: Record<string, string>,
@@ -622,6 +642,8 @@ export async function loadMetadata(
 	locals: Record<string, any>,
 	cookies: Cookies,
 	req: Request,
+	/** Records which query params metadata() read, for the response cache. */
+	deps?: LoaderDeps,
 ): Promise<Metadata | null> {
 	if (!route.pageServer) return null;
 	try {
@@ -633,7 +655,7 @@ export async function loadMetadata(
 					mod.metadata({
 						params,
 						route: { id: route.id },
-						url,
+						url: deps ? trackedUrl(url, deps) : url,
 						locals,
 						cookies,
 						fetch,
@@ -647,6 +669,9 @@ export async function loadMetadata(
 	} catch (err) {
 		// Control flow thrown from metadata() is intent, not failure — swallowing it
 		// here made every caller's Redirect/HttpError branch dead code.
+		// Also marked for control flow: the data endpoint swallows it and must
+		// not cache the 200 it sends instead.
+		if (deps) failedMetadata.add(deps);
 		if (isRedirect(err) || isHttpError(err)) throw err;
 		if (isDev) console.error("Metadata load error:", err);
 		else console.error("Metadata load error:", (err as Error).message ?? err);
@@ -706,21 +731,25 @@ export async function renderSSRStream(
 	if (cacheRead) {
 		cacheKey = computeCacheKey(url, req, cookies as CookieJar);
 		if (!cacheBypass) {
+			// Tracking params (CACHE_IGNORE_PARAMS): the plain URL's entry first,
+			// then this URL's own, as before — see cache.ts.
+			const plainUrl = stripIgnoredParams(url);
+			if (plainUrl !== url) {
+				const plain = cacheGet(computeCacheKey(plainUrl, req, cookies as CookieJar));
+				if (plain && !plain.queryAware) return serveCached(plain, req);
+			}
 			const hit = cacheGet(cacheKey);
 			if (hit) return serveCached(hit, req);
 		}
 		if (cacheable && !cacheBypass) {
 			// Miss coalescing: the first miss leads the build; concurrent misses
-			// wait, then re-check the cache. A waiter that still misses (leader
-			// skipped the write) builds independently — no re-leadering.
-			const gate = coalesceMiss(cacheKey);
-			if (gate.wait) {
-				await gate.wait;
-				const rehit = cacheGet(cacheKey);
-				if (rehit) return serveCached(rehit, req);
-			} else {
-				releaseMiss = gate.release;
-			}
+			// wait, then re-check the cache — see claimMiss().
+			const claim = await claimMiss(cacheKey, req.signal);
+			if (claim.hit) return serveCached(claim.hit, req);
+			// The client left while waiting: nobody reads this. 499 (nginx's
+			// "client closed request"), so logs don't count it as a server error.
+			if (claim.aborted) return new Response(null, { status: 499 });
+			if (claim.lead) releaseMiss = claim.lead.release;
 		}
 	}
 
@@ -733,7 +762,8 @@ export async function renderSSRStream(
 		// fragments all start together, and all settle before committing to a 200,
 		// so a Redirect/HttpError from any of them still gets a proper response.
 		// The page load() alone waits for metadata.data (see loadRouteData).
-		const metadataP = loadMetadata(route, params, url, locals, cookies, req).then(
+		const metaDeps = emptyDeps();
+		const metadataP = loadMetadata(route, params, url, locals, cookies, req, metaDeps).then(
 			(value) => ({ ok: true as const, value }),
 			(err: unknown) => ({ ok: false as const, err }),
 		);
@@ -968,11 +998,21 @@ export async function renderSSRStream(
 		// Skip if the handler set cookies — cached response can't reproduce
 		// per-request Set-Cookie headers. deferCacheWrite runs the variant
 		// compression after this response is flushed, not ahead of it.
-		if (cacheable && cacheKey && (cookies as any).outgoing?.length === 0) {
+		// A loader that said not to store its response is taken at its word, as
+		// on the data endpoint: a `private` page must not be replayed from cache.
+		const loaderOptOut =
+			isNoStoreCacheControl(data.loaderHeaders?.["cache-control"]) ||
+			varyBlocksCache(data.loaderHeaders?.["vary"]) ||
+			metadataFailed(metaDeps);
+		if (cacheable && cacheKey && !loaderOptOut && (cookies as any).outgoing?.length === 0) {
 			// Oversized bodies skip early so they never pay compression; cacheSet
 			// re-checks as the authoritative guard.
-			if (CACHE_MAX_BODY_BYTES === 0 || fullBody.length <= CACHE_MAX_BODY_BYTES) {
+			if (bodyFitsCache(fullBody.length)) {
 				const tags = collectTags(data.layoutDeps ?? null, data.pageDeps ?? null);
+				const queryAware = depsReadIgnoredParams(
+					[...(data.layoutDeps ?? []), metaDeps],
+					data.pageDeps ?? null,
+				);
 				const keyForWrite = cacheKey;
 				// Hand the gate release to the deferred write: waiters resume only
 				// after cacheSet ran, so their re-check hits.
@@ -1000,6 +1040,7 @@ export async function renderSSRStream(
 								status: 200,
 								extraHeaders: headers,
 								tags,
+								queryAware,
 							},
 							cookies,
 						);

@@ -222,7 +222,7 @@ See [Request Deduplication](/guides/request-deduplication) for the full model an
 
 Loaders have configurable timeouts to prevent hung responses:
 
-| Env Variable       | Default | Description                    |
-| ------------------ | ------- | ------------------------------ |
-| `LOAD_TIMEOUT`     | —       | Timeout for `load()` in ms     |
-| `METADATA_TIMEOUT` | —       | Timeout for `metadata()` in ms |
+| Env Variable       | Default | Description                                             |
+| ------------------ | ------- | ------------------------------------------------------- |
+| `LOAD_TIMEOUT`     | `30000` | Timeout for `load()` in ms. `0` or `Infinity` = off     |
+| `METADATA_TIMEOUT` | `10000` | Timeout for `metadata()` in ms. `0` or `Infinity` = off |

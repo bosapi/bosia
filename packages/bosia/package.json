@@ -37,6 +37,7 @@
 		"./client": "./src/lib/client.ts",
 		"./server": "./src/lib/server.ts",
 		"./plugins/server-timing": "./src/core/plugins/server-timing.ts",
+		"./plugins/access-log": "./src/core/plugins/access-log.ts",
 		"./plugins/inspector": "./src/core/plugins/inspector/index.ts"
 	},
 	"bin": {

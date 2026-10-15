@@ -54,19 +54,17 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-const loggingHandle: Handle = async ({ event, resolve }) => {
-	const start = Date.now();
-	const res = await resolve(event);
-	const ms = Date.now() - start;
-	console.log(`[${event.request.method}] ${event.url.pathname} ${res.status} (${ms}ms)`);
-	res.headers.set("X-Response-Time", `${ms}ms`);
-	return res;
+const langHandle: Handle = async ({ event, resolve }) => {
+	event.locals.lang = event.request.headers.get("accept-language")?.split(",")[0] ?? "en";
+	return resolve(event);
 };
 
-export const handle = sequence(authHandle, loggingHandle);
+export const handle = sequence(authHandle, langHandle);
 ```
 
 Handlers execute left-to-right. Each handler's `resolve` calls the next handler in the chain.
+
+> **Access logs:** don't `console.log` every request from a hook. When stdout is a pipe (`docker logs`, systemd) each line is a syscall, ~11–14µs of CPU per request. Let the reverse proxy (nginx, Caddy) keep the access log, or add the batched [`accessLog()`](/guides/plugins#bosiapluginsaccess-log) plugin.
 
 ## Setting Locals
 

@@ -67,8 +67,10 @@ Prefer `throw redirect(303, …)` over `return Response.redirect(…)`: it is co
 
 ```ts
 import { sequence } from "bosia";
-export const handle = sequence(authHandle, loggingHandle); // each resolve calls the next
+export const handle = sequence(authHandle, guardHandle); // each resolve calls the next
 ```
+
+Access logs: NEVER `console.log` per request in a hook (a syscall per request on a piped stdout). Use the proxy's log or `accessLog()` from `bosia/plugins/access-log` in `bosia.config.ts`.
 
 ## ❌ Wrong
 

@@ -78,12 +78,14 @@ These are reserved by Bosia and live outside `$env` (so is every `BOSIA_*` name)
 | `IDLE_TIMEOUT`               | `10`       | `Bun.serve` idle seconds. Raise for streaming                                                        |
 | `BOSIA_REUSE_PORT`           | `0`        | `1` = let N processes share one port (`SO_REUSEPORT`)                                                |
 | `MAX_INFLIGHT`               | `Infinity` | Soft concurrency cap → fast `503` over the line                                                      |
-| `LOAD_TIMEOUT`               | —          | `load()` timeout in ms                                                                               |
-| `METADATA_TIMEOUT`           | —          | `metadata()` timeout                                                                                 |
+| `LOAD_TIMEOUT`               | `30000`    | `load()` timeout in ms. `0` = off                                                                    |
+| `METADATA_TIMEOUT`           | `10000`    | `metadata()` timeout in ms. `0` = off                                                                |
 | `PRERENDER_TIMEOUT`          | `5000`     | Prerender fetch timeout; the only limit at build (LOAD/METADATA/IDLE_TIMEOUT, MAX_INFLIGHT off)      |
 | `PRERENDER_CONCURRENCY`      | `6`        | Prerender requests at once (page + data = 2 loader runs)                                             |
 | `ASSET_CACHE_MAX_BYTES`      | `52428800` | Memory for static files + prerendered pages after first hit. `0` = always disk                       |
 | `ASSET_CACHE_MAX_FILE_BYTES` | `1048576`  | Largest file kept in that memory cache                                                               |
+| `CACHE_IGNORE_PARAMS`        | `utm_*,…`  | Query params left out of page cache keys. `none` = off                                               |
+| `CACHE_WAIT_TIMEOUT`         | `60000`    | Ms a miss waits for another request building the same entry                                          |
 | `CSRF_ALLOWED_ORIGINS`       | —          | Extra origins allowed on POST/PUT/PATCH/DELETE                                                       |
 | `TRUST_PROXY`                | `false`    | Trust `X-Forwarded-Host` / `-Proto` for the CSRF origin calc                                         |
 | `CORS_ALLOWED_ORIGINS`       | —          | Enable CORS; see [[bosia-cors]]                                                                      |

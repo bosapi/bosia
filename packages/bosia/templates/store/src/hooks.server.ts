@@ -18,14 +18,6 @@ const guardHandle: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-const loggingHandle: Handle = async ({ event, resolve }) => {
-	const start = Date.now();
-	event.locals.requestTime = start;
-	const res = await resolve(event);
-	const ms = Date.now() - start;
-	console.log(`[${event.request.method}] ${event.url.pathname} ${res.status} (${ms}ms)`);
-	res.headers.set("X-Response-Time", `${ms}ms`);
-	return res;
-};
-
-export const handle = sequence(dbHandle, authHandle, guardHandle, loggingHandle);
+// Need an access log? Let nginx/Caddy keep it, or add `accessLog()` from
+// "bosia/plugins/access-log" to bosia.config.ts.
+export const handle = sequence(dbHandle, authHandle, guardHandle);

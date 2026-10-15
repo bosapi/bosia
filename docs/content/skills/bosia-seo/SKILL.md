@@ -541,7 +541,7 @@ Rules:
 
 - The shared payload is `data: { ... }` inside the `metadata()` return — NOT a top-level field.
 - In `load()` it lands at `event.metadata` (the `data` wrapper is unwrapped by the framework). Destructure `{ metadata }: LoadEvent`.
-- Always keep a fallback fetch in `load()`. If `metadata()` exceeds `METADATA_TIMEOUT` (default 3000ms), the page still renders without metadata — `event.metadata` will be `null`. Don't crash the page.
+- Always keep a fallback fetch in `load()`. If `metadata()` exceeds `METADATA_TIMEOUT` (default 10000ms), the page still renders without metadata — `event.metadata` will be `null`. Don't crash the page.
 - Don't put secrets in `data`. Anything `load()` returns is streamed to the client; even if `metadata().data` is server-only, you'll likely re-emit the same object via `load()`'s return — treat the payload as public from the start.
 - If `metadata()` and `load()` both need the same expensive computation (rendering, formatting), do it ONCE in `metadata()` and stash the result in `data`.
 

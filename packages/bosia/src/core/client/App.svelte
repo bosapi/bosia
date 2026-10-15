@@ -3,7 +3,7 @@
 	import { router, scrollToHash } from "./router.svelte.ts";
 	import { findMatch } from "../matcher.ts";
 	import { clientRoutes, defaultTitle } from "bosia:routes";
-	import { consumePrefetch, prefetchCache, dataUrl, readDataResponse } from "./prefetch.ts";
+	import { consumePrefetch, clearPrefetches, dataUrl, readDataResponse } from "./prefetch.ts";
 	import { appState, clearDirty } from "./appState.svelte.ts";
 	import { captureSnapshot, liveContext, shouldRerun, type CacheEntry } from "./loaderCache.ts";
 	import { pickErrorPage } from "../errorMatch.ts";
@@ -350,18 +350,26 @@
 
 		// Load components + data in parallel, then update state atomically
 		// to avoid a flash of stale/empty data before the fetch completes.
-		const cached = match.route.hasServerData && !invalidated ? consumePrefetch(path) : null;
-		prefetchCache.clear(); // clear remaining entries on navigation — matches SvelteKit behavior
+		// `fresh` covers `invalidated` plus dirty keys/URLs: a prefetch sent before
+		// an invalidate() skipped `_fresh`, so it may hold the server's stale copy.
+		const cached = match.route.hasServerData && !fresh ? consumePrefetch(path, maskBits) : null;
+		clearPrefetches(); // clear remaining entries on navigation — matches SvelteKit behavior
 		// A prerendered route's data is a fixed file, so there is nothing to omit.
 		const prerendered = match.route.prerender;
+		const fetchData = () =>
+			fetch(dataUrl(path, prerendered ? undefined : maskBits, fresh && !prerendered))
+				.then(readDataResponse)
+				// Only a failed request reaches here now — offline, DNS, aborted.
+				// A response that arrived is read for what it says, not discarded.
+				.catch(() => null);
 		const dataFetch = cached
-			? Promise.resolve(cached)
+			? // A prefetch still in flight: wait for it; fetch again if it failed or
+				// errored (a hover-time 500 shouldn't stand in for the click's answer).
+				cached instanceof Promise
+				? cached.then((data) => (data && !data.error ? data : fetchData()))
+				: Promise.resolve(cached)
 			: match.route.hasServerData
-				? fetch(dataUrl(path, prerendered ? undefined : maskBits, fresh && !prerendered))
-						.then(readDataResponse)
-						// Only a failed request reaches here now — offline, DNS, aborted.
-						// A response that arrived is read for what it says, not discarded.
-						.catch(() => null)
+				? fetchData()
 				: Promise.resolve(null);
 
 		// Scrolls first: waiting goto()/use:enhance calls resume after the scroll.
