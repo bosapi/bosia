@@ -1,7 +1,13 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.2.5**
+> Current version: **1.2.6**
+
+---
+
+## bosia 1.2.6 (2026-10-16) — templates type-check under isolated installs
+
+- [x] 🟡 All 4 template tsconfigs used `"types": ["bun-types"]`, a transitive dep of `@types/bun`; isolated installs (workspaces, pnpm) failed `check` with TS2688. Now `"types": ["bun"]`.
 
 ---
 

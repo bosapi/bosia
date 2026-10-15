@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.6] - 2026-10-16
+
+### Fixed
+
+- New projects pass `bun run check` in a monorepo or with isolated installs (bun-types not found).
+
 ## [1.2.5] - 2026-10-15
 
 ### Changed
