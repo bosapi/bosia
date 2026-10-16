@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Security guide and routing skill: a slug matching another route's URL ignoring case fails prerender.
+- Security guide, routing skill: prerender fails when a URL matches another route ignoring case.
 
 ## [0.8.28] - 2026-10-15
 

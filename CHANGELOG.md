@@ -33,7 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - One loader or `+server.ts` GET that never finished no longer made its URL hang for everyone until a restart.
 - A page whose `metadata()` failed or timed out is no longer cached without its title and meta tags.
 - New projects pass `bun run check` in a monorepo or with isolated installs (bun-types not found).
-- Prerender fails when a slug matches another route's URL ignoring case, like `New` next to `blog/new`.
+- Prerender fails when a page's URL matches another route ignoring case (`New` vs `blog/new`).
 
 ## [1.2.5] - 2026-10-15
 
