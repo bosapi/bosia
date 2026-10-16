@@ -31,6 +31,17 @@ export function withBase(base: string, path: string): string {
 }
 
 /**
+ * What the client router matches: the path the server would see. Every URL goes
+ * through the URL parser against `pageHref`, like a link: `?page=2`, `b`, `../x`
+ * resolve, `/a b` and `/café` get encoded (params match the server's), `/\host`
+ * is another origin. Another origin comes back as its full URL so the router leaves the app.
+ */
+export function toRouterPath(url: string, pageHref: string): string {
+	const u = new URL(url, pageHref);
+	return u.origin === new URL(pageHref).origin ? u.pathname + u.search + u.hash : u.href;
+}
+
+/**
  * The in-app pathname for an incoming request, or `null` when the request is
  * not ours to answer. `/sso` and `/sso/` both resolve to `/` so the root route
  * is reachable with or without the trailing slash.

@@ -6,7 +6,7 @@ import { findMatch, canonicalPathname } from "../matcher.ts";
 import { clientRoutes } from "bosia:routes";
 import { fireBeforeNavigate, type Navigation } from "./navListeners.ts";
 import { base } from "./base.ts";
-import { withBase } from "../basePath.ts";
+import { toRouterPath, withBase } from "../basePath.ts";
 
 // Everything here is a real browser path, base and all. Under a BASE_PATH mount
 // the generated `clientRoutes` carry the prefix too, so an anchor's href, the
@@ -103,6 +103,8 @@ export const router = new (class Router {
 	loading = false;
 
 	navigate(path: string, opts: { replace?: boolean; source?: NavType } = {}): NavResult {
+		// goto, use:enhance and loader redirects may hand over `?page=2` or a full URL.
+		path = toRouterPath(path, window.location.href);
 		if (this.currentRoute === path) return "same";
 		// Unknown route — let the server handle it (renders +error.svelte with 404)
 		const queryHash = path.slice(path.split("?")[0].split("#")[0].length);

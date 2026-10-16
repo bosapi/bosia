@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { normalizeBase, rebaseHtmlAttrs, stripBase, withBase } from "../src/core/basePath.ts";
+import {
+	normalizeBase,
+	rebaseHtmlAttrs,
+	stripBase,
+	toRouterPath,
+	withBase,
+} from "../src/core/basePath.ts";
 
 describe("normalizeBase()", () => {
 	test("unset and root-ish values all mean no base", () => {
@@ -51,6 +57,27 @@ describe("withBase()", () => {
 		// The clause that makes this work is the trailing "/" in `${base}/`.
 		expect(withBase(B, "/sso-admin")).toBe("/sso/sso-admin");
 	});
+});
+
+describe("toRouterPath()", () => {
+	const page = "http://x.test/a/b?q=1";
+	const cases: [string, string][] = [
+		["?page=2", "/a/b?page=2"],
+		["c", "/a/c"],
+		["../x", "/x"],
+		["#x", "/a/b?q=1#x"],
+		["http://x.test/c", "/c"],
+		["https://other.test/c", "https://other.test/c"],
+		["//other.test/c", "http://other.test/c"],
+		["/d", "/d"],
+		["/a b/x y", "/a%20b/x%20y"],
+		["/café/x", "/caf%C3%A9/x"],
+		["/a/../b/c", "/b/c"],
+		["/\\evil.com/c", "http://evil.com/c"],
+	];
+	for (const [url, path] of cases) {
+		test(`${url} → ${path}`, () => expect(toRouterPath(url, page)).toBe(path));
+	}
 });
 
 describe("stripBase()", () => {

@@ -7,7 +7,11 @@
 
 ## bosia 1.2.7 (2026-10-17) — goto resolves relative URLs
 
-- [x] 🟡 `goto("?page=2")`, `goto("b")`, same-origin absolute URLs and relative `use:enhance` redirects matched no route and did a full reload (since 0.5.10). `go()` now resolves them against `location.href`.
+- [x] 🟡 `goto("?page=2")`, `goto("b")`, same-origin full URLs, relative `use:enhance` and loader redirects matched no route: full reload (since 0.5.10). `router.navigate` resolves them (`toRouterPath`).
+- [x] 🟡 Review: `goto("//other.site/x")` stayed a raw path; with a root catch-all route it matched and `pushState` threw. Other origins now go out as a full URL.
+- [x] ⚪ Review: a root path skipped the URL parser, so `goto("/café")` matched `slug = "café"` (server: `caf%C3%A9`), `/a/../b` and `/\host` matched raw. Every URL is parsed now.
+- [ ] ⚪ A relative `use:enhance` redirect (`"profile"`) resolves against the current page; HTTP resolves it against the form's action URL (`/account/settings` → `/account/profile`).
+- [ ] ⚪ `readDataResponse` (prefetch.ts) repeats `toRouterPath`'s same-origin → path step; reuse it.
 
 ---
 
