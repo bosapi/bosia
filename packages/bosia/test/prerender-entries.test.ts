@@ -372,6 +372,59 @@ describe("detectPrerenderRoutes()", () => {
 		expect(api.message).toContain("/api/all (from /api/[slug]) is served by /api/ALL on hosts");
 	});
 
+	// Review: only the first route in a lowercased table was asked, so a tie hid the clash.
+	test("fails: a case clash whatever the param name or route order", async () => {
+		for (const live of ["/Blog/[a]", "/Blog/[z]"]) {
+			const err = await detect([
+				route("/blog/[slug]", "blog/[slug]/+page.server.ts", entries("x")),
+				{ pattern: live, trailingSlash: "never" },
+			]);
+			expect(err.message).toContain(`/blog/x (from /blog/[slug]) is served by ${live} on hosts`);
+		}
+		const about = () =>
+			route("/about", "about/+page.server.ts", "export const prerender = true;\n");
+		const live = { pattern: "/About", trailingSlash: "never" };
+		for (const pages of [
+			[about(), live],
+			[live, about()],
+		]) {
+			const err = await detect(pages);
+			expect(err.message).toContain("/about is served by /About on hosts");
+		}
+	});
+
+	// Review 2: the case pass took param parts in the target's case, so `/[a]/NEW` (live at
+	// `/BLOG/NEW`) was missed, and `/[x]/NEW` made a static page fail naming `/blog/[slug]`.
+	test("fails: a route spelling a part in another case, behind a param", async () => {
+		const slug = await detect([
+			route("/blog/[slug]", "blog/[slug]/+page.server.ts", entries("new")),
+			{ pattern: "/[a]/NEW", trailingSlash: "never" },
+		]);
+		expect(slug.message).toContain("/blog/new (from /blog/[slug]) is served by /[a]/NEW on hosts");
+		const stat = await detect([
+			route("/blog/new", "blog/new/+page.server.ts", "export const prerender = true;\n"),
+			{ pattern: "/blog/[slug]", trailingSlash: "never" },
+			{ pattern: "/[x]/NEW", trailingSlash: "never" },
+		]);
+		expect(stat.message).toContain("/blog/new is served by /[x]/NEW on hosts");
+	});
+
+	// Params alone catch every spelling (`/[...rest]` answers `/BLOG/new`); counting that
+	// would fail any catch-all next to a prerendered page, so only a static part spelled in
+	// another case counts. Allowed on purpose, not a gap.
+	test("builds: a broader route matching ignoring case doesn't own the URL", async () => {
+		const targets = await detect([
+			route("/blog/new", "blog/new/+page.server.ts", "export const prerender = true;\n"),
+			{ pattern: "/[a]/[b]", trailingSlash: "never" },
+			{ pattern: "/[...rest]", trailingSlash: "never" },
+			{ pattern: "/[a]/new", trailingSlash: "never" },
+			{ pattern: "/blog/[slug]", trailingSlash: "never" },
+		]);
+		expect(targets).toEqual([
+			{ path: "/blog/new", route: "/blog/new", kind: "page", trailingSlash: "never" },
+		]);
+	});
+
 	test("builds: a static page whose own name has capitals", async () => {
 		const targets = await detect([
 			route("/About", "About/+page.server.ts", "export const prerender = true;\n"),

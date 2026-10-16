@@ -8,6 +8,7 @@
 ## bosia 1.2.6 (2026-10-16) — templates type-check under isolated installs
 
 - [x] 🟡 Owner check runs again ignoring case: `/blog/[slug]` ← `New` next to live `blog/new` fails (a macOS/Windows host would serve `blog/New.html` at `/blog/new`).
+- [x] 🟡 Review: case pass is a rule, not first-match: a route spelling a static part in another case clashes if it wins a spelling (ranks higher, or the spelling misses this route). Params-only overlaps allowed.
 - [x] 🟡 All 4 template tsconfigs used `"types": ["bun-types"]`, a transitive dep of `@types/bun`; isolated installs (workspaces, pnpm) failed `check` with TS2688. Now `"types": ["bun"]`.
 
 ---
@@ -51,6 +52,7 @@
 - [ ] ⚪ Prerender child overrides live-traffic env one by one (MAX_INFLIGHT, IDLE/LOAD/METADATA_TIMEOUT); a new server limit must be added here too. One `BOSIA_PRERENDER=1` flag the server reads would cover all.
 - [x] ⚪ Review 4: data fetch errors carry `data` (timeouts too); 404 probe drops its body via `dropBody`; ready poll uses `HEALTH_PATH`, says "not ready within 10s"; docs check `<locale>/+page.svelte`.
 - [ ] ⚪ The 10s prerender server ready deadline is fixed; make it an env var if a slow hooks `init()` hits it.
+- [ ] ⚪ Case pass compares with JS `toLowerCase`, not APFS/NTFS folding: `/straße` vs `/STRASSE` passes. Static route names can be non-ASCII.
 - [ ] ⚪ `findMisownedTargets` copies `matchRoutes`' API-first order; move it into a pure helper both call, so a routing change can't skip the check.
 - [ ] ⚪ The owner check ignores an API's `x.json` alias (`/api/x.json` served by `/api/[slug]`); a narrow case, add it if anyone hits it.
 - [ ] ⚪ `PrerenderEntriesError` now also carries reply/timeout/server-start failures; rename to `PrerenderError` (exported name).
