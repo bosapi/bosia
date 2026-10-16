@@ -129,41 +129,6 @@ function matchCompiled(
 	return params;
 }
 
-/** How one part of a URL meets a route part: `same` static, `case` static spelled in
- *  another case, `param`. A match with no `case` is an exact match. */
-export type PartMatch = "same" | "case" | "param";
-
-/**
- * Match a route's parts against a URL's parts ignoring case, by compilePattern's rules: only
- * a last `[...rest]` takes several parts, any other bracket part is one param. `null` when
- * they don't match. `lower`/`pathLower` are the same parts in `toLowerCase`, made once by the
- * caller. ASCII case only in effect: Unicode forms and special folds (`ς`/`σ`) aren't merged.
- * Keep in step with compilePattern.
- */
-export function matchPartsFolded(
-	parts: string[],
-	lower: string[],
-	ranks: (0 | 1 | 2)[],
-	path: string[],
-	pathLower: string[],
-): PartMatch[] | null {
-	const kinds: PartMatch[] = [];
-	for (const [i, seg] of parts.entries()) {
-		if (ranks[i] === 2 && i === parts.length - 1) {
-			if (path.length <= i) return null;
-			for (let j = i; j < path.length; j++) kinds.push("param");
-			return kinds;
-		}
-		const part = path[i];
-		if (part === undefined) return null;
-		if (ranks[i]) kinds.push("param");
-		else if (part === seg) kinds.push("same");
-		else if (pathLower[i] === lower[i]) kinds.push("case");
-		else return null;
-	}
-	return kinds.length === path.length ? kinds : null;
-}
-
 /**
  * Find the first matching route from a list.
  * Routes must be pre-sorted by sortRoutes (most specific segment first).

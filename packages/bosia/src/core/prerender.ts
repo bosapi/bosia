@@ -7,14 +7,7 @@ import type { RuntimeTarget } from "./types/plugin.ts";
 import { BOSIA_NODE_PATH, OUT_DIR } from "./paths.ts";
 import { currentBase } from "./appBase.ts";
 import { prerenderSkipReason, wantsPrerender } from "./scanner.ts";
-import {
-	findMatch,
-	isDynamic,
-	matchPartsFolded,
-	type PartMatch,
-	segmentName,
-	segmentRank,
-} from "./matcher.ts";
+import { findMatch, isDynamic, segmentName, segmentRank } from "./matcher.ts";
 import { sortRoutes } from "./routeFile.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
 
@@ -470,8 +463,13 @@ function caseProblem(t: PrerenderTarget, order: RouteShape[]): string | null {
 			break;
 		}
 	}
-	// The walk disagrees with findMatch (they share compilePattern's rules): don't guess.
-	if (!own || !hit) return null;
+	// findMatch said this route serves the URL, so the walk must find it too; if not, the two
+	// matchers have drifted apart and every case clash would pass unseen.
+	if (!own)
+		throw new Error(
+			`Bosia internal: the prerender case check can't match ${t.path} to ${t.route}; please report it`,
+		);
+	if (!hit) return null;
 	const { r, kinds, above } = hit;
 	// The spelling it wins: its own static parts. Ranked below, every param under this
 	// route's static part changes case too, which also steers clear of routes in between
@@ -482,6 +480,41 @@ function caseProblem(t: PrerenderTarget, order: RouteShape[]): string | null {
 	});
 	const name = r.api && t.kind === "page" ? `${r.pattern} (+server.ts)` : r.pattern;
 	return `❌ Prerender: ${targetLabel(t)} would also answer /${spelling.join("/")} on hosts that ignore case (macOS/Windows), which ${name} serves`;
+}
+
+/** How one part of a URL meets a route part: `same` static, `case` static spelled in
+ *  another case, `param`. A match with no `case` is an exact match. */
+type PartMatch = "same" | "case" | "param";
+
+/**
+ * Match a route's parts against a URL's parts ignoring case, by compilePattern's rules: only
+ * a last `[...rest]` takes several parts, any other bracket part is one param. `null` when
+ * they don't match. `lower`/`pathLower` are the same parts in `toLowerCase`, made once by the
+ * caller. ASCII case only in effect: Unicode forms and special folds (`ς`/`σ`) aren't merged.
+ * Keep in step with matcher.ts compilePattern.
+ */
+function matchPartsFolded(
+	parts: string[],
+	lower: string[],
+	ranks: (0 | 1 | 2)[],
+	path: string[],
+	pathLower: string[],
+): PartMatch[] | null {
+	const kinds: PartMatch[] = [];
+	for (const [i, seg] of parts.entries()) {
+		if (ranks[i] === 2 && i === parts.length - 1) {
+			if (path.length <= i) return null;
+			for (let j = i; j < path.length; j++) kinds.push("param");
+			return kinds;
+		}
+		const part = path[i];
+		if (part === undefined) return null;
+		if (ranks[i]) kinds.push("param");
+		else if (part === seg) kinds.push("same");
+		else if (pathLower[i] === lower[i]) kinds.push("case");
+		else return null;
+	}
+	return kinds.length === path.length ? kinds : null;
 }
 
 /** Some part where this route is static has a spelling the other route takes and this one doesn't. */

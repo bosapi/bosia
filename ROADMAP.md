@@ -13,6 +13,9 @@
 - [x] ⚪ Review 3: error names the spelling at risk (`would also answer /BLOG/NEW … which /[x]/NEW serves`); no case report when the target's own route doesn't answer it.
 - [x] ⚪ Review 4: NFC folding taken out (NTFS doesn't merge forms; the ❌ showed two same-looking names); route names lowercased once; case scan stops at its first hit. Still a build error on every host.
 - [x] 🟡 Review 5: `ß` (→ `SS`) no longer counts as having a case (false failure); spellings keep each name's length; an API slug is checked against live pages too (`/API/ALL`).
+- [x] ⚪ Review 5: `matchPartsFolded` moved out of runtime matcher.ts into prerender.ts; if it can't find a route findMatch matched, the build throws an internal error instead of skipping the case check.
+- [ ] ⚪ "Only a last `[...rest]` takes several parts" lives in compilePattern, `matchPartsFolded` and the part-count filter; one segment parser would serve all (with the shared route-order helper).
+- [ ] ⚪ Case check walks every route per target; bucket route shapes by part count once (rest routes apart) if a big `entries()` build gets slow.
 - [ ] ⚪ Case check folds with `toLowerCase` only: non-ASCII route names (`ΟΔΟΣ`/`οδοσ`, `ſ`, NFD forms) aren't compared; add a real case-fold table if anyone uses them.
 - [x] 🟡 All 4 template tsconfigs used `"types": ["bun-types"]`, a transitive dep of `@types/bun`; isolated installs (workspaces, pnpm) failed `check` with TS2688. Now `"types": ["bun"]`.
 
