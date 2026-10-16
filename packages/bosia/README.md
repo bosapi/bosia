@@ -144,16 +144,15 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-const loggingHandle: Handle = async ({ event, resolve }) => {
-	const res = await resolve(event);
-	console.log(`${event.request.method} ${event.url.pathname} ${res.status}`);
-	return res;
+const langHandle: Handle = async ({ event, resolve }) => {
+	event.locals.lang = event.request.headers.get("accept-language")?.split(",")[0] ?? "en";
+	return resolve(event);
 };
 
-export const handle = sequence(authHandle, loggingHandle);
+export const handle = sequence(authHandle, langHandle);
 ```
 
-`locals` set here are available in every loader and API handler.
+`locals` set here are available in every loader and API handler. For an access log, use your reverse proxy's or add `accessLog()` from `bosia/plugins/access-log` to `bosia.config.ts` — not a `console.log` per request.
 
 ## Public API
 

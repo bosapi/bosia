@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import {
 	buildCompressedVariants,
 	cacheClear,
@@ -10,9 +12,17 @@ import {
 	computeIdentityHash,
 	concatChunks,
 	deferCacheWrite,
+	depsReadIgnoredParams,
 	invalidate,
 	invalidateAll,
+	isIgnoredParam,
+	markWholeQueryRead,
+	parseIgnoreParams,
+	parseMs,
+	readBodyForCache,
 	serveCached,
+	stripIgnoredParams,
+	varyBlocksCache,
 	type CacheEntry,
 } from "../src/core/cache.ts";
 import { CookieJar } from "../src/core/cookies.ts";
@@ -199,6 +209,23 @@ describe("cacheGet / cacheSet", () => {
 		) as Uint8Array<ArrayBuffer>;
 		cacheSet("/fit|i=0", mkEntry({ raw: atLimit }));
 		expect(cacheGet("/fit|i=0")).toBeDefined();
+	});
+
+	test("CACHE_MAX_BYTES evicts the oldest entries once the total passes it", async () => {
+		const { CACHE_MAX_BYTES, CACHE_MAX_BODY_BYTES } = await import("../src/core/cache.ts");
+		// 0 means "no limit" for either; nothing to fill then.
+		if (CACHE_MAX_BYTES === 0 || CACHE_MAX_BODY_BYTES === 0) return;
+		// One shared buffer for all three copies: weighed as 3×, allocated once.
+		const buf = new Uint8Array(new ArrayBuffer(CACHE_MAX_BODY_BYTES)) as Uint8Array<ArrayBuffer>;
+		const per = buf.byteLength * 3;
+		const fits = Math.floor(CACHE_MAX_BYTES / per);
+		for (let i = 0; i <= fits; i++) {
+			cacheSet(`/big-${i}|i=0`, mkEntry({ raw: buf, gzip: buf, brotli: buf }));
+		}
+		expect(cacheGet("/big-0|i=0")).toBeUndefined();
+		expect(cacheGet(`/big-${fits}|i=0`)).toBeDefined();
+		// The evicted entry left no path index behind.
+		expect(invalidate("/big-0")).toBe(0);
 	});
 
 	test("warns loudly once per cookie read that is not in CACHE_KEYS", () => {
@@ -493,6 +520,59 @@ describe("precompressed responses opt out of runtime re-encoding", () => {
 
 // ─── concatChunks ────────────────────────────────────────
 
+describe("varyBlocksCache", () => {
+	test("only Accept-Encoding is honored by the key", () => {
+		expect(varyBlocksCache(null)).toBe(false);
+		expect(varyBlocksCache("Accept-Encoding")).toBe(false);
+		expect(varyBlocksCache("Origin")).toBe(true);
+		expect(varyBlocksCache("Cookie")).toBe(true);
+		expect(varyBlocksCache("accept-encoding, Accept-Language")).toBe(true);
+		expect(varyBlocksCache("*")).toBe(true);
+	});
+});
+
+describe("readBodyForCache", () => {
+	test("returns the whole body when it fits", async () => {
+		const buf = await readBodyForCache(new Response("hello"));
+		expect(new TextDecoder().decode(buf!)).toBe("hello");
+	});
+
+	test("encodes string chunks instead of corrupting them", async () => {
+		const res = new Response(
+			new ReadableStream({
+				start(c) {
+					c.enqueue('{"a":');
+					c.enqueue(new TextEncoder().encode("1}"));
+					c.close();
+				},
+			}),
+		);
+		const buf = await readBodyForCache(res.clone());
+		expect(new TextDecoder().decode(buf!)).toBe('{"a":1}');
+	});
+
+	test("gives up and cancels the copy past CACHE_MAX_BODY_BYTES", async () => {
+		const { CACHE_MAX_BODY_BYTES } = await import("../src/core/cache.ts");
+		let pulled = 0;
+		let cancelled = false;
+		const chunk = new Uint8Array(64 * 1024);
+		const res = new Response(
+			new ReadableStream({
+				pull(c) {
+					pulled += chunk.byteLength;
+					c.enqueue(chunk);
+				},
+				cancel() {
+					cancelled = true;
+				},
+			}),
+		);
+		expect(await readBodyForCache(res)).toBeNull();
+		expect(cancelled).toBe(true);
+		expect(pulled).toBeLessThan(CACHE_MAX_BODY_BYTES + 4 * chunk.byteLength);
+	});
+});
+
 describe("concatChunks", () => {
 	test("concatenates multiple chunks in order", () => {
 		const a = new Uint8Array([1, 2]);
@@ -611,5 +691,94 @@ describe("deferCacheWrite", () => {
 		await handle();
 		await new Promise((r) => setImmediate(r));
 		expect(order).toEqual(["response returned", "cache write"]);
+	});
+});
+
+// ─── Tracking params (CACHE_IGNORE_PARAMS) ───────────────
+
+describe("CACHE_IGNORE_PARAMS", () => {
+	test("parses names and `prefix*`; unset or empty is the default list", () => {
+		const custom = parseIgnoreParams(" ref , utm_* ,, campaign ");
+		expect([...custom.names].sort()).toEqual(["campaign", "ref"]);
+		expect(custom.prefixes).toEqual(["utm_"]);
+		const dflt = parseIgnoreParams(undefined);
+		expect(dflt.names.has("fbclid")).toBe(true);
+		expect(dflt.prefixes).toEqual(["utm_"]);
+		expect(parseIgnoreParams("  ").names.has("gclid")).toBe(true);
+	});
+
+	test("`none` ignores nothing, and a bare `*` never matches every param", () => {
+		const none = parseIgnoreParams("none");
+		expect(none.names.size + none.prefixes.length).toBe(0);
+		const star = parseIgnoreParams("*");
+		expect(star.names.size + star.prefixes.length).toBe(0);
+	});
+
+	test("default list matches click ids and utm_*, not ordinary params", () => {
+		for (const p of ["utm_source", "utm_whatever", "fbclid", "gclid", "msclkid"]) {
+			expect(isIgnoredParam(p)).toBe(true);
+		}
+		for (const p of ["page", "q", "ref", "utm", "id"]) expect(isIgnoredParam(p)).toBe(false);
+	});
+
+	test("strip keeps other params and returns the same URL when nothing matched", () => {
+		const plain = new URL("http://x/blog?page=2");
+		expect(stripIgnoredParams(plain)).toBe(plain);
+		const ad = new URL("http://x/blog?utm_source=a&page=2&fbclid=z");
+		const stripped = stripIgnoredParams(ad);
+		expect(stripped).not.toBe(ad);
+		expect(stripped.search).toBe("?page=2");
+		expect(ad.search).toBe("?utm_source=a&page=2&fbclid=z");
+		expect(
+			computeCacheKey(stripped, mkRequest("http://x/"), mkCookies()) ===
+				computeCacheKey(new URL("http://x/blog?page=2"), mkRequest("http://x/"), mkCookies()),
+		).toBe(true);
+	});
+
+	test("an entry is query-aware when a loader read an ignored param or the whole query", () => {
+		const reads = (names: string[]) => ({ ...emptyDeps(), searchParams: names });
+		expect(depsReadIgnoredParams([reads(["page"])], reads(["q"]))).toBe(false);
+		expect(depsReadIgnoredParams(null, reads(["utm_source"]))).toBe(true);
+		expect(depsReadIgnoredParams([null, reads(["gclid"])], null)).toBe(true);
+		const whole = emptyDeps();
+		markWholeQueryRead(whole);
+		expect(depsReadIgnoredParams([whole], null)).toBe(true);
+	});
+});
+
+describe("parseMs", () => {
+	test("unset or blank is the fallback; 0 and Infinity mean no limit", () => {
+		expect(parseMs(undefined, 30_000, "X")).toBe(30_000);
+		expect(parseMs(" ", 30_000, "X")).toBe(30_000);
+		expect(parseMs("0", 30_000, "X")).toBe(0);
+		expect(parseMs("Infinity", 30_000, "X")).toBe(0);
+		expect(parseMs("infinity", 30_000, "X")).toBe(0);
+		expect(parseMs(" 2500 ", 30_000, "X")).toBe(2500);
+		// setTimeout fires at once above 2^31-1.
+		expect(parseMs("9999999999", 30_000, "X")).toBe(2_147_483_647);
+	});
+
+	test("the derived CACHE_WAIT_TIMEOUT stays a valid timer delay", async () => {
+		const script = `const { CACHE_WAIT_TIMEOUT } = await import(${JSON.stringify(
+			pathToFileURL(join(import.meta.dir, "../src/core/cache.ts")).href,
+		)}); console.log(CACHE_WAIT_TIMEOUT);`;
+		const proc = Bun.spawn(["bun", "-e", script], {
+			env: { ...process.env, LOAD_TIMEOUT: "2147483647", CACHE_WAIT_TIMEOUT: "" },
+			stdout: "pipe",
+		});
+		const out = (await new Response(proc.stdout).text()).trim().split("\n").pop();
+		expect(Number(out)).toBe(2_147_483_647);
+	});
+
+	test("a value that isn't whole milliseconds warns and uses the fallback", () => {
+		const warn = console.warn;
+		const seen: string[] = [];
+		console.warn = (msg: string) => seen.push(msg);
+		try {
+			for (const v of ["10s", "1e4", "-1", "2.5"]) expect(parseMs(v, 7, "X")).toBe(7);
+		} finally {
+			console.warn = warn;
+		}
+		expect(seen.length).toBe(4);
 	});
 });

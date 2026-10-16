@@ -841,3 +841,13 @@ describe("public runtime env", () => {
 		expect(buildHtml("", "", {}, [], true, null, "en", true)).not.toContain("__BOSIA_ENV__");
 	});
 });
+
+describe("varyWithEncoding", () => {
+	test("adds Accept-Encoding to a loader's own Vary", async () => {
+		const { varyWithEncoding } = await import("../src/core/html.ts");
+		expect(varyWithEncoding(undefined)).toBe("Accept-Encoding");
+		expect(varyWithEncoding("Cookie")).toBe("Cookie, Accept-Encoding");
+		expect(varyWithEncoding("cookie, accept-encoding")).toBe("cookie, accept-encoding");
+		expect(varyWithEncoding("*")).toBe("*");
+	});
+});

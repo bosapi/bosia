@@ -35,7 +35,8 @@ export interface BosiaPlugin {
 
 	/**
 	 * Mount points around the framework's HTTP backend — Bosia's own small,
-	 * Elysia-shaped app (`get/post/…`, `onRequest`, `onAfterHandle`, `onError`).
+	 * Elysia-shaped app (`get/post/…`, `onRequest`, `onAfterHandle`, `onError`,
+	 * and observe-only `onResponse` for logging/metrics on the final response).
 	 */
 	backend?: {
 		/** Runs before framework middleware/routes — can register routes that bypass Bosia. */

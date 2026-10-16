@@ -100,7 +100,7 @@
 ## Bosia metadata() / load() integration (4)
 
 - [ ] Any `metadata()` that fetches DB or external data returns `data: { ... }` so `load()` reuses it via `event.metadata`. No duplicate fetch.
-- [ ] `load()` destructures `metadata` and uses `metadata?.foo ?? fallback` — the page still renders if `metadata()` timed out (`METADATA_TIMEOUT`, default 3000ms).
+- [ ] `load()` destructures `metadata` and uses `metadata?.foo ?? fallback` — the page still renders if `metadata()` timed out (`METADATA_TIMEOUT`, default 10000ms).
 - [ ] No secrets in `metadata().data` — assume it will be streamed to the client through `load()`'s return.
 - [ ] `metadata()` does not duplicate work `load()` already needs to do (or vice versa).
 

@@ -1,6 +1,7 @@
 // ─── Bosia Backend App ────────────────────────────────────
 // A tiny Elysia-shaped HTTP app: chainable routes + onRequest / onAfterHandle /
-// onError hooks, one `fetch(request)` entry for Bun.serve and Workers alike.
+// onError / onResponse hooks, one `fetch(request)` entry for Bun.serve and
+// Workers alike.
 // Only the subset the framework and plugins use — not a general router.
 
 /** Outbound response bag — merged into whatever the handler returns. */
@@ -34,6 +35,19 @@ export type AfterHandleHook = (ctx: {
 
 export type ErrorHook = (ctx: { request: Request; error: unknown; set: ResponseSet }) => unknown;
 
+/**
+ * Sees the final Response — after onRequest short-circuits, after-handle
+ * replacements, error hooks and the HEAD body drop — exactly once per request.
+ * `start`: `performance.now()` when the request entered `fetch`. Observe only:
+ * the return value is ignored and a throw or rejection is swallowed. `response`
+ * is the one the client gets — don't read its body or change its headers.
+ */
+export type ResponseHook = (ctx: {
+	request: Request;
+	response: Response;
+	start: number;
+}) => void | Promise<unknown>;
+
 export interface ServeOptions {
 	maxRequestBodySize?: number;
 	idleTimeout?: number;
@@ -55,6 +69,7 @@ export class BosiaApp {
 	private requestHooks: RequestHook[] = [];
 	private afterHooks: AfterHandleHook[] = [];
 	private errorHooks: ErrorHook[] = [];
+	private responseHooks: ResponseHook[] = [];
 	private server: ReturnType<typeof Bun.serve> | null = null;
 
 	constructor(private config: { serve?: ServeOptions } = {}) {}
@@ -100,6 +115,12 @@ export class BosiaApp {
 		return this;
 	}
 
+	/** Observes the final response of every request (see ResponseHook). */
+	onResponse(hook: ResponseHook): this {
+		this.responseHooks.push(hook);
+		return this;
+	}
+
 	// Paths match exactly, or "*" matches everything. Enough for plugin endpoints
 	// like /__bosia/locate; add `:param` matching here when a plugin needs it.
 	private route(method: Method, path: string, handler: Handler): this {
@@ -130,6 +151,39 @@ export class BosiaApp {
 	}
 
 	fetch = async (request: Request): Promise<Response> => {
+		if (this.responseHooks.length === 0) return this.respond(request);
+		const start = performance.now();
+		let response: Response;
+		try {
+			response = await this.respond(request);
+		} catch (error) {
+			// An error hook threw: the runtime answers 500, so observers see that.
+			this.observe(request, new Response(null, { status: 500 }), start);
+			throw error;
+		}
+		this.observe(request, response, start);
+		return response;
+	};
+
+	private observe(request: Request, response: Response, start: number): void {
+		for (const hook of this.responseHooks) {
+			try {
+				const out = hook({ request, response, start });
+				// An async observer's rejection would be unhandled — fatal in prod.
+				if (out instanceof Promise) out.catch(() => {});
+			} catch {
+				// Observers must not change what the client gets.
+			}
+		}
+	}
+
+	/** Answers without running onResponse observers — for the Workers warm-up
+	 *  render, which no client made and no access log should count. */
+	fetchUnobserved(request: Request): Promise<Response> {
+		return this.respond(request);
+	}
+
+	private async respond(request: Request): Promise<Response> {
 		const set: ResponseSet = { headers: {} };
 		const isHead = request.method === "HEAD";
 		const method = isHead ? "GET" : request.method.toUpperCase();
@@ -143,7 +197,7 @@ export class BosiaApp {
 			}
 			return new Response("Internal Server Error", { status: 500 });
 		}
-	};
+	}
 
 	private async dispatch(request: Request, method: string, set: ResponseSet): Promise<Response> {
 		for (const hook of this.requestHooks) {

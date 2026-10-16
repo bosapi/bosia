@@ -36,20 +36,25 @@ Kalau konten per-user sebuah rute tidak dikunci oleh apa pun di `CACHE_KEYS`, ma
 
 ## Kelayakan
 
-| Kondisi                                                                             | Hasil                    |
-| ----------------------------------------------------------------------------------- | ------------------------ |
-| `export const cache = false` pada rute                                              | Lewati read + write      |
-| Method request ≠ `GET`                                                              | Lewati read + write      |
-| `CSP_DIRECTIVES` terset (CSP aktif)                                                 | Lewati read + write      |
-| `CACHE_MAX_ENTRIES=0`                                                               | Lewati read + write      |
-| Status response ≠ 200                                                               | Lewati write             |
-| Handler memanggil `cookies.set()`                                                   | Lewati write             |
-| `?_invalidated=…` di query                                                          | Lewati read; tetap write |
-| Request data dengan `_fresh=1`                                                      | Lewati read; tetap write |
-| Request data dikirim sebagai `POST`                                                 | Lewati read + write      |
-| Loader mengatur `Cache-Control: no-store`, `no-cache` atau `private` (request data) | Lewati write             |
+| Kondisi                                                                           | Hasil                    |
+| --------------------------------------------------------------------------------- | ------------------------ |
+| `export const cache = false` pada rute                                            | Lewati read + write      |
+| Method request ≠ `GET`                                                            | Lewati read + write      |
+| `CSP_DIRECTIVES` terset (CSP aktif)                                               | Lewati read + write      |
+| `CACHE_MAX_ENTRIES=0`                                                             | Lewati read + write      |
+| Status response ≠ 200                                                             | Lewati write             |
+| Handler memanggil `cookies.set()`                                                 | Lewati write             |
+| `?_invalidated=…` di query                                                        | Lewati read; tetap write |
+| Request data dengan `_fresh=1`                                                    | Lewati read; tetap write |
+| Request data dikirim sebagai `POST`                                               | Lewati read + write      |
+| Loader atau handler mengatur `Cache-Control: no-store`, `no-cache` atau `private` | Lewati write             |
+| `Vary` selain `Accept-Encoding` (mis. `Cookie`, `Origin`, `*`)                    | Lewati write             |
+| Response `+server.ts` sudah punya `Content-Encoding`                              | Lewati write             |
+| Body melebihi `CACHE_MAX_BODY_BYTES` atau seperempat `CACHE_MAX_BYTES`            | Lewati write             |
 
 Skip tidak akan merusak response — sekadar jatuh ke jalur render normal.
+
+Key cache adalah URL ditambah `CACHE_KEYS`, jadi tidak bisa menghormati `Vary` pada hal lain. Response yang mengatur `Vary: Cookie` (meski cookie itu ada di `CACHE_KEYS`) tidak di-cache; jangan pasang `Vary` dan andalkan `CACHE_KEYS`.
 
 ## Opt-out per rute
 
@@ -96,6 +101,16 @@ export async function load({ depends, locals }) {
 
 Saat form action menjalankan `invalidate("app:user")`, kedua cache menghapus entry dan GET berikutnya menjalankan ulang `load()`.
 
+## Parameter tracking
+
+Link dari iklan, newsletter dan media sosial membawa parameter klik (`?utm_source=…`, `?fbclid=…`, `?gclid=…`) yang tidak pernah mengubah halaman. Tiap nilai akan jadi entry cache sendiri — render penuh per klik, dan halaman yang ramai terdorong keluar dari LRU — jadi halaman mencari request seperti itu dengan URL **tanpa** parameter tersebut: `/blog?utm_source=x&page=2` dilayani dari cache `/blog?page=2`. Loader tetap melihat URL lengkap.
+
+- Daftarnya `CACHE_IGNORE_PARAMS` (default `utm_*,fbclid,gclid,gbraid,wbraid,dclid,msclkid,twclid,ttclid,li_fat_id,igshid,yclid,mc_cid,mc_eid,_ga,_gl`). `nama*` cocok sebagai prefix; mengisinya mengganti daftar; `none` mematikannya.
+- Kalau halaman bersihnya belum ada di cache, request di-cache dengan URL lengkapnya sendiri, seperti sebelumnya. Request ini tidak pernah mengisi entry halaman bersih: komponen bisa merender `page.url` (link canonical, field `gclid` tersembunyi), jadi HTML-nya bisa berisi nilai milik pengunjung itu.
+- Halaman yang `load()` atau `metadata()`-nya membaca salah satunya (`url.searchParams.get("utm_source")`) atau seluruh query (`url.search`, `url.href`, iterasi `url.searchParams`) tidak dilayani salinan bersih untuk request seperti itu — di-cache per URL lengkap, dengan nilai aslinya.
+- Tidak terlacak: komponen, hook `handle`, atau fragmen `render` plugin yang memakai parameternya. Salinan bersih (dirender tanpa parameter) yang dilayani; set `CACHE_IGNORE_PARAMS=none`, atau baca parameternya di `load()`.
+- Hanya halaman dan request data router klien. Route API tetap memakai URL lengkap.
+
 ## Endpoint API
 
 Handler GET `+server.ts` di-cache dengan aturan key yang sama. Di v0.6 hanya bisa di-invalidasi berdasarkan URL atau prefix — belum ada mekanisme `depends()` untuk handler API:
@@ -109,12 +124,15 @@ Invalidasi berbasis tag untuk endpoint API ada di roadmap.
 
 ## Env var
 
-| Variabel            | Default                                    | Tujuan                                                 |
-| ------------------- | ------------------------------------------ | ------------------------------------------------------ |
-| `CACHE_KEYS`        | `session,sid,auth,token,jwt,Authorization` | Nama cookie/header yang ikut menghitung identity hash. |
-| `CACHE_MAX_ENTRIES` | `500`                                      | Kapasitas LRU. `0` mematikan cache sepenuhnya.         |
+| Variabel              | Default                                    | Tujuan                                                                                                                             |
+| --------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `CACHE_KEYS`          | `session,sid,auth,token,jwt,Authorization` | Nama cookie/header yang ikut menghitung identity hash.                                                                             |
+| `CACHE_MAX_ENTRIES`   | `500`                                      | Kapasitas LRU. `0` mematikan cache sepenuhnya.                                                                                     |
+| `CACHE_MAX_BYTES`     | `104857600` (100MB)                        | Memori semua entry (raw + gzip + brotli). `0` = jumlah entry saja.                                                                 |
+| `CACHE_IGNORE_PARAMS` | `utm_*,fbclid,gclid,…`                     | Parameter query yang tidak masuk key cache halaman. Lihat [Parameter tracking](#parameter-tracking). `none` = mati.                |
+| `CACHE_WAIT_TIMEOUT`  | `60000`                                    | Ms sebuah miss menunggu request lain yang sedang membangun entry yang sama sebelum membangun sendiri. `0` = tunggu sampai selesai. |
 
-Keduanya dibaca sekali saat startup. Tiap entry menyimpan byte raw plus salinan gzip + brotli — biasanya beberapa KB.
+Semuanya dibaca sekali saat startup. Tiap entry menyimpan byte raw plus salinan gzip + brotli — biasanya beberapa KB.
 
 ## Verifikasi
 
@@ -124,6 +142,6 @@ Keduanya dibaca sekali saat startup. Tiap entry menyimpan byte raw plus salinan 
 
 ## Trade-off
 
-- Memori tumbuh sebesar `CACHE_MAX_ENTRIES × (raw + gzip + brotli)`. Atur cap sesuai container.
+- Memori tumbuh sampai `CACHE_MAX_BYTES` (default 100MB) atau `CACHE_MAX_ENTRIES` entry, mana yang lebih dulu. Atur sesuai container.
 - Cache hidup in-process. Replika kedua punya cache sendiri; invalidasi pub/sub multi-replika ada di roadmap.
 - Tidak ada expiry berbasis TTL — entry hidup sampai LRU eviction atau `invalidate()` eksplisit. Write yang dilakukan author memicu eviction.

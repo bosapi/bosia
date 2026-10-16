@@ -46,21 +46,29 @@ import {
 import { dedup } from "./dedup.ts";
 import {
 	CACHE_ENABLED,
-	CACHE_MAX_BODY_BYTES,
+	CACHE_WAIT_TIMEOUT,
+	bodyFitsCache,
 	buildCompressedVariants,
 	cacheGet,
 	cacheSet,
-	coalesceMiss,
+	claimMiss,
 	collectTags,
+	depsReadIgnoredParams,
+	stripIgnoredParams,
 	computeCacheKey,
 	deferCacheWrite,
+	isNoStoreCacheControl,
+	readBodyForCache,
 	serveCached,
+	varyBlocksCache,
 	warnUncoveredCookies,
 } from "./cache.ts";
 import { reportDevErrorFromCatch } from "./devErrorReport.ts";
 import {
 	loadRouteData,
+	emptyDeps,
 	loadMetadata,
+	metadataFailed,
 	renderSSRStream,
 	renderErrorPage,
 	renderPageWithFormData,
@@ -78,13 +86,14 @@ let userHandle: Handle | null = null;
 // Headers that must not be baked into a cache entry. Content-Length is
 // recomputed by Bun, content-encoding/transfer-encoding depend on the chosen
 // variant, and security/CORS/Set-Cookie headers are applied by handleRequest.
+// A handler's own Vary is kept: serveCached adds Accept-Encoding to it, so a
+// hit varies on the same headers as the miss did.
 const NON_CACHEABLE_HEADERS = new Set([
 	"content-length",
 	"content-encoding",
 	"transfer-encoding",
 	"content-type",
 	"set-cookie",
-	"vary",
 	"x-bosia-cache",
 ]);
 
@@ -406,6 +415,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			const runLoad = async () => {
 				// metadata() runs alongside the loaders; the page load() gets its
 				// `data`, as on SSR. A failure stays non-fatal here.
+				const metaDeps = emptyDeps();
 				const metaP = pageMatch
 					? loadMetadata(
 							pageMatch.route,
@@ -414,6 +424,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 							locals,
 							cookies,
 							request,
+							metaDeps,
 						).catch(() => null)
 					: Promise.resolve(null);
 				const data = await loadRouteData(
@@ -438,7 +449,12 @@ async function resolve(event: RequestEvent): Promise<Response> {
 						}
 					: null;
 
-				return { data, metadata, cookiesAccessed: (cookies as CookieJar).accessed };
+				return {
+					data,
+					metadata,
+					metaDeps,
+					cookiesAccessed: (cookies as CookieJar).accessed,
+				};
 			};
 
 			// ── Response cache for client-navigation data ──
@@ -446,9 +462,11 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			// (different masks return different slots), tag/path invalidation, and
 			// no CSP. Only GETs use it (the client router only sends GETs); a
 			// `_fresh` fetch after invalidate() skips the read only.
-			const cacheKey =
-				computeCacheKey(routeUrl, request, cookies as CookieJar) +
-				`|data${invalidatedBits ? `|m=${invalidatedBits}` : ""}`;
+			// Set when this request replaced a stuck leader: its dedup() call,
+			// started right after that gate, is replaced rather than joined.
+			let replaceDedupBefore = -Infinity;
+			const keySuffix = `|data${invalidatedBits ? `|m=${invalidatedBits}` : ""}`;
+			const cacheKey = computeCacheKey(routeUrl, request, cookies as CookieJar) + keySuffix;
 			const dataCacheable =
 				CACHE_ENABLED &&
 				!CSP_ENABLED &&
@@ -457,15 +475,27 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				pageMatch !== null &&
 				(await pageRouteCacheable(pageMatch.route));
 			if (dataCacheable && !fresh) {
+				// Tracking params (CACHE_IGNORE_PARAMS): the plain URL's entry
+				// first, then this URL's own, as before — see cache.ts.
+				const plainUrl = stripIgnoredParams(routeUrl);
+				if (plainUrl !== routeUrl) {
+					const plain = cacheGet(
+						computeCacheKey(plainUrl, request, cookies as CookieJar) + keySuffix,
+					);
+					if (plain && !plain.queryAware) return serveCached(plain, request);
+				}
 				const hit = cacheGet(cacheKey);
 				if (hit) return serveCached(hit, request);
-				const gate = coalesceMiss(cacheKey);
-				if (gate.wait) {
-					await gate.wait;
-					const rehit = cacheGet(cacheKey);
-					if (rehit) return serveCached(rehit, request);
-				} else {
-					releaseDataMiss = gate.release;
+				const claim = await claimMiss(cacheKey, request.signal);
+				if (claim.hit) return serveCached(claim.hit, request);
+				if (claim.aborted) return new Response(null, { status: 499 });
+				if (claim.lead) {
+					releaseDataMiss = claim.lead.release;
+					// It replaced a stuck leader: start a new loader run, which
+					// later requests join, instead of joining the stuck one (a
+					// call that began within 1s of the stuck gate, not a later
+					// healthy one).
+					if (claim.lead.stale) replaceDedupBefore = claim.lead.staleStart + 1000;
 				}
 			}
 
@@ -477,7 +507,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			const dedupK =
 				computeCacheKey(routeUrl, request, cookies as CookieJar) +
 				(invalidatedBits ? `|m=${invalidatedBits}` : "");
-			const result = await dedup(dedupK, runLoad);
+			const result = await dedup(dedupK, runLoad, CACHE_WAIT_TIMEOUT, replaceDedupBefore);
 			// Identity only covers CACHE_KEYS — warn if a loader read a session
 			// cookie outside that list (dedup could then mix users' results).
 			warnUncoveredCookies(cookies);
@@ -503,16 +533,23 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			const body = jsonEncoder.encode(JSON.stringify({ ...payload, metadata: result.metadata }));
 
 			// A loader that said not to store its response is taken at its word.
-			const loaderCc = (loaderHeaders["cache-control"] ?? "").toLowerCase();
-			const loaderOptOut = /no-store|no-cache|private/.test(loaderCc);
+			const loaderOptOut =
+				isNoStoreCacheControl(loaderHeaders["cache-control"]) ||
+				varyBlocksCache(loaderHeaders["vary"]) ||
+				// Failed or timed out: don't keep a copy without its title/meta.
+				metadataFailed(result.metaDeps);
 			let sent: Encoded | null | undefined;
 			if (
 				dataCacheable &&
 				!loaderOptOut &&
 				(cookies as CookieJar).outgoing.length === 0 &&
-				(CACHE_MAX_BODY_BYTES === 0 || body.length <= CACHE_MAX_BODY_BYTES)
+				bodyFitsCache(body.length)
 			) {
 				const tags = collectTags(result.data.layoutDeps ?? null, result.data.pageDeps ?? null);
+				const queryAware = depsReadIgnoredParams(
+					[...(result.data.layoutDeps ?? []), result.metaDeps],
+					result.data.pageDeps ?? null,
+				);
 				const rel = releaseDataMiss;
 				releaseDataMiss = null;
 				// Encoded once at cache quality and shared by response and entry.
@@ -538,6 +575,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 								status: 200,
 								extraHeaders: extra,
 								tags,
+								queryAware,
 							},
 							cookies,
 						);
@@ -649,14 +687,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				if (apiCacheable && !url.searchParams.has("_invalidated")) {
 					// Miss coalescing: first miss runs the handler; concurrent misses
 					// wait, re-check the cache, and on a still-miss run independently.
-					const gate = coalesceMiss(apiCacheKey);
-					if (gate.wait) {
-						await gate.wait;
-						const rehit = cacheGet(apiCacheKey);
-						if (rehit) return serveCached(rehit, request);
-					} else {
-						releaseApiMiss = gate.release;
-					}
+					const claim = await claimMiss(apiCacheKey, request.signal);
+					if (claim.hit) return serveCached(claim.hit, request);
+					if (claim.aborted) return new Response(null, { status: 499 });
+					if (claim.lead) releaseApiMiss = claim.lead.release;
 				}
 			}
 
@@ -690,11 +724,12 @@ async function resolve(event: RequestEvent): Promise<Response> {
 
 			// Respect handler opt-out via Cache-Control. Standard HTTP semantics:
 			// no-store / private / no-cache all signal "don't reuse this response".
-			const cacheControl = (response.headers.get("cache-control") ?? "").toLowerCase();
+			// A Vary the key can't honor, or a body the handler already encoded
+			// (the entry would replay it without its Content-Encoding), isn't reused.
 			const noStore =
-				cacheControl.includes("no-store") ||
-				cacheControl.includes("private") ||
-				cacheControl.includes("no-cache");
+				isNoStoreCacheControl(response.headers.get("cache-control")) ||
+				varyBlocksCache(response.headers.get("vary")) ||
+				response.headers.has("content-encoding");
 
 			if (
 				apiCacheable &&
@@ -702,7 +737,9 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				response.status === 200 &&
 				!isEventStream &&
 				!noStore &&
-				(cookies as CookieJar).outgoing.length === 0
+				(cookies as CookieJar).outgoing.length === 0 &&
+				// A declared size that can't fit: skip the copy and the read entirely.
+				bodyFitsCache(parseInt(response.headers.get("content-length") ?? "", 10) || 0)
 			) {
 				const cloned = response.clone();
 				const extraHeaders = captureCacheableHeaders(response.headers);
@@ -714,10 +751,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				releaseApiMiss = null;
 				deferCacheWrite(async () => {
 					try {
-						const buf = new Uint8Array(await cloned.arrayBuffer());
-						// Oversized bodies skip early so they never pay compression;
-						// cacheSet re-checks as the authoritative guard.
-						if (CACHE_MAX_BODY_BYTES > 0 && buf.length > CACHE_MAX_BODY_BYTES) return;
+						// Stops reading once the body can't fit, so an oversized body
+						// never sits in memory or pays compression; cacheSet re-checks.
+						const buf = await readBodyForCache(cloned);
+						if (buf === null) return;
 						const { gzip, brotli } = buildCompressedVariants(buf);
 						// API endpoints have no LoaderDeps in v0.6 — invalidation is
 						// URL/prefix only. See ROADMAP for deferred tag support.
@@ -1095,7 +1132,10 @@ function finalizeResponse(
 		applyCorsVary(headers);
 		const corsHeaders = getCorsHeaders(request, CORS_CONFIG);
 		if (corsHeaders) {
-			for (const [k, v] of Object.entries(corsHeaders)) headers.set(k, v);
+			// Vary: Origin is already merged in above; set() would drop Accept-Encoding.
+			for (const [k, v] of Object.entries(corsHeaders)) {
+				if (k.toLowerCase() !== "vary") headers.set(k, v);
+			}
 		}
 	}
 	// Apply any Set-Cookie headers accumulated during the request

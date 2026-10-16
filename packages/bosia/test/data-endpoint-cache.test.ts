@@ -57,6 +57,198 @@ beforeAll(async () => {
 			`export function POST() {\n\treturn Response.json({ evicted: invalidate("app:hitung") });\n}\n`,
 	);
 
+	// A loader that marks its page private: SSR must not cache it either.
+	mkdirSync(join(routes, "pribadi"), { recursive: true });
+	writeFileSync(join(routes, "pribadi", "+page.svelte"), `<p>Pribadi</p>\n`);
+	writeFileSync(
+		join(routes, "pribadi", "+page.server.ts"),
+		counter("pribadi").replace(
+			"export function load({ depends }: any) {\n",
+			`export function load({ depends, setHeaders }: any) {\n\tsetHeaders({ "cache-control": "private" });\n`,
+		),
+	);
+
+	// API GETs: one too big for the cache, one small, one that never ends.
+	mkdirSync(join(routes, "api", "besar"), { recursive: true });
+	writeFileSync(
+		join(routes, "api", "besar", "+server.ts"),
+		`export function GET() {\n` +
+			`\tconst g = globalThis as any;\n` +
+			`\tg.__besar = (g.__besar ?? 0) + 1;\n` +
+			`\tconst chunk = new Uint8Array(1024 * 1024).fill(97);\n` +
+			`\tlet n = 0;\n` +
+			`\treturn new Response(new ReadableStream({ pull(c) { if (n++ < 3) c.enqueue(chunk); else c.close(); } }), {\n` +
+			`\t\theaders: { "content-type": "text/plain", "x-runs": String(g.__besar) },\n` +
+			`\t});\n}\n`,
+	);
+	mkdirSync(join(routes, "api", "kecil"), { recursive: true });
+	writeFileSync(
+		join(routes, "api", "kecil", "+server.ts"),
+		`export function GET() {\n` +
+			`\tconst g = globalThis as any;\n` +
+			`\tg.__kecil = (g.__kecil ?? 0) + 1;\n` +
+			`\treturn Response.json({ runs: g.__kecil }, { headers: { vary: "Accept-Encoding" } });\n}\n`,
+	);
+	mkdirSync(join(routes, "api", "kuki"), { recursive: true });
+	writeFileSync(
+		join(routes, "api", "kuki", "+server.ts"),
+		`export function GET() {\n` +
+			`\tconst g = globalThis as any;\n` +
+			`\tg.__kuki = (g.__kuki ?? 0) + 1;\n` +
+			`\treturn Response.json({ runs: g.__kuki }, { headers: { vary: "Cookie" } });\n}\n`,
+	);
+	mkdirSync(join(routes, "api", "gzip"), { recursive: true });
+	writeFileSync(
+		join(routes, "api", "gzip", "+server.ts"),
+		`import { gzipSync } from "node:zlib";\n` +
+			`export function GET() {\n` +
+			`\treturn new Response(gzipSync(JSON.stringify({ ok: true })), {\n` +
+			`\t\theaders: { "content-type": "application/json", "content-encoding": "gzip" },\n` +
+			`\t});\n}\n`,
+	);
+	mkdirSync(join(routes, "api", "aliran"), { recursive: true });
+	writeFileSync(
+		join(routes, "api", "aliran", "+server.ts"),
+		`export function GET() {\n` +
+			`\tconst chunk = new Uint8Array(512 * 1024).fill(98);\n` +
+			`\treturn new Response(new ReadableStream({ pull(c) { c.enqueue(chunk); } }), {\n` +
+			`\t\theaders: { "content-type": "application/x-ndjson" },\n` +
+			`\t});\n}\n`,
+	);
+
+	// Tracking params (CACHE_IGNORE_PARAMS): one page ignores the query, one
+	// reads utm_source and shows it.
+	mkdirSync(join(routes, "iklan"), { recursive: true });
+	writeFileSync(join(routes, "iklan", "+page.svelte"), `<p>Iklan</p>\n`);
+	writeFileSync(join(routes, "iklan", "+page.server.ts"), counter("iklan"));
+	mkdirSync(join(routes, "sumber"), { recursive: true });
+	writeFileSync(
+		join(routes, "sumber", "+page.svelte"),
+		`<script>\n\tlet { data } = $props();\n</script>\n<p>dari {data.from}</p>\n`,
+	);
+	writeFileSync(
+		join(routes, "sumber", "+page.server.ts"),
+		`export function load({ url }: any) {\n` +
+			`\treturn { from: url.searchParams.get("utm_source") ?? "langsung" };\n}\n`,
+	);
+
+	mkdirSync(join(routes, "semua"), { recursive: true });
+	writeFileSync(
+		join(routes, "semua", "+page.svelte"),
+		`<script>\n\tlet { data } = $props();\n</script>\n<p>q={data.q}</p>\n`,
+	);
+	writeFileSync(
+		join(routes, "semua", "+page.server.ts"),
+		`export function load({ url }: any) {\n` +
+			`\treturn { q: JSON.stringify(Object.fromEntries(url.searchParams)) };\n}\n`,
+	);
+
+	mkdirSync(join(routes, "meta"), { recursive: true });
+	writeFileSync(join(routes, "meta", "+page.svelte"), `<p>Meta</p>\n`);
+	writeFileSync(
+		join(routes, "meta", "+page.server.ts"),
+		`export function metadata({ url }: any) {\n` +
+			`\treturn { title: "Meta", data: { gclid: url.searchParams.get("gclid") } };\n}\n` +
+			`export function load({ metadata }: any) {\n\treturn { gclid: metadata?.gclid ?? null };\n}\n`,
+	);
+
+	mkdirSync(join(routes, "punya"), { recursive: true });
+	writeFileSync(join(routes, "punya", "+page.svelte"), `<p>Punya</p>\n`);
+	writeFileSync(
+		join(routes, "punya", "+page.server.ts"),
+		`export function metadata({ url }: any) {\n` +
+			`\treturn { data: { has: url.searchParams.has("tag", "svelte") } };\n}\n` +
+			`export function load({ url, metadata }: any) {\n` +
+			`\treturn { loader: url.searchParams.has("tag", "svelte"), meta: metadata?.has };\n}\n`,
+	);
+
+	// A layout reads the param; the page gets it through parent().
+	mkdirSync(join(routes, "kampanye"), { recursive: true });
+	writeFileSync(join(routes, "kampanye", "+page.svelte"), `<p>Kampanye</p>\n`);
+	writeFileSync(
+		join(routes, "kampanye", "+layout.svelte"),
+		`<script>\n\tlet { children } = $props();\n</script>\n{@render children()}\n`,
+	);
+	writeFileSync(
+		join(routes, "kampanye", "+layout.server.ts"),
+		`export function load({ url }: any) {\n` +
+			`\treturn { campaign: url.searchParams.get("utm_campaign") ?? "none" };\n}\n`,
+	);
+	writeFileSync(
+		join(routes, "kampanye", "+page.server.ts"),
+		`export async function load({ parent }: any) {\n` +
+			`\tconst { campaign } = await parent();\n\treturn { promo: campaign };\n}\n`,
+	);
+
+	mkdirSync(join(routes, "kampanye", "anak"), { recursive: true });
+	writeFileSync(join(routes, "kampanye", "anak", "+page.svelte"), `<p>Anak</p>\n`);
+	writeFileSync(
+		join(routes, "kampanye", "anak", "+page.server.ts"),
+		`export function load() {\n\treturn { anak: true };\n}\n`,
+	);
+	writeFileSync(
+		join(routes, "kampanye", "anak", "+layout.svelte"),
+		`<script>\n\tlet { children } = $props();\n</script>\n{@render children()}\n`,
+	);
+	writeFileSync(
+		join(routes, "kampanye", "anak", "+layout.server.ts"),
+		`export async function load({ parent }: any) {\n` +
+			`\tconst { campaign } = await parent();\n\treturn { banner: campaign };\n}\n`,
+	);
+
+	// metadata() hangs on the first call (METADATA_TIMEOUT=0 here).
+	mkdirSync(join(routes, "meta-macet"), { recursive: true });
+	writeFileSync(join(routes, "meta-macet", "+page.svelte"), `<p>Meta macet</p>\n`);
+	writeFileSync(
+		join(routes, "meta-macet", "+page.server.ts"),
+		`export function metadata() {\n` +
+			`\tconst g = globalThis as any;\n` +
+			`\tif (!g.__metaMacet) { g.__metaMacet = 1; return new Promise(() => {}); }\n` +
+			`\treturn { title: "ok" };\n}\n` +
+			`export function load() {\n\treturn { ok: true };\n}\n`,
+	);
+
+	// metadata() fails on the first call only.
+	mkdirSync(join(routes, "meta-gagal"), { recursive: true });
+	writeFileSync(join(routes, "meta-gagal", "+page.svelte"), `<p>Meta gagal</p>\n`);
+	writeFileSync(
+		join(routes, "meta-gagal", "+page.server.ts"),
+		`export function metadata() {\n` +
+			`\tconst g = globalThis as any;\n` +
+			`\tif (!g.__metaGagal) { g.__metaGagal = 1; throw new Error("cms down"); }\n` +
+			`\treturn { title: "Judul" };\n}\n` +
+			`export function load() {\n\treturn { ok: true };\n}\n`,
+	);
+
+	mkdirSync(join(routes, "meta-gagal-ssr"), { recursive: true });
+	writeFileSync(join(routes, "meta-gagal-ssr", "+page.svelte"), `<p>Meta gagal SSR</p>\n`);
+	writeFileSync(
+		join(routes, "meta-gagal-ssr", "+page.server.ts"),
+		`export function metadata() {\n` +
+			`\tconst g = globalThis as any;\n` +
+			`\tif (!g.__metaGagalSsr) { g.__metaGagalSsr = 1; throw new Error("cms down"); }\n` +
+			`\treturn { title: "Judul SSR" };\n}\n`,
+	);
+
+	// The first call never settles; later ones answer.
+	mkdirSync(join(routes, "macet"), { recursive: true });
+	writeFileSync(join(routes, "macet", "+page.svelte"), `<p>Macet</p>\n`);
+	writeFileSync(
+		join(routes, "macet", "+page.server.ts"),
+		`export function load() {\n` +
+			`\tconst g = globalThis as any;\n` +
+			`\tif (!g.__macet) { g.__macet = 1; return new Promise(() => {}); }\n` +
+			`\treturn { ok: true };\n}\n`,
+	);
+	mkdirSync(join(routes, "api", "macet"), { recursive: true });
+	writeFileSync(
+		join(routes, "api", "macet", "+server.ts"),
+		`export function GET() {\n` +
+			`\tconst g = globalThis as any;\n` +
+			`\tif (!g.__apiMacet) { g.__apiMacet = 1; return new Promise(() => {}); }\n` +
+			`\treturn Response.json({ ok: true });\n}\n`,
+	);
+
 	const build = Bun.spawn(["bun", "run", join(import.meta.dir, "..", "src", "core", "build.ts")], {
 		cwd: tmpDir,
 		env: { ...process.env, NODE_ENV: "production", NODE_PATH: BOSIA_NODE_PATH },
@@ -79,6 +271,9 @@ beforeAll(async () => {
 			NODE_ENV: "production",
 			PORT: String(port),
 			NODE_PATH: BOSIA_NODE_PATH,
+			LOAD_TIMEOUT: "2000",
+			METADATA_TIMEOUT: "0",
+			CACHE_WAIT_TIMEOUT: "1000",
 		},
 		stdout: "ignore",
 		stderr: "ignore",
@@ -97,7 +292,9 @@ beforeAll(async () => {
 }, 180_000);
 
 afterAll(async () => {
-	child?.kill();
+	// SIGKILL: the hung API handler below is still in flight, and a graceful
+	// stop would drain it for 10s.
+	child?.kill("SIGKILL");
 	// Windows keeps the server's files locked until it has exited (EBUSY).
 	await child?.exited;
 	rmSync(tmpDir, { recursive: true, force: true });
@@ -171,6 +368,69 @@ describe("data endpoint response cache", () => {
 	});
 });
 
+describe("what the cache leaves alone", () => {
+	test("an SSR page whose loader set cache-control: private is not cached", async () => {
+		const first = await fetch(`${origin}/pribadi`);
+		const firstHtml = await first.text();
+		await settle();
+		const second = await fetch(`${origin}/pribadi`);
+		expect(second.headers.get("x-bosia-cache")).toBeNull();
+		expect(await second.text()).not.toBe(firstHtml);
+	});
+
+	test("a small API GET is still cached", async () => {
+		const first = await (await fetch(`${origin}/api/kecil`)).json();
+		await settle();
+		const second = await fetch(`${origin}/api/kecil`);
+		expect(second.headers.get("x-bosia-cache")).toBe("HIT");
+		// The handler's own Vary survives the hit, without a duplicate token.
+		expect(second.headers.get("vary")).toBe("Accept-Encoding");
+		expect((await second.json()).runs).toBe(first.runs);
+	});
+
+	test("an API GET with a Vary the cache key can't honor is not cached", async () => {
+		const first = await (await fetch(`${origin}/api/kuki`)).json();
+		await settle();
+		const second = await fetch(`${origin}/api/kuki`);
+		expect(second.headers.get("x-bosia-cache")).toBeNull();
+		expect((await second.json()).runs).toBe(first.runs + 1);
+	});
+
+	test("an API GET the handler already encoded is not cached as plain bytes", async () => {
+		await (await fetch(`${origin}/api/gzip`)).text();
+		await settle();
+		const second = await fetch(`${origin}/api/gzip`);
+		expect(second.headers.get("x-bosia-cache")).toBeNull();
+		expect(await second.json()).toEqual({ ok: true });
+	});
+
+	test("an API GET over CACHE_MAX_BODY_BYTES goes out whole and is not cached", async () => {
+		const first = await fetch(`${origin}/api/besar`);
+		expect((await first.arrayBuffer()).byteLength).toBe(3 * 1024 * 1024);
+		await settle();
+		const second = await fetch(`${origin}/api/besar`);
+		expect(second.headers.get("x-bosia-cache")).toBeNull();
+		expect(Number(second.headers.get("x-runs"))).toBe(Number(first.headers.get("x-runs")) + 1);
+		expect((await second.arrayBuffer()).byteLength).toBe(3 * 1024 * 1024);
+	});
+
+	test("an endless API stream doesn't hold back the next request", async () => {
+		const ac = new AbortController();
+		const first = await fetch(`${origin}/api/aliran`, { signal: ac.signal });
+		const reader = first.body!.getReader();
+		await reader.read();
+		// The first response is still streaming; a second one must not wait on it.
+		const ac2 = new AbortController();
+		const timer = setTimeout(() => ac2.abort(), 3000);
+		const second = await fetch(`${origin}/api/aliran`, { signal: ac2.signal });
+		clearTimeout(timer);
+		expect(second.status).toBe(200);
+		ac.abort();
+		ac2.abort();
+		await reader.cancel().catch(() => {});
+	});
+});
+
 describe("ETag on cached responses", () => {
 	test("a cache hit carries an ETag and answers If-None-Match with 304", async () => {
 		await getData("/hitung.json?_invalidated=1");
@@ -212,5 +472,176 @@ describe("ETag on cached responses", () => {
 		expect(etag).toBeTruthy();
 		const revalidate = await fetch(`${origin}/hitung`, { headers: { "if-none-match": etag! } });
 		expect(revalidate.status).toBe(304);
+	});
+});
+
+describe("tracking params (CACHE_IGNORE_PARAMS)", () => {
+	test("a request with utm_* / fbclid is served the plain URL's entry", async () => {
+		await fetch(`${origin}/iklan`);
+		await settle();
+		const plain = await fetch(`${origin}/iklan`);
+		expect(plain.headers.get("x-bosia-cache")).toBe("HIT");
+		const html = await plain.text();
+
+		const ad = await fetch(`${origin}/iklan?utm_source=fb&utm_medium=cpc&fbclid=abc`);
+		expect(ad.headers.get("x-bosia-cache")).toBe("HIT");
+		expect(await ad.text()).toBe(html);
+
+		// Other params are still their own entry.
+		const other = await fetch(`${origin}/iklan?page=2`);
+		expect(other.headers.get("x-bosia-cache")).toBeNull();
+	});
+
+	test("the data endpoint does the same", async () => {
+		const first = await getData("/iklan.json");
+		await settle();
+		const ad = await getData("/iklan.json?gclid=xyz");
+		expect(ad.res.headers.get("x-bosia-cache")).toBe("HIT");
+		expect(ad.body.pageData.runs).toBe(first.body.pageData.runs);
+	});
+
+	test("without a plain entry, a tracked URL is cached under its own URL", async () => {
+		const ad = await getData("/iklan.json?_invalidated=1&utm_source=x");
+		expect(ad.res.headers.get("x-bosia-cache")).toBeNull();
+		await settle();
+		const again = await getData("/iklan.json?_invalidated=1&utm_source=x");
+		expect(again.res.headers.get("x-bosia-cache")).toBe("HIT");
+		// It never fills the plain URL's entry.
+		const plain = await getData("/iklan.json?_invalidated=1");
+		expect(plain.res.headers.get("x-bosia-cache")).toBeNull();
+		expect(plain.body.pageData.runs).toBe(ad.body.pageData.runs + 1);
+	});
+
+	test("a page whose loader reads the param is not served the plain entry", async () => {
+		await fetch(`${origin}/sumber`);
+		await settle();
+		expect((await fetch(`${origin}/sumber`)).headers.get("x-bosia-cache")).toBe("HIT");
+
+		const ad = await fetch(`${origin}/sumber?utm_source=newsletter`);
+		expect(ad.headers.get("x-bosia-cache")).toBeNull();
+		expect(await ad.text()).toContain("dari newsletter");
+		await settle();
+		// Its own URL is still cached, with its own value.
+		const again = await fetch(`${origin}/sumber?utm_source=newsletter`);
+		expect(again.headers.get("x-bosia-cache")).toBe("HIT");
+		expect(await again.text()).toContain("dari newsletter");
+		const data = await getData("/sumber.json?utm_source=newsletter");
+		expect(data.body.pageData.from).toBe("newsletter");
+	});
+
+	test("so is a page whose layout read it, even when the mask leaves the layout out", async () => {
+		await getData("/kampanye.json?_invalidated=1000");
+		await settle();
+		expect(
+			(await getData("/kampanye.json?_invalidated=1000")).res.headers.get("x-bosia-cache"),
+		).toBe("HIT");
+		const ad = await getData("/kampanye.json?_invalidated=1000&utm_campaign=lebaran");
+		expect(ad.res.headers.get("x-bosia-cache")).toBeNull();
+		expect(ad.body.pageData.promo).toBe("lebaran");
+	});
+
+	test("…and when only a lower layout that got it through parent() is sent", async () => {
+		const full = await getData("/kampanye/anak.json");
+		const n = full.body.layoutData.length;
+		// Page skipped, the reading layout left out, the one below it sent.
+		const bits = "0" + "1".repeat(n - 2) + "01";
+		await getData(`/kampanye/anak.json?_invalidated=${bits}`);
+		await settle();
+		const plain = await getData(`/kampanye/anak.json?_invalidated=${bits}`);
+		expect(plain.res.headers.get("x-bosia-cache")).toBe("HIT");
+		expect(plain.body.pageData).toBeNull();
+		const ad = await getData(`/kampanye/anak.json?_invalidated=${bits}&utm_campaign=x`);
+		expect(ad.res.headers.get("x-bosia-cache")).toBeNull();
+		expect(ad.body.layoutData[n - 1].banner).toBe("x");
+	});
+
+	test("so is a page whose metadata() reads the param", async () => {
+		await getData("/meta.json");
+		await settle();
+		expect((await getData("/meta.json")).res.headers.get("x-bosia-cache")).toBe("HIT");
+		const ad = await getData("/meta.json?gclid=g1");
+		expect(ad.res.headers.get("x-bosia-cache")).toBeNull();
+		expect(ad.body.pageData.gclid).toBe("g1");
+	});
+
+	test("so is a page whose loader iterates the whole query", async () => {
+		await getData("/semua.json");
+		await settle();
+		expect((await getData("/semua.json")).res.headers.get("x-bosia-cache")).toBe("HIT");
+		const ad = await getData("/semua.json?utm_source=x");
+		expect(ad.res.headers.get("x-bosia-cache")).toBeNull();
+		expect(ad.body.pageData.q).toBe(JSON.stringify({ utm_source: "x" }));
+	});
+});
+
+describe("a request that never finishes", () => {
+	test("a hung loader times out and the URL recovers", async () => {
+		const first = await fetch(`${origin}/macet`);
+		expect(first.status).toBe(500);
+		await first.text();
+		const second = await fetch(`${origin}/macet`);
+		expect(second.status).toBe(200);
+	}, 15_000);
+
+	test("a data request doesn't join a stuck one's loader run after CACHE_WAIT_TIMEOUT", async () => {
+		const ac = new AbortController();
+		const hung = getData("/meta-macet.json", { signal: ac.signal }).catch(() => null);
+		await Bun.sleep(100);
+		const started = Date.now();
+		const waiters = await Promise.all(Array.from({ length: 5 }, () => getData("/meta-macet.json")));
+		for (const w of waiters) expect(w.res.status).toBe(200);
+		expect(Date.now() - started).toBeLessThan(4000);
+		const t = Date.now();
+		expect((await getData("/meta-macet.json")).res.status).toBe(200);
+		// Well under CACHE_WAIT_TIMEOUT (1000): it didn't wait on the stuck gate.
+		expect(Date.now() - t).toBeLessThan(900);
+		ac.abort();
+		await hung;
+	}, 15_000);
+
+	test("a hung API handler holds its cache key for at most CACHE_WAIT_TIMEOUT", async () => {
+		const ac = new AbortController();
+		const hung = fetch(`${origin}/api/macet`, { signal: ac.signal }).catch(() => null);
+		await Bun.sleep(100);
+		const started = Date.now();
+		const second = await fetch(`${origin}/api/macet`);
+		expect(second.status).toBe(200);
+		expect(Date.now() - started).toBeLessThan(4000);
+		// The stuck gate is gone: the next miss doesn't wait.
+		const t = Date.now();
+		expect((await fetch(`${origin}/api/macet`)).status).toBe(200);
+		// Well under CACHE_WAIT_TIMEOUT (1000): it didn't wait on the stuck gate.
+		expect(Date.now() - t).toBeLessThan(900);
+		ac.abort();
+		await hung;
+	}, 15_000);
+});
+
+describe("metadata() failures", () => {
+	test("a page whose metadata() failed is served but not cached without its title", async () => {
+		const failed = await getData("/meta-gagal.json");
+		expect(failed.res.status).toBe(200);
+		expect(failed.body.metadata).toBeNull();
+		await settle();
+		const next = await getData("/meta-gagal.json");
+		expect(next.res.headers.get("x-bosia-cache")).toBeNull();
+		expect(next.body.metadata.title).toBe("Judul");
+	});
+
+	test("the same for page HTML", async () => {
+		const failed = await fetch(`${origin}/meta-gagal-ssr`);
+		expect(await failed.text()).not.toContain("Judul SSR");
+		await settle();
+		const next = await fetch(`${origin}/meta-gagal-ssr`);
+		expect(next.headers.get("x-bosia-cache")).toBeNull();
+		expect(await next.text()).toContain("<title>Judul SSR</title>");
+	});
+});
+
+describe("loader url tracking", () => {
+	test("searchParams.has(name, value) still checks the value", async () => {
+		const page = await getData("/punya.json?tag=react");
+		expect(page.body.pageData.loader).toBe(false);
+		expect(page.body.pageData.meta).toBe(false);
 	});
 });

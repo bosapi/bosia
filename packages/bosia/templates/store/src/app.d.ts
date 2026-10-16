@@ -9,6 +9,5 @@ declare module "*.svelte" {
 declare namespace App {
 	interface Locals {
 		db: import("./features/drizzle").Database;
-		requestTime: number;
 	}
 }

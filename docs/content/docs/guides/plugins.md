@@ -34,6 +34,20 @@ import { serverTiming } from "bosia/plugins/server-timing";
 serverTiming({ metric: "bosia" }); // override default metric name
 ```
 
+### `bosia/plugins/access-log`
+
+Logs one line per request — `[GET] /blog 200 (1.2ms)` — from the final response, so the status is what the client got and each request is logged once, whatever other plugins do. Bosia doesn't log requests by default; add this when you want an access log and no reverse proxy keeps one. Lines are written in batches (every 100ms, or at 64KB) instead of one write per request: on a piped stdout (`docker logs`, systemd) that's ~3µs of CPU per request instead of ~11–14µs. Lines still waiting are written on shutdown. On Workers every line is written at once. The path is the one requested, with any `BASE_PATH` prefix, as a proxy would log it. Responses Bun sends before the app runs (a body over `BODY_SIZE_LIMIT` → 413) aren't logged; keep `write` synchronous so the shutdown flush completes. On Workers, `ms` only moves across I/O (CPU time reads as 0), and an async `write` may be cut off after the response.
+
+```ts
+import { accessLog } from "bosia/plugins/access-log";
+
+accessLog(); // every request
+accessLog({ filter: (e) => e.status >= 400 || e.ms > 200 }); // errors and slow requests only
+accessLog({ format: (e) => JSON.stringify({ m: e.method, p: e.path, s: e.status, ms: e.ms }) });
+accessLog({ filter: (e) => e.path !== "/_health" }); // skip liveness probes
+accessLog({ flushMs: 0 }); // write each line immediately
+```
+
 ## Authoring a Plugin
 
 A plugin is any object matching `BosiaPlugin`:
@@ -112,6 +126,7 @@ The `app` passed to `backend.before` / `backend.after` is a `BosiaApp` (type exp
 | `onRequest(({ request, set }) => …)`                    | Runs first on every request. Return a value to answer right away.  |
 | `onAfterHandle(({ request, response, set }) => …)`      | Runs after the handler. Return a value to replace the response.    |
 | `onError(({ request, error, set }) => …)`               | Runs in order. Return a value to answer; `undefined` passes it on. |
+| `onResponse(({ request, response, start }) => …)`       | Sees the final response once per request. Observe only.            |
 
 Route handlers get `{ request, body, query, set }`. `body` is parsed from JSON or form data. Return a `Response`, a string (plain text), or an object (JSON). `set.status` and `set.headers` are merged into the reply.
 

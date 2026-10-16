@@ -11,7 +11,7 @@ import { createHash } from "node:crypto";
 import type { Cookies, LoaderDeps } from "./hooks.ts";
 import type { CookieJar } from "./cookies.ts";
 import { dedupKey } from "./dedup.ts";
-import { compressionOn, encodeBytes, PRECOMPRESSED } from "./html.ts";
+import { compressionOn, encodeBytes, PRECOMPRESSED, varyWithEncoding } from "./html.ts";
 import { matchesEtag } from "./etag.ts";
 
 // ─── Config ──────────────────────────────────────────────
@@ -34,12 +34,57 @@ function parseMaxEntries(raw: string | undefined): number {
 	return n;
 }
 
-function parseMaxBodyBytes(raw: string | undefined): number {
-	const DEFAULT = 2_097_152; // 2MB; 0 = unlimited
-	if (!raw) return DEFAULT;
+function parseBytes(raw: string | undefined, fallback: number): number {
+	if (!raw) return fallback;
 	const n = parseInt(raw, 10);
-	if (!Number.isFinite(n) || n < 0) return DEFAULT;
+	if (!Number.isFinite(n) || n < 0) return fallback;
 	return n;
+}
+
+function parseMaxBodyBytes(raw: string | undefined): number {
+	return parseBytes(raw, 2_097_152); // 2MB; 0 = unlimited
+}
+
+const MAX_TIMER_MS = 2_147_483_647;
+
+/**
+ * A duration env var in whole milliseconds. Unset or blank → `fallback`;
+ * `0` or `Infinity` → 0 (no limit). Anything else (`5s`, `1e4`, `-1`) warns
+ * and uses `fallback` — parseInt read `10s` as 10ms.
+ */
+export function parseMs(raw: string | undefined, fallback: number, name: string): number {
+	const value = raw?.trim();
+	if (!value) return fallback;
+	if (value.toLowerCase() === "infinity") return 0;
+	// setTimeout overflows above 2^31-1 and fires at once.
+	if (/^\d+$/.test(value)) return Math.min(Number(value), MAX_TIMER_MS);
+	if (typeof console !== "undefined") {
+		console.warn(`⚠️  ${name}="${raw}" is not a number of milliseconds; using ${fallback}`);
+	}
+	return fallback;
+}
+
+/** Ad and social click parameters: they never change what a page shows. */
+const DEFAULT_IGNORE_PARAMS =
+	"utm_*,fbclid,gclid,gbraid,wbraid,dclid,msclkid,twclid,ttclid,li_fat_id,igshid,yclid,mc_cid,mc_eid,_ga,_gl";
+
+/** Comma-separated names; `name*` matches a prefix. `none` (or `-`) = ignore nothing. */
+export function parseIgnoreParams(raw: string | undefined): {
+	names: Set<string>;
+	prefixes: string[];
+} {
+	let value = raw?.trim();
+	if (value === undefined || value === "") value = DEFAULT_IGNORE_PARAMS;
+	const names = new Set<string>();
+	const prefixes: string[] = [];
+	if (value === "none" || value === "-") return { names, prefixes };
+	for (const part of value.split(",")) {
+		const p = part.trim();
+		if (!p || p === "*") continue;
+		if (p.endsWith("*")) prefixes.push(p.slice(0, -1));
+		else names.add(p);
+	}
+	return { names, prefixes };
 }
 
 // Server-only module (imported by core/renderer.ts, core/server.ts,
@@ -53,12 +98,60 @@ const isServer = typeof process !== "undefined";
 export const CACHE_KEYS: readonly string[] = parseCacheKeys(env.CACHE_KEYS);
 export const CACHE_MAX_ENTRIES = parseMaxEntries(env.CACHE_MAX_ENTRIES);
 export const CACHE_MAX_BODY_BYTES = parseMaxBodyBytes(env.CACHE_MAX_BODY_BYTES);
+/** Budget for every entry together (raw + gzip + brotli). 0 = entry count only. */
+export const CACHE_MAX_BYTES = parseBytes(env.CACHE_MAX_BYTES, 104_857_600); // 100MB
 export const CACHE_ENABLED = CACHE_MAX_ENTRIES > 0;
+// Unset means the default; `0` or `Infinity` turns the timeout off. Unset
+// used to mean no timeout: a hung loader held its URL's cache gate (and dedup
+// slot) until restart. 30s/10s leave room for slow-but-healthy loaders; a
+// page's timer also covers its `await parent()`. Used by renderer.ts.
+export const LOAD_TIMEOUT = parseMs(env.LOAD_TIMEOUT, 30_000, "LOAD_TIMEOUT");
+export const METADATA_TIMEOUT = parseMs(env.METADATA_TIMEOUT, 10_000, "METADATA_TIMEOUT");
+
+/** The longest a healthy page build can take (metadata, then load, plus
+ *  render); 0 when LOAD_TIMEOUT is off. */
+const LOADER_BUDGET = LOAD_TIMEOUT > 0 ? METADATA_TIMEOUT + LOAD_TIMEOUT + 10_000 : 0;
+
+/**
+ * How long a cache miss waits for another request already building the same
+ * key, counted from when that one started, before building itself (ms).
+ * Bounds a leader that never finishes (an API handler that hangs, or
+ * LOAD_TIMEOUT=0). When it fires every waiter builds at once, so it must
+ * outlast a healthy leader: at least LOADER_BUDGET. 0 = wait for the leader.
+ */
+export const CACHE_WAIT_TIMEOUT = parseMs(
+	env.CACHE_WAIT_TIMEOUT,
+	Math.min(Math.max(60_000, LOADER_BUDGET), MAX_TIMER_MS),
+	"CACHE_WAIT_TIMEOUT",
+);
+if (
+	CACHE_WAIT_TIMEOUT > 0 &&
+	CACHE_WAIT_TIMEOUT < Math.min(LOADER_BUDGET, MAX_TIMER_MS) &&
+	typeof console !== "undefined"
+) {
+	console.warn(
+		`⚠️  CACHE_WAIT_TIMEOUT=${CACHE_WAIT_TIMEOUT} is shorter than METADATA_TIMEOUT + LOAD_TIMEOUT: requests waiting on a slow page build will start their own`,
+	);
+}
+const IGNORE_PARAMS = parseIgnoreParams(env.CACHE_IGNORE_PARAMS);
+/** Largest body worth reading or compressing for the cache: the per-body cap,
+ *  and at most a quarter of the budget (raw + two compressed copies still fit,
+ *  and one entry can't flush the rest). 0 = no limit. */
+const CACHE_BUDGET_SHARE = CACHE_MAX_BYTES > 0 ? Math.floor(CACHE_MAX_BYTES / 4) : 0;
+const CACHE_BODY_CAP =
+	CACHE_MAX_BODY_BYTES > 0 && CACHE_BUDGET_SHARE > 0
+		? Math.min(CACHE_MAX_BODY_BYTES, CACHE_BUDGET_SHARE)
+		: CACHE_MAX_BODY_BYTES || CACHE_BUDGET_SHARE;
+
+/** Whether a body of `bytes` could be stored — checked before paying compression. */
+export function bodyFitsCache(bytes: number): boolean {
+	return CACHE_BODY_CAP === 0 || bytes <= CACHE_BODY_CAP;
+}
 
 if (isServer) {
 	if (CACHE_ENABLED) {
 		console.log(
-			`💾 Response cache: max ${CACHE_MAX_ENTRIES} entries, max body ${CACHE_MAX_BODY_BYTES === 0 ? "unlimited" : `${CACHE_MAX_BODY_BYTES} bytes`}, identity keys [${CACHE_KEYS.join(", ")}]`,
+			`💾 Response cache: max ${CACHE_MAX_ENTRIES} entries${CACHE_MAX_BYTES === 0 ? "" : ` / ${CACHE_MAX_BYTES} bytes`}, max body ${CACHE_BODY_CAP === 0 ? "unlimited" : `${CACHE_BODY_CAP} bytes`}, identity keys [${CACHE_KEYS.join(", ")}]`,
 		);
 	} else {
 		console.log("💾 Response cache: disabled (CACHE_MAX_ENTRIES=0)");
@@ -80,14 +173,27 @@ export type CacheEntry = {
 	/** Digest of `raw`, filled in by `cacheSet`; the ETag is built from it per
 	 *  encoding so a gzip and a brotli copy are never mistaken for each other. */
 	etag?: string;
+	/** A loader read an ignored tracking param (or the whole query): not served
+	 *  to requests that carried one. See CACHE_IGNORE_PARAMS. */
+	queryAware?: boolean;
 };
 
 // ─── Tiny LRU ────────────────────────────────────────────
 // Uses Map's insertion-order iteration. get() promotes by re-inserting.
+// Bounded by entry count and, when `maxBytes` > 0, by the summed `weigh()` —
+// 500 entries of up to 2MB plus two compressed copies each could otherwise
+// reach gigabytes of heap.
 
 class LRU<K, V> {
 	private map = new Map<K, V>();
-	constructor(private cap: number) {}
+	// Weighed once on set, so a later change to a value can't skew the total.
+	private weights = new Map<K, number>();
+	private bytes = 0;
+	constructor(
+		private cap: number,
+		private maxBytes: number,
+		private weigh: (value: V) => number,
+	) {}
 	get(key: K): V | undefined {
 		const v = this.map.get(key);
 		if (v === undefined) return undefined;
@@ -95,20 +201,31 @@ class LRU<K, V> {
 		this.map.set(key, v);
 		return v;
 	}
-	set(key: K, value: V): { key: K; value: V } | undefined {
-		if (this.map.has(key)) this.map.delete(key);
+	/** Stores `value` and returns what was evicted to make room. A value
+	 *  heavier than the whole budget is not stored. */
+	set(key: K, value: V): { stored: boolean; evicted: { key: K; value: V }[] } {
+		this.delete(key);
+		const evicted: { key: K; value: V }[] = [];
+		const weight = this.weigh(value);
+		if (this.maxBytes > 0 && weight > this.maxBytes) return { stored: false, evicted };
 		this.map.set(key, value);
-		if (this.map.size > this.cap) {
-			const oldest = this.map.keys().next().value as K | undefined;
-			if (oldest !== undefined) {
-				const evicted = this.map.get(oldest) as V;
-				this.map.delete(oldest);
-				return { key: oldest, value: evicted };
-			}
+		this.weights.set(key, weight);
+		this.bytes += weight;
+		while (
+			this.map.size > this.cap ||
+			(this.maxBytes > 0 && this.bytes > this.maxBytes && this.map.size > 1)
+		) {
+			const oldest = this.map.keys().next().value as K;
+			const old = this.map.get(oldest) as V;
+			this.delete(oldest);
+			evicted.push({ key: oldest, value: old });
 		}
-		return undefined;
+		return { stored: true, evicted };
 	}
 	delete(key: K): boolean {
+		if (!this.map.has(key)) return false;
+		this.bytes -= this.weights.get(key) ?? 0;
+		this.weights.delete(key);
 		return this.map.delete(key);
 	}
 	keys(): IterableIterator<K> {
@@ -116,6 +233,8 @@ class LRU<K, V> {
 	}
 	clear(): void {
 		this.map.clear();
+		this.weights.clear();
+		this.bytes = 0;
 	}
 	get size(): number {
 		return this.map.size;
@@ -124,7 +243,11 @@ class LRU<K, V> {
 
 // ─── Storage ─────────────────────────────────────────────
 
-const htmlCache = new LRU<string, CacheEntry>(CACHE_MAX_ENTRIES || 1);
+const htmlCache = new LRU<string, CacheEntry>(
+	CACHE_MAX_ENTRIES || 1,
+	CACHE_MAX_BYTES,
+	(e) => e.raw.byteLength + (e.gzip?.byteLength ?? 0) + (e.brotli?.byteLength ?? 0),
+);
 const tagIndex = new Map<string, Set<string>>();
 const pathIndex = new Map<string, Set<string>>(); // pathname → cacheKeys
 
@@ -155,6 +278,63 @@ export function computeCacheKey(url: URL, req: Request, cookies: Pick<CookieJar,
 	return `${dedupKey(url)}|i=${computeIdentityHash(req, cookies)}`;
 }
 
+// ─── Tracking parameters (CACHE_IGNORE_PARAMS) ───────────
+// `/blog?utm_source=x` and `/blog?fbclid=…` are the same page as `/blog`, but
+// every value made its own entry: a full render per ad click, and the misses
+// pushed hot pages out of the LRU. Pages (SSR and data endpoint) look such a
+// request up under the URL without those params; API routes keep the full URL.
+//
+// A request that carried them is served the plain URL's entry when there is
+// one; otherwise it caches under its full URL, as before. It never writes the
+// plain entry: a component may render `page.url` (a canonical link, a hidden
+// gclid field), so its HTML can hold this visitor's values. An entry whose
+// loaders or metadata() read an ignored param (or the whole query) is marked
+// `queryAware` and isn't served to such requests.
+
+export function isIgnoredParam(name: string): boolean {
+	if (IGNORE_PARAMS.names.has(name)) return true;
+	for (const p of IGNORE_PARAMS.prefixes) if (name.startsWith(p)) return true;
+	return false;
+}
+
+/** `url` without ignored params, or `url` itself when it has none. */
+export function stripIgnoredParams(url: URL): URL {
+	if (url.search === "") return url;
+	if (IGNORE_PARAMS.names.size === 0 && IGNORE_PARAMS.prefixes.length === 0) return url;
+	let kept: [string, string][] | null = null;
+	let i = 0;
+	for (const [name, value] of url.searchParams) {
+		if (isIgnoredParam(name)) {
+			kept ??= [...url.searchParams].slice(0, i);
+		} else if (kept) kept.push([name, value]);
+		i++;
+	}
+	if (!kept) return url;
+	const out = new URL(url.href);
+	out.search = new URLSearchParams(kept).toString();
+	return out;
+}
+
+/** Loaders that read the whole query string (`url.search`, `url.href`, iterating
+ *  `url.searchParams`): their output may depend on any param. */
+const wholeQueryDeps = new WeakSet<LoaderDeps>();
+
+export function markWholeQueryRead(deps: LoaderDeps): void {
+	wholeQueryDeps.add(deps);
+}
+
+/** Whether any loader read an ignored param — its entry must not be served to a
+ *  request that carried one. */
+export function depsReadIgnoredParams(
+	layoutDeps: (LoaderDeps | null)[] | null,
+	pageDeps: LoaderDeps | null,
+): boolean {
+	const check = (d: LoaderDeps | null) =>
+		!!d && (wholeQueryDeps.has(d) || d.searchParams.some(isIgnoredParam));
+	if (check(pageDeps)) return true;
+	return !!layoutDeps && layoutDeps.some(check);
+}
+
 /** Extract pathname portion of a cacheKey for path-based invalidation. */
 function pathOfKey(key: string): string {
 	const qIdx = key.indexOf("?");
@@ -182,6 +362,26 @@ export function collectTags(
 		for (const u of pageDeps.urls) tags.add(`u:${u}`);
 	}
 	return [...tags];
+}
+
+/** A `Cache-Control` value that says not to reuse the response. */
+export function isNoStoreCacheControl(cc: string | null | undefined): boolean {
+	return /no-store|no-cache|private/i.test(cc ?? "");
+}
+
+/**
+ * A `Vary` the cache key can't honor. The key covers the URL and CACHE_KEYS;
+ * Accept-Encoding is negotiated per hit. Anything else (`Cookie`, `Origin`
+ * from a handler doing its own CORS, `Accept-Language`, `*`) means one stored
+ * copy would be served to requests the response said differ. The framework's
+ * own `Vary: Origin` is added after this check, on the way out.
+ */
+export function varyBlocksCache(vary: string | null | undefined): boolean {
+	if (!vary) return false;
+	return vary
+		.split(",")
+		.map((t) => t.trim().toLowerCase())
+		.some((t) => t !== "" && t !== "accept-encoding");
 }
 
 // ─── Public-ish: read / write ────────────────────────────
@@ -226,8 +426,10 @@ export function cacheSet(key: string, entry: CacheEntry, cookies?: Cookies): voi
 	entry.etag ??= createHash("sha1").update(entry.raw).digest("base64url").slice(0, 22);
 	// Drop any existing entry's index pointers first
 	cacheDeleteKey(key);
-	const evicted = htmlCache.set(key, entry);
-	if (evicted) cacheDeleteIndexOnly(evicted.key, evicted.value);
+	const { stored, evicted } = htmlCache.set(key, entry);
+	for (const e of evicted) cacheDeleteIndexOnly(e.key, e.value);
+	// Heavier than the whole budget: not stored, so nothing to index.
+	if (!stored) return;
 	for (const tag of entry.tags) {
 		let set = tagIndex.get(tag);
 		if (!set) {
@@ -330,6 +532,65 @@ export function deferCacheWrite(fn: () => void | Promise<void>): void {
 	else queueMicrotask(fn);
 }
 
+const textEncoder = new TextEncoder();
+
+/** How long a cache write may spend reading a response body it copied. */
+const CACHE_READ_TIMEOUT_MS = 10_000;
+
+/**
+ * Read a copied response body for the cache, giving up (and cancelling the
+ * copy) once it can't fit the cache (`bodyFitsCache`) or takes longer than
+ * `CACHE_READ_TIMEOUT_MS`. `null` = don't cache.
+ *
+ * `arrayBuffer()` on the copy held the whole body before any size check: a
+ * 1GB file served from a `+server.ts` GET took 1GB of RAM per download, and an
+ * endless non-SSE stream kept the miss gate (and every waiter) for good.
+ */
+export async function readBodyForCache(res: Response): Promise<Bytes | null> {
+	const stream = res.body;
+	if (!stream) return new Uint8Array(new ArrayBuffer(0));
+	const reader = stream.getReader();
+	const chunks: Uint8Array[] = [];
+	let total = 0;
+	// Cancelling ends the pending read() as `done`; the flag tells that apart
+	// from a body that really ended.
+	let timedOut = false;
+	const timer = setTimeout(() => {
+		timedOut = true;
+		reader.cancel().catch(() => {});
+	}, CACHE_READ_TIMEOUT_MS);
+	try {
+		for (;;) {
+			const step = await reader.read();
+			if (timedOut) return null;
+			if (step.done) return concatChunks(chunks);
+			// A handler's stream may enqueue strings; Bun passes them through a clone.
+			const value: unknown = step.value;
+			const chunk =
+				typeof value === "string"
+					? textEncoder.encode(value)
+					: value instanceof Uint8Array
+						? value
+						: ArrayBuffer.isView(value)
+							? new Uint8Array(value.buffer, value.byteOffset, value.byteLength)
+							: value instanceof ArrayBuffer
+								? new Uint8Array(value)
+								: null;
+			if (chunk === null) return null;
+			total += chunk.byteLength;
+			if (!bodyFitsCache(total)) return null;
+			chunks.push(chunk);
+		}
+	} catch {
+		return null;
+	} finally {
+		clearTimeout(timer);
+		// Stops the copy so the runtime no longer buffers it; the response the
+		// client reads is a separate branch and keeps going.
+		reader.cancel().catch(() => {});
+	}
+}
+
 /** Concatenate multiple Uint8Array chunks into one buffer. */
 export function concatChunks(chunks: Uint8Array[]): Bytes {
 	let total = 0;
@@ -347,20 +608,59 @@ export function concatChunks(chunks: Uint8Array[]): Bytes {
 // Stampede protection for cache misses. The first miss on a key becomes the
 // leader (gets `release`); concurrent misses become waiters (get `wait`).
 // Waiters re-check cacheGet after the wait resolves — hit: serve it; miss
-// (leader skipped the write): build independently, no re-leadering. Distinct
-// from dedup(), which shares the *result*; this shares only the *wait*.
+// (leader skipped the write): build independently. Distinct from dedup(),
+// which shares the *result*; this shares only the *wait*.
 //
 // INVARIANT: the leader must call release() exactly once, after its cacheSet
-// attempt completed or was skipped. A missed release() hangs waiters for the
-// process lifetime — callers guard with try/finally.
+// attempt completed or was skipped — callers guard with try/finally.
+//
+// A leader that never finishes (an API handler that hangs, LOAD_TIMEOUT=0)
+// held its key for the process lifetime: every later request waited on it
+// and the handler never ran again. A gate expires CACHE_WAIT_TIMEOUT after
+// its leader started: waiters resume with `false` and re-claim through
+// claimMiss(); the first replaces the gate and leads with `stale: true` (and
+// must not join the stuck leader's dedup() call), the rest wait on it.
 
-const missGates = new Map<string, { promise: Promise<void>; release: () => void }>();
+type MissGate = {
+	promise: Promise<void>;
+	release: () => void;
+	start: number;
+	/** Set by an expiry timer, so a waiter it woke never sees the gate as
+	 *  live (the timer may fire a little before the clock reads expired). */
+	expired: boolean;
+};
+
+const missGates = new Map<string, MissGate>();
+
+function gateExpired(gate: MissGate, now = performance.now()): boolean {
+	return gate.expired || (CACHE_WAIT_TIMEOUT > 0 && now - gate.start >= CACHE_WAIT_TIMEOUT);
+}
+
+// An expired gate stays until its key misses again (it tells that miss it is
+// `stale`). Keys that never come back are swept once the map grows; by twice
+// the timeout the stuck dedup() call is too old to be joined anyway.
+const SWEEP_AT = 256;
+let lastSweep = 0;
+function sweepGates(now: number): void {
+	if (missGates.size < SWEEP_AT || now - lastSweep < CACHE_WAIT_TIMEOUT) return;
+	lastSweep = now;
+	for (const [key, gate] of missGates) {
+		if (now - gate.start >= 2 * CACHE_WAIT_TIMEOUT) missGates.delete(key);
+	}
+}
+
+/** `staleStart`: when the expired gate this lead replaced started (else -Infinity). */
+export type MissLead = { release: () => void; stale: boolean; staleStart: number };
 
 export function coalesceMiss(
 	key: string,
-): { release: () => void; wait?: undefined } | { wait: Promise<void>; release?: undefined } {
+): (MissLead & { wait?: undefined }) | { wait: Promise<boolean>; release?: undefined } {
+	const now = performance.now();
 	const existing = missGates.get(key);
-	if (existing) return { wait: existing.promise };
+	if (existing && !gateExpired(existing, now)) {
+		return { wait: waitWithTimeout(existing) };
+	}
+	if (CACHE_WAIT_TIMEOUT > 0) sweepGates(now);
 	let resolve!: () => void;
 	const promise = new Promise<void>((r) => (resolve = r));
 	const release = () => {
@@ -368,8 +668,56 @@ export function coalesceMiss(
 		if (missGates.get(key)?.promise === promise) missGates.delete(key);
 		resolve();
 	};
-	missGates.set(key, { promise, release });
-	return { release };
+	// Replaces an expired gate; the old leader's release() won't touch this one.
+	missGates.set(key, { promise, release, start: now, expired: false });
+	return { release, stale: existing !== undefined, staleStart: existing?.start ?? -Infinity };
+}
+
+/**
+ * Claim a cache miss: a hit some other request wrote while this one waited;
+ * the lead (`lead.release()` exactly once, after the write or its skip);
+ * `lead: null` — build without leading; or `aborted` — the client left while
+ * waiting, don't build. A waiter whose gate expired re-claims once: the first
+ * becomes the new (`stale`) leader and the rest wait on it, so a stuck leader
+ * doesn't set every waiter building at once. After a second expiry a waiter
+ * builds on its own: it has waited 2× CACHE_WAIT_TIMEOUT.
+ */
+export async function claimMiss(
+	key: string,
+	signal?: AbortSignal,
+): Promise<
+	| { hit: CacheEntry; lead?: undefined; aborted?: undefined }
+	| { lead: MissLead | null; hit?: undefined; aborted?: undefined }
+	| { aborted: true; hit?: undefined; lead?: undefined }
+> {
+	for (let round = 0; ; round++) {
+		const gate = coalesceMiss(key);
+		if (!gate.wait) return { lead: gate };
+		const finished = await gate.wait;
+		const hit = cacheGet(key);
+		if (hit) return { hit };
+		if (signal?.aborted) return { aborted: true };
+		if (finished || round >= 1) return { lead: null };
+	}
+}
+
+/** True when the leader finished, false when the gate expired first. One
+ *  timer per waiter, not per gate: on Workers a timer belongs to the request
+ *  that set it and dies with it, which would strand the other waiters. */
+function waitWithTimeout(gate: MissGate): Promise<boolean> {
+	if (CACHE_WAIT_TIMEOUT <= 0) return gate.promise.then(() => true);
+	const left = Math.max(0, CACHE_WAIT_TIMEOUT - (performance.now() - gate.start));
+	return new Promise<boolean>((resolve) => {
+		const timer = setTimeout(() => {
+			gate.expired = true;
+			resolve(false);
+		}, left);
+		(timer as { unref?: () => void }).unref?.();
+		gate.promise.then(() => {
+			clearTimeout(timer);
+			resolve(true);
+		});
+	});
 }
 
 // ─── Serve a cache hit ───────────────────────────────────
@@ -380,9 +728,9 @@ export function serveCached(entry: CacheEntry, req: Request): Response {
 	// override them instead of getting comma-joined by Headers.
 	const headers: Record<string, string> = {
 		"content-type": entry.contentType,
-		vary: "Accept-Encoding",
 		"x-bosia-cache": "HIT",
 		...entry.extraHeaders,
+		vary: varyWithEncoding(entry.extraHeaders.vary),
 	};
 	let body: Bytes = entry.raw;
 	let encoding: "br" | "gzip" | null = null;

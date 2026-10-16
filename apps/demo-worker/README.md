@@ -32,7 +32,9 @@ bun run deploy  # build + wrangler deploy (needs `bunx wrangler login`)
 Demonstrates middleware composition with `sequence()`:
 
 - **`authHandle`** — sets `locals.requestTime` and `locals.user` on every request
-- **`loggingHandle`** — logs method, path, status code, and response time; sets `X-Response-Time` header
+- **`guardHandle`** — redirects `/guard-test/panel` to the login page when there is no user
+
+The access log comes from the `accessLog()` plugin in `bosia.config.ts`, not from a hook.
 
 ### `src/routes/+layout.server.ts`
 

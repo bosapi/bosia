@@ -3,7 +3,7 @@
 // Usage in src/hooks.server.ts:
 //
 //   import { sequence } from "bosia";
-//   export const handle = sequence(authHandle, loggingHandle);
+//   export const handle = sequence(authHandle, guardHandle);
 
 // ─── Cookie Types ─────────────────────────────────────────
 

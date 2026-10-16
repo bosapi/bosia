@@ -674,6 +674,18 @@ export function compress(
 	return compressBytes(textEncoder.encode(body), contentType, req, status, extraHeaders);
 }
 
+/**
+ * The Vary value for a body that may be compressed: a loader's or handler's
+ * own `vary` (e.g. `Cookie`) used to replace `Accept-Encoding`, so a CDN could
+ * hand brotli to a client that never asked for it.
+ */
+export function varyWithEncoding(vary: string | undefined): string {
+	if (!vary) return "Accept-Encoding";
+	const parts = vary.split(",").map((p) => p.trim().toLowerCase());
+	if (parts.includes("*") || parts.includes("accept-encoding")) return vary;
+	return `${vary}, Accept-Encoding`;
+}
+
 /** `encoded`: the result of `encodeForRequest` when the caller already has it
  *  (a cache write reuses the same bytes); omitted, it is built here. */
 export function compressBytes(
@@ -688,8 +700,8 @@ export function compressBytes(
 	// override them instead of getting comma-joined by Headers.
 	const headers: Record<string, string> = {
 		"content-type": contentType,
-		vary: "Accept-Encoding",
 		...extraHeaders,
+		vary: varyWithEncoding(extraHeaders?.vary),
 	};
 	if (encoded) {
 		return new Response(encoded.encoded, {

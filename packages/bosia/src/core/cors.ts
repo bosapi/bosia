@@ -29,7 +29,23 @@ function parseHeaderList(value: string): string[] {
  * response with `Access-Control-Allow-Origin: X` to a different origin Y.
  */
 export function applyCorsVary(headers: Headers): void {
-	headers.set("Vary", "Origin");
+	mergeVary(headers, "Origin");
+}
+
+/**
+ * Add `value` to the Vary header, keeping what is there: `set("Vary", "Origin")`
+ * dropped `Accept-Encoding`, so a CDN could hand a brotli body to a client that
+ * never asked for one.
+ */
+export function mergeVary(headers: Headers, value: string): void {
+	const current = headers.get("Vary");
+	if (!current) {
+		headers.set("Vary", value);
+		return;
+	}
+	const parts = current.split(",").map((p) => p.trim().toLowerCase());
+	if (parts.includes("*") || parts.includes(value.toLowerCase())) return;
+	headers.set("Vary", `${current}, ${value}`);
 }
 
 /**

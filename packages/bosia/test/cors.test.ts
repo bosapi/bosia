@@ -48,10 +48,19 @@ describe("applyCorsVary", () => {
 		expect(h.get("Vary")).toBe("Origin");
 	});
 
-	test("overwrites pre-existing Vary value", () => {
+	test("keeps a pre-existing Vary value (Accept-Encoding)", () => {
 		const h = new Headers({ Vary: "Accept-Encoding" });
 		applyCorsVary(h);
-		expect(h.get("Vary")).toBe("Origin");
+		expect(h.get("Vary")).toBe("Accept-Encoding, Origin");
+	});
+
+	test("does not repeat Origin or add to Vary: *", () => {
+		const h = new Headers({ Vary: "Accept-Encoding, origin" });
+		applyCorsVary(h);
+		expect(h.get("Vary")).toBe("Accept-Encoding, origin");
+		const star = new Headers({ Vary: "*" });
+		applyCorsVary(star);
+		expect(star.get("Vary")).toBe("*");
 	});
 
 	test("applied independently of origin-match (non-allowed origin still gets Vary)", () => {

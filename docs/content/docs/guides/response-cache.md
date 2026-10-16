@@ -45,20 +45,25 @@ If a route's per-user content is not keyed by anything in `CACHE_KEYS`, opt it o
 
 ## Eligibility
 
-| Condition                                                                     | Result                 |
-| ----------------------------------------------------------------------------- | ---------------------- |
-| `export const cache = false` on the route                                     | Skip read + write      |
-| Request method ≠ `GET`                                                        | Skip read + write      |
-| `CSP_DIRECTIVES` set (CSP enabled)                                            | Skip read + write      |
-| `CACHE_MAX_ENTRIES=0`                                                         | Skip read + write      |
-| Response status ≠ 200                                                         | Skip write             |
-| Handler called `cookies.set()`                                                | Skip write             |
-| `?_invalidated=…` query present                                               | Skip read; still write |
-| Data request with `_fresh=1`                                                  | Skip read; still write |
-| Data request sent as `POST`                                                   | Skip read + write      |
-| Loader set `Cache-Control: no-store`, `no-cache` or `private` (data requests) | Skip write             |
+| Condition                                                                | Result                 |
+| ------------------------------------------------------------------------ | ---------------------- |
+| `export const cache = false` on the route                                | Skip read + write      |
+| Request method ≠ `GET`                                                   | Skip read + write      |
+| `CSP_DIRECTIVES` set (CSP enabled)                                       | Skip read + write      |
+| `CACHE_MAX_ENTRIES=0`                                                    | Skip read + write      |
+| Response status ≠ 200                                                    | Skip write             |
+| Handler called `cookies.set()`                                           | Skip write             |
+| `?_invalidated=…` query present                                          | Skip read; still write |
+| Data request with `_fresh=1`                                             | Skip read; still write |
+| Data request sent as `POST`                                              | Skip read + write      |
+| Loader or handler set `Cache-Control: no-store`, `no-cache` or `private` | Skip write             |
+| `Vary` other than `Accept-Encoding` (e.g. `Cookie`, `Origin`, `*`)       | Skip write             |
+| `+server.ts` response already has `Content-Encoding`                     | Skip write             |
+| Body over `CACHE_MAX_BODY_BYTES` or a quarter of `CACHE_MAX_BYTES`       | Skip write             |
 
 A skip never breaks the response — it just falls back to the normal render path.
+
+The cache key is the URL plus `CACHE_KEYS`, so it can't honor a `Vary` on anything else. A response that sets `Vary: Cookie` (even with that cookie in `CACHE_KEYS`) is not cached; leave `Vary` off and rely on `CACHE_KEYS` instead.
 
 ## Opting out per route
 
@@ -217,6 +222,16 @@ per cached document (`core/cache.ts`). That is what makes a single
 `invalidate("app:sidebar")` able to clear an entire authenticated section; it is also why a
 missed write path leaves _all_ of those pages stale at once.
 
+## Tracking parameters
+
+Links from ads, newsletters and social posts carry click parameters (`?utm_source=…`, `?fbclid=…`, `?gclid=…`) that never change the page. Every value would be its own cache entry — a full render per click, pushing hot pages out of the LRU — so pages look such a request up under the URL **without** them: `/blog?utm_source=x&page=2` is served the cached `/blog?page=2`. Loaders still see the full URL.
+
+- The list is `CACHE_IGNORE_PARAMS` (default `utm_*,fbclid,gclid,gbraid,wbraid,dclid,msclkid,twclid,ttclid,li_fat_id,igshid,yclid,mc_cid,mc_eid,_ga,_gl`). `name*` matches a prefix; setting it replaces the list; `none` turns it off.
+- With no cached plain page, the request is cached under its own full URL, as before. It never fills the plain page's entry: a component may render `page.url` (a canonical link, a hidden `gclid` field), so its HTML can hold that visitor's values.
+- A page whose `load()` or `metadata()` reads one of them (`url.searchParams.get("utm_source")`) or the whole query (`url.search`, `url.href`, iterating `url.searchParams`) isn't served the plain copy for such requests — it is cached per full URL, with the real values.
+- Not tracked: a component, a `handle` hook, or a plugin's `render` fragment that uses the param. The plain copy (rendered without it) is served; set `CACHE_IGNORE_PARAMS=none`, or read the param in `load()`.
+- Pages and the client router's data requests only. API routes keep the full URL.
+
 ## API endpoints
 
 `+server.ts` GET handlers are cached with the same key rules. In v0.6 they can only be invalidated by URL or prefix — there is no `depends()` mechanism for API handlers yet:
@@ -230,11 +245,14 @@ Tag-based invalidation for API endpoints is on the roadmap.
 
 ## Env vars
 
-| Variable               | Default                                    | Purpose                                                                    |
-| ---------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
-| `CACHE_KEYS`           | `session,sid,auth,token,jwt,Authorization` | Cookie/header names that contribute to the identity hash.                  |
-| `CACHE_MAX_ENTRIES`    | `500`                                      | LRU capacity. `0` disables the cache entirely.                             |
-| `CACHE_MAX_BODY_BYTES` | `2097152` (2MB)                            | Per-entry body size cap. Larger responses skip the cache. `0` = unlimited. |
+| Variable               | Default                                    | Purpose                                                                                                  |
+| ---------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `CACHE_KEYS`           | `session,sid,auth,token,jwt,Authorization` | Cookie/header names that contribute to the identity hash.                                                |
+| `CACHE_MAX_ENTRIES`    | `500`                                      | LRU capacity. `0` disables the cache entirely.                                                           |
+| `CACHE_MAX_BODY_BYTES` | `2097152` (2MB)                            | Per-entry body size cap. Larger responses skip the cache. `0` = unlimited.                               |
+| `CACHE_MAX_BYTES`      | `104857600` (100MB)                        | Memory for all entries together (raw + gzip + brotli). Oldest go first. `0` = entry count only.          |
+| `CACHE_IGNORE_PARAMS`  | `utm_*,fbclid,gclid,…`                     | Query params left out of page cache keys. See [Tracking parameters](#tracking-parameters). `none` = off. |
+| `CACHE_WAIT_TIMEOUT`   | `60000`                                    | Ms a miss waits for another request building the same entry before building itself. `0` = wait for it.   |
 
 All are read once at startup. Each entry holds the raw bytes plus gzip + brotli copies — typically a few KB.
 
@@ -246,6 +264,6 @@ All are read once at startup. Each entry holds the raw bytes plus gzip + brotli 
 
 ## Trade-offs
 
-- Memory grows with `CACHE_MAX_ENTRIES × (raw + gzip + brotli)`. Tune the cap for your container.
+- Memory grows up to `CACHE_MAX_BYTES` (100MB by default) or `CACHE_MAX_ENTRIES` entries, whichever comes first. Tune both for your container.
 - The cache lives in-process. A second replica has its own cache; multi-replica pub/sub invalidation is on the roadmap.
 - TTL-based expiry isn't implemented — entries live until LRU eviction or explicit `invalidate()`. Author writes drive eviction.
