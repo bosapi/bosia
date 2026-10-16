@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.29] - 2026-10-16
+
+### Changed
+
+- Security guide and routing skill: a slug matching another route's URL ignoring case fails prerender.
+
 ## [0.8.28] - 2026-10-15
 
 ### Changed

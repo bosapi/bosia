@@ -345,6 +345,42 @@ describe("detectPrerenderRoutes()", () => {
 		);
 	});
 
+	test("fails: a slug that differs from a static page only by case (New vs blog/new)", async () => {
+		const err = await detect([
+			route("/blog/[slug]", "blog/[slug]/+page.server.ts", entries("New", "hello")),
+			{ pattern: "/blog/new", trailingSlash: "never" }, // live, not prerendered
+		]);
+		expect(err.message).toBe(
+			"❌ Prerender: /blog/New (from /blog/[slug]) is served by /blog/new on hosts that ignore case (macOS/Windows), not this route",
+		);
+	});
+
+	test("fails: a lowercase slug at an uppercase static page or API", async () => {
+		const page = await detect([
+			route("/[slug]", "[slug]/+page.server.ts", entries("about", "x")),
+			{ pattern: "/About", trailingSlash: "never" },
+		]);
+		expect(page.message).toContain("/about (from /[slug]) is served by /About on hosts");
+		route("/api/[slug]", "api/[slug]/+server.ts", entries("all"));
+		const api = await detect(
+			[],
+			[
+				{ pattern: "/api/[slug]", server: "api/[slug]/+server.ts" },
+				liveApi("/api/ALL", "api/ALL/+server.ts"),
+			],
+		);
+		expect(api.message).toContain("/api/all (from /api/[slug]) is served by /api/ALL on hosts");
+	});
+
+	test("builds: a static page whose own name has capitals", async () => {
+		const targets = await detect([
+			route("/About", "About/+page.server.ts", "export const prerender = true;\n"),
+		]);
+		expect(targets).toEqual([
+			{ path: "/About", route: "/About", kind: "page", trailingSlash: "never" },
+		]);
+	});
+
 	test("builds: a slug no other route serves, and the manifest is left alone", async () => {
 		const pages = [
 			route("/blog/[slug]", "blog/[slug]/+page.server.ts", entries("hello")),

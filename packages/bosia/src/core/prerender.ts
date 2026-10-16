@@ -380,23 +380,41 @@ function targetLabel(t: PrerenderTarget): string {
  * Targets whose URL another route serves: `/blog/[slug]` giving `new` while
  * `src/routes/blog/new` exists, or a page slug at a `+server.ts` URL (an API
  * wins, as in server.ts matchRoutes). Saving it would freeze the other route.
+ * Checked again ignoring case: on a macOS/Windows host `blog/New.html` answers `/blog/new`.
  */
 export function findMisownedTargets(
 	manifest: Pick<RouteManifest, "pages" | "apis">,
 	targets: PrerenderTarget[],
 ): Map<PrerenderTarget, string> {
 	// Copies: findMatch caches a compiled regex on each route object it sees.
-	const pages = sortRoutes(manifest.pages.map((r) => ({ pattern: r.pattern })));
-	const apis = sortRoutes(manifest.apis.map((r) => ({ pattern: r.pattern })));
+	const table = (routes: { pattern: string }[], fold: boolean) =>
+		sortRoutes(
+			routes.map((r) => ({
+				pattern: fold ? r.pattern.toLowerCase() : r.pattern,
+				owner: r.pattern,
+			})),
+		);
+	const exact = { pages: table(manifest.pages, false), apis: table(manifest.apis, false) };
+	const folded = { pages: table(manifest.pages, true), apis: table(manifest.apis, true) };
+	const ownerOf = (t: PrerenderTarget, routes: typeof exact, path: string) => {
+		const api = findMatch(routes.apis, path)?.route.owner;
+		if (t.kind === "api") return api;
+		// A page loses to any API at its URL, even a +server.ts in its own folder.
+		return api ? `${api} (+server.ts)` : findMatch(routes.pages, path)?.route.owner;
+	};
 	const out = new Map<PrerenderTarget, string>();
 	for (const t of targets) {
-		const api = findMatch(apis, t.path)?.route.pattern;
-		let owner = api;
-		// A page loses to any API at its URL, even a +server.ts in its own folder.
-		if (t.kind === "page")
-			owner = api ? `${api} (+server.ts)` : findMatch(pages, t.path)?.route.pattern;
-		if (owner && owner !== t.route)
+		const owner = ownerOf(t, exact, t.path);
+		if (owner && owner !== t.route) {
 			out.set(t, `❌ Prerender: ${targetLabel(t)} is served by ${owner}, not this route`);
+			continue;
+		}
+		const caseOwner = ownerOf(t, folded, t.path.toLowerCase());
+		if (caseOwner && caseOwner !== t.route)
+			out.set(
+				t,
+				`❌ Prerender: ${targetLabel(t)} is served by ${caseOwner} on hosts that ignore case (macOS/Windows), not this route`,
+			);
 	}
 	return out;
 }

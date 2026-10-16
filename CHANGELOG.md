@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - New projects pass `bun run check` in a monorepo or with isolated installs (bun-types not found).
+- Prerender fails when a slug matches another route's URL ignoring case, like `New` next to `blog/new`.
 
 ## [1.2.5] - 2026-10-15
 

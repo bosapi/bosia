@@ -7,6 +7,7 @@
 
 ## bosia 1.2.6 (2026-10-16) — templates type-check under isolated installs
 
+- [x] 🟡 Owner check runs again ignoring case: `/blog/[slug]` ← `New` next to live `blog/new` fails (a macOS/Windows host would serve `blog/New.html` at `/blog/new`).
 - [x] 🟡 All 4 template tsconfigs used `"types": ["bun-types"]`, a transitive dep of `@types/bun`; isolated installs (workspaces, pnpm) failed `check` with TS2688. Now `"types": ["bun"]`.
 
 ---
@@ -52,7 +53,6 @@
 - [ ] ⚪ The 10s prerender server ready deadline is fixed; make it an env var if a slow hooks `init()` hits it.
 - [ ] ⚪ `findMisownedTargets` copies `matchRoutes`' API-first order; move it into a pure helper both call, so a routing change can't skip the check.
 - [ ] ⚪ The owner check ignores an API's `x.json` alias (`/api/x.json` served by `/api/[slug]`); a narrow case, add it if anyone hits it.
-- [ ] 🟡 A slug differing from a live static route only by case (`New` vs `blog/new`) passes the owner check; on a case-insensitive host it freezes that route.
 - [ ] ⚪ `PrerenderEntriesError` now also carries reply/timeout/server-start failures; rename to `PrerenderError` (exported name).
 - [ ] ⚪ When the prerender server died, page timeout lines still say "increase PRERENDER_TIMEOUT"; drop the hint when the crash is the cause.
 - [ ] ⚪ A 404 probe that times out because a hook blocked and then crashed the server shows the timeout hint, not the exit code; check the exit after a probe timeout too.
