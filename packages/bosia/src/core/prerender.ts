@@ -7,7 +7,14 @@ import type { RuntimeTarget } from "./types/plugin.ts";
 import { BOSIA_NODE_PATH, OUT_DIR } from "./paths.ts";
 import { currentBase } from "./appBase.ts";
 import { prerenderSkipReason, wantsPrerender } from "./scanner.ts";
-import { findMatch, isDynamic, segmentName, segmentRank } from "./matcher.ts";
+import {
+	findMatch,
+	isDynamic,
+	matchPartsFolded,
+	type PartMatch,
+	segmentName,
+	segmentRank,
+} from "./matcher.ts";
 import { sortRoutes } from "./routeFile.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
 
@@ -380,7 +387,7 @@ function targetLabel(t: PrerenderTarget): string {
  * Targets whose URL another route serves: `/blog/[slug]` giving `new` while
  * `src/routes/blog/new` exists, or a page slug at a `+server.ts` URL (an API
  * wins, as in server.ts matchRoutes). Saving it would freeze the other route.
- * Checked again ignoring case: on a macOS/Windows host `blog/New.html` answers `/blog/new`.
+ * Checked ignoring case too: on a macOS/Windows host `blog/New.html` answers `/blog/new`.
  */
 export function findMisownedTargets(
 	manifest: Pick<RouteManifest, "pages" | "apis">,
@@ -389,35 +396,36 @@ export function findMisownedTargets(
 	// Copies: findMatch caches a compiled regex on each route object it sees.
 	const pages = sortRoutes(manifest.pages.map((r) => ({ pattern: r.pattern })));
 	const apis = sortRoutes(manifest.apis.map((r) => ({ pattern: r.pattern })));
-	const ownerOf = (t: PrerenderTarget, path: string) => {
-		const api = findMatch(apis, path)?.route.pattern;
+	// The server's own matcher decides who serves the URL exactly.
+	const ownerOf = (t: PrerenderTarget) => {
+		const api = findMatch(apis, t.path)?.route.pattern;
 		if (t.kind === "api") return api;
 		// A page loses to any API at its URL, even a +server.ts in its own folder.
-		return api ? `${api} (+server.ts)` : findMatch(pages, path)?.route.pattern;
+		return api ? `${api} (+server.ts)` : findMatch(pages, t.path)?.route.pattern;
 	};
-	// Split once, in match order: an API target only meets APIs, a page meets APIs first.
-	const shape = (pattern: string, api: boolean, label: string): RouteShape => {
+	// Split once, in match order, for the case pass: every API first, then pages. An API
+	// target meets pages too: a live `/API/ALL` page is hidden by a saved `api/all` file.
+	const shape = (pattern: string, api: boolean): RouteShape => {
 		const parts = pattern.split("/").filter(Boolean);
-		return { pattern, api, label, parts, ranks: parts.map(segmentRank) };
+		const ranks = parts.map(segmentRank);
+		const lower = parts.map((p) => p.toLowerCase());
+		return { pattern, api, parts, lower, ranks, rest: ranks.at(-1) === 2 };
 	};
-	const apiOrder = apis.map((r) => shape(r.pattern, true, r.pattern));
-	const pageOrder = [
-		...apis.map((r) => shape(r.pattern, true, `${r.pattern} (+server.ts)`)),
-		...pages.map((r) => shape(r.pattern, false, r.pattern)),
+	const order = [
+		...apis.map((r) => shape(r.pattern, true)),
+		...pages.map((r) => shape(r.pattern, false)),
 	];
 	const out = new Map<PrerenderTarget, string>();
 	for (const t of targets) {
-		const owner = ownerOf(t, t.path);
+		const owner = ownerOf(t);
 		if (owner && owner !== t.route) {
 			out.set(t, `❌ Prerender: ${targetLabel(t)} is served by ${owner}, not this route`);
 			continue;
 		}
-		const caseOwner = findCaseOwner(t, t.kind === "api" ? apiOrder : pageOrder);
-		if (caseOwner)
-			out.set(
-				t,
-				`❌ Prerender: ${targetLabel(t)} is served by ${caseOwner} on hosts that ignore case (macOS/Windows), not this route`,
-			);
+		// No route answers the URL (a hand-built table): nothing to measure a case clash by.
+		if (!owner) continue;
+		const problem = caseProblem(t, order);
+		if (problem) out.set(t, problem);
 	}
 	return out;
 }
@@ -425,57 +433,76 @@ export function findMisownedTargets(
 interface RouteShape {
 	pattern: string;
 	api: boolean;
-	label: string;
 	parts: string[];
+	lower: string[];
 	ranks: (0 | 1 | 2)[];
+	/** Ends in `[...rest]`, so it takes paths longer than its parts. */
+	rest: boolean;
 }
 
 /**
- * A route that spells one of its static parts in another case (`/blog/new` for `/blog/New`,
- * `/[a]/NEW` for `/blog/new`) and wins some spelling of the URL: it ranks above this
- * route, or the spelling differs at one of this route's static parts so this route
- * can't answer it. On a host that ignores case the saved file answers that spelling.
- * Overlaps through params alone (`/[...rest]` catching `/BLOG/new`) are allowed, or every
- * catch-all next to a prerendered page would fail. A route ranked higher still that takes
- * the very same spellings isn't looked for; the check may then name a route that never answers.
+ * This route serves the URL exactly (findMatch said so). A route matching only ignoring
+ * case (a static part spelled `NEW` for `new`) then clashes if it wins some spelling: it
+ * ranks above this route, or the spelling differs at one of this route's static parts so
+ * this route can't answer it. On a host that ignores case the saved file answers that
+ * spelling. Overlaps through params alone (`/[...rest]` catching `/BLOG/new`) are allowed,
+ * or every catch-all next to a prerendered page would fail. A route ranked higher still
+ * that takes the very same spellings isn't looked for; the check may then name a route
+ * that never answers.
  */
-function findCaseOwner(t: PrerenderTarget, order: RouteShape[]): string | undefined {
+function caseProblem(t: PrerenderTarget, order: RouteShape[]): string | null {
 	const path = t.path.split("/").filter(Boolean);
-	const own = order.findIndex((r) => r.pattern === t.route && r.api === (t.kind === "api"));
-	const ownKinds = own === -1 ? null : foldedKinds(order[own]!, path);
-	for (const [i, r] of order.entries()) {
-		if (i === own) continue;
-		const kinds = foldedKinds(r, path);
-		if (!kinds?.includes("case")) continue;
-		if (own === -1 || i < own || !ownKinds) return r.label;
-		const escapes = kinds.some(
-			(k, j) =>
-				ownKinds[j] === "same" &&
-				(k === "case" || (k === "param" && path[j]!.toLowerCase() !== path[j]!.toUpperCase())),
-		);
-		if (escapes) return r.label;
+	const pathLower = path.map((p) => p.toLowerCase());
+	let own: PartMatch[] | null = null;
+	let hit: { r: RouteShape; kinds: PartMatch[]; above: boolean } | null = null;
+	for (const r of order) {
+		// Cheap filter first: most routes can't match on part count alone.
+		if (r.rest ? path.length < r.parts.length : path.length !== r.parts.length) continue;
+		const kinds = matchPartsFolded(r.parts, r.lower, r.ranks, path, pathLower);
+		if (!kinds) continue;
+		if (r.pattern === t.route && r.api === (t.kind === "api")) {
+			own = kinds;
+			if (hit) break; // a route above already wins a spelling
+		} else if (!kinds.includes("case")) continue;
+		else if (!own) hit ??= { r, kinds, above: true };
+		else if (escapesOwn(kinds, own, path)) {
+			hit = { r, kinds, above: false };
+			break;
+		}
 	}
-	return undefined;
+	// The walk disagrees with findMatch (they share compilePattern's rules): don't guess.
+	if (!own || !hit) return null;
+	const { r, kinds, above } = hit;
+	// The spelling it wins: its own static parts. Ranked below, every param under this
+	// route's static part changes case too, which also steers clear of routes in between
+	// (`/BLOG/NEW`, not `/blog/NEW` that `/blog/[slug]` takes).
+	const spelling = kinds.map((k, j) => {
+		if (k !== "param") return r.parts[j]!;
+		return (!above && own[j] === "same" && otherCase(path[j]!)) || path[j]!;
+	});
+	const name = r.api && t.kind === "page" ? `${r.pattern} (+server.ts)` : r.pattern;
+	return `❌ Prerender: ${targetLabel(t)} would also answer /${spelling.join("/")} on hosts that ignore case (macOS/Windows), which ${name} serves`;
+}
+
+/** Some part where this route is static has a spelling the other route takes and this one doesn't. */
+function escapesOwn(kinds: PartMatch[], own: PartMatch[], path: string[]): boolean {
+	return kinds.some(
+		(k, j) => own[j] === "same" && (k === "case" || (k === "param" && otherCase(path[j]!))),
+	);
 }
 
 /**
- * How each part of `path` meets the route ignoring case: `same` static, `case` static in
- * another case, `param`. `null` if they don't match. Mirrors matcher.ts compilePattern:
- * only a last `[...rest]` takes several parts.
+ * `s` with every letter in the other case, keeping only swaps that lowercase back to the same
+ * letter (`ß` → `SS` and `İ` → `i̇` change length, so they stay). `null` if nothing swaps.
  */
-function foldedKinds(r: RouteShape, path: string[]): ("same" | "case" | "param")[] | null {
-	const kinds: ("same" | "case" | "param")[] = [];
-	for (const [i, seg] of r.parts.entries()) {
-		if (r.ranks[i] === 2 && i === r.parts.length - 1)
-			return path.length > i ? [...kinds, ...path.slice(i).map(() => "param" as const)] : null;
-		const part = path[i];
-		if (part === undefined) return null;
-		if (r.ranks[i]) kinds.push("param");
-		else if (part === seg) kinds.push("same");
-		else if (part.toLowerCase() === seg.toLowerCase()) kinds.push("case");
-		else return null;
-	}
-	return kinds.length === path.length ? kinds : null;
+function otherCase(s: string): string | null {
+	const swapped = [...s]
+		.map((c) => {
+			const o = c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase();
+			return o.length === c.length && o.toLowerCase() === c.toLowerCase() ? o : c;
+		})
+		.join("");
+	return swapped === s ? null : swapped;
 }
 
 /**

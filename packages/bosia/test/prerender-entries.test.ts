@@ -9,6 +9,7 @@ import { tmpdir } from "os";
 import { dirname, join } from "path";
 import {
 	detectPrerenderRoutes,
+	findMisownedTargets,
 	findPrerenderClash,
 	PrerenderEntriesError,
 	type PrerenderTarget,
@@ -351,7 +352,7 @@ describe("detectPrerenderRoutes()", () => {
 			{ pattern: "/blog/new", trailingSlash: "never" }, // live, not prerendered
 		]);
 		expect(err.message).toBe(
-			"❌ Prerender: /blog/New (from /blog/[slug]) is served by /blog/new on hosts that ignore case (macOS/Windows), not this route",
+			"❌ Prerender: /blog/New (from /blog/[slug]) would also answer /blog/new on hosts that ignore case (macOS/Windows), which /blog/new serves",
 		);
 	});
 
@@ -360,7 +361,9 @@ describe("detectPrerenderRoutes()", () => {
 			route("/[slug]", "[slug]/+page.server.ts", entries("about", "x")),
 			{ pattern: "/About", trailingSlash: "never" },
 		]);
-		expect(page.message).toContain("/about (from /[slug]) is served by /About on hosts");
+		expect(page.message).toContain(
+			"/about (from /[slug]) would also answer /About on hosts that ignore case (macOS/Windows), which /About serves",
+		);
 		route("/api/[slug]", "api/[slug]/+server.ts", entries("all"));
 		const api = await detect(
 			[],
@@ -369,7 +372,9 @@ describe("detectPrerenderRoutes()", () => {
 				liveApi("/api/ALL", "api/ALL/+server.ts"),
 			],
 		);
-		expect(api.message).toContain("/api/all (from /api/[slug]) is served by /api/ALL on hosts");
+		expect(api.message).toContain(
+			"/api/all (from /api/[slug]) would also answer /api/ALL on hosts that ignore case (macOS/Windows), which /api/ALL serves",
+		);
 	});
 
 	// Review: only the first route in a lowercased table was asked, so a tie hid the clash.
@@ -379,7 +384,9 @@ describe("detectPrerenderRoutes()", () => {
 				route("/blog/[slug]", "blog/[slug]/+page.server.ts", entries("x")),
 				{ pattern: live, trailingSlash: "never" },
 			]);
-			expect(err.message).toContain(`/blog/x (from /blog/[slug]) is served by ${live} on hosts`);
+			expect(err.message).toContain(
+				`/blog/x (from /blog/[slug]) would also answer /Blog/x on hosts that ignore case (macOS/Windows), which ${live} serves`,
+			);
 		}
 		const about = () =>
 			route("/about", "about/+page.server.ts", "export const prerender = true;\n");
@@ -389,7 +396,9 @@ describe("detectPrerenderRoutes()", () => {
 			[live, about()],
 		]) {
 			const err = await detect(pages);
-			expect(err.message).toContain("/about is served by /About on hosts");
+			expect(err.message).toContain(
+				"/about would also answer /About on hosts that ignore case (macOS/Windows), which /About serves",
+			);
 		}
 	});
 
@@ -400,13 +409,68 @@ describe("detectPrerenderRoutes()", () => {
 			route("/blog/[slug]", "blog/[slug]/+page.server.ts", entries("new")),
 			{ pattern: "/[a]/NEW", trailingSlash: "never" },
 		]);
-		expect(slug.message).toContain("/blog/new (from /blog/[slug]) is served by /[a]/NEW on hosts");
+		expect(slug.message).toContain(
+			"/blog/new (from /blog/[slug]) would also answer /BLOG/NEW on hosts that ignore case (macOS/Windows), which /[a]/NEW serves",
+		);
 		const stat = await detect([
 			route("/blog/new", "blog/new/+page.server.ts", "export const prerender = true;\n"),
 			{ pattern: "/blog/[slug]", trailingSlash: "never" },
 			{ pattern: "/[x]/NEW", trailingSlash: "never" },
 		]);
-		expect(stat.message).toContain("/blog/new is served by /[x]/NEW on hosts");
+		expect(stat.message).toContain(
+			"/blog/new would also answer /BLOG/NEW on hosts that ignore case (macOS/Windows), which /[x]/NEW serves",
+		);
+	});
+
+	// Review 3: a target its own route doesn't answer (a hand-built table) has no owner to
+	// measure by; it used to name any route with a case part.
+	test("no case owner when the target's own route doesn't answer it", () => {
+		const t = { path: "/x/new", route: "/y/[slug]", kind: "page", trailingSlash: "never" } as const;
+		const manifest = { pages: [{ pattern: "/y/[slug]" }, { pattern: "/[a]/NEW" }], apis: [] };
+		expect(findMisownedTargets(manifest as any, [t]).size).toBe(0);
+	});
+
+	// Review 5: `ß` uppercases to `SS`, so it counted as having another case: a false failure,
+	// and a spelling (`/STRASSE`) no disk treats as the same name.
+	test("ß has no other case; a spelling keeps each name's length", () => {
+		const page = (path: string, route: string) =>
+			({ path, route, kind: "page", trailingSlash: "never" }) as const;
+		const ok = page("/\u00df/foo", "/\u00df/[x]");
+		const okManifest = { pages: [{ pattern: "/\u00df/[x]" }, { pattern: "/[a]/FOO" }], apis: [] };
+		expect(findMisownedTargets(okManifest as any, [ok]).size).toBe(0);
+		const bad = page("/stra\u00dfe/new", "/stra\u00dfe/[x]");
+		const manifest = {
+			pages: [{ pattern: "/stra\u00dfe/[x]" }, { pattern: "/[a]/NEW" }],
+			apis: [],
+		};
+		expect(findMisownedTargets(manifest as any, [bad]).get(bad)).toContain(
+			"would also answer /STRA\u00dfE/NEW",
+		);
+	});
+
+	// Review 5: an API target only met APIs, so a live page `/API/ALL` that the saved
+	// `api/all` file hides on a case-insensitive host passed.
+	test("fails: an API slug next to a page differing only by case", async () => {
+		route("/api/[x]", "api/[x]/+server.ts", entries("all").replace('"slug"', '"x"'));
+		const err = await detect(
+			[{ pattern: "/API/ALL", trailingSlash: "never" }],
+			[{ pattern: "/api/[x]", server: "api/[x]/+server.ts" }],
+		);
+		expect(err.message).toContain("/api/all (from /api/[x]) would also answer /API/ALL");
+		expect(err.message).toContain("which /API/ALL serves");
+	});
+
+	// Review 3 added Unicode-form (NFC/NFD) folding; review 4 took it out: NTFS doesn't merge
+	// forms, and the error showed two identical-looking spellings. Only case is compared.
+	test("builds: static names that differ only by Unicode form aren't compared", () => {
+		const t = {
+			path: "/caf\u00e9",
+			route: "/caf\u00e9",
+			kind: "page",
+			trailingSlash: "never",
+		} as const;
+		const manifest = { pages: [{ pattern: "/caf\u00e9" }, { pattern: "/cafe\u0301" }], apis: [] };
+		expect(findMisownedTargets(manifest as any, [t]).size).toBe(0);
 	});
 
 	// Params alone catch every spelling (`/[...rest]` answers `/BLOG/new`); counting that

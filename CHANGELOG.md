@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - A page whose `metadata()` failed or timed out is no longer cached without its title and meta tags.
 - New projects pass `bun run check` in a monorepo or with isolated installs (bun-types not found).
 - Prerender fails when a page's URL matches another route ignoring case (`New` vs `blog/new`).
+- A prerender case error names the URL at risk, like `/BLOG/NEW`, and the route that serves it.
 
 ## [1.2.5] - 2026-10-15
 
