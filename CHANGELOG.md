@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.7] - 2026-10-17
+
+### Fixed
+
+- `goto("?page=2")` now stays in the app instead of reloading the whole page.
+
 ## [1.2.6] - 2026-10-16
 
 ### Added

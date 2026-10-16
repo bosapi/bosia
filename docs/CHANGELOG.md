@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.30] - 2026-10-17
+
+### Changed
+
+- Navigation guide, navigation skill: `goto()` accepts relative URLs like `?page=2`.
+
 ## [0.8.29] - 2026-10-16
 
 ### Changed

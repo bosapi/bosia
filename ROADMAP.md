@@ -1,7 +1,13 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.2.6**
+> Current version: **1.2.7**
+
+---
+
+## bosia 1.2.7 (2026-10-17) — goto resolves relative URLs
+
+- [x] 🟡 `goto("?page=2")`, `goto("b")`, same-origin absolute URLs and relative `use:enhance` redirects matched no route and did a full reload (since 0.5.10). `go()` now resolves them against `location.href`.
 
 ---
 

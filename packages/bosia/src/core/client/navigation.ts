@@ -138,6 +138,14 @@ export function go(
 ): Promise<void> {
 	if (typeof window === "undefined") return Promise.resolve();
 
+	// The router matches a root path; resolve `?page=2`, `b`, `../x` and
+	// same-origin absolute URLs against the current page like the browser would.
+	// Another origin stays as-is: the router sends it to `window.location`.
+	if (!url.startsWith("/") || url.startsWith("//")) {
+		const u = new URL(url, window.location.href);
+		if (u.origin === window.location.origin) url = u.pathname + u.search + u.hash;
+	}
+
 	return new Promise<void>((resolve) => {
 		const result = router.navigate(url, { replace: opts.replace, source: opts.source });
 		// The nav effect runs after this, so marks set now still reach it — and a nav

@@ -76,6 +76,8 @@ await goto("/login", { replaceState: true, invalidateAll: true });
 
 The Promise resolves after loaders ran and components mounted. If the URL matches the current route, it resolves immediately without re-running loaders — pass `{ invalidateAll: true }` to force a refresh.
 
+Relative URLs resolve against the current page: `goto("?page=2")` is a SPA nav, no need to build the full path.
+
 Options:
 
 | Option          | Default | Description                                                            |

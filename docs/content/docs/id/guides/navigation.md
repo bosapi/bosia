@@ -31,6 +31,8 @@ await goto("/login", { replaceState: true, invalidateAll: true });
 
 `goto()` mengembalikan sebuah Promise yang resolve setelah navigasi mengendap (loader berjalan, komponen ter-mount).
 
+URL relatif di-resolve terhadap halaman saat ini, seperti tautan: `goto("?page=2")` tetap di dalam aplikasi. `goto("#x")` adalah navigasi di halaman yang sama.
+
 ### Opsi
 
 | Opsi            | Default | Deskripsi                                                                       |

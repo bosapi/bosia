@@ -31,6 +31,8 @@ await goto("/login", { replaceState: true, invalidateAll: true });
 
 `goto()` returns a Promise that resolves after the navigation settles (loaders ran, components mounted).
 
+Relative URLs resolve against the current page, like a link: `goto("?page=2")` stays in the app. `goto("#x")` is a same-page navigation.
+
 ### Options
 
 | Option          | Default | Description                                                            |
