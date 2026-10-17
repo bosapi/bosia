@@ -102,11 +102,8 @@ export function isUpgraded(): boolean {
 
 /** A hook threw after the 101: close the socket, as a handler error would. */
 export function closeUpgraded(): void {
-	try {
-		upgrades.getStore()?.socket?.close(1011, "Internal error");
-	} catch {
-		/* already closed */
-	}
+	const ws = upgrades.getStore()?.socket;
+	if (ws) closeEach([ws], 1011, "Internal error");
 }
 
 let closing = false;
@@ -154,11 +151,7 @@ const sockets = new Set<Socket>();
 
 function fail(ws: Socket, err: unknown): void {
 	console.error("WebSocket handler error:", err);
-	try {
-		ws.close(1011, "Internal error");
-	} catch {
-		/* already closed */
-	}
+	closeEach([ws], 1011, "Internal error");
 }
 
 // A user handler's throw or rejection closes that socket with 1011; it must

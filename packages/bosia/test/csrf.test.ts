@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { checkCsrf, checkUpgradeOrigin, type CsrfConfig } from "../src/core/csrf.ts";
 
 function req(method: string, headers: Record<string, string> = {}) {
@@ -81,24 +81,16 @@ describe("checkCsrf — exemptPaths (webhooks)", () => {
 	});
 });
 
-// server.ts applies X-Forwarded-* (behind TRUST_PROXY) to `url` before these
-// run, so they compare against `url` alone and never read those headers.
+// server.ts applies X-Forwarded-* (behind TRUST_PROXY, see proxy.test.ts) to
+// `url` before these run, so they compare against `url` alone.
 describe("checkCsrf — compares against the url it is given", () => {
-	const originalTrustProxy = process.env.TRUST_PROXY;
-
-	afterEach(() => {
-		if (originalTrustProxy === undefined) delete process.env.TRUST_PROXY;
-		else process.env.TRUST_PROXY = originalTrustProxy;
-	});
-
 	const spoofed = {
 		"x-forwarded-host": "attacker.com",
 		"x-forwarded-proto": "https",
 		origin: "https://attacker.com",
 	};
 
-	test("X-Forwarded-* headers are ignored, even with TRUST_PROXY=true", () => {
-		process.env.TRUST_PROXY = "true";
+	test("X-Forwarded-* headers are never read here", () => {
 		const innerUrl = new URL("http://localhost:9001/x");
 		const post = new Request(innerUrl, { method: "POST", headers: spoofed });
 		expect(checkCsrf(post, innerUrl)).toContain("Origin");

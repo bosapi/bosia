@@ -6,7 +6,7 @@
 // is treated as a cross-origin attack.
 
 export interface CsrfConfig {
-	/** Whether to enforce origin checks. Default: true. */
+	/** Whether to enforce the form-post origin check. WebSocket upgrades are always checked. Default: true. */
 	checkOrigin: boolean;
 	/** Additional origins to allow (e.g. CDN or mobile app origin). */
 	allowedOrigins?: string[];
@@ -99,22 +99,7 @@ export function checkUpgradeOrigin(
 	return `Cross-origin WebSocket blocked: Origin "${originHeader}" is not allowed`;
 }
 
-/**
- * First value of an `X-Forwarded-*` header: each proxy in a chain appends its
- * own ("https, http"), and the first is the client-facing one. server.ts
- * rebuilds `url` with these (behind TRUST_PROXY) before any check here runs.
- */
-export function firstForwarded(request: Request, name: string): string | undefined {
-	return request.headers.get(name)?.split(",")[0]?.trim() || undefined;
-}
-
-/** `X-Forwarded-Proto` as an http scheme: Traefik sends `ws`/`wss` on upgrades. */
-export function forwardedProto(request: Request): string | undefined {
-	const proto = firstForwarded(request, "x-forwarded-proto")?.toLowerCase();
-	return proto === "wss" ? "https" : proto === "ws" ? "http" : proto;
-}
-
-// The expected origin is per-request (host-derived), so no Set to precompute —
+// The expected origin is per-request (url.origin), so no Set to precompute —
 // a direct compare plus the tiny static allow-list.
 function originAllowed(origin: string, expected: string, config: CsrfConfig): boolean {
 	return origin === expected || (config.allowedOrigins?.includes(origin) ?? false);

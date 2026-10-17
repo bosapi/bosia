@@ -87,7 +87,7 @@ These are reserved by Bosia and live outside `$env` (so is every `BOSIA_*` name)
 | `CACHE_IGNORE_PARAMS`        | `utm_*,…`  | Query params left out of page cache keys. `none` = off                                               |
 | `CACHE_WAIT_TIMEOUT`         | `60000`    | Ms a miss waits for another request building the same entry                                          |
 | `CSRF_ALLOWED_ORIGINS`       | —          | Extra origins allowed on POST/PUT/PATCH/DELETE                                                       |
-| `TRUST_PROXY`                | `false`    | Trust `X-Forwarded-Host` / `-Proto` for the CSRF origin calc                                         |
+| `TRUST_PROXY`                | `false`    | Trust `X-Forwarded-Host` / `-Proto`: rebuilds `event.url` (CSRF/WS origin, redirects, `Secure`)      |
 | `CORS_ALLOWED_ORIGINS`       | —          | Enable CORS; see [[bosia-cors]]                                                                      |
 | `CORS_ALLOWED_METHODS`       | —          | Override allowed methods                                                                             |
 | `CORS_ALLOWED_HEADERS`       | —          | Override allowed headers                                                                             |

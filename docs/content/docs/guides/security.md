@@ -49,6 +49,8 @@ Only enable this when **all** of the following are true:
 - That proxy **strips** any client-supplied `X-Forwarded-*` headers before forwarding (most do by default; verify yours does).
 - The proxy adds its own `X-Forwarded-Host` / `X-Forwarded-Proto` reflecting the public origin.
 
+With it on, Bosia rebuilds the request URL from those headers, so `event.url`, absolute redirects, the CSRF and WebSocket origin checks and the `Secure` cookie flag all use the public origin. A chained value (`https, http`) uses the first entry; `ws`/`wss` (Traefik on upgrades) count as `http`/`https`. A malformed host or an unknown scheme is ignored.
+
 Do **not** set `TRUST_PROXY=true` when Bosia is internet-facing with no proxy in front, or when you can't verify the proxy strips inbound forwarded headers — that re-opens the spoofing window the default closes.
 
 In **dev mode**, `bun run dev` runs a proxy in front of the inner app server on a different port. The dev proxy injects `X-Forwarded-Host` / `X-Forwarded-Proto` and sets `TRUST_PROXY=true` on the spawned app process automatically, so same-origin form submissions and `POST`s work without any extra configuration.

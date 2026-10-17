@@ -49,6 +49,8 @@ Aktifkan hanya jika **semua** kondisi berikut terpenuhi:
 - Proxy tersebut **menghapus** header `X-Forwarded-*` yang dikirim klien sebelum diteruskan (umumnya proxy melakukan ini secara default; pastikan punyamu juga).
 - Proxy menambahkan `X-Forwarded-Host` / `X-Forwarded-Proto` sendiri yang mencerminkan origin publik.
 
+Saat aktif, Bosia membangun ulang URL request dari header itu, jadi `event.url`, redirect absolut, cek origin CSRF dan WebSocket, serta flag cookie `Secure` memakai origin publik. Nilai berantai (`https, http`) memakai entri pertama; `ws`/`wss` (Traefik saat upgrade) dibaca sebagai `http`/`https`. Host yang rusak atau scheme yang tidak dikenal diabaikan.
+
 **Jangan** menyetel `TRUST_PROXY=true` jika Bosia langsung terekspos ke internet tanpa proxy, atau jika kamu tidak bisa memastikan proxy membersihkan header forwarded yang masuk — hal itu akan membuka kembali celah pemalsuan yang ditutup oleh nilai default.
 
 Pada **mode dev**, `bun run dev` menjalankan proxy di depan app server internal pada port berbeda. Dev proxy menyuntikkan `X-Forwarded-Host` / `X-Forwarded-Proto` dan menyetel `TRUST_PROXY=true` di proses app secara otomatis, sehingga submission form same-origin dan `POST` bekerja tanpa konfigurasi tambahan.

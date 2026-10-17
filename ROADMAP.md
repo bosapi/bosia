@@ -13,11 +13,14 @@
 - [x] 🟡 `$types` was generated only for page dirs; `+server.ts`-only dirs get `Params` + `WebSocketHandler` now. Workers guard flags `websocket` exports.
 - [x] 🟡 Review: one shared `UPGRADED` Response let hooks mutate or hide it, and a hook's new Request broke the upgrade (501). Now a per-request AsyncLocalStorage flag.
 - [x] 🟡 Review: an upgrade pending at shutdown got no 1001 → it opens, then closes 1001. `stop(true)` cut drained responses; now a 500ms graceful stop, then forced (SSE can't hang it).
-- [x] 🟡 Review: chained `X-Forwarded-Proto`/`-Host` (`https, http`) gave a wrong origin → 403 on posts and upgrades. One `firstForwarded()` for csrf and `event.url`.
+- [x] 🟡 Review: chained `X-Forwarded-Proto`/`-Host` (`https, http`) gave a wrong origin → 403 on posts and upgrades. First value of each is used.
 - [x] 🟡 Review: dev proxy threw on odd close codes and mapped client 1001 to 1000; HEAD on a websocket-only route got 405 with an empty `Allow`.
 - [x] 🟡 Review: route handlers sat on `ws.data`, so one object from two routes (a cached user) ran the wrong handlers. Now a per-socket map. Origin check moved before the hooks.
 - [x] ⚪ Review: `WS_*` size errors named `BODY_SIZE_LIMIT` and called 0 "Infinity"; a requested subprotocol failed silently (now a warning). One redirect and one seconds parser.
-- [x] 🟡 Review: `X-Forwarded-Proto: wss` (Traefik) → 403 + no `Secure`; `Upgrade` without `Sec-WebSocket-Key` ran `upgrade()`; upgrade context outlived its request; hook throw after 101 now closes it 1011. CSRF compares `url.origin` only; forwarded host kept the inner port.
+- [x] 🟡 Review: `X-Forwarded-Proto: wss` (Traefik) → 403; `Upgrade` without `Sec-WebSocket-Key` ran `upgrade()`; upgrade context outlived its request; hook throw after 101 left the socket open.
+- [x] 🟡 Review: forwarded host kept the inner port (`app.com:3000`); a malformed one half-applied. One strict `applyForwarded()` (proxy.ts); CSRF compares `url.origin` only.
+- [ ] 🔴 On `main` too: page cache key is path + query only, but `url` follows the `Host` header. A spoofed `Host` can poison cached pages that render `url.origin`. Add `url.host` to the cache key.
+- [ ] 🟡 `X-Forwarded-Proto: constructor` hits an inherited key of `SCHEMES` and drops a valid forwarded host. Use `Object.hasOwn` (proxy.ts).
 - [ ] ⚪ Dev proxy: a handshake in flight during a rebuild gets 502 (or 1011), not 1012. Needs an in-flight set mapped to 1012.
 - [ ] ⚪ Not in v1: subprotocol selection (`protocols` on the export), Workers (WebSocketPair + Durable Objects), dev-proxy backpressure and 101 cookies.
 

@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - A plain GET with a stray `Upgrade` header now reaches your `GET` handler.
 - A hook error after a WebSocket opens now closes that socket (1011) instead of keeping it open.
 - Behind a proxy, `event.url` no longer shows the app's inner port (like `app.com:3000`).
+- A malformed `X-Forwarded-Host` or odd `X-Forwarded-Proto` is now ignored, not half-applied.
 
 ## [1.2.6] - 2026-10-16
 

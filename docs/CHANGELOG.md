@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Navigation guide, skill: hover prefetch skips `rel="external"`; `file://` pages do full loads.
 - Plugins guide: `onAfterHandle` does not run for a WebSocket upgrade.
 - WebSockets guide: a hook error after `resolve()` closes the socket with 1011.
+- Security, env guides, env skill: `TRUST_PROXY` also sets `event.url`, redirects and `Secure`.
 
 ## [0.8.29] - 2026-10-16
 

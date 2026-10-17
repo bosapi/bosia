@@ -16,7 +16,8 @@ import { HttpError, Redirect, ActionFailure, isHttpError, isRedirect } from "./e
 import { CookieJar } from "./cookies.ts";
 import { safePath } from "./safePath.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
-import { checkCsrf, checkUpgradeOrigin, firstForwarded, forwardedProto } from "./csrf.ts";
+import { checkCsrf, checkUpgradeOrigin } from "./csrf.ts";
+import { applyForwarded } from "./proxy.ts";
 import type { CsrfConfig } from "./csrf.ts";
 import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
@@ -1109,9 +1110,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 // (preview/proxy hubs, design tools, etc.). Other security headers stay on.
 const _xfoDisabled = process.env.DISABLE_X_FRAME_OPTIONS === "true";
 
-// Trust `x-forwarded-proto` header behind a TLS-terminating proxy when computing
-// per-request HTTPS-ness (drives `Secure` cookie flag). Off by default — the
-// header is spoofable from any client that talks directly to the app.
+// Behind a reverse proxy, rebuild the request url from X-Forwarded-Host/-Proto
+// (applyForwarded): event.url, redirects, the CSRF/WebSocket origin checks and
+// the `Secure` cookie flag all follow it. Off by default — the headers are
+// spoofable from any client that talks directly to the app.
 const TRUST_PROXY = process.env.TRUST_PROXY === "true";
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -1191,24 +1193,7 @@ function finalizeResponse(
 }
 
 async function handleRequest(request: Request, url: URL): Promise<Response> {
-	// Behind a trusted proxy the inbound `Host`/scheme is the proxy's inner hop
-	// (e.g. `localhost:PORT` over plain HTTP), so `url` built from `request.url`
-	// misreports the public origin. Rebuild it from `X-Forwarded-Host`/`-Proto`
-	// so `event.url` — and every absolute redirect, canonical URL, and
-	// `url.origin` the app derives — points at the public-facing origin instead
-	// of localhost. Gated on TRUST_PROXY since these headers are client-spoofable
-	// when no proxy strips them.
-	if (TRUST_PROXY) {
-		const fwdHost = firstForwarded(request, "x-forwarded-host");
-		// Clear the port first: setting `host` without one keeps the inner port
-		// (`app.example.com:3000`).
-		if (fwdHost) {
-			url.port = "";
-			url.host = fwdHost;
-		}
-		const fwdProto = forwardedProto(request);
-		if (fwdProto) url.protocol = `${fwdProto}:`;
-	}
+	applyForwarded(request, url, TRUST_PROXY);
 
 	// Mounted under BASE_PATH? Everything downstream — hooks, the router, the
 	// /_health and /__bosia tests below — works in app space, so the prefix comes
