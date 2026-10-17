@@ -18,7 +18,7 @@ The first three are SPA — they don't re-execute the entry script. The fourth t
 <a href="/dashboard">Dashboard</a>
 ```
 
-Bosia's click handler intercepts plain anchor clicks and runs `router.navigate()`. Modifier-clicks (Cmd, Ctrl, middle-click) and `target="_blank"` fall through to the browser, so "open in new tab" works as expected. `rel="external"` and `download` also opt out.
+Bosia's click handler intercepts plain anchor clicks and runs `router.navigate()`. Modifier-clicks (Cmd, Ctrl, middle-click) and `target="_blank"` fall through to the browser, so "open in new tab" works as expected. `rel="external"` and `download` also opt out, and hover prefetch skips them too, so a `/logout` loader never runs on hover. Pages opened from `file://` (no host) always do full loads; an Electron app that wants client navigation should serve from a scheme with a host, like `app://bundle`.
 
 ## `goto()`
 

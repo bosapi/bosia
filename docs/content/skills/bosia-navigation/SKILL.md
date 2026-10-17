@@ -65,6 +65,8 @@ Anti-trigger: server-side redirects from a loader or action — use `redirect(30
 
 Prefer SPA paths. `window.location.href` is the last resort.
 
+A link with a side-effect loader (`/logout`) needs `rel="external"`: the click and hover prefetch both skip it. On `file://` pages (no host) the router never routes in-app; serve Electron from a scheme with a host (`app://bundle`).
+
 ### R2 — `goto()` returns a Promise
 
 ```ts

@@ -76,7 +76,7 @@ const enc = new TextEncoder();
 //
 // `url` is app-space (server.ts strips BASE_PATH exactly once, at the top of
 // handleRequest), but every value the client half writes to these fields is
-// browser-space: hydrate.ts assigns raw window.location.pathname, and
+// browser-space: hydrate.ts assigns locationPath() (the address bar), and
 // clientRoutes are generated with the prefix already in them. So the base goes
 // back on before seeding, or a mounted app server-renders `/admin/audit` and
 // hydration flips it to `/sso/admin/audit`.

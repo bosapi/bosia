@@ -50,7 +50,12 @@ export function toRouterPath(url: string, pageHref: string): string {
 	// A path starting `//` (from `/.//evil.com`) would read as another host once used as
 	// a URL, so it stays a full URL: the router leaves for this origin's `//evil.com` page.
 	const page = new URL(pageHref);
-	const ours = u.protocol === page.protocol && u.host === page.host && !u.pathname.startsWith("//");
+	// No host (`file:`) is never ours: every file on disk would count as one app.
+	const ours =
+		u.host !== "" &&
+		u.protocol === page.protocol &&
+		u.host === page.host &&
+		!u.pathname.startsWith("//");
 	// `capacitor://localhost` has an empty path: that's the root.
 	return ours ? (u.pathname || "/") + u.search + u.hash : u.href;
 }

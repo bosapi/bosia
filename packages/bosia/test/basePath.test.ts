@@ -94,6 +94,8 @@ describe("toRouterPath()", () => {
 		expect(toRouterPath("blob:http://x.test/1234", page)).toBe("blob:http://x.test/1234"));
 	test("mailto: still leaves the app", () =>
 		expect(toRouterPath("mailto:j@bosia.dev", page)).toBe("mailto:j@bosia.dev"));
+	test("a file: page (no host) never stays in the app", () =>
+		expect(toRouterPath("/b.html", "file:///a.html")).toBe("file:///b.html"));
 	test("an app-shell scheme (capacitor://) stays in the app", () => {
 		const app = "capacitor://localhost/a?q=1";
 		expect(toRouterPath("?page=2", app)).toBe("/a?page=2");

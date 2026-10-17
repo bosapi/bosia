@@ -25,7 +25,8 @@ function readJsonScript<T>(id: string): T | null {
 // ─── Hydration ────────────────────────────────────────────
 
 async function main() {
-	const path = window.location.pathname;
+	// The pathname of the route the router will hold (`capacitor://localhost` → `/`).
+	const path = new URL(locationPath(), window.location.href).pathname;
 
 	router.init();
 
@@ -170,11 +171,15 @@ if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
 				} catch {
 					// Storage may be unavailable (private mode) — best effort.
 				}
-				// Appended as text: searchParams.set would re-encode the whole query (breaks signed URLs).
+				// Split on `&` and kept as text: searchParams would re-encode the query (breaks
+				// signed URLs), and a pattern could hit a `?_v=` inside a value (`?next=/a?_v=1`).
+				// The last deploy's `_v` goes, so they don't pile up.
 				const url = new URL(window.location.href);
-				// Drop the last deploy's `_v` first, so they don't pile up.
-				const search = url.search.replace(/[?&]_v=\d+/g, "").replace(/^&/, "?");
-				url.search = `${search}${search ? "&" : "?"}_v=${Date.now()}`;
+				const parts = url.search
+					.slice(1)
+					.split("&")
+					.filter((p) => p && !/^_v=\d+$/.test(p));
+				url.search = [...parts, `_v=${Date.now()}`].join("&");
 				window.location.replace(url.href);
 			});
 		}

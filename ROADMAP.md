@@ -13,7 +13,7 @@
 - [x] 🔴 Review: `goto("javascript:…")` (also `data:`, `vbscript:`) went to `window.location` and ran: XSS via `goto(params.get("next"))`. `toRouterPath` throws on them like `redirect()`.
 - [x] 🟠 Review: `redirect()` tested the raw string: `java\tscript:`, `\x01javascript:` passed, `htt\tps://evil.com` and `/\evil.com` counted as relative. Parsed with `new URL` now; one `DANGEROUS_PROTOCOL` (basePath.ts) for both sides.
 - [x] 🟡 Review: same-origin `blob:` URLs became `https://host/uuid` (404); only http(s) counts as in-app. Error says `navigation:`, not `goto():`. Docs say "rejects", skill no longer calls `?next=` safe.
-- [x] 🔴 Review: parsing against the `http://bosia.invalid` sentinel let `http:evil.com` pass as a path (an https page sends it to http://evil.com), and the sentinel host itself. Relative now also means `!URL.canParse(location)`.
+- [x] 🔴 Review: parsing against the `http://bosia.invalid` sentinel let `http:evil.com` pass as a path (an https page sends it to http://evil.com), and the sentinel host itself. Relative now also means it fails to parse alone.
 - [x] ⚪ Review: an unparseable location throws `invalid URL`, with `allowExternal` too (was passed through). Security guide documents both.
 - [x] 🔴 Review: a same-origin `//` path (`/.//evil.com`) came out of `toRouterPath` as `//evil.com`, read as a host: off-site. It stays a full URL now; link clicks pass `anchor.href`, `readDataResponse` returns `res.url`.
 - [x] 🔴 Review: popstate, hydration and the hash-link branch stored raw `location.pathname`; Back onto `//evil.com/x` hard-loaded evil.com. All go through `locationPath()` now; hover prefetch skips `//` links.
@@ -21,10 +21,16 @@
 - [x] 🟡 Review: hydrate's stale-chunk reload (raw pathname) and trailing-slash `replaceState` (throws) on a `//x` page fixed; `buildTarget` takes params from `new URL`, so a full-URL route keeps them.
 - [x] 🟠 Review 8–10: app shells (`capacitor://`) stay in-app: scheme + host match, empty path = `/`; client URLs resolve against `location.href` (`location.origin` can be "null": threw); links take the page's scheme.
 - [x] 🟡 Review 8: the `//` 308 used idempotent `withBase`: `/sso//sso/x` went to `/sso/x`. `URL.canParse` (no Safari 16) swapped for try/`new URL`. Stale reload appends `_v` as text (searchParams re-encoded the query), dropping the last one.
+- [x] 🟡 Review 11: `_v` strip ended at the digits (`?q=a&_v=12abc` → `?q=aabc`); link clicks and hover prefetch check scheme + host like toRouterPath (origin "null" let other shell hosts in); hydration reads an empty path as `/`.
+- [x] 🟡 Review 12: hover prefetch skips `rel="external"` links (a `/logout` loader ran on hover). Comments fixed (sandboxed iframes aren't "null"; renderer). `redirect()` scheme error no longer says same-origin URLs pass.
+- [x] 🟡 Review 13: `file:` pages (no host) counted every file as in-app (click intercepted, prefetch fetched over file://); a URL with no host is never ours. `rel="External"` matches case-insensitively.
+- [x] 🟡 Review 14/15: one `appLinkPath(anchor)` for click + prefetch (no-href `<a>` skipped); same-page, prefetch and hydrate compare `locationPath()`. `_v` drops whole `&` parts; `rel` splits on ASCII space.
+- [ ] ⚪ `goto("settings")` resolves against `location.href`, links against `document.baseURI`: with `<base href="/app/">` in app.html they disagree (main reloaded, so the browser used the base). Resolve against baseURI, compare host with the page.
+- [ ] ⚪ The `//x` 308 (server.ts) returns before CORS, hooks and `finalizeResponse`: no security headers, a cross-origin preflight to `//api/x` fails. Same as the base 404 and 413 next to it.
 - [ ] ⚪ Trailing-slash 308 (server.ts) and SSR route (renderer.ts) use idempotent `withBase`: under `/sso`, app route `/sso/x/` 308s to `/sso/x` (app `/x`). Also `redirect(303, "/sso/x")` (errors.ts). Needs a `base + path` helper.
-- [ ] ⚪ Hover prefetch checks links apart from the click handler: no `rel="external"` or scheme check, so a same-origin `blob:` link prefetches. Share one `isAppLink(anchor)`.
+- [ ] ⚪ Prefetch is keyed `pathname + search`, consumed by `currentRoute` (hash, canonical slash): `/docs#intro` or `/about/` links fetch twice.
 - [ ] ⚪ `goto("")` on `/a#x` drops the hash: a new history entry and a scroll to top.
-- [ ] 🟡 A loader redirect `navigate()` refuses (hook `Response` with a bad/`javascript:` Location) throws in App.svelte's redirect branch: uncaught, maybe `goto()` waiters hang. Wrap it, `abandonRun()`.
+- [ ] 🟡 A loader redirect `navigate()` refuses (hook `Response` with a bad/`javascript:` Location) throws in App.svelte's redirect branch: `.catch` releases waiters, but logs an uncaught error and the address bar keeps the new URL over the old page.
 - [ ] ⚪ `redirect(" /x")` validates trimmed but rebases/sends untrimmed: under `BASE_PATH` it skips the prefix. Send the trimmed value.
 - [ ] ⚪ `redirect()` gives `//evil` "protocol-relative" but `/\evil` "external URL"; the raw `//` check could go. `DANGEROUS_PROTOCOL` sits in basePath.ts; `toRouterPath` parses `pageHref` twice.
 - [ ] ⚪ A relative `use:enhance` redirect (`"profile"`) resolves against the current page; HTTP resolves it against the form's action URL (`/account/settings` → `/account/profile`).

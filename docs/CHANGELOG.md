@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Navigation guide, skill: `goto()` rejects `javascript:` URLs; check `?next=` stays on your site.
 - Security guide: `redirect()` reads URLs like a browser; broken URLs throw, `allowExternal` too.
 - Security guide: a path starting with `//` is redirected to a single `/`.
+- Navigation guide, skill: hover prefetch skips `rel="external"`; `file://` pages do full loads.
 
 ## [0.8.29] - 2026-10-16
 

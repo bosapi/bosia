@@ -78,7 +78,7 @@ function validateRedirectLocation(location: string, options?: RedirectOptions): 
 	if (DANGEROUS_PROTOCOL.test(url.protocol)) {
 		throw new Error(
 			`redirect(): dangerous scheme in URL "${location}". ` +
-				`Only relative paths and same-origin URLs are allowed.`,
+				`Use a relative path or an http(s) URL with { allowExternal: true }.`,
 		);
 	}
 

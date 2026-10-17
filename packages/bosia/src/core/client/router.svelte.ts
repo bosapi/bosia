@@ -80,6 +80,24 @@ export function locationPath(): string {
 	return toRouterPath(window.location.href, window.location.href);
 }
 
+/** The router path an `<a>` goes to, or null when the browser should follow it: `target`,
+ *  `download`, `rel="external"`, or anything toRouterPath doesn't call ours (another
+ *  scheme or host, no host like `file:`, a `//x` path, a `javascript:` href).
+ *  The click handler and hover prefetch both use it, so they can't disagree. */
+export function appLinkPath(anchor: HTMLAnchorElement): string | null {
+	// No href (`<a role="button">`) is not a link: `anchor.href` "" would read as this page.
+	if (!anchor.hasAttribute("href")) return null;
+	if (anchor.target || anchor.hasAttribute("download")) return null;
+	// HTML splits `rel` on ASCII whitespace only, and ignores case.
+	if (/(^|[\t\n\f\r ])external([\t\n\f\r ]|$)/i.test(anchor.rel)) return null;
+	try {
+		const path = toRouterPath(anchor.href, window.location.href);
+		return path.startsWith("/") ? path : null;
+	} catch {
+		return null; // a dangerous scheme: the browser handles it, as on any page
+	}
+}
+
 export const router = new (class Router {
 	currentRoute = $state(typeof window !== "undefined" ? locationPath() : "/");
 	/** Base `page.url` resolves the route against. Empty on the server until the renderer
@@ -206,19 +224,15 @@ export const router = new (class Router {
 
 			const anchor = (e.target as HTMLElement).closest("a");
 			if (!anchor) return;
-			if (anchor.origin !== window.location.origin) return;
-			if (anchor.target) return;
-			if (anchor.hasAttribute("download")) return;
-			if (anchor.rel.split(/\s+/).includes("external")) return;
-			if (anchor.protocol !== window.location.protocol) return;
+			const path = appLinkPath(anchor);
+			if (path === null) return;
 
 			// Same-page hash navigation: skip page reload, just update URL and scroll
 			// to the target element. Mirrors browser default for in-page anchors.
-			const samePage =
-				anchor.pathname === window.location.pathname && anchor.search === window.location.search;
+			const samePage = path.split("#")[0] === locationPath().split("#")[0];
 			if (samePage && anchor.hash) {
 				e.preventDefault();
-				const finalPath = toRouterPath(anchor.href, window.location.href);
+				const finalPath = path;
 				if (this.currentRoute !== finalPath) {
 					saveScroll();
 					savePageSnapshot();
@@ -232,8 +246,7 @@ export const router = new (class Router {
 			}
 
 			e.preventDefault();
-			// The full href: navigate() parses it, so a `//x` pathname can't read as a host.
-			this.navigate(anchor.href, { source: "link" });
+			this.navigate(path, { source: "link" });
 		});
 
 		// Browser back/forward

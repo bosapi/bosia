@@ -7,6 +7,7 @@ import { clientRoutes } from "bosia:routes";
 import { appState } from "./appState.svelte.ts";
 import { liveContext, shouldRerun } from "./loaderCache.ts";
 import { base } from "./base.ts";
+import { appLinkPath, locationPath } from "./router.svelte.ts";
 
 /**
  * Build the `_invalidated` mask bits for a target path using the current
@@ -146,7 +147,7 @@ export function clearPrefetches(): void {
 export async function prefetchPath(path: string): Promise<void> {
 	// Nothing to fetch for the page we're on. A click also focuses its link, so
 	// the focusin trigger fires ~100ms after the navigation it belongs to.
-	if (path === window.location.pathname + window.location.search) return;
+	if (path === locationPath().split("#")[0]) return;
 	// Warm the route's +loading.svelte chunk alongside its data, so the skeleton
 	// paints instantly on click instead of cold-importing after the old page lingers.
 	const warmMatch = findMatch(clientRoutes, new URL(path, window.location.href).pathname);
@@ -202,12 +203,8 @@ export async function prefetchPath(path: string): Promise<void> {
 }
 
 function getLinkHref(anchor: HTMLAnchorElement): string | null {
-	if (anchor.origin !== window.location.origin) return null;
-	if (anchor.target) return null;
-	if (anchor.hasAttribute("download")) return null;
-	// A `//x` path would read as host x below; the click does a full load on it anyway.
-	if (anchor.pathname.startsWith("//")) return null;
-	return anchor.pathname + anchor.search;
+	// The click handler's own check; the cache is keyed without the hash.
+	return appLinkPath(anchor)?.split("#")[0] ?? null;
 }
 
 function observeViewportLinks(container: Element | Document = document) {

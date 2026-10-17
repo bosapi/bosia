@@ -18,7 +18,7 @@ Tiga yang pertama bersifat SPA — tidak mengeksekusi ulang skrip entry. Yang ke
 <a href="/dashboard">Dashboard</a>
 ```
 
-Handler klik milik Bosia mencegat klik anchor biasa dan menjalankan `router.navigate()`. Klik dengan modifier (Cmd, Ctrl, klik tengah) dan `target="_blank"` diteruskan ke browser, sehingga "buka di tab baru" tetap bekerja seperti yang diharapkan. `rel="external"` dan `download` juga ikut keluar.
+Handler klik milik Bosia mencegat klik anchor biasa dan menjalankan `router.navigate()`. Klik dengan modifier (Cmd, Ctrl, klik tengah) dan `target="_blank"` diteruskan ke browser, sehingga "buka di tab baru" tetap bekerja seperti yang diharapkan. `rel="external"` dan `download` juga ikut keluar, dan prefetch saat hover juga melewatinya, jadi loader `/logout` tidak pernah jalan saat hover. Halaman yang dibuka dari `file://` (tanpa host) selalu memuat ulang penuh; aplikasi Electron yang ingin navigasi klien sebaiknya disajikan dari skema dengan host, seperti `app://bundle`.
 
 ## `goto()`
 
