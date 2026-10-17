@@ -21,6 +21,7 @@
 - [x] 🟡 Review: forwarded host kept the inner port (`app.com:3000`); a malformed one half-applied. One strict `applyForwarded()` (proxy.ts); CSRF compares `url.origin` only.
 - [ ] 🔴 On `main` too: page cache key is path + query only, but `url` follows the `Host` header. A spoofed `Host` can poison cached pages that render `url.origin`. Add `url.host` to the cache key.
 - [ ] 🟡 `X-Forwarded-Proto: constructor` hits an inherited key of `SCHEMES` and drops a valid forwarded host. Use `Object.hasOwn` (proxy.ts).
+- [ ] ⚪ Graceful shutdown is untested on Windows (no SIGTERM; `kill()` terminates). CI skips that test there. Cover Ctrl+C (SIGINT) if Windows hosts matter.
 - [ ] ⚪ Dev proxy: a handshake in flight during a rebuild gets 502 (or 1011), not 1012. Needs an in-flight set mapped to 1012.
 - [ ] ⚪ Not in v1: subprotocol selection (`protocols` on the export), Workers (WebSocketPair + Durable Objects), dev-proxy backpressure and 101 cookies.
 

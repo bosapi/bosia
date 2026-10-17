@@ -580,21 +580,25 @@ describe("frames and close", () => {
 
 // Last: it stops the server.
 describe("shutdown", () => {
-	test("SIGTERM: sockets close with 1001, a pending upgrade too, and the process exits 0", async () => {
-		const ws = await connect("/ws/echo");
-		const done = closed(ws);
-		// Still inside its async upgrade() when the signal lands: it opens, so
-		// the app sees open/close and can clean up, then gets 1001 at once.
-		const pending = connect("/ws/slow").then(closed);
-		// An open stream never finishes by itself; shutdown must not wait on it.
-		const sse = await fetch(`${origin}/sse`);
-		await sse.body!.getReader().read();
-		await Bun.sleep(100);
-		child!.kill("SIGTERM");
-		expect((await done).code).toBe(1001);
-		expect((await pending).code).toBe(1001);
-		const t = Date.now();
-		expect(await child!.exited).toBe(0);
-		expect(Date.now() - t).toBeLessThan(1500);
-	});
+	// Windows has no SIGTERM: kill() terminates the process, so no handler runs.
+	test.skipIf(process.platform === "win32")(
+		"SIGTERM: sockets close with 1001, a pending upgrade too, and the process exits 0",
+		async () => {
+			const ws = await connect("/ws/echo");
+			const done = closed(ws);
+			// Still inside its async upgrade() when the signal lands: it opens, so
+			// the app sees open/close and can clean up, then gets 1001 at once.
+			const pending = connect("/ws/slow").then(closed);
+			// An open stream never finishes by itself; shutdown must not wait on it.
+			const sse = await fetch(`${origin}/sse`);
+			await sse.body!.getReader().read();
+			await Bun.sleep(100);
+			child!.kill("SIGTERM");
+			expect((await done).code).toBe(1001);
+			expect((await pending).code).toBe(1001);
+			const t = Date.now();
+			expect(await child!.exited).toBe(0);
+			expect(Date.now() - t).toBeLessThan(1500);
+		},
+	);
 });
