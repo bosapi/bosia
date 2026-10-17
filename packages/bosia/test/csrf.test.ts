@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { checkCsrf, type CsrfConfig } from "../src/core/csrf.ts";
+import { checkCsrf, checkUpgradeOrigin, type CsrfConfig } from "../src/core/csrf.ts";
 
 function req(method: string, headers: Record<string, string> = {}) {
 	return new Request("https://app.example.com/x", { method, headers });
@@ -131,5 +131,35 @@ describe("checkCsrf — TRUST_PROXY gate", () => {
 			},
 		});
 		expect(checkCsrf(r, innerUrl)).toContain("Origin");
+	});
+});
+
+describe("checkUpgradeOrigin", () => {
+	const upgrade = (headers: Record<string, string> = {}) =>
+		req("GET", { upgrade: "websocket", ...headers });
+
+	test("same Origin passes", () => {
+		expect(checkUpgradeOrigin(upgrade({ origin: "https://app.example.com" }), url)).toBe(null);
+	});
+
+	test("missing Origin passes — a non-browser client has no ambient cookies", () => {
+		expect(checkUpgradeOrigin(upgrade(), url)).toBe(null);
+	});
+
+	test("cross-site Origin is rejected, even though the method is GET", () => {
+		expect(checkUpgradeOrigin(upgrade({ origin: "https://evil.com" }), url)).toContain("evil.com");
+	});
+
+	test("allowedOrigins, exemptPaths and checkOrigin: false let it through", () => {
+		const evil = upgrade({ origin: "https://evil.com" });
+		expect(
+			checkUpgradeOrigin(evil, url, { checkOrigin: true, allowedOrigins: ["https://evil.com"] }),
+		).toBe(null);
+		expect(checkUpgradeOrigin(evil, url, { checkOrigin: true, exemptPaths: ["/x"] })).toBe(null);
+		expect(checkUpgradeOrigin(evil, url, { checkOrigin: false })).toBe(null);
+	});
+
+	test("a Referer alone is not an Origin", () => {
+		expect(checkUpgradeOrigin(upgrade({ referer: "https://evil.com/" }), url)).toBe(null);
 	});
 });

@@ -19,6 +19,7 @@ export interface WorkersGuardHit {
 }
 
 const SERVER_FILE = /(^|\/)(hooks\.server\.(ts|js)|\+server\.(ts|js)|\+[^/]*\.server\.(ts|js))$/;
+const API_FILE = /(^|\/)\+server\.(ts|js)$/;
 const LIB_SERVER = /^lib\/server\/.*\.(ts|js)$/;
 const FS_MODULES = new Set(["fs", "node:fs", "fs/promises", "node:fs/promises"]);
 
@@ -54,12 +55,26 @@ export function findWorkersIncompatible(srcDir = "./src"): WorkersGuardHit[] {
 		const lines = source.split("\n");
 
 		let imports: { path: string }[] = [];
+		let exports: string[] = [];
 		try {
-			imports = new Bun.Transpiler({ loader: rel.endsWith(".js") ? "js" : "ts" }).scan(
-				source,
-			).imports;
+			({ imports, exports } = new Bun.Transpiler({
+				loader: rel.endsWith(".js") ? "js" : "ts",
+			}).scan(source));
 		} catch {
 			continue; // syntax error — the real build reports it better
+		}
+		// Any export form (`const`, `let`, `export { websocket }`) shows up here.
+		if (API_FILE.test(rel) && exports.includes("websocket")) {
+			const i = Math.max(
+				0,
+				lines.findIndex((l) => /\bwebsocket\b/.test(l) && /\bexport\b/.test(l)),
+			);
+			hits.push({
+				file,
+				line: i + 1,
+				col: 1,
+				message: "exports `websocket` — WebSockets are Bun-only for now",
+			});
 		}
 		for (const { path } of imports) {
 			const message = badImport(path);

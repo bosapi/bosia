@@ -4,6 +4,16 @@
 // Workers alike.
 // Only the subset the framework and plugins use — not a general router.
 
+import type { Server } from "bun";
+
+import {
+	UPGRADED,
+	bindServer,
+	isUpgradeRequest,
+	websocketHandlers,
+	type WebSocketOptions,
+} from "./websocket.ts";
+
 /** Outbound response bag — merged into whatever the handler returns. */
 export interface ResponseSet {
 	status?: number;
@@ -41,10 +51,14 @@ export type ErrorHook = (ctx: { request: Request; error: unknown; set: ResponseS
  * `start`: `performance.now()` when the request entered `fetch`. Observe only:
  * the return value is ignored and a throw or rejection is swallowed. `response`
  * is the one the client gets — don't read its body or change its headers.
+ * `status` is the status the client got: 101 for a WebSocket upgrade, whose
+ * `response` is only a marker (a 101 Response can't be built).
  */
 export type ResponseHook = (ctx: {
 	request: Request;
 	response: Response;
+	status: number;
+	upgraded: boolean;
 	start: number;
 }) => void | Promise<unknown>;
 
@@ -52,6 +66,7 @@ export interface ServeOptions {
 	maxRequestBodySize?: number;
 	idleTimeout?: number;
 	reusePort?: boolean;
+	websocket?: WebSocketOptions;
 }
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "*";
@@ -150,8 +165,14 @@ export class BosiaApp {
 		return [...methods];
 	}
 
-	fetch = async (request: Request): Promise<Response> => {
-		if (this.responseHooks.length === 0) return this.respond(request);
+	/** `undefined` after a WebSocket upgrade — Bun has already answered with 101.
+	 *  Only Bun passes `server`, so Workers never upgrades. */
+	fetch = async (request: Request, server?: Server<any>): Promise<Response | undefined> => {
+		if (server && isUpgradeRequest(request)) bindServer(request, server);
+		if (this.responseHooks.length === 0) {
+			const response = await this.respond(request);
+			return response === UPGRADED ? undefined : response;
+		}
 		const start = performance.now();
 		let response: Response;
 		try {
@@ -162,13 +183,15 @@ export class BosiaApp {
 			throw error;
 		}
 		this.observe(request, response, start);
-		return response;
+		return response === UPGRADED ? undefined : response;
 	};
 
 	private observe(request: Request, response: Response, start: number): void {
+		const upgraded = response === UPGRADED;
+		const status = upgraded ? 101 : response.status;
 		for (const hook of this.responseHooks) {
 			try {
-				const out = hook({ request, response, start });
+				const out = hook({ request, response, status, upgraded, start });
 				// An async observer's rejection would be unhandled — fatal in prod.
 				if (out instanceof Promise) out.catch(() => {});
 			} catch {
@@ -189,7 +212,7 @@ export class BosiaApp {
 		const method = isHead ? "GET" : request.method.toUpperCase();
 		try {
 			const res = await this.dispatch(request, method, set);
-			return isHead ? new Response(null, res) : res;
+			return isHead && res !== UPGRADED ? new Response(null, res) : res;
 		} catch (error) {
 			for (const hook of this.errorHooks) {
 				const out = await hook({ request, error, set });
@@ -227,6 +250,8 @@ export class BosiaApp {
 			response = "Method Not Allowed";
 		}
 
+		// Bun already sent the 101: nothing after this can change the answer.
+		if (response === UPGRADED) return UPGRADED;
 		for (const hook of this.afterHooks) {
 			const out = await hook({ request, response, set });
 			if (out !== undefined) response = out;
@@ -243,6 +268,7 @@ export class BosiaApp {
 			maxRequestBodySize: serve.maxRequestBodySize,
 			idleTimeout: serve.idleTimeout,
 			reusePort: serve.reusePort ?? false,
+			websocket: { ...websocketHandlers, ...serve.websocket, sendPings: true },
 		});
 		callback?.();
 		return this;

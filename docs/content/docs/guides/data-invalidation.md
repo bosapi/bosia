@@ -58,7 +58,7 @@ await invalidate("/api/posts");
 await invalidate((url) => url.pathname.startsWith("/api/"));
 ```
 
-Invalidation marks the matching cache entries dirty and re-runs only those loaders the next time the nav effect fires. Calling `invalidate()` outside of a navigation (e.g. after a WebSocket message) triggers a re-run on the current URL.
+Invalidation marks the matching cache entries dirty and re-runs only those loaders the next time the nav effect fires. Calling `invalidate()` outside of a navigation (e.g. after a [WebSocket](/guides/websockets) message) triggers a re-run on the current URL.
 
 ## `invalidateAll()`
 

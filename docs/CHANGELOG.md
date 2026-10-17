@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.8.30] - 2026-10-17
 
+### Added
+
+- WebSockets guide (English + Indonesian): auth, origin check, backpressure, close codes.
+- Environment variables guide: `WS_MAX_PAYLOAD`, `WS_IDLE_TIMEOUT`, `WS_BACKPRESSURE_LIMIT`, `WS_COMPRESS`.
+- Routing skill: rule for `websocket` exports in `+server.ts`.
+
 ### Changed
 
 - Navigation guide, navigation skill: `goto()` accepts relative URLs like `?page=2`.

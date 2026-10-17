@@ -5,6 +5,14 @@
 
 ---
 
+## bosia 1.2.7 (2026-10-17) — WebSockets
+
+- [x] 🟠 No WebSocket support: `Bun.serve` had no `websocket`, `fetch` dropped `server`. `+server.ts` exports `websocket`; upgrade runs after hooks, `ws.data` = `upgrade()` result.
+- [x] 🔴 GET skips CSRF, so a cross-site page could open a socket with the user's cookies. `checkUpgradeOrigin`: foreign Origin → 403, no Origin (CLI/device) passes.
+- [x] 🟡 Shutdown closes sockets with 1001; dev proxy connects to the app first (refusal = failed handshake, like prod), rebuild → 1012, 1006 → 1011.
+- [x] 🟡 `$types` was generated only for page dirs; `+server.ts`-only dirs get `Params` + `WebSocketHandler` now. Workers guard flags `websocket` exports.
+- [ ] ⚪ Not in v1: subprotocol selection (`protocols` on the export), Workers (WebSocketPair + Durable Objects), dev-proxy backpressure and 101 cookies.
+
 ## bosia 1.2.7 (2026-10-17) — goto resolves relative URLs
 
 - [x] 🟡 `goto("?page=2")`, `goto("b")`, same-origin full URLs, relative `use:enhance` and loader redirects matched no route: full reload (since 0.5.10). `router.navigate` resolves them (`toRouterPath`).

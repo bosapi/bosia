@@ -5,6 +5,8 @@ import { loadEnv } from "./env.ts";
 import { BOSIA_NODE_PATH } from "./paths.ts";
 import { pidsOnPort } from "./port.ts";
 import { affectsRouteManifest, shouldIgnoreForRebuild } from "./devWatch.ts";
+import { closeProxiedSockets, proxyHandlers, proxyUpgrade } from "./devWsProxy.ts";
+import { isUpgradeRequest } from "./websocket.ts";
 
 // Dev always writes to .bosia/dev so a parallel `bun run build` (writing to ./dist)
 // can't clobber the live preview. Hardcoded — BOSIA_OUT_DIR is a build-mode knob,
@@ -183,6 +185,9 @@ async function reapStaleAppServer(port: number) {
 
 async function startAppServer() {
 	if (appProcess) {
+		// The app dies without closing its sockets (upstream would read 1006):
+		// tell proxied clients it's a restart so they reconnect to the new build.
+		closeProxiedSockets(1012, "Server restarting");
 		intentionalKill = true;
 		appProcess.kill("SIGTERM");
 		// Escalate to SIGKILL if the child won't stop — otherwise `await exited`
@@ -333,7 +338,8 @@ function scheduleBuild() {
 const devServer = Bun.serve({
 	port: DEV_PORT,
 	idleTimeout: 255,
-	async fetch(req) {
+	websocket: proxyHandlers,
+	async fetch(req, server) {
 		const url = new URL(req.url);
 
 		// SSE endpoint — owned by dev server, not the app
@@ -455,6 +461,10 @@ const devServer = Bun.serve({
 		// decode raw data") on every HTML navigation. Identity on the dev wire
 		// is fine — it's localhost.
 		forwardedHeaders.set("accept-encoding", "identity");
+
+		// WebSockets can't go through fetch(): connect to the app first, then
+		// upgrade the client (see devWsProxy.ts).
+		if (isUpgradeRequest(req)) return proxyUpgrade(req, server, target, forwardedHeaders);
 
 		// HMR-driven reloads can land on the proxy before the freshly-respawned
 		// inner has bound APP_PORT. Retry for a few seconds on idempotent HTML

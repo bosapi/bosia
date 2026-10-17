@@ -58,7 +58,7 @@ await invalidate("/api/posts");
 await invalidate((url) => url.pathname.startsWith("/api/"));
 ```
 
-Invalidasi menandai entri cache yang cocok sebagai kotor (dirty) dan menjalankan ulang hanya loader tersebut pada saat efek navigasi berikutnya menyala. Memanggil `invalidate()` di luar navigasi (misal setelah pesan WebSocket) akan memicu pengulangan untuk URL saat ini.
+Invalidasi menandai entri cache yang cocok sebagai kotor (dirty) dan menjalankan ulang hanya loader tersebut pada saat efek navigasi berikutnya menyala. Memanggil `invalidate()` di luar navigasi (misal setelah pesan [WebSocket](/id/guides/websockets)) akan memicu pengulangan untuk URL saat ini.
 
 ## `invalidateAll()`
 

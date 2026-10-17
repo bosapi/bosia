@@ -67,6 +67,13 @@ beforeAll(async () => {
 			`<p data-path={page.url.pathname} data-href={page.url.href}>Profil</p>\n`,
 	);
 
+	// A WebSocket route is reached through the mount like any other.
+	mkdirSync(join(routes, "ws"), { recursive: true });
+	writeFileSync(
+		join(routes, "ws", "+server.ts"),
+		`export const websocket = {\n\tmessage(ws, msg) {\n\t\tws.send(msg);\n\t},\n};\n`,
+	);
+
 	const build = Bun.spawn(["bun", "run", join(import.meta.dir, "..", "src", "core", "build.ts")], {
 		cwd: tmpDir,
 		env: {
@@ -120,6 +127,22 @@ afterAll(async () => {
 });
 
 describe("a built server mounted under BASE_PATH", () => {
+	test("a WebSocket route upgrades under the mount", async () => {
+		const ws = new WebSocket(`${origin.replace("http", "ws")}${BASE}/ws`);
+		await new Promise((resolve, reject) => {
+			ws.onopen = resolve;
+			ws.onerror = reject;
+		});
+		const echo = new Promise((r) =>
+			ws.addEventListener("message", (e) => r(e.data), { once: true }),
+		);
+		ws.send("ping");
+		expect(await echo).toBe("ping");
+		ws.close();
+		// Off the mount it was never ours.
+		expect((await fetch(`${origin}/ws`)).status).toBe(404);
+	});
+
 	test("404s the origin root — off-mount was never ours", async () => {
 		expect((await fetch(`${origin}/`)).status).toBe(404);
 	});

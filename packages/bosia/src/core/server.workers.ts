@@ -41,6 +41,7 @@ export default {
 	fetch(request: Request, env: PlatformEnv): Response | Promise<Response> {
 		// Bindings are one object per isolate — capture on the first request.
 		if (!getPlatform()) setPlatform({ env });
-		return app.fetch(request);
+		// No `server` passed, so nothing is ever upgraded and a Response always comes back.
+		return app.fetch(request) as Promise<Response>;
 	},
 };

@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [1.2.7] - 2026-10-17
 
+### Added
+
+- WebSockets (Bun): export `websocket` from a `+server.ts`; hooks and `locals` run before it.
+- WebSocket upgrades from another site are blocked (403), like form posts.
+- Open WebSockets close with code 1001 on shutdown and 1012 on a dev rebuild, so clients reconnect.
+- `bun run dev` passes WebSockets through to your app.
+- New settings: `WS_MAX_PAYLOAD`, `WS_IDLE_TIMEOUT`, `WS_BACKPRESSURE_LIMIT`, `WS_COMPRESS`.
+- `./$types` now exists for `+server.ts`-only folders too (`Params`, `WebSocketHandler`).
+- `onResponse` hooks get `status` and `upgraded`; the access log shows WebSocket upgrades as 101.
+
 ### Fixed
 
 - `goto("?page=2")` now stays in the app instead of reloading the whole page.

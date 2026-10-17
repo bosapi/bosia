@@ -16,7 +16,7 @@ import { HttpError, Redirect, ActionFailure, isHttpError, isRedirect } from "./e
 import { CookieJar } from "./cookies.ts";
 import { safePath } from "./safePath.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
-import { checkCsrf } from "./csrf.ts";
+import { checkCsrf, checkUpgradeOrigin } from "./csrf.ts";
 import type { CsrfConfig } from "./csrf.ts";
 import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
@@ -74,6 +74,14 @@ import {
 	renderPageWithFormData,
 } from "./renderer.ts";
 import { getServerTime } from "../lib/utils.ts";
+import {
+	UPGRADED,
+	closeAllSockets,
+	isUpgradeRequest,
+	upgradeRequest,
+	type WebSocketHandler,
+	type WebSocketOptions,
+} from "./websocket.ts";
 
 // ─── User Hooks ──────────────────────────────────────────
 // Set by createApp(). Each runtime entry finds `src/hooks.server.ts` its own
@@ -650,11 +658,47 @@ async function resolve(event: RequestEvent): Promise<Response> {
 		let releaseApiMiss: (() => void) | null = null;
 		try {
 			const mod = await apiMatch.route.module();
+
+			// WebSocket upgrade — before the response cache, which must never see it.
+			const ws = (mod as { websocket?: WebSocketHandler<any, any> }).websocket;
+			if (ws && isUpgradeRequest(request)) {
+				event.params = apiMatch.params;
+				const originError = checkUpgradeOrigin(request, url, CSRF_CONFIG);
+				if (originError) {
+					console.warn(`[CSRF] Blocked WebSocket upgrade: ${originError}`);
+					return Response.json({ error: "Forbidden", message: originError }, { status: 403 });
+				}
+				const result = ws.upgrade ? await ws.upgrade(event) : undefined;
+				if (result instanceof Response) return result;
+				if (isRedirect(result)) {
+					return new Response(null, {
+						status: result.status,
+						headers: { Location: result.location },
+					});
+				}
+				if (result !== undefined && (result === null || typeof result !== "object")) {
+					throw new Error(
+						`websocket.upgrade() in ${apiMatch.route.id} must return an object, a Response or nothing`,
+					);
+				}
+				// Cookies a hook set before resolve() ride on the 101; later ones are lost.
+				const headers = new Headers();
+				for (const cookie of (cookies as CookieJar).outgoing) headers.append("Set-Cookie", cookie);
+				return upgradeRequest(request, ws, result ?? {}, headers);
+			}
+
 			// HEAD falls back to GET (an explicit HEAD export still wins). BosiaApp
 			// strips the body on the way out, for every route kind.
 			const handler = mod[method] ?? (method === "HEAD" ? mod.GET : undefined);
 
 			if (!handler) {
+				// A websocket-only route asked over plain HTTP.
+				if (ws && method === "GET") {
+					return new Response("Upgrade Required", {
+						status: 426,
+						headers: { Upgrade: "websocket", Connection: "Upgrade" },
+					});
+				}
 				const allowed = Object.keys(mod).filter((k) => /^[A-Z]+$/.test(k));
 				if (allowed.includes("GET") && !allowed.includes("HEAD")) allowed.push("HEAD");
 				return Response.json(
@@ -1293,6 +1337,9 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		// `Location` is copied verbatim: `redirect()` already rebased it through
 		// `withBase()`, and a raw `Response.redirect` under a BASE_PATH carries the
 		// base by hand, so rebasing here would double the prefix on both.
+		// Bun already answered with 101; there is no response left to finish.
+		if (response === UPGRADED) return response;
+
 		if (dataReq && response.status >= 300 && response.status < 400) {
 			const location = response.headers.get("location");
 			if (location) {
@@ -1428,6 +1475,33 @@ const IDLE_TIMEOUT = parseIdleTimeout(process.env.IDLE_TIMEOUT);
 
 console.log(`⏱  Idle timeout: ${IDLE_TIMEOUT}s`);
 
+// ─── WebSocket Limits ─────────────────────────────────────
+// Parsed once at startup. Sizes take the BODY_SIZE_LIMIT format ("16M").
+// WS_IDLE_TIMEOUT is seconds without a frame before Bun closes the socket; Bun
+// pings idle sockets on its own, so a live peer never hits it.
+
+function parseWsIdleTimeout(value?: string): number {
+	if (!value) return 120;
+	const n = parseInt(value, 10);
+	if (!/^\d+$/.test(value) || n > 960)
+		throw new Error(`Invalid WS_IDLE_TIMEOUT: "${value}" (0–960)`);
+	return n;
+}
+
+function parseWsSize(key: string, value?: string): number {
+	if (!value) return 16 * 1024 * 1024;
+	const n = parseBodySizeLimit(value);
+	if (n === 0) throw new Error(`Invalid ${key}: "${value}" (Infinity is not allowed)`);
+	return n;
+}
+
+const WEBSOCKET_OPTIONS: WebSocketOptions = {
+	maxPayloadLength: parseWsSize("WS_MAX_PAYLOAD", process.env.WS_MAX_PAYLOAD),
+	idleTimeout: parseWsIdleTimeout(process.env.WS_IDLE_TIMEOUT),
+	backpressureLimit: parseWsSize("WS_BACKPRESSURE_LIMIT", process.env.WS_BACKPRESSURE_LIMIT),
+	perMessageDeflate: process.env.WS_COMPRESS === "true",
+};
+
 // ─── Concurrency Ceiling ──────────────────────────────────
 // Soft cap on in-flight requests, parsed from MAX_INFLIGHT env var.
 // Default is unlimited so existing apps see no behavior change. When set,
@@ -1462,6 +1536,8 @@ let drainResolve: (() => void) | null = null;
 /** Stop taking new requests; resolves once in-flight ones have finished. */
 export function beginShutdown(): Promise<void> {
 	shuttingDown = true;
+	// 1001 "going away": clients reconnect, to this server's replacement.
+	closeAllSockets(1001, "Server shutting down");
 	if (inFlight === 0) return Promise.resolve();
 	return new Promise<void>((r) => {
 		drainResolve = r;
@@ -1526,6 +1602,7 @@ export async function createApp(options: CreateAppOptions = {}): Promise<BosiaAp
 			// splits traffic between two different builds. Opt in only for deliberate
 			// N-worker clustering.
 			reusePort: process.env.BOSIA_REUSE_PORT === "1",
+			websocket: WEBSOCKET_OPTIONS,
 		},
 	});
 

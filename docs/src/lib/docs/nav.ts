@@ -39,6 +39,7 @@ export const sidebar: NavGroup[] = [
 				slug: "guides/server-metadata",
 			},
 			{ label: "API Routes", labelId: "API Route", slug: "guides/api-routes" },
+			{ label: "WebSockets", labelId: "WebSocket", slug: "guides/websockets" },
 			{ label: "Form Actions", labelId: "Form Action", slug: "guides/form-actions" },
 			{
 				label: "Middleware Hooks",

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { BosiaApp } from "../src/core/backend.ts";
+import { UPGRADED } from "../src/core/websocket.ts";
 
 const req = (path: string, init?: RequestInit) => new Request(`http://localhost${path}`, init);
 
@@ -142,4 +143,33 @@ describe("BosiaApp", () => {
 test("options() registers a route, not the constructor config", async () => {
 	const app = new BosiaApp({ serve: { idleTimeout: 5 } }).options("*", () => "preflight");
 	expect(await (await app.fetch(req("/", { method: "OPTIONS" }))).text()).toBe("preflight");
+});
+
+describe("WebSocket upgrade marker", () => {
+	test("an upgraded request answers Bun with undefined; observers see 101", async () => {
+		const seen: { status: number; upgraded: boolean }[] = [];
+		let after = 0;
+		const app = new BosiaApp()
+			.get("/ws", () => UPGRADED)
+			.get("/plain", () => "hi")
+			.onAfterHandle(() => {
+				after++;
+			})
+			.onResponse(({ status, upgraded }) => {
+				seen.push({ status, upgraded });
+			});
+
+		expect(await app.fetch(req("/ws"))).toBeUndefined();
+		expect(after).toBe(0); // the 101 is already sent: nothing may replace it
+		expect((await app.fetch(req("/plain")))!.status).toBe(200);
+		expect(seen).toEqual([
+			{ status: 101, upgraded: true },
+			{ status: 200, upgraded: false },
+		]);
+	});
+
+	test("without observers too", async () => {
+		const app = new BosiaApp().get("/ws", () => UPGRADED);
+		expect(await app.fetch(req("/ws"))).toBeUndefined();
+	});
 });

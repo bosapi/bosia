@@ -26,6 +26,11 @@ beforeAll(() => {
 		`import { Database } from "bun:sqlite";\nexport const GET = () => new Response(String(Database));\n`,
 	);
 	put("lib/server/db.ts", `export const f = () => Bun.file("x");\n`);
+	// WebSockets are Bun-only: every export form is caught, only in +server files.
+	put("routes/ws1/+server.ts", `export const websocket = { open() {} };\n`);
+	put("routes/ws2/+server.ts", `const websocket = {};\nexport { websocket };\n`);
+	put("routes/ws3/+server.js", `export let websocket = {};\n`);
+	put("routes/ws4/+page.server.ts", `export const websocket = {};\n`);
 	// Not flagged: type-only import, typeof guard, comment, and a non-server file.
 	put(
 		"routes/ok/+page.server.ts",
@@ -54,6 +59,9 @@ describe("workers guard", () => {
 				"routes/+page.server.ts:1:30",
 				"routes/api/+server.ts:1:26",
 				"lib/server/db.ts:1:24",
+				"routes/ws1/+server.ts:1:1",
+				"routes/ws2/+server.ts:2:1",
+				"routes/ws3/+server.js:1:1",
 			].sort(),
 		);
 	});

@@ -97,3 +97,7 @@ export function GET({ locals }: RequestEvent) {
 	return Response.json({ user: locals.user });
 }
 ```
+
+## WebSockets
+
+A `+server.ts` can also export `websocket` to accept WebSocket connections (Bun only). See [WebSockets](/guides/websockets).

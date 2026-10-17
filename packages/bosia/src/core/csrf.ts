@@ -51,23 +51,8 @@ export function checkCsrf(
 	if (SAFE_METHODS.has(request.method.toUpperCase())) return null;
 	if (config.exemptPaths && isPathExempt(url.pathname, config.exemptPaths)) return null;
 
-	// Derive the expected origin.
-	// `X-Forwarded-*` headers are only trusted when `TRUST_PROXY=true`, since a
-	// directly-exposed server would otherwise let a client spoof its own origin
-	// via attacker-controlled forwarded headers. Behind a real reverse proxy
-	// (nginx, Caddy, Cloudflare) the operator opts in by setting the env.
-	const trustProxy = process.env.TRUST_PROXY === "true";
-	const forwardedHost = trustProxy ? request.headers.get("x-forwarded-host") : null;
-	const host = forwardedHost ?? request.headers.get("host");
-	const forwardedProto = trustProxy ? request.headers.get("x-forwarded-proto") : null;
-	const protocol = forwardedProto ?? url.protocol.replace(":", "");
-	const expectedOrigin = host ? `${protocol}://${host}` : url.origin;
-
-	// expectedOrigin is per-request (host-derived), so no Set to precompute — a
-	// direct compare plus the tiny static allow-list avoids a per-request alloc.
-	const extraOrigins = config.allowedOrigins;
-	const isAllowed = (origin: string) =>
-		origin === expectedOrigin || (extraOrigins ? extraOrigins.includes(origin) : false);
+	const expected = expectedOrigin(request, url);
+	const isAllowed = (origin: string) => originAllowed(origin, expected, config);
 
 	// Check Origin header first (sent by all modern browsers on cross-origin requests)
 	const originHeader = request.headers.get("origin");
@@ -90,4 +75,44 @@ export function checkCsrf(
 
 	// Neither Origin nor Referer present — reject
 	return "Forbidden: missing Origin or Referer header on non-safe request";
+}
+
+/**
+ * Origin check for a WebSocket upgrade — a GET, so checkCsrf skips it, yet a
+ * cross-site page could open a socket that carries the user's cookies.
+ * Browsers always send `Origin` on a WebSocket handshake; a request without one
+ * comes from a non-browser client (no ambient cookies to hijack) and passes.
+ * Returns `null` on success, or an error message string to reject with 403.
+ */
+export function checkUpgradeOrigin(
+	request: Request,
+	url: URL,
+	config: CsrfConfig = DEFAULT_CSRF_CONFIG,
+): string | null {
+	if (!config.checkOrigin) return null;
+	if (config.exemptPaths && isPathExempt(url.pathname, config.exemptPaths)) return null;
+	const originHeader = request.headers.get("origin");
+	if (!originHeader || originAllowed(originHeader, expectedOrigin(request, url), config)) {
+		return null;
+	}
+	return `Cross-origin WebSocket blocked: Origin "${originHeader}" is not allowed`;
+}
+
+function expectedOrigin(request: Request, url: URL): string {
+	// `X-Forwarded-*` headers are only trusted when `TRUST_PROXY=true`, since a
+	// directly-exposed server would otherwise let a client spoof its own origin
+	// via attacker-controlled forwarded headers. Behind a real reverse proxy
+	// (nginx, Caddy, Cloudflare) the operator opts in by setting the env.
+	const trustProxy = process.env.TRUST_PROXY === "true";
+	const forwardedHost = trustProxy ? request.headers.get("x-forwarded-host") : null;
+	const host = forwardedHost ?? request.headers.get("host");
+	const forwardedProto = trustProxy ? request.headers.get("x-forwarded-proto") : null;
+	const protocol = forwardedProto ?? url.protocol.replace(":", "");
+	return host ? `${protocol}://${host}` : url.origin;
+}
+
+// The expected origin is per-request (host-derived), so no Set to precompute —
+// a direct compare plus the tiny static allow-list.
+function originAllowed(origin: string, expected: string, config: CsrfConfig): boolean {
+	return origin === expected || (config.allowedOrigins?.includes(origin) ?? false);
 }

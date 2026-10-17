@@ -8,6 +8,7 @@ triggers:
   - form action
   - layout data
   - logout endpoint
+  - websocket
 od:
   mode: convention
   category: framework
@@ -40,6 +41,22 @@ R2 — Action-only endpoints (logout, POST handlers, webhooks) use `+server.ts` 
 export async function POST() {
 	return new Response(null, { status: 303, headers: { Location: "/login" } });
 }
+```
+
+R2b — WebSockets (Bun only; fails the Workers build): `+server.ts` exports `websocket: WebSocketHandler<Data>` (from `./$types`) with `upgrade?`, `open`, `message`, `drain`, `close`, `ping`, `pong`. Auth in `hooks.server.ts`/`upgrade(event)` (may be async): return a fresh object → `ws.data`, a `Response` → refused. Cross-site `Origin` → 403; no `Origin` (CLI/device) passes, so token-auth those. `send()` → `-1` means wait for `drain`. Clients reconnect on `1001` (shutdown) / `1012` (dev rebuild). Guide: /guides/websockets.
+
+```ts
+// src/routes/rig/[id]/+server.ts
+import type { WebSocketHandler } from "./$types";
+export const websocket: WebSocketHandler<{ rigId: string }> = {
+	upgrade({ params, locals }) {
+		if (!locals.user) return new Response(null, { status: 401 });
+		return { rigId: params.id };
+	},
+	message(ws, msg) {
+		ws.send(msg); // string = text frame, Buffer = binary frame
+	},
+};
 ```
 
 R3 — Page data ≠ layout data. `+page.svelte`'s `data` holds ONLY its own loader output (+ `params`); Bosia keeps pageData/layoutData separate (no SvelteKit auto-merge). To read a parent `+layout.server.ts` value, add `+page.server.ts` calling `parent()`:

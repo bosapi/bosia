@@ -34,6 +34,7 @@ export type {
 	PlatformEnv,
 } from "../core/hooks.ts";
 export type { CsrfConfig } from "../core/csrf.ts";
+export type { WebSocketHandler } from "../core/websocket.ts";
 export type { CorsConfig } from "../core/cors.ts";
 export { defineConfig } from "../core/types/plugin.ts";
 export type {

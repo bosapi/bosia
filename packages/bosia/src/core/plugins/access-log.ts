@@ -111,11 +111,11 @@ export function accessLog(options: AccessLogOptions = {}): BosiaPlugin {
 			before(app) {
 				// onResponse swallows a throw here (a broken filter/format/sink),
 				// so logging can never change or fail a response.
-				return app.onResponse(({ request, response, start }) => {
+				return app.onResponse(({ request, status, start }) => {
 					log({
 						method: request.method,
 						path: pathOf(request.url),
-						status: response.status,
+						status,
 						ms: performance.now() - start,
 						request,
 					});

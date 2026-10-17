@@ -97,3 +97,7 @@ export function GET({ locals }: RequestEvent) {
 	return Response.json({ user: locals.user });
 }
 ```
+
+## WebSocket
+
+`+server.ts` juga bisa mengekspor `websocket` untuk menerima koneksi WebSocket (khusus Bun). Lihat [WebSocket](/id/guides/websockets).

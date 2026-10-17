@@ -279,3 +279,19 @@ describe("ensureRootDirs()", () => {
 		expect(readFileSync(join(tmpDir, "tsconfig.json"), "utf-8")).toBe("{ this is not json");
 	});
 });
+
+describe("generateRouteTypes() — +server.ts routes", () => {
+	test("an API-only dir gets Params and a params-typed WebSocketHandler", () => {
+		const m: RouteManifest = {
+			pages: [],
+			apis: [{ pattern: "/rig/[id]", id: "/rig/[id]", server: "rig/[id]/+server.ts" }],
+			errorPage: null,
+		};
+		generateRouteTypes(m);
+		const out = readTypes("rig", "[id]");
+		expect(out).toContain("export type Params = { id: string };");
+		expect(out).toContain(
+			"export type WebSocketHandler<T extends object = {}> = _WebSocketHandler<T, _RequestEvent>;",
+		);
+	});
+});
