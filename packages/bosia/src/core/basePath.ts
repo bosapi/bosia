@@ -30,6 +30,10 @@ export function withBase(base: string, path: string): string {
 	return base + path;
 }
 
+/** Never a navigation target. Test a parsed `URL.protocol`, not the raw string: the
+ *  parser drops tabs, newlines and leading control chars, so `java\tscript:` is one too. */
+export const DANGEROUS_PROTOCOL = /^(javascript|data|vbscript):$/;
+
 /**
  * What the client router matches: the path the server would see. Every URL goes
  * through the URL parser against `pageHref`, like a link: `?page=2`, `b`, `../x`
@@ -38,7 +42,12 @@ export function withBase(base: string, path: string): string {
  */
 export function toRouterPath(url: string, pageHref: string): string {
 	const u = new URL(url, pageHref);
-	return u.origin === new URL(pageHref).origin ? u.pathname + u.search + u.hash : u.href;
+	if (DANGEROUS_PROTOCOL.test(u.protocol)) {
+		throw new Error(`navigation: dangerous scheme in URL "${url}". Use a path or an http(s) URL.`);
+	}
+	// A same-origin `blob:` URL has the page's origin too; only http(s) is a page of ours.
+	const ours = /^https?:$/.test(u.protocol) && u.origin === new URL(pageHref).origin;
+	return ours ? u.pathname + u.search + u.hash : u.href;
 }
 
 /**

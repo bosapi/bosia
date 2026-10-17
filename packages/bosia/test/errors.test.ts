@@ -72,6 +72,37 @@ describe("redirect()", () => {
 			/dangerous scheme/,
 		);
 	});
+
+	// The browser's URL parser drops tabs and leading control chars from a Location.
+	for (const loc of ["java\tscript:alert(1)", "\x01javascript:alert(1)"]) {
+		test(`rejects ${JSON.stringify(loc)}, with allowExternal too`, () => {
+			expect(() => new Redirect(302, loc)).toThrow(/dangerous scheme/);
+			expect(() => new Redirect(302, loc, { allowExternal: true })).toThrow(/dangerous scheme/);
+		});
+	}
+
+	for (const loc of [
+		"htt\tps://evil.com/x",
+		"/\\evil.com/x",
+		"http:evil.com",
+		"https:/evil.com",
+		"http://bosia.invalid/x",
+	]) {
+		test(`rejects ${JSON.stringify(loc)} as external`, () => {
+			expect(() => new Redirect(302, loc)).toThrow(/external URL/);
+		});
+	}
+
+	test("allowExternal rejects a URL the browser can't parse", () => {
+		expect(() => new Redirect(303, "https://exa mple.com/cb", { allowExternal: true })).toThrow(
+			/invalid URL/,
+		);
+	});
+
+	test("allows relative and query-only locations", () => {
+		for (const loc of ["?step=2", "login", "../x", "#top"])
+			expect(new Redirect(302, loc).location).toBe(loc);
+	});
 });
 
 function redirectSafe(status: number, location: string): Redirect {

@@ -78,6 +78,20 @@ describe("toRouterPath()", () => {
 	for (const [url, path] of cases) {
 		test(`${url} → ${path}`, () => expect(toRouterPath(url, page)).toBe(path));
 	}
+	for (const url of [
+		"javascript:alert(1)",
+		" JavaScript:alert(1)",
+		"java\tscript:alert(1)",
+		"data:text/html,x",
+		"vbscript:x",
+	]) {
+		test(`refuses ${JSON.stringify(url)}`, () =>
+			expect(() => toRouterPath(url, page)).toThrow("dangerous scheme"));
+	}
+	test("a same-origin blob: URL stays a blob: URL", () =>
+		expect(toRouterPath("blob:http://x.test/1234", page)).toBe("blob:http://x.test/1234"));
+	test("mailto: still leaves the app", () =>
+		expect(toRouterPath("mailto:j@bosia.dev", page)).toBe("mailto:j@bosia.dev"));
 });
 
 describe("stripBase()", () => {

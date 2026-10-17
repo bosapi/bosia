@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `goto("?page=2")` now stays in the app instead of reloading the whole page.
 - A loader `redirect(303, "?step=2")` no longer reloads the whole page.
+- `goto("javascript:…")` now fails instead of running the script, like `redirect()` does.
+- `redirect()` now catches tricky spellings like `java\tscript:`, `/\evil.com` or `http:evil.com`.
+- `redirect()` to a broken URL (like `https://exa mple.com`) now fails, also with `allowExternal`.
 
 ## [1.2.6] - 2026-10-16
 

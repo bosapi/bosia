@@ -1,7 +1,7 @@
 // ─── Error / Redirect Helpers ────────────────────────────
 // Throw these from load() functions; the server catches and handles them.
 
-import { withBase } from "./basePath.ts";
+import { DANGEROUS_PROTOCOL, withBase } from "./basePath.ts";
 import { currentBase } from "./appBase.ts";
 
 // Identity across bundle boundaries. `dist/hooks.server.js` keeps "bosia"
@@ -59,14 +59,23 @@ export class Redirect {
 (HttpError.prototype as any)[HTTP_ERROR_BRAND] = true;
 (Redirect.prototype as any)[REDIRECT_BRAND] = true;
 
-const DANGEROUS_SCHEMES = /^(javascript|data|vbscript):/i;
+// Any parseable origin works as the base: only "did it stay on it?" is asked.
+const SELF = "http://bosia.invalid";
 
 function validateRedirectLocation(location: string, options?: RedirectOptions): void {
 	const trimmed = location.trim();
+	// Parsed like the browser will parse the Location: `java\tscript:` is javascript:,
+	// `htt\tps://evil.com` and `/\\evil.com` are another origin.
+	let url: URL;
+	try {
+		url = new URL(trimmed, SELF);
+	} catch {
+		throw new Error(`redirect(): invalid URL "${location}".`);
+	}
 
 	// Dangerous schemes are rejected even when `allowExternal: true` —
 	// `javascript:` / `data:` / `vbscript:` are never legitimate redirect targets.
-	if (DANGEROUS_SCHEMES.test(trimmed)) {
+	if (DANGEROUS_PROTOCOL.test(url.protocol)) {
 		throw new Error(
 			`redirect(): dangerous scheme in URL "${location}". ` +
 				`Only relative paths and same-origin URLs are allowed.`,
@@ -83,8 +92,9 @@ function validateRedirectLocation(location: string, options?: RedirectOptions): 
 		);
 	}
 
-	// Allow relative paths (no scheme)
-	if (!/^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(trimmed)) return;
+	// Relative only when it isn't a URL on its own: `http:evil.com` resolves against
+	// SELF as a path, but on an https page the browser reads it as http://evil.com.
+	if (!URL.canParse(trimmed) && url.origin === SELF) return;
 
 	// It's an absolute URL — reject external origins
 	throw new Error(

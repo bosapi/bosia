@@ -255,6 +255,10 @@ redirect(303, "https://accounts.example.com/oauth", { allowExternal: true });
 
 Even with `allowExternal: true`, dangerous schemes — `javascript:`, `data:`, `vbscript:` — are **always** rejected. Those schemes are never legitimate redirect targets and could otherwise be abused to inject script execution into a redirect chain.
 
+The location is read the way a browser reads it, so tricky spellings can't slip through: `java\tscript:` is still `javascript:`, and `/\evil.com`, `htt\tps://evil.com` and `http:evil.com` all count as external. A location that isn't a valid URL (`https://exa mple.com`) throws `invalid URL`, also with `allowExternal: true`. Encode it first, e.g. with `new URL(...)`.
+
+`goto()` follows the same scheme rule on the client: a `javascript:`, `data:` or `vbscript:` URL makes its Promise reject. Unlike `redirect()`, `goto()` still navigates to other sites, so check a user-supplied `?next=` stays on your origin before passing it.
+
 ## Production Error Handling
 
 In production (`NODE_ENV=production`), stack traces are stripped from error responses to prevent leaking internal details to clients.

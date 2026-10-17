@@ -76,7 +76,7 @@ await goto("/login", { replaceState: true, invalidateAll: true });
 
 The Promise resolves after loaders ran and components mounted. If the URL matches the current route, it resolves immediately without re-running loaders — pass `{ invalidateAll: true }` to force a refresh.
 
-Relative URLs resolve against the current page: `goto("?page=2")` is a SPA nav, no need to build the full path.
+Relative URLs resolve against the current page: `goto("?page=2")` is a SPA nav, no need to build the full path. `javascript:`/`data:`/`vbscript:` URLs make the Promise reject. Other origins still navigate (open redirect), so NEVER pass a `?next=` value straight in — check `new URL(next, location.href).origin === location.origin` first, else go to `/`.
 
 Options:
 

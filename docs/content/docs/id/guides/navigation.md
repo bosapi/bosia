@@ -31,7 +31,7 @@ await goto("/login", { replaceState: true, invalidateAll: true });
 
 `goto()` mengembalikan sebuah Promise yang resolve setelah navigasi mengendap (loader berjalan, komponen ter-mount).
 
-URL relatif di-resolve terhadap halaman saat ini, seperti tautan: `goto("?page=2")` tetap di dalam aplikasi. `goto("#x")` adalah navigasi di halaman yang sama.
+URL relatif di-resolve terhadap halaman saat ini, seperti tautan: `goto("?page=2")` tetap di dalam aplikasi. `goto("#x")` adalah navigasi di halaman yang sama. URL `javascript:`, `data:` atau `vbscript:` membuat Promise-nya reject, sama seperti `redirect()` yang throw. Situs lain tetap diizinkan, jadi pastikan nilai `?next=` tetap di situs Anda sebelum dipakai.
 
 ### Opsi
 

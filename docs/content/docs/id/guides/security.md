@@ -237,6 +237,10 @@ redirect(303, "https://accounts.example.com/oauth", { allowExternal: true });
 
 Meski `allowExternal: true`, skema berbahaya — `javascript:`, `data:`, `vbscript:` — **selalu** ditolak. Skema-skema itu tidak pernah menjadi tujuan redirect yang sah dan bisa disalahgunakan untuk menyuntikkan eksekusi script ke dalam rantai redirect.
 
+Location dibaca seperti browser membacanya, jadi ejaan yang menipu tidak bisa lolos: `java\tscript:` tetap `javascript:`, dan `/\evil.com`, `htt\tps://evil.com` serta `http:evil.com` semuanya dianggap eksternal. Location yang bukan URL valid (`https://exa mple.com`) akan throw `invalid URL`, juga dengan `allowExternal: true`. Encode dulu, misalnya dengan `new URL(...)`.
+
+`goto()` mengikuti aturan skema yang sama di client: URL `javascript:`, `data:` atau `vbscript:` membuat Promise-nya reject. Berbeda dengan `redirect()`, `goto()` tetap bernavigasi ke situs lain, jadi pastikan `?next=` dari pengguna tetap di origin Anda sebelum dipakai.
+
 ## Penanganan Error di Produksi
 
 Pada produksi (`NODE_ENV=production`), stack trace dihapus dari response error untuk mencegah kebocoran detail internal ke klien.

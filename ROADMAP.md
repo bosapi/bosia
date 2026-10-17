@@ -10,6 +10,14 @@
 - [x] 🟡 `goto("?page=2")`, `goto("b")`, same-origin full URLs, relative `use:enhance` and loader redirects matched no route: full reload (since 0.5.10). `router.navigate` resolves them (`toRouterPath`).
 - [x] 🟡 Review: `goto("//other.site/x")` stayed a raw path; with a root catch-all route it matched and `pushState` threw. Other origins now go out as a full URL.
 - [x] ⚪ Review: a root path skipped the URL parser, so `goto("/café")` matched `slug = "café"` (server: `caf%C3%A9`), `/a/../b` and `/\host` matched raw. Every URL is parsed now.
+- [x] 🔴 Review: `goto("javascript:…")` (also `data:`, `vbscript:`) went to `window.location` and ran: XSS via `goto(params.get("next"))`. `toRouterPath` throws on them like `redirect()`.
+- [x] 🟠 Review: `redirect()` tested the raw string: `java\tscript:`, `\x01javascript:` passed, `htt\tps://evil.com` and `/\evil.com` counted as relative. Parsed with `new URL` now; one `DANGEROUS_PROTOCOL` (basePath.ts) for both sides.
+- [x] 🟡 Review: same-origin `blob:` URLs became `https://host/uuid` (404); only http(s) counts as in-app. Error says `navigation:`, not `goto():`. Docs say "rejects", skill no longer calls `?next=` safe.
+- [x] 🔴 Review: parsing against the `http://bosia.invalid` sentinel let `http:evil.com` pass as a path (an https page sends it to http://evil.com), and the sentinel host itself. Relative now also means `!URL.canParse(location)`.
+- [x] ⚪ Review: an unparseable location throws `invalid URL`, with `allowExternal` too (was passed through). Security guide documents both.
+- [ ] ⚪ A loader redirect that `navigate()` refuses (hand-built `javascript:` JSON) ends as an uncaught error with the redirecting URL in the bar; catch it and `abandonRun()`.
+- [ ] ⚪ `redirect(" /x")` validates trimmed but rebases/sends untrimmed: under `BASE_PATH` it skips the prefix. Send the trimmed value.
+- [ ] ⚪ `redirect()` gives `//evil` "protocol-relative" but `/\evil` "external URL"; the raw `//` check could go. `DANGEROUS_PROTOCOL` sits in basePath.ts; `toRouterPath` parses `pageHref` twice.
 - [ ] ⚪ A relative `use:enhance` redirect (`"profile"`) resolves against the current page; HTTP resolves it against the form's action URL (`/account/settings` → `/account/profile`).
 - [ ] ⚪ `readDataResponse` (prefetch.ts) repeats `toRouterPath`'s same-origin → path step; reuse it.
 
