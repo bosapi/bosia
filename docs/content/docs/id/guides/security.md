@@ -241,6 +241,8 @@ Location dibaca seperti browser membacanya, jadi ejaan yang menipu tidak bisa lo
 
 `goto()` mengikuti aturan skema yang sama di client: URL `javascript:`, `data:` atau `vbscript:` membuat Promise-nya reject. Berbeda dengan `redirect()`, `goto()` tetap bernavigasi ke situs lain, jadi pastikan `?next=` dari pengguna tetap di origin Anda sebelum dipakai.
 
+Tidak ada halaman yang dilayani di path yang diawali `//`: request ke `//evil.com/x` mendapat 308 ke `/evil.com/x`. Jika tidak, redirect yang memantulkan path (seperti redirect trailing-slash) akan mengirim browser ke evil.com.
+
 ## Penanganan Error di Produksi
 
 Pada produksi (`NODE_ENV=production`), stack trace dihapus dari response error untuk mencegah kebocoran detail internal ke klien.

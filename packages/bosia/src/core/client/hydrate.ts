@@ -1,6 +1,6 @@
 import { hydrate, mount } from "svelte";
 import App from "./App.svelte";
-import { router } from "./router.svelte.ts";
+import { locationPath, router } from "./router.svelte.ts";
 import { initPrefetch } from "./prefetch.ts";
 import { findMatch, compileRoutes, canonicalPathname } from "../matcher.ts";
 import { clientRoutes } from "bosia:routes";
@@ -36,7 +36,8 @@ async function main() {
 	// Canonicalize trailing slash on initial mount — server already 308'd if
 	// SSR'd, but `ssr=false` shells and prerendered pages can land on the
 	// non-canonical URL. replaceState (no extra history entry).
-	if (match) {
+	// A `//x` path is skipped: replaceState would read it as host x and throw.
+	if (match && !path.startsWith("//")) {
 		const canonical = canonicalPathname(path, (match.route as any).trailingSlash ?? "never");
 		if (canonical !== null && typeof history !== "undefined") {
 			history.replaceState(
@@ -46,7 +47,7 @@ async function main() {
 			);
 		}
 	}
-	router.currentRoute = window.location.pathname + window.location.search + window.location.hash;
+	router.currentRoute = locationPath();
 	// After canonicalizing, before any await: a click during the chunk loads below
 	// moves currentRoute, and App must still know which route the server rendered.
 	router.hydratedRoute = router.currentRoute;
@@ -171,7 +172,7 @@ if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
 				}
 				const sep = window.location.search ? "&" : "?";
 				window.location.replace(
-					`${window.location.pathname}${window.location.search}${sep}_v=${Date.now()}${window.location.hash}`,
+					`${locationPath().split("#")[0]}${sep}_v=${Date.now()}${window.location.hash}`,
 				);
 			});
 		}

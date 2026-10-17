@@ -79,15 +79,8 @@ function isJsonResponse(res: Response): boolean {
 export async function readDataResponse(res: Response): Promise<any> {
 	// `fetch` follows redirects, so a hook's 303 arrives as the login page's HTML
 	// at status 200. `redirected` is the only surviving trace of the redirect.
-	if (res.redirected) {
-		const target = new URL(res.url, window.location.origin);
-		return {
-			redirect:
-				target.origin === window.location.origin
-					? target.pathname + target.search + target.hash
-					: target.href,
-		};
-	}
+	// router.navigate() turns it into a path (or leaves the app) via toRouterPath.
+	if (res.redirected) return { redirect: res.url };
 	if (isJsonResponse(res)) {
 		try {
 			return await res.json();
@@ -212,6 +205,8 @@ function getLinkHref(anchor: HTMLAnchorElement): string | null {
 	if (anchor.origin !== window.location.origin) return null;
 	if (anchor.target) return null;
 	if (anchor.hasAttribute("download")) return null;
+	// A `//x` path would read as host x below; the click does a full load on it anyway.
+	if (anchor.pathname.startsWith("//")) return null;
 	return anchor.pathname + anchor.search;
 }
 

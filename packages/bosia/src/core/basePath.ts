@@ -46,7 +46,12 @@ export function toRouterPath(url: string, pageHref: string): string {
 		throw new Error(`navigation: dangerous scheme in URL "${url}". Use a path or an http(s) URL.`);
 	}
 	// A same-origin `blob:` URL has the page's origin too; only http(s) is a page of ours.
-	const ours = /^https?:$/.test(u.protocol) && u.origin === new URL(pageHref).origin;
+	// A path starting `//` (from `/.//evil.com`) would read as another host once used as
+	// a URL, so it stays a full URL: the router leaves for this origin's `//evil.com` page.
+	const ours =
+		/^https?:$/.test(u.protocol) &&
+		u.origin === new URL(pageHref).origin &&
+		!u.pathname.startsWith("//");
 	return ours ? u.pathname + u.search + u.hash : u.href;
 }
 

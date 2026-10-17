@@ -1178,6 +1178,15 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		url.pathname = appPath;
 	}
 
+	// No page lives at a `//x` path: anything that echoes it as a URL (the trailing-slash
+	// 308, `page.url`, the client router) would read it as host x. Collapse the slashes.
+	if (url.pathname.startsWith("//")) {
+		return new Response(null, {
+			status: 308,
+			headers: { Location: withBase(base, url.pathname.replace(/^\/+/, "/")) + url.search },
+		});
+	}
+
 	// Bun.serve enforces maxRequestBodySize itself; Workers has no such knob, so
 	// check the declared length here. A chunked upload without Content-Length
 	// falls back to the host's own request cap (Cloudflare: 100MB on free).

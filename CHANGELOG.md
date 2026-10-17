@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `goto("javascript:…")` now fails instead of running the script, like `redirect()` does.
 - `redirect()` now catches tricky spellings like `java\tscript:`, `/\evil.com` or `http:evil.com`.
 - `redirect()` to a broken URL (like `https://exa mple.com`) now fails, also with `allowExternal`.
+- Links like `/.//evil.com` or `//evil.com/x/` no longer take visitors to evil.com.
 
 ## [1.2.6] - 2026-10-16
 

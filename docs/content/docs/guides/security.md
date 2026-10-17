@@ -259,6 +259,8 @@ The location is read the way a browser reads it, so tricky spellings can't slip 
 
 `goto()` follows the same scheme rule on the client: a `javascript:`, `data:` or `vbscript:` URL makes its Promise reject. Unlike `redirect()`, `goto()` still navigates to other sites, so check a user-supplied `?next=` stays on your origin before passing it.
 
+No page is served at a path starting with `//`: a request for `//evil.com/x` gets a 308 to `/evil.com/x`. Otherwise a redirect that echoes the path (like the trailing-slash one) would send the browser to evil.com.
+
 ## Production Error Handling
 
 In production (`NODE_ENV=production`), stack traces are stripped from error responses to prevent leaking internal details to clients.

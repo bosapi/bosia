@@ -74,6 +74,8 @@ describe("toRouterPath()", () => {
 		["/café/x", "/caf%C3%A9/x"],
 		["/a/../b/c", "/b/c"],
 		["/\\evil.com/c", "http://evil.com/c"],
+		["/.//evil.com/x", "http://x.test//evil.com/x"],
+		["http://x.test//evil.com", "http://x.test//evil.com"],
 	];
 	for (const [url, path] of cases) {
 		test(`${url} → ${path}`, () => expect(toRouterPath(url, page)).toBe(path));

@@ -20,9 +20,9 @@ export type NavResult = "started" | "same" | "cancelled" | "left";
 
 function buildTarget(path: string): { url: URL; params: Record<string, string> } | null {
 	if (typeof window === "undefined") return null;
-	const pathname = path.split("?")[0].split("#")[0];
-	const match = findMatch(clientRoutes, pathname);
+	// From the URL, not a string split: the route may be a full URL (`http://host//x`).
 	const url = new URL(path, window.location.origin);
+	const match = findMatch(clientRoutes, url.pathname);
 	return { url, params: match?.params ?? {} };
 }
 
@@ -74,12 +74,14 @@ export function scrollToHash(hash: string): boolean {
 	return true;
 }
 
+/** The address bar as a router path. Never raw `location.pathname`: a `//evil.com` path
+ *  would read as a host wherever the route is used as a URL; toRouterPath keeps it a full URL. */
+export function locationPath(): string {
+	return toRouterPath(window.location.href, window.location.href);
+}
+
 export const router = new (class Router {
-	currentRoute = $state(
-		typeof window !== "undefined"
-			? window.location.pathname + window.location.search + window.location.hash
-			: "/",
-	);
+	currentRoute = $state(typeof window !== "undefined" ? locationPath() : "/");
 	/** Origin half of `page.url`. Empty on the server until the renderer seeds it
 	 *  per request — see `renderWithPageContext` in core/renderer.ts. */
 	origin = $state(typeof window !== "undefined" ? window.location.origin : "");
@@ -215,7 +217,7 @@ export const router = new (class Router {
 				anchor.pathname === window.location.pathname && anchor.search === window.location.search;
 			if (samePage && anchor.hash) {
 				e.preventDefault();
-				const finalPath = anchor.pathname + anchor.search + anchor.hash;
+				const finalPath = toRouterPath(anchor.href, window.location.href);
 				if (this.currentRoute !== finalPath) {
 					saveScroll();
 					savePageSnapshot();
@@ -229,12 +231,13 @@ export const router = new (class Router {
 			}
 
 			e.preventDefault();
-			this.navigate(anchor.pathname + anchor.search + anchor.hash, { source: "link" });
+			// The full href: navigate() parses it, so a `//x` pathname can't read as a host.
+			this.navigate(anchor.href, { source: "link" });
 		});
 
 		// Browser back/forward
 		window.addEventListener("popstate", (e) => {
-			const finalPath = window.location.pathname + window.location.search + window.location.hash;
+			const finalPath = locationPath();
 			// Save the position of the entry we're leaving (historyIndex is still
 			// the old entry's), then look up where the landed-on entry was.
 			saveScroll();
