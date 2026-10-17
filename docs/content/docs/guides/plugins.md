@@ -124,7 +124,7 @@ The `app` passed to `backend.before` / `backend.after` is a `BosiaApp` (type exp
 | `get` / `post` / `put` / `patch` / `delete` / `options`             | Add a route. Path is exact (`/__my-plugin/health`) or `"*"`.                                                             |
 | `all(path, handler)`                                                | Route for any method.                                                                                                    |
 | `onRequest(({ request, set }) => …)`                                | Runs first on every request. Return a value to answer right away.                                                        |
-| `onAfterHandle(({ request, response, set }) => …)`                  | Runs after the handler. Return a value to replace the response.                                                          |
+| `onAfterHandle(({ request, response, set }) => …)`                  | Runs after the handler. Return a value to replace the response. Skipped for a WebSocket upgrade.                         |
 | `onError(({ request, error, set }) => …)`                           | Runs in order. Return a value to answer; `undefined` passes it on.                                                       |
 | `onResponse(({ request, response, status, upgraded, start }) => …)` | Sees the final response once per request. Observe only. Read `status`: `101` for a WebSocket upgrade (`upgraded: true`). |
 

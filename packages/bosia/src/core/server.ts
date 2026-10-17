@@ -16,7 +16,7 @@ import { HttpError, Redirect, ActionFailure, isHttpError, isRedirect } from "./e
 import { CookieJar } from "./cookies.ts";
 import { safePath } from "./safePath.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
-import { checkCsrf, checkUpgradeOrigin, firstForwarded } from "./csrf.ts";
+import { checkCsrf, checkUpgradeOrigin, firstForwarded, forwardedProto } from "./csrf.ts";
 import type { CsrfConfig } from "./csrf.ts";
 import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
@@ -78,6 +78,7 @@ import {
 	closeAllSockets,
 	isUpgradeRequest,
 	isUpgraded,
+	closeUpgraded,
 	upgradeRequest,
 	type WebSocketHandler,
 	type WebSocketOptions,
@@ -1199,8 +1200,13 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 	// when no proxy strips them.
 	if (TRUST_PROXY) {
 		const fwdHost = firstForwarded(request, "x-forwarded-host");
-		if (fwdHost) url.host = fwdHost;
-		const fwdProto = firstForwarded(request, "x-forwarded-proto");
+		// Clear the port first: setting `host` without one keeps the inner port
+		// (`app.example.com:3000`).
+		if (fwdHost) {
+			url.port = "";
+			url.host = fwdHost;
+		}
+		const fwdProto = forwardedProto(request);
 		if (fwdProto) url.protocol = `${fwdProto}:`;
 	}
 
@@ -1278,10 +1284,8 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 			return Response.json({ error: "Forbidden", message: upgradeError }, { status: 403 });
 		}
 
-		const isHttps =
-			(TRUST_PROXY && request.headers.get("x-forwarded-proto") === "https") ||
-			url.protocol === "https:";
-		cookieJar = new CookieJar(request.headers.get("cookie") ?? "", isHttps);
+		// url already carries the forwarded scheme when TRUST_PROXY is on.
+		cookieJar = new CookieJar(request.headers.get("cookie") ?? "", url.protocol === "https:");
 		nonce = CSP_ENABLED ? generateNonce() : "";
 
 		// Decode the data endpoint before the hooks, not inside resolve(): a guard
@@ -1361,6 +1365,13 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 
 		return finalizeResponse(response, request, nonce, cookieJar);
 	} catch (err) {
+		// Bun already sent the 101, so there is no 500 to send: close the socket
+		// with 1011, the way a handler error does.
+		if (isUpgraded()) {
+			console.error("Hook error after the WebSocket upgrade (socket closed with 1011):", err);
+			closeUpgraded();
+			return new Response(null);
+		}
 		// `throw redirect()` / `throw error()` from a hook lands here — the same
 		// escape hatch loaders have always had. Without these branches both fall
 		// through to the 500 below, which is why the docs could only ever suggest

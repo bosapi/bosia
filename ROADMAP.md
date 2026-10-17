@@ -17,6 +17,8 @@
 - [x] 🟡 Review: dev proxy threw on odd close codes and mapped client 1001 to 1000; HEAD on a websocket-only route got 405 with an empty `Allow`.
 - [x] 🟡 Review: route handlers sat on `ws.data`, so one object from two routes (a cached user) ran the wrong handlers. Now a per-socket map. Origin check moved before the hooks.
 - [x] ⚪ Review: `WS_*` size errors named `BODY_SIZE_LIMIT` and called 0 "Infinity"; a requested subprotocol failed silently (now a warning). One redirect and one seconds parser.
+- [x] 🟡 Review: `X-Forwarded-Proto: wss` (Traefik) → 403 + no `Secure`; `Upgrade` without `Sec-WebSocket-Key` ran `upgrade()`; upgrade context outlived its request; hook throw after 101 now closes it 1011. CSRF compares `url.origin` only; forwarded host kept the inner port.
+- [ ] ⚪ Dev proxy: a handshake in flight during a rebuild gets 502 (or 1011), not 1012. Needs an in-flight set mapped to 1012.
 - [ ] ⚪ Not in v1: subprotocol selection (`protocols` on the export), Workers (WebSocketPair + Durable Objects), dev-proxy backpressure and 101 cookies.
 
 ## bosia 1.2.7 (2026-10-17) — goto resolves relative URLs

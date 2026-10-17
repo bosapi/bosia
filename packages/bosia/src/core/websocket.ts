@@ -55,8 +55,14 @@ class Envelope {
 // session user, say) must not carry either route's handlers.
 const routeOf = new WeakMap<Socket, WebSocketHandler<any, any>>();
 
+// Sec-WebSocket-Key too: a stray Upgrade header on a plain GET (a proxy, a
+// scanner) must reach the GET handler, not run upgrade() and then 400.
 export function isUpgradeRequest(request: Request): boolean {
-	return request.method === "GET" && request.headers.get("upgrade")?.toLowerCase() === "websocket";
+	return (
+		request.method === "GET" &&
+		request.headers.get("upgrade")?.toLowerCase() === "websocket" &&
+		request.headers.has("sec-websocket-key")
+	);
 }
 
 // One per upgrade request, set by BosiaApp.fetch. It holds the Request Bun gave
@@ -64,20 +70,43 @@ export function isUpgradeRequest(request: Request): boolean {
 // and whether the upgrade happened — a per-request flag, so a hook that
 // rebuilds or mutates the returned Response can't hide or leak it.
 interface UpgradeContext {
-	request: Request;
-	server: Server<any>;
+	request?: Request;
+	server?: Server<any>;
 	upgraded: boolean;
+	/** Set by open(), which Bun runs inside server.upgrade(). */
+	socket?: Socket;
 }
 
 const upgrades = new AsyncLocalStorage<UpgradeContext>();
 
-export function runUpgrade<T>(request: Request, server: Server<any>, fn: () => T): T {
-	return upgrades.run({ request, server, upgraded: false }, fn);
+export async function runUpgrade<T>(
+	request: Request,
+	server: Server<any>,
+	fn: () => Promise<T>,
+): Promise<T> {
+	const ctx: UpgradeContext = { request, server, upgraded: false };
+	try {
+		return await upgrades.run(ctx, fn);
+	} finally {
+		// A timer or pool started during this request keeps the context: it must
+		// not hold the Request, nor see isUpgraded() in its own later fetches.
+		ctx.request = ctx.server = ctx.socket = undefined;
+		ctx.upgraded = false;
+	}
 }
 
 /** True once this request has been upgraded: Bun already sent the 101. */
 export function isUpgraded(): boolean {
 	return upgrades.getStore()?.upgraded === true;
+}
+
+/** A hook threw after the 101: close the socket, as a handler error would. */
+export function closeUpgraded(): void {
+	try {
+		upgrades.getStore()?.socket?.close(1011, "Internal error");
+	} catch {
+		/* already closed */
+	}
 }
 
 let closing = false;
@@ -108,7 +137,9 @@ export function upgradeRequest(
 	headers: Headers,
 ): Response {
 	const ctx = upgrades.getStore();
-	if (!ctx) return new Response("WebSockets are not supported here", { status: 501 });
+	if (!ctx?.request || !ctx.server) {
+		return new Response("WebSockets are not supported here", { status: 501 });
+	}
 	warnProtocol(handler, ctx.request);
 	if (!ctx.server.upgrade(ctx.request, { data: new Envelope(handler, data) as any, headers })) {
 		return new Response("Bad WebSocket handshake", { status: 400 });
@@ -133,9 +164,10 @@ function fail(ws: Socket, err: unknown): void {
 // A user handler's throw or rejection closes that socket with 1011; it must
 // never reach the prod `uncaughtException` handler, which exits the process.
 //
-// Bun calls these inside the upgrade request's async context; exit() it, so a
-// timer or callback started in open() doesn't hold that request for the
-// socket's life or see isUpgraded() in its own in-process fetches.
+// Bun runs open() inside server.upgrade(), so in the upgrade request's async
+// context; exit() it, so a timer or callback started in open() doesn't hold
+// that request or see isUpgraded() in its own in-process fetches. (Other
+// events run outside it; exit() is then a no-op.)
 function run(ws: Socket, name: Exclude<keyof WebSocketHandler, "upgrade">, args: unknown[]): void {
 	upgrades.exit(() => call(ws, name, args));
 }
@@ -160,6 +192,8 @@ export const websocketHandlers: BunWebSocketHandler<any> = {
 		routeOf.set(ws, envelope.handler);
 		ws.data = envelope.data;
 		sockets.add(ws);
+		const ctx = upgrades.getStore();
+		if (ctx) ctx.socket = ws;
 		run(ws, "open", []);
 		// An upgrade still in its async upgrade() during the shutdown sweep opens
 		// after it: the app has seen open() and gets close(), so it can clean up.

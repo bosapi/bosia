@@ -39,7 +39,8 @@ function isPathExempt(pathname: string, patterns: string[]): boolean {
 }
 
 /**
- * Check whether a request passes CSRF validation.
+ * Check whether a request passes CSRF validation against `url.origin` — the
+ * public origin, which server.ts has already rebuilt from X-Forwarded-*.
  * Returns `null` on success, or an error message string to reject with 403.
  */
 export function checkCsrf(
@@ -51,8 +52,7 @@ export function checkCsrf(
 	if (SAFE_METHODS.has(request.method.toUpperCase())) return null;
 	if (config.exemptPaths && isPathExempt(url.pathname, config.exemptPaths)) return null;
 
-	const expected = expectedOrigin(request, url);
-	const isAllowed = (origin: string) => originAllowed(origin, expected, config);
+	const isAllowed = (origin: string) => originAllowed(origin, url.origin, config);
 
 	// Check Origin header first (sent by all modern browsers on cross-origin requests)
 	const originHeader = request.headers.get("origin");
@@ -89,10 +89,11 @@ export function checkUpgradeOrigin(
 	url: URL,
 	config: CsrfConfig = DEFAULT_CSRF_CONFIG,
 ): string | null {
-	if (!config.checkOrigin) return null;
+	// Not gated on checkOrigin: turning off the form check must not also open
+	// sockets to cross-site hijacking. CSRF_EXEMPT_PATHS is the way out.
 	if (config.exemptPaths && isPathExempt(url.pathname, config.exemptPaths)) return null;
 	const originHeader = request.headers.get("origin");
-	if (!originHeader || originAllowed(originHeader, expectedOrigin(request, url), config)) {
+	if (!originHeader || originAllowed(originHeader, url.origin, config)) {
 		return null;
 	}
 	return `Cross-origin WebSocket blocked: Origin "${originHeader}" is not allowed`;
@@ -101,23 +102,16 @@ export function checkUpgradeOrigin(
 /**
  * First value of an `X-Forwarded-*` header: each proxy in a chain appends its
  * own ("https, http"), and the first is the client-facing one. server.ts
- * builds `event.url` with this too, so both agree on the public origin.
+ * rebuilds `url` with these (behind TRUST_PROXY) before any check here runs.
  */
 export function firstForwarded(request: Request, name: string): string | undefined {
 	return request.headers.get(name)?.split(",")[0]?.trim() || undefined;
 }
 
-function expectedOrigin(request: Request, url: URL): string {
-	// `X-Forwarded-*` headers are only trusted when `TRUST_PROXY=true`, since a
-	// directly-exposed server would otherwise let a client spoof its own origin
-	// via attacker-controlled forwarded headers. Behind a real reverse proxy
-	// (nginx, Caddy, Cloudflare) the operator opts in by setting the env.
-	const trustProxy = process.env.TRUST_PROXY === "true";
-	const host =
-		(trustProxy && firstForwarded(request, "x-forwarded-host")) || request.headers.get("host");
-	const protocol =
-		(trustProxy && firstForwarded(request, "x-forwarded-proto")) || url.protocol.replace(":", "");
-	return host ? `${protocol}://${host}` : url.origin;
+/** `X-Forwarded-Proto` as an http scheme: Traefik sends `ws`/`wss` on upgrades. */
+export function forwardedProto(request: Request): string | undefined {
+	const proto = firstForwarded(request, "x-forwarded-proto")?.toLowerCase();
+	return proto === "wss" ? "https" : proto === "ws" ? "http" : proto;
 }
 
 // The expected origin is per-request (host-derived), so no Set to precompute —

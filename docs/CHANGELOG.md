@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- WebSockets guide (English + Indonesian): auth, origin check, backpressure, close codes, subprotocols.
+- WebSockets guide (EN + ID): auth, origin check, backpressure, close codes, subprotocols.
 - Environment variables guide: the four new `WS_*` WebSocket settings.
 - Routing skill: rule for `websocket` exports in `+server.ts`.
 
@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Security guide: `redirect()` reads URLs like a browser; broken URLs throw, `allowExternal` too.
 - Security guide: a path starting with `//` is redirected to a single `/`.
 - Navigation guide, skill: hover prefetch skips `rel="external"`; `file://` pages do full loads.
+- Plugins guide: `onAfterHandle` does not run for a WebSocket upgrade.
+- WebSockets guide: a hook error after `resolve()` closes the socket with 1011.
 
 ## [0.8.29] - 2026-10-16
 

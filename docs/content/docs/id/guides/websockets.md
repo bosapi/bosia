@@ -49,7 +49,7 @@ Browser tidak bisa membaca status WebSocket yang ditolak: ia hanya melihat event
 
 ### Cookie saat upgrade
 
-Cookie yang diset hook `handle` **sebelum** `await resolve(event)` (misal sesi yang diperbarui) ikut terkirim di response `101`. Cookie yang diset **setelah** `resolve()` selesai hilang — `101` sudah terkirim. Header yang ditambahkan hook ke response dari `resolve()` diabaikan untuk upgrade.
+Cookie yang diset hook `handle` **sebelum** `await resolve(event)` (misal sesi yang diperbarui) ikut terkirim di response `101`. Cookie yang diset **setelah** `resolve()` selesai hilang — `101` sudah terkirim. Header yang ditambahkan hook ke response dari `resolve()` diabaikan untuk upgrade. Hook yang melempar error **setelah** `resolve()` menutup socket dengan `1011`; untuk menolak koneksi, lempar atau return sebelum `resolve()`.
 
 ## Pengecekan Origin
 

@@ -49,7 +49,7 @@ A browser can't read the status of a refused WebSocket: it only sees an `error` 
 
 ### Cookies on the upgrade
 
-Cookies your `handle` hook sets **before** `await resolve(event)` (e.g. a refreshed session) are sent on the `101` response. Cookies set **after** `resolve()` returns are lost — the `101` has already gone out. Headers a hook adds to the response returned by `resolve()` are ignored for upgrades.
+Cookies your `handle` hook sets **before** `await resolve(event)` (e.g. a refreshed session) are sent on the `101` response. Cookies set **after** `resolve()` returns are lost — the `101` has already gone out. Headers a hook adds to the response returned by `resolve()` are ignored for upgrades. A hook that throws **after** `resolve()` closes the socket with `1011`; to refuse a connection, throw or return before `resolve()`.
 
 ## Origin check
 

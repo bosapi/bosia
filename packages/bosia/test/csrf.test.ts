@@ -81,72 +81,40 @@ describe("checkCsrf — exemptPaths (webhooks)", () => {
 	});
 });
 
-describe("checkCsrf — TRUST_PROXY gate", () => {
+// server.ts applies X-Forwarded-* (behind TRUST_PROXY) to `url` before these
+// run, so they compare against `url` alone and never read those headers.
+describe("checkCsrf — compares against the url it is given", () => {
 	const originalTrustProxy = process.env.TRUST_PROXY;
-
-	beforeEach(() => {
-		delete process.env.TRUST_PROXY;
-	});
 
 	afterEach(() => {
 		if (originalTrustProxy === undefined) delete process.env.TRUST_PROXY;
 		else process.env.TRUST_PROXY = originalTrustProxy;
 	});
 
-	test("spoofed X-Forwarded-Host is ignored when TRUST_PROXY unset", () => {
-		const innerUrl = new URL("http://localhost:9001/x");
-		const r = new Request("http://localhost:9001/x", {
-			method: "POST",
-			headers: {
-				"x-forwarded-host": "attacker.com",
-				"x-forwarded-proto": "https",
-				origin: "https://attacker.com",
-			},
-		});
-		expect(checkCsrf(r, innerUrl)).toContain("Origin");
-	});
+	const spoofed = {
+		"x-forwarded-host": "attacker.com",
+		"x-forwarded-proto": "https",
+		origin: "https://attacker.com",
+	};
 
-	test("X-Forwarded-Host honored when TRUST_PROXY=true", () => {
+	test("X-Forwarded-* headers are ignored, even with TRUST_PROXY=true", () => {
 		process.env.TRUST_PROXY = "true";
 		const innerUrl = new URL("http://localhost:9001/x");
-		const r = new Request("http://localhost:9001/x", {
-			method: "POST",
-			headers: {
-				"x-forwarded-host": "localhost:9000",
-				"x-forwarded-proto": "http",
-				origin: "http://localhost:9000",
-			},
-		});
-		expect(checkCsrf(r, innerUrl)).toBe(null);
+		const post = new Request(innerUrl, { method: "POST", headers: spoofed });
+		expect(checkCsrf(post, innerUrl)).toContain("Origin");
+		const upgrade = new Request(innerUrl, { headers: { ...spoofed, upgrade: "websocket" } });
+		expect(checkUpgradeOrigin(upgrade, innerUrl)).toContain("attacker.com");
 	});
 
-	test("chained X-Forwarded-Proto/-Host use their first value, like event.url", () => {
-		process.env.TRUST_PROXY = "true";
-		const innerUrl = new URL("http://localhost:9001/x");
-		const headers = {
-			"x-forwarded-host": "app.example.com, internal.lb",
-			"x-forwarded-proto": "https, http",
-			origin: "https://app.example.com",
-		};
+	test("the public url server.ts rebuilt is the expected origin", () => {
+		const publicUrl = new URL("https://app.example.com/x");
+		const headers = { origin: "https://app.example.com" };
 		const post = new Request("http://localhost:9001/x", { method: "POST", headers });
-		expect(checkCsrf(post, innerUrl)).toBe(null);
+		expect(checkCsrf(post, publicUrl)).toBe(null);
 		const upgrade = new Request("http://localhost:9001/x", {
 			headers: { ...headers, upgrade: "websocket" },
 		});
-		expect(checkUpgradeOrigin(upgrade, innerUrl)).toBe(null);
-	});
-
-	test("TRUST_PROXY=false (string) does not enable trust", () => {
-		process.env.TRUST_PROXY = "false";
-		const innerUrl = new URL("http://localhost:9001/x");
-		const r = new Request("http://localhost:9001/x", {
-			method: "POST",
-			headers: {
-				"x-forwarded-host": "attacker.com",
-				origin: "https://attacker.com",
-			},
-		});
-		expect(checkCsrf(r, innerUrl)).toContain("Origin");
+		expect(checkUpgradeOrigin(upgrade, publicUrl)).toBe(null);
 	});
 });
 
@@ -166,13 +134,13 @@ describe("checkUpgradeOrigin", () => {
 		expect(checkUpgradeOrigin(upgrade({ origin: "https://evil.com" }), url)).toContain("evil.com");
 	});
 
-	test("allowedOrigins, exemptPaths and checkOrigin: false let it through", () => {
+	test("allowedOrigins and exemptPaths let it through; checkOrigin: false does not", () => {
 		const evil = upgrade({ origin: "https://evil.com" });
 		expect(
 			checkUpgradeOrigin(evil, url, { checkOrigin: true, allowedOrigins: ["https://evil.com"] }),
 		).toBe(null);
 		expect(checkUpgradeOrigin(evil, url, { checkOrigin: true, exemptPaths: ["/x"] })).toBe(null);
-		expect(checkUpgradeOrigin(evil, url, { checkOrigin: false })).toBe(null);
+		expect(checkUpgradeOrigin(evil, url, { checkOrigin: false })).toContain("evil.com");
 	});
 
 	test("a Referer alone is not an Origin", () => {

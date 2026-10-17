@@ -32,6 +32,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Behind chained proxies (`X-Forwarded-Proto: https, http`), form posts no longer get a 403.
 - A wrong `WS_*` setting now names that setting in its error, not `BODY_SIZE_LIMIT`.
 - A browser asking for a WebSocket subprotocol now logs a warning instead of failing silently.
+- WebSockets behind Traefik (`X-Forwarded-Proto: wss`) no longer get a 403.
+- A plain GET with a stray `Upgrade` header now reaches your `GET` handler.
+- A hook error after a WebSocket opens now closes that socket (1011) instead of keeping it open.
+- Behind a proxy, `event.url` no longer shows the app's inner port (like `app.com:3000`).
 
 ## [1.2.6] - 2026-10-16
 

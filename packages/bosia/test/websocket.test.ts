@@ -4,6 +4,7 @@ import { join } from "path";
 
 import { getEphemeralPort } from "../src/core/prerender.ts";
 import { BOSIA_NODE_PATH } from "../src/core/paths.ts";
+import { isUpgradeRequest, isUpgraded, runUpgrade, upgradeRequest } from "../src/core/websocket.ts";
 
 // Boots a real built server with `websocket` exports in +server.ts routes and
 // drives it over the wire: the hooks run before upgrade(), ws.data is what
@@ -50,6 +51,7 @@ export async function handle({ event, resolve }) {
 		return resolve({ ...event, request });
 	}
 	const res = await resolve(event);
+	if (event.url.searchParams.has("throwAfter")) throw new Error("audit failed");
 	if (event.url.searchParams.has("rewrap")) return new Response(res.body, res);
 	return res;
 }
@@ -411,6 +413,36 @@ describe("upgrade", () => {
 		ws.close();
 	});
 
+	test("a hook throwing after the upgrade closes the socket with 1011", async () => {
+		const ws = await connect("/ws/echo?throwAfter");
+		expect((await closed(ws)).code).toBe(1011);
+		expect(logs).toContain("after the WebSocket upgrade");
+		expect(logs).not.toContain("Unhandled request error: audit failed");
+	});
+
+	test("a GET with Upgrade but no Sec-WebSocket-Key reaches GET, not upgrade()", () => {
+		const get = (headers: Record<string, string>) => new Request("http://x/", { headers });
+		expect(isUpgradeRequest(get({ upgrade: "websocket" }))).toBe(false);
+		expect(isUpgradeRequest(get({ upgrade: "websocket", "sec-websocket-key": "k" }))).toBe(true);
+	});
+
+	test("the upgrade context ends with the request: a later timer sees no upgrade", async () => {
+		const server = { upgrade: () => true } as any;
+		const request = new Request("http://x/", { headers: { upgrade: "websocket" } });
+		let fire!: () => void;
+		const fired = new Promise<void>((r) => (fire = r));
+		let later: boolean | undefined;
+		await runUpgrade(request, server, async () => {
+			upgradeRequest({}, {}, new Headers());
+			setTimeout(() => {
+				later = isUpgraded();
+				fire();
+			}, 10);
+		});
+		await fired;
+		expect(later).toBe(false);
+	});
+
 	test("a route can export GET and websocket together", async () => {
 		expect(await (await fetch(`${origin}/ws/mixed`)).text()).toBe("plain");
 		const ws = await connect("/ws/mixed");
@@ -441,6 +473,29 @@ describe("origin check", () => {
 			headers: { "x-forwarded-proto": "https, http", "x-forwarded-host": `localhost:${port}` },
 		});
 		expect(res.headers.get("set-cookie")).toContain("Secure");
+	});
+
+	test("X-Forwarded-Proto: wss is the https origin; the 101 cookie is Secure", async () => {
+		const { status, head } = await handshake("/ws/echo", {
+			...RIG,
+			origin: `https://localhost:${port}`,
+			"x-forwarded-proto": "wss",
+			"x-forwarded-host": `localhost:${port}`,
+		});
+		expect(status).toBe(101);
+		expect(head).toContain("Secure");
+	});
+
+	test("a form post behind chained proxies passes CSRF (TRUST_PROXY=true)", async () => {
+		const res = await fetch(`${origin}/ws/mixed`, {
+			method: "POST",
+			headers: {
+				"x-forwarded-proto": "https, http",
+				"x-forwarded-host": "app.example.com, internal.lb",
+				origin: "https://app.example.com",
+			},
+		});
+		expect(res.status).not.toBe(403);
 	});
 
 	test("CSRF_ALLOWED_ORIGINS is honoured", async () => {
