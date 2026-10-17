@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.8] - 2026-10-18
+
+### Fixed
+
+- Cached pages are now kept apart per site address, so a faked `Host` header can't poison them.
+- `X-Forwarded-Proto: constructor` no longer drops a valid forwarded host.
+
 ## [1.2.7] - 2026-10-17
 
 ### Added

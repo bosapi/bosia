@@ -4,8 +4,9 @@
 // Settled responses are NOT cached — once the promise resolves, the entry is
 // dropped, so the next request runs the loader again.
 //
-// The caller's key includes the CACHE_KEYS identity hash (see cache.ts), so
-// different users never share a loader result. Custom session cookie names
+// The caller's key (computeCacheKey in cache.ts) adds the request origin and
+// the CACHE_KEYS identity hash, so different hosts and users never share a
+// loader result. Custom session cookie names
 // must be listed in CACHE_KEYS. See docs/guides/request-deduplication.md.
 
 type Inflight = { promise: Promise<unknown>; start: number };

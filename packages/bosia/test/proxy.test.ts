@@ -58,7 +58,7 @@ describe("applyForwarded", () => {
 	});
 
 	test("a scheme other than http(s)/ws(s) is ignored", () => {
-		for (const proto of ["file", "ftp", "javascript"]) {
+		for (const proto of ["file", "ftp", "javascript", "constructor", "__proto__", "toString"]) {
 			const url = new URL("http://localhost/x");
 			applyForwarded(req({ "x-forwarded-host": "app.com", "x-forwarded-proto": proto }), url, true);
 			expect(url.href).toBe("http://app.com/x");

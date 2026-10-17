@@ -49,7 +49,7 @@ Server cache and client cache share the **same key vocabulary** as the existing 
 - `invalidate("/api/posts")` from `bosia` (server) evicts cached HTML where a loader fetched `/api/posts`, AND the cached `/api/posts` API response.
 - `invalidateAll("/products/")` evicts every entry whose path starts with the prefix.
 
-Per-user isolation is automatic: the cache key includes a hash of cookies and headers named in `CACHE_KEYS` (default: `session,sid,auth,token,jwt,Authorization`). Two users with different `session` cookies never see each other's HTML.
+Per-user isolation is automatic: the cache key includes a hash of cookies and headers named in `CACHE_KEYS` (default: `session,sid,auth,token,jwt,Authorization`). Two users with different `session` cookies never see each other's HTML. The key also includes `url.origin`, so each host/protocol (`app.com` vs `www.app.com`) caches separately; redirect aliases to one address.
 
 ## Rules
 

@@ -27,7 +27,9 @@ const SCHEMES: Record<string, string> = {
  */
 export function applyForwarded(request: Request, url: URL, trustProxy: boolean): void {
 	if (!trustProxy) return;
-	const proto = SCHEMES[firstForwarded(request, "x-forwarded-proto")?.toLowerCase() ?? ""];
+	const rawProto = firstForwarded(request, "x-forwarded-proto")?.toLowerCase() ?? "";
+	// own keys only: "constructor" or "__proto__" must read as unknown, not inherited
+	const proto = Object.hasOwn(SCHEMES, rawProto) ? SCHEMES[rawProto] : undefined;
 	const host = firstForwarded(request, "x-forwarded-host");
 	let parsed: URL | undefined;
 	if (host) {

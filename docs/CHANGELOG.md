@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.31] - 2026-10-18
+
+### Changed
+
+- Response cache + dedup guides (EN + ID): the cache key now includes the site address.
+- Response cache skill: each host caches separately; redirect aliases to one address.
+
 ## [0.8.30] - 2026-10-17
 
 ### Added

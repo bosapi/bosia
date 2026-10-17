@@ -275,7 +275,9 @@ export function computeIdentityHash(req: Request, cookies: Pick<CookieJar, "peek
 }
 
 export function computeCacheKey(url: URL, req: Request, cookies: Pick<CookieJar, "peek">): string {
-	return `${dedupKey(url)}|i=${computeIdentityHash(req, cookies)}`;
+	// Origin is in the key: `url` follows the Host / X-Forwarded-* headers, and a
+	// page that renders `url.origin` must not be served to another host.
+	return `${dedupKey(url)}|o=${url.origin}|i=${computeIdentityHash(req, cookies)}`;
 }
 
 // ─── Tracking parameters (CACHE_IGNORE_PARAMS) ───────────

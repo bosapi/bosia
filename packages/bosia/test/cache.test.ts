@@ -155,6 +155,12 @@ describe("computeCacheKey", () => {
 		const b = computeCacheKey(url, mkRequest("http://x/"), mkCookies({ session: "bob" }));
 		expect(a).not.toBe(b);
 	});
+
+	test("different host or protocol → different key (spoofed Host can't poison)", () => {
+		const k = (u: string) => computeCacheKey(new URL(u), mkRequest("http://x/"), mkCookies());
+		expect(k("http://app.com/x")).not.toBe(k("http://evil.com/x"));
+		expect(k("http://app.com/x")).not.toBe(k("https://app.com/x"));
+	});
 });
 
 // ─── collectTags ─────────────────────────────────────────

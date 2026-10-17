@@ -9,7 +9,7 @@ Cache ini **aman untuk user yang login** karena key menyertakan hash dari cookie
 
 ## Alur request
 
-1. Lookup `<dedup-key>|i=<identity-hash>` di cache.
+1. Lookup `<dedup-key>|o=<origin>|i=<identity-hash>` di cache.
 2. **Hit** → kirim varian terkompresi yang cocok (brotli, gzip, atau identity) berdasarkan `Accept-Encoding`. Selesai.
 3. **Miss** → miss **pertama** pada sebuah kunci menjadi leader: menjalankan `metadata()`, `load()`, render, membangun HTML, lalu mengirimnya terkompresi. Pembuatan salinan gzip + brotli untuk cache berjalan setelah response terkirim.
 4. **Miss bersamaan** pada kunci yang sama menunggu leader, lalu cek ulang cache — hit dilayani dari cache, jadi N miss simultan membangun halaman sekali, bukan N kali. Jika leader melewatkan penulisan (mis. mengeset cookie atau response tidak cacheable), tiap waiter membangun sendiri-sendiri.
@@ -21,8 +21,10 @@ Hash identitas di sini sama dengan yang dipakai [deduplikasi request](/id/guides
 Cache key berbentuk:
 
 ```
-<normalized-path>?<sorted-query>|i=<identity-hash>
+<normalized-path>?<sorted-query>|o=<origin>|i=<identity-hash>
 ```
+
+`origin` adalah `url.origin` request (protokol + host). Nilainya mengikuti header `Host` (dan `X-Forwarded-*` dengan `TRUST_PROXY=true`), jadi `Host` palsu tidak bisa meracuni salinan untuk pengunjung lain. Tiap alamat yang dilayani app (`app.com`, `www.app.com`, `http://` dan `https://`) punya salinan sendiri; redirect alias ke satu alamat agar salinan dipakai bersama.
 
 `identity-hash` dibangun dari setiap cookie DAN header yang namanya muncul di `CACHE_KEYS`. Default sudah menutup nama session umum:
 

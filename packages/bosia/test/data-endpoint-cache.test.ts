@@ -196,6 +196,17 @@ beforeAll(async () => {
 			`\tconst { campaign } = await parent();\n\treturn { banner: campaign };\n}\n`,
 	);
 
+	// Renders the request's origin, which follows the Host header.
+	mkdirSync(join(routes, "asal"), { recursive: true });
+	writeFileSync(
+		join(routes, "asal", "+page.svelte"),
+		`<script>\n\tlet { data } = $props();\n</script>\n<p>asal={data.origin}</p>\n`,
+	);
+	writeFileSync(
+		join(routes, "asal", "+page.server.ts"),
+		`export function load({ url }: any) {\n\treturn { origin: url.origin };\n}\n`,
+	);
+
 	// metadata() hangs on the first call (METADATA_TIMEOUT=0 here).
 	mkdirSync(join(routes, "meta-macet"), { recursive: true });
 	writeFileSync(join(routes, "meta-macet", "+page.svelte"), `<p>Meta macet</p>\n`);
@@ -644,4 +655,28 @@ describe("loader url tracking", () => {
 		expect(page.body.pageData.loader).toBe(false);
 		expect(page.body.pageData.meta).toBe(false);
 	});
+});
+
+describe("cache key carries the origin", () => {
+	// A spoofed Host must not poison the copy served to the real one.
+	const get = (path: string, host: string) => fetch(`${origin}${path}`, { headers: { host } });
+
+	for (const [kind, path] of [
+		["page HTML", "/asal"],
+		["data endpoint", "/__bosia/data/asal.json?_invalidated=1"],
+	]) {
+		test(`${kind}: another Host gets its own copy`, async () => {
+			await get(path, "app.test");
+			await settle();
+			const hit = await get(path, "app.test");
+			expect(hit.headers.get("x-bosia-cache")).toBe("HIT");
+			expect(await hit.text()).toContain("http://app.test");
+
+			const other = await get(path, "evil.test");
+			expect(other.headers.get("x-bosia-cache")).toBeNull();
+			const body = await other.text();
+			expect(body).toContain("http://evil.test");
+			expect(body).not.toContain("http://app.test");
+		});
+	}
 });
