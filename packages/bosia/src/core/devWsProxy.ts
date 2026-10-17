@@ -13,6 +13,8 @@
 
 import type { Server, ServerWebSocket, WebSocketHandler } from "bun";
 
+import { closeEach } from "./websocket.ts";
+
 interface ProxyData {
 	upstream: WebSocket;
 	client: ServerWebSocket<ProxyData> | null;
@@ -39,16 +41,18 @@ const UPSTREAM_TIMEOUT_MS = 10_000;
 
 const proxied = new Set<ServerWebSocket<ProxyData>>();
 
-/** A code the server side may send: 1005/1006/1015 only describe a close. */
-function toClientCode(code: number): number {
-	if (code === 1005) return 1000;
-	if (code === 1006 || code === 1015) return 1011;
-	return code;
-}
-
-/** A client WebSocket may only send 1000 or 3000–4999. */
-function toAppCode(code: number): number {
-	return code === 1000 || (code >= 3000 && code <= 4999) ? code : 1000;
+/**
+ * A close code `close()` accepts. 1005/1006/1015 only describe a close:
+ * 1005 (no code) becomes 1000, 1006/1015 (connection lost) become `lost`.
+ * Reserved or out-of-range codes become 1000; Bun's client close() throws on them.
+ */
+export function toSendableCode(code: number, lost: number): number {
+	if (code === 1006 || code === 1015) return lost;
+	const valid =
+		(code >= 1000 && code <= 1003) ||
+		(code >= 1007 && code <= 1014) ||
+		(code >= 3000 && code <= 4999);
+	return valid ? code : 1000;
 }
 
 /**
@@ -82,7 +86,7 @@ export async function proxyUpgrade(
 	});
 	upstream.addEventListener("close", (e) => {
 		if (!data.client) data.early = { code: e.code, reason: e.reason };
-		else if (proxied.has(data.client)) data.client.close(toClientCode(e.code), e.reason);
+		else if (proxied.has(data.client)) data.client.close(toSendableCode(e.code, 1011), e.reason);
 	});
 
 	const opened = await new Promise<boolean>((resolve) => {
@@ -110,13 +114,16 @@ export async function proxyUpgrade(
 }
 
 export const proxyHandlers: WebSocketHandler<ProxyData> = {
+	// The app enforces WS_MAX_PAYLOAD (and closes with 1009, passed through);
+	// the proxy must not cut frames off at Bun's 16 MB default first.
+	maxPayloadLength: 2 ** 30,
 	open(ws) {
 		const data = ws.data;
 		data.client = ws;
 		proxied.add(ws);
 		for (const frame of data.pending) ws.send(frame);
 		data.pending = [];
-		if (data.early) ws.close(toClientCode(data.early.code), data.early.reason);
+		if (data.early) ws.close(toSendableCode(data.early.code, 1011), data.early.reason);
 	},
 	message(ws, message) {
 		const { upstream } = ws.data;
@@ -126,18 +133,12 @@ export const proxyHandlers: WebSocketHandler<ProxyData> = {
 		proxied.delete(ws);
 		const { upstream } = ws.data;
 		if (upstream.readyState === WebSocket.OPEN || upstream.readyState === WebSocket.CONNECTING) {
-			upstream.close(toAppCode(code), reason);
+			upstream.close(toSendableCode(code, 1001), reason);
 		}
 	},
 };
 
 /** Close every proxied client — 1012 on a rebuild, so clients reconnect to the new app. */
 export function closeProxiedSockets(code: number, reason: string): void {
-	for (const ws of [...proxied]) {
-		try {
-			ws.close(code, reason);
-		} catch {
-			/* already closed */
-		}
-	}
+	closeEach(proxied, code, reason);
 }

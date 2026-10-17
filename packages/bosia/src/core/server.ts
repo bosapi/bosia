@@ -16,7 +16,7 @@ import { HttpError, Redirect, ActionFailure, isHttpError, isRedirect } from "./e
 import { CookieJar } from "./cookies.ts";
 import { safePath } from "./safePath.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
-import { checkCsrf, checkUpgradeOrigin } from "./csrf.ts";
+import { checkCsrf, checkUpgradeOrigin, firstForwarded } from "./csrf.ts";
 import type { CsrfConfig } from "./csrf.ts";
 import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
@@ -75,9 +75,9 @@ import {
 } from "./renderer.ts";
 import { getServerTime } from "../lib/utils.ts";
 import {
-	UPGRADED,
 	closeAllSockets,
 	isUpgradeRequest,
+	isUpgraded,
 	upgradeRequest,
 	type WebSocketHandler,
 	type WebSocketOptions,
@@ -684,7 +684,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				// Cookies a hook set before resolve() ride on the 101; later ones are lost.
 				const headers = new Headers();
 				for (const cookie of (cookies as CookieJar).outgoing) headers.append("Set-Cookie", cookie);
-				return upgradeRequest(request, ws, result ?? {}, headers);
+				return upgradeRequest(ws, result ?? {}, headers);
 			}
 
 			// HEAD falls back to GET (an explicit HEAD export still wins). BosiaApp
@@ -693,14 +693,17 @@ async function resolve(event: RequestEvent): Promise<Response> {
 
 			if (!handler) {
 				// A websocket-only route asked over plain HTTP.
-				if (ws && method === "GET") {
+				if (ws && (method === "GET" || method === "HEAD")) {
 					return new Response("Upgrade Required", {
 						status: 426,
 						headers: { Upgrade: "websocket", Connection: "Upgrade" },
 					});
 				}
 				const allowed = Object.keys(mod).filter((k) => /^[A-Z]+$/.test(k));
-				if (allowed.includes("GET") && !allowed.includes("HEAD")) allowed.push("HEAD");
+				const hasGet = allowed.includes("GET");
+				if (hasGet && !allowed.includes("HEAD")) allowed.push("HEAD");
+				// A websocket route takes GET (the upgrade's method); HEAD answers 426.
+				if (ws && !hasGet) allowed.push("GET", "HEAD");
 				return Response.json(
 					{ error: `Method ${method} not allowed` },
 					{ status: 405, headers: { Allow: allowed.join(", ") } },
@@ -1205,9 +1208,9 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 	// of localhost. Gated on TRUST_PROXY since these headers are client-spoofable
 	// when no proxy strips them.
 	if (TRUST_PROXY) {
-		const fwdHost = request.headers.get("x-forwarded-host");
+		const fwdHost = firstForwarded(request, "x-forwarded-host");
 		if (fwdHost) url.host = fwdHost;
-		const fwdProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+		const fwdProto = firstForwarded(request, "x-forwarded-proto");
 		if (fwdProto) url.protocol = `${fwdProto}:`;
 	}
 
@@ -1338,7 +1341,7 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		// `withBase()`, and a raw `Response.redirect` under a BASE_PATH carries the
 		// base by hand, so rebasing here would double the prefix on both.
 		// Bun already answered with 101; there is no response left to finish.
-		if (response === UPGRADED) return response;
+		if (isUpgraded()) return response;
 
 		if (dataReq && response.status >= 300 && response.status < 400) {
 			const location = response.headers.get("location");
@@ -1537,7 +1540,7 @@ let drainResolve: (() => void) | null = null;
 export function beginShutdown(): Promise<void> {
 	shuttingDown = true;
 	// 1001 "going away": clients reconnect, to this server's replacement.
-	closeAllSockets(1001, "Server shutting down");
+	closeAllSockets();
 	if (inFlight === 0) return Promise.resolve();
 	return new Promise<void>((r) => {
 		drainResolve = r;

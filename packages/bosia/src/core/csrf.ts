@@ -98,16 +98,25 @@ export function checkUpgradeOrigin(
 	return `Cross-origin WebSocket blocked: Origin "${originHeader}" is not allowed`;
 }
 
+/**
+ * First value of an `X-Forwarded-*` header: each proxy in a chain appends its
+ * own ("https, http"), and the first is the client-facing one. server.ts
+ * builds `event.url` with this too, so both agree on the public origin.
+ */
+export function firstForwarded(request: Request, name: string): string | undefined {
+	return request.headers.get(name)?.split(",")[0]?.trim() || undefined;
+}
+
 function expectedOrigin(request: Request, url: URL): string {
 	// `X-Forwarded-*` headers are only trusted when `TRUST_PROXY=true`, since a
 	// directly-exposed server would otherwise let a client spoof its own origin
 	// via attacker-controlled forwarded headers. Behind a real reverse proxy
 	// (nginx, Caddy, Cloudflare) the operator opts in by setting the env.
 	const trustProxy = process.env.TRUST_PROXY === "true";
-	const forwardedHost = trustProxy ? request.headers.get("x-forwarded-host") : null;
-	const host = forwardedHost ?? request.headers.get("host");
-	const forwardedProto = trustProxy ? request.headers.get("x-forwarded-proto") : null;
-	const protocol = forwardedProto ?? url.protocol.replace(":", "");
+	const host =
+		(trustProxy && firstForwarded(request, "x-forwarded-host")) || request.headers.get("host");
+	const protocol =
+		(trustProxy && firstForwarded(request, "x-forwarded-proto")) || url.protocol.replace(":", "");
 	return host ? `${protocol}://${host}` : url.origin;
 }
 

@@ -28,6 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Links like `/.//evil.com` or `//evil.com/x/` no longer take visitors to evil.com.
 - Links in Capacitor apps (`capacitor://`) now open in-app instead of reloading the whole app.
 - Hovering a `rel="external"` link (like `/logout`) no longer runs its loader in the background.
+- Responses still being sent when the server stops are no longer cut off.
+- Behind chained proxies (`X-Forwarded-Proto: https, http`), form posts no longer get a 403.
 
 ## [1.2.6] - 2026-10-16
 

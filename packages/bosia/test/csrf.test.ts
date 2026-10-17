@@ -120,6 +120,22 @@ describe("checkCsrf — TRUST_PROXY gate", () => {
 		expect(checkCsrf(r, innerUrl)).toBe(null);
 	});
 
+	test("chained X-Forwarded-Proto/-Host use their first value, like event.url", () => {
+		process.env.TRUST_PROXY = "true";
+		const innerUrl = new URL("http://localhost:9001/x");
+		const headers = {
+			"x-forwarded-host": "app.example.com, internal.lb",
+			"x-forwarded-proto": "https, http",
+			origin: "https://app.example.com",
+		};
+		const post = new Request("http://localhost:9001/x", { method: "POST", headers });
+		expect(checkCsrf(post, innerUrl)).toBe(null);
+		const upgrade = new Request("http://localhost:9001/x", {
+			headers: { ...headers, upgrade: "websocket" },
+		});
+		expect(checkUpgradeOrigin(upgrade, innerUrl)).toBe(null);
+	});
+
 	test("TRUST_PROXY=false (string) does not enable trust", () => {
 		process.env.TRUST_PROXY = "false";
 		const innerUrl = new URL("http://localhost:9001/x");

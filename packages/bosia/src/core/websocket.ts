@@ -10,6 +10,8 @@
 // client offers as `Sec-WebSocket-Protocol` in server.upgrade's headers. The
 // dev proxy already passes it through.
 
+import { AsyncLocalStorage } from "node:async_hooks";
+
 import type { Server, ServerWebSocket, WebSocketHandler as BunWebSocketHandler } from "bun";
 
 import type { RequestEvent } from "./hooks.ts";
@@ -43,41 +45,55 @@ const WS_ROUTE = Symbol("bosia.websocket");
 
 type Socket = ServerWebSocket<Record<PropertyKey, any>>;
 
-/** Returned by resolve() after a successful upgrade; BosiaApp answers Bun with `undefined`. */
-export const UPGRADED = new Response(null, { status: 200 });
-
 export function isUpgradeRequest(request: Request): boolean {
 	return request.method === "GET" && request.headers.get("upgrade")?.toLowerCase() === "websocket";
 }
 
-// The Bun server each upgrade request arrived on — `server.upgrade()` needs it,
-// and the framework's handlers only see the Request.
-const servers = new WeakMap<Request, Server<any>>();
-
-export function bindServer(request: Request, server: Server<any>): void {
-	servers.set(request, server);
+// One per upgrade request, set by BosiaApp.fetch. It holds the Request Bun gave
+// (server.upgrade() needs that one, and a hook may pass resolve() a new one)
+// and whether the upgrade happened — a per-request flag, so a hook that
+// rebuilds or mutates the returned Response can't hide or leak it.
+interface UpgradeContext {
+	request: Request;
+	server: Server<any>;
+	upgraded: boolean;
 }
 
+const upgrades = new AsyncLocalStorage<UpgradeContext>();
+
+export function runUpgrade<T>(request: Request, server: Server<any>, fn: () => T): T {
+	return upgrades.run({ request, server, upgraded: false }, fn);
+}
+
+/** True once this request has been upgraded: Bun already sent the 101. */
+export function isUpgraded(): boolean {
+	return upgrades.getStore()?.upgraded === true;
+}
+
+let closing = false;
+
 /**
- * Upgrade `request` with `data` as `ws.data`. Returns UPGRADED, or the Response
- * to send instead (bad handshake, or a runtime without WebSockets).
+ * Upgrade the current request with `data` as `ws.data`. Returns a placeholder
+ * Response (Bun ignores it; isUpgraded() is the signal), or the Response to
+ * send instead (bad handshake, a runtime without WebSockets).
  */
 export function upgradeRequest(
-	request: Request,
 	handler: WebSocketHandler<any, any>,
 	data: object,
 	headers: Headers,
 ): Response {
-	const server = servers.get(request);
-	if (!server) return new Response("WebSockets are not supported here", { status: 501 });
+	const ctx = upgrades.getStore();
+	if (!ctx) return new Response("WebSockets are not supported here", { status: 501 });
 	// The returned object itself becomes ws.data (an app may keep it in a
 	// registry); only a frozen/sealed one is copied so the symbol can be added.
 	// One object returned from two routes would carry the last route's handlers.
 	const target = Object.isExtensible(data) ? data : { ...data };
 	Object.defineProperty(target, WS_ROUTE, { value: handler, configurable: true });
-	return server.upgrade(request, { data: target as any, headers })
-		? UPGRADED
-		: new Response("Bad WebSocket handshake", { status: 400 });
+	if (!ctx.server.upgrade(ctx.request, { data: target as any, headers })) {
+		return new Response("Bad WebSocket handshake", { status: 400 });
+	}
+	ctx.upgraded = true;
+	return new Response(null, { status: 200 });
 }
 
 // ─── Shared Bun handlers ─────────────────────────────────
@@ -95,7 +111,15 @@ function fail(ws: Socket, err: unknown): void {
 
 // A user handler's throw or rejection closes that socket with 1011; it must
 // never reach the prod `uncaughtException` handler, which exits the process.
+//
+// Bun calls these inside the upgrade request's async context; exit() it, so a
+// timer or callback started in open() doesn't hold that request for the
+// socket's life or see isUpgraded() in its own in-process fetches.
 function run(ws: Socket, name: Exclude<keyof WebSocketHandler, "upgrade">, args: unknown[]): void {
+	upgrades.exit(() => call(ws, name, args));
+}
+
+function call(ws: Socket, name: Exclude<keyof WebSocketHandler, "upgrade">, args: unknown[]): void {
 	const handler = ws.data?.[WS_ROUTE] as WebSocketHandler<any> | undefined;
 	const fn = handler?.[name] as ((...a: unknown[]) => unknown) | undefined;
 	if (!fn) return;
@@ -111,6 +135,9 @@ export const websocketHandlers: BunWebSocketHandler<any> = {
 	open(ws) {
 		sockets.add(ws);
 		run(ws, "open", []);
+		// An upgrade still in its async upgrade() during the shutdown sweep opens
+		// after it: the app has seen open() and gets close(), so it can clean up.
+		if (closing) ws.close(1001, "Server shutting down");
 	},
 	message(ws, message) {
 		run(ws, "message", [message]);
@@ -130,17 +157,23 @@ export const websocketHandlers: BunWebSocketHandler<any> = {
 	},
 };
 
-/** Close every open socket — 1001 tells clients to reconnect elsewhere. */
-export function closeAllSockets(code = 1001, reason = "Server shutting down"): void {
-	for (const ws of [...sockets]) {
+/** Shutdown: close every open socket with 1001 (clients reconnect elsewhere),
+ *  and any that opens from here on. */
+export function closeAllSockets(): void {
+	closing = true;
+	closeEach(sockets, 1001, "Server shutting down");
+}
+
+export function closeEach(
+	list: Iterable<ServerWebSocket<any>>,
+	code: number,
+	reason: string,
+): void {
+	for (const ws of [...list]) {
 		try {
 			ws.close(code, reason);
 		} catch {
 			/* already closed */
 		}
 	}
-}
-
-export function openSocketCount(): number {
-	return sockets.size;
 }

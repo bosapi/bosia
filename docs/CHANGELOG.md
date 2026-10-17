@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - WebSockets guide (English + Indonesian): auth, origin check, backpressure, close codes.
-- Environment variables guide: `WS_MAX_PAYLOAD`, `WS_IDLE_TIMEOUT`, `WS_BACKPRESSURE_LIMIT`, `WS_COMPRESS`.
+- Environment variables guide: the four new `WS_*` WebSocket settings.
 - Routing skill: rule for `websocket` exports in `+server.ts`.
 
 ### Changed

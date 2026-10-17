@@ -7,9 +7,9 @@
 import type { Server } from "bun";
 
 import {
-	UPGRADED,
-	bindServer,
 	isUpgradeRequest,
+	isUpgraded,
+	runUpgrade,
 	websocketHandlers,
 	type WebSocketOptions,
 } from "./websocket.ts";
@@ -52,7 +52,7 @@ export type ErrorHook = (ctx: { request: Request; error: unknown; set: ResponseS
  * the return value is ignored and a throw or rejection is swallowed. `response`
  * is the one the client gets — don't read its body or change its headers.
  * `status` is the status the client got: 101 for a WebSocket upgrade, whose
- * `response` is only a marker (a 101 Response can't be built).
+ * `response` is only a placeholder (a 101 Response can't be built).
  */
 export type ResponseHook = (ctx: {
 	request: Request;
@@ -167,11 +167,15 @@ export class BosiaApp {
 
 	/** `undefined` after a WebSocket upgrade — Bun has already answered with 101.
 	 *  Only Bun passes `server`, so Workers never upgrades. */
-	fetch = async (request: Request, server?: Server<any>): Promise<Response | undefined> => {
-		if (server && isUpgradeRequest(request)) bindServer(request, server);
+	fetch = (request: Request, server?: Server<any>): Promise<Response | undefined> =>
+		server && isUpgradeRequest(request)
+			? runUpgrade(request, server, () => this.handle(request))
+			: this.handle(request);
+
+	private handle = async (request: Request): Promise<Response | undefined> => {
 		if (this.responseHooks.length === 0) {
 			const response = await this.respond(request);
-			return response === UPGRADED ? undefined : response;
+			return isUpgraded() ? undefined : response;
 		}
 		const start = performance.now();
 		let response: Response;
@@ -183,11 +187,11 @@ export class BosiaApp {
 			throw error;
 		}
 		this.observe(request, response, start);
-		return response === UPGRADED ? undefined : response;
+		return isUpgraded() ? undefined : response;
 	};
 
 	private observe(request: Request, response: Response, start: number): void {
-		const upgraded = response === UPGRADED;
+		const upgraded = isUpgraded();
 		const status = upgraded ? 101 : response.status;
 		for (const hook of this.responseHooks) {
 			try {
@@ -212,7 +216,7 @@ export class BosiaApp {
 		const method = isHead ? "GET" : request.method.toUpperCase();
 		try {
 			const res = await this.dispatch(request, method, set);
-			return isHead && res !== UPGRADED ? new Response(null, res) : res;
+			return isHead ? new Response(null, res) : res;
 		} catch (error) {
 			for (const hook of this.errorHooks) {
 				const out = await hook({ request, error, set });
@@ -251,7 +255,7 @@ export class BosiaApp {
 		}
 
 		// Bun already sent the 101: nothing after this can change the answer.
-		if (response === UPGRADED) return UPGRADED;
+		if (isUpgraded()) return response as Response;
 		for (const hook of this.afterHooks) {
 			const out = await hook({ request, response, set });
 			if (out !== undefined) response = out;

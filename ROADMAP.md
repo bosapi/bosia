@@ -9,8 +9,12 @@
 
 - [x] 🟠 No WebSocket support: `Bun.serve` had no `websocket`, `fetch` dropped `server`. `+server.ts` exports `websocket`; upgrade runs after hooks, `ws.data` = `upgrade()` result.
 - [x] 🔴 GET skips CSRF, so a cross-site page could open a socket with the user's cookies. `checkUpgradeOrigin`: foreign Origin → 403, no Origin (CLI/device) passes.
-- [x] 🟡 Shutdown closes sockets with 1001; dev proxy connects to the app first (refusal = failed handshake, like prod), rebuild → 1012, 1006 → 1011.
+- [x] 🟡 Shutdown closes sockets with 1001; dev proxy connects to the app first (refusal = failed handshake, like prod), rebuild → 1012.
 - [x] 🟡 `$types` was generated only for page dirs; `+server.ts`-only dirs get `Params` + `WebSocketHandler` now. Workers guard flags `websocket` exports.
+- [x] 🟡 Review: one shared `UPGRADED` Response let hooks mutate or hide it, and a hook's new Request broke the upgrade (501). Now a per-request AsyncLocalStorage flag.
+- [x] 🟡 Review: an upgrade pending at shutdown got no 1001 → it opens, then closes 1001. `stop(true)` cut drained responses; now a 500ms graceful stop, then forced (SSE can't hang it).
+- [x] 🟡 Review: chained `X-Forwarded-Proto`/`-Host` (`https, http`) gave a wrong origin → 403 on posts and upgrades. One `firstForwarded()` for csrf and `event.url`.
+- [x] 🟡 Review: dev proxy threw on odd close codes and mapped client 1001 to 1000; HEAD on a websocket-only route got 405 with an empty `Allow`.
 - [ ] ⚪ Not in v1: subprotocol selection (`protocols` on the export), Workers (WebSocketPair + Durable Objects), dev-proxy backpressure and 101 cookies.
 
 ## bosia 1.2.7 (2026-10-17) — goto resolves relative URLs

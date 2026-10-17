@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { BosiaApp } from "../src/core/backend.ts";
-import { UPGRADED } from "../src/core/websocket.ts";
+import { isUpgraded, upgradeRequest, websocketHandlers } from "../src/core/websocket.ts";
 
 const req = (path: string, init?: RequestInit) => new Request(`http://localhost${path}`, init);
 
@@ -145,12 +145,27 @@ test("options() registers a route, not the constructor config", async () => {
 	expect(await (await app.fetch(req("/", { method: "OPTIONS" }))).text()).toBe("preflight");
 });
 
-describe("WebSocket upgrade marker", () => {
+describe("WebSocket upgrade", () => {
+	// A real Bun server: only Bun can upgrade. The route rebuilds the response,
+	// as a hook wrapping resolve() may — the upgrade must still be seen.
+	function serve(app: BosiaApp) {
+		return Bun.serve({ port: 0, fetch: app.fetch as any, websocket: websocketHandlers });
+	}
+	const open = (port: number, path: string) =>
+		new Promise<WebSocket>((resolve, reject) => {
+			const ws = new WebSocket(`ws://127.0.0.1:${port}${path}`);
+			ws.onopen = () => resolve(ws);
+			ws.onerror = () => reject(new Error("handshake failed"));
+		});
+
 	test("an upgraded request answers Bun with undefined; observers see 101", async () => {
 		const seen: { status: number; upgraded: boolean }[] = [];
 		let after = 0;
 		const app = new BosiaApp()
-			.get("/ws", () => UPGRADED)
+			.get("/ws", () => {
+				const res = upgradeRequest({}, {}, new Headers());
+				return new Response(null, res);
+			})
 			.get("/plain", () => "hi")
 			.onAfterHandle(() => {
 				after++;
@@ -158,18 +173,45 @@ describe("WebSocket upgrade marker", () => {
 			.onResponse(({ status, upgraded }) => {
 				seen.push({ status, upgraded });
 			});
-
-		expect(await app.fetch(req("/ws"))).toBeUndefined();
-		expect(after).toBe(0); // the 101 is already sent: nothing may replace it
-		expect((await app.fetch(req("/plain")))!.status).toBe(200);
-		expect(seen).toEqual([
-			{ status: 101, upgraded: true },
-			{ status: 200, upgraded: false },
-		]);
+		const server = serve(app);
+		try {
+			(await open(server.port!, "/ws")).close();
+			expect(after).toBe(0); // the 101 is already sent: nothing may replace it
+			expect((await fetch(`http://127.0.0.1:${server.port}/plain`)).status).toBe(200);
+			expect(seen).toEqual([
+				{ status: 101, upgraded: true },
+				{ status: 200, upgraded: false },
+			]);
+		} finally {
+			server.stop(true);
+		}
 	});
 
-	test("without observers too", async () => {
-		const app = new BosiaApp().get("/ws", () => UPGRADED);
-		expect(await app.fetch(req("/ws"))).toBeUndefined();
+	test("socket handlers don't run inside the upgrade's request context", async () => {
+		let inOpen: boolean | null = null;
+		let later: boolean | null = null;
+		const handler = {
+			open() {
+				inOpen = isUpgraded();
+				setTimeout(() => (later = isUpgraded()), 0);
+			},
+		};
+		const app = new BosiaApp().get("/ws", () => upgradeRequest(handler, {}, new Headers()));
+		const server = serve(app);
+		try {
+			const ws = await open(server.port!, "/ws");
+			await Bun.sleep(20);
+			ws.close();
+			expect(inOpen).toBe(false);
+			expect(later).toBe(false);
+		} finally {
+			server.stop(true);
+		}
+	});
+
+	test("without a Bun server, upgradeRequest answers 501", async () => {
+		const app = new BosiaApp().get("/ws", () => upgradeRequest({}, {}, new Headers()));
+		const res = await app.fetch(req("/ws", { headers: { upgrade: "websocket" } }));
+		expect(res!.status).toBe(501);
 	});
 });

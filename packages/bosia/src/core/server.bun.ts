@@ -107,8 +107,13 @@ async function shutdown() {
 		console.log("✅ All requests drained");
 	}
 
-	app.stop(true).then(() => process.exit(0));
 	setTimeout(() => process.exit(1), 2_000);
+	// inFlight reaches 0 just before Bun writes the last responses, so stop
+	// gracefully first, briefly: an open stream (SSE) never finishes by itself,
+	// and a socket that never acks its 1001 shouldn't hold the exit either.
+	if (left === 0) await Promise.race([app.stop(), Bun.sleep(500)]);
+	await app.stop(true);
+	process.exit(0);
 }
 
 process.on("SIGTERM", shutdown);

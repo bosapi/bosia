@@ -43,7 +43,7 @@ export async function POST() {
 }
 ```
 
-R2b — WebSockets (Bun only; fails the Workers build): `+server.ts` exports `websocket: WebSocketHandler<Data>` (from `./$types`) with `upgrade?`, `open`, `message`, `drain`, `close`, `ping`, `pong`. Auth in `hooks.server.ts`/`upgrade(event)` (may be async): return a fresh object → `ws.data`, a `Response` → refused. Cross-site `Origin` → 403; no `Origin` (CLI/device) passes, so token-auth those. `send()` → `-1` means wait for `drain`. Clients reconnect on `1001` (shutdown) / `1012` (dev rebuild). Guide: /guides/websockets.
+R2b — WebSockets (Bun only; fails the Workers build): `+server.ts` exports `websocket: WebSocketHandler<Data>` (from `./$types`) with `upgrade?`, `open`, `message`, `drain`, `close`, `ping`, `pong`. Auth in `hooks.server.ts`/`upgrade(event)` (may be async): return a fresh object → `ws.data`, a `Response` → refused. Cross-site `Origin` → 403; no `Origin` (CLI/device) passes, so token-auth those. `send()` → `-1` means pause until `drain`; past `WS_BACKPRESSURE_LIMIT` it returns `0` and drops the data. Plain `GET`/`HEAD` → 426. Clients reconnect on `1001` (shutdown) / `1012` (dev rebuild). Guide: /guides/websockets.
 
 ```ts
 // src/routes/rig/[id]/+server.ts

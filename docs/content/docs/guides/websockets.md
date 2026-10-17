@@ -30,7 +30,7 @@ export const websocket: WebSocketHandler<Conn> = {
 
 `ws` is Bun's [`ServerWebSocket`](https://bun.sh/docs/api/websockets): `send`, `sendText`, `sendBinary`, `close(code, reason)`, `ping`, `getBufferedAmount()`, `subscribe`/`publish` and `ws.data` all work as Bun documents them. The handlers you can export are `upgrade`, `open`, `message`, `drain`, `close`, `ping` and `pong`. All of them are optional.
 
-A route can export `websocket` next to `GET`/`POST`. A plain `GET` to a route that only has `websocket` gets `426 Upgrade Required`.
+A route can export `websocket` next to `GET`/`POST`. A plain `GET` or `HEAD` to a route that only has `websocket` gets `426 Upgrade Required`.
 
 :::note[Bun only]
 WebSockets need the Bun runtime. A `websocket` export fails the Cloudflare Workers build with a clear message.
@@ -63,7 +63,7 @@ Cookies your `handle` hook sets **before** `await resolve(event)` (e.g. a refres
 
 Text frames arrive as `string`, binary frames as `Buffer` — raw bytes (e.g. PTY output) come through unchanged.
 
-`ws.send()` returns the number of bytes sent, `-1` when the data was queued because the client is slow (backpressure), or `0` when it was dropped. On `-1`, stop sending and wait for `drain`:
+`ws.send()` returns the number of bytes sent, `-1` when the data was queued because the client is slow (backpressure), or `0` when it was dropped — which happens once the queue passes `WS_BACKPRESSURE_LIMIT`. So on `-1`, stop sending and wait for `drain`:
 
 ```ts
 export const websocket: WebSocketHandler<{ pty: Pty }> = {
@@ -96,11 +96,13 @@ A handler that throws (or returns a rejected promise) closes that socket with `1
 | Handler error                            | `1011`     | Reconnect, maybe report     |
 | Your own `ws.close(4xxx, …)`             | as sent    | Whatever your protocol says |
 
+An upgrade still inside an async `upgrade()` when the server stops still opens — so `open` and `close` run and you can clean up — and is closed with `1001` right away.
+
 Reconnect with a backoff (e.g. 0.5s, 1s, 2s … up to 30s) so a restarting server isn't flooded.
 
 ## Dev server
 
-`bun run dev` proxies WebSockets to the app: it connects to the app first and only then accepts the client, so a refusal looks the same as in production. Close codes, text and binary frames go through unchanged. Two dev-only limits: cookies the app sets on the `101` don't reach the client, and there is no backpressure across the proxy hop.
+`bun run dev` proxies WebSockets to the app: it connects to the app first and only then accepts the client, so a browser sees a refusal the same way as in production. Text and binary frames and close codes go through unchanged. Dev-only differences: a refused handshake answers `502` instead of the app's own status (only non-browser clients can tell), cookies the app sets on the `101` don't reach the client, and there is no backpressure across the proxy hop.
 
 ## Access logs and `onResponse`
 

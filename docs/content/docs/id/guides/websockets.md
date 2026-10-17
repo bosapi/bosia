@@ -30,7 +30,7 @@ export const websocket: WebSocketHandler<Conn> = {
 
 `ws` adalah [`ServerWebSocket`](https://bun.sh/docs/api/websockets) milik Bun: `send`, `sendText`, `sendBinary`, `close(code, reason)`, `ping`, `getBufferedAmount()`, `subscribe`/`publish` dan `ws.data` berjalan seperti di dokumentasi Bun. Handler yang bisa diekspor: `upgrade`, `open`, `message`, `drain`, `close`, `ping` dan `pong`. Semuanya opsional.
 
-Satu route boleh mengekspor `websocket` bersama `GET`/`POST`. `GET` biasa ke route yang hanya punya `websocket` dapat `426 Upgrade Required`.
+Satu route boleh mengekspor `websocket` bersama `GET`/`POST`. `GET` atau `HEAD` biasa ke route yang hanya punya `websocket` dapat `426 Upgrade Required`.
 
 :::note[Khusus Bun]
 WebSocket butuh runtime Bun. Export `websocket` membuat build Cloudflare Workers gagal dengan pesan yang jelas.
@@ -63,7 +63,7 @@ Request `GET` dilewati oleh pengecekan CSRF, padahal halaman dari situs lain tet
 
 Frame teks datang sebagai `string`, frame binary sebagai `Buffer` — byte mentah (misal output PTY) sampai tanpa berubah.
 
-`ws.send()` mengembalikan jumlah byte yang terkirim, `-1` kalau data diantrekan karena klien lambat (backpressure), atau `0` kalau data dibuang. Saat `-1`, berhenti mengirim dan tunggu `drain`:
+`ws.send()` mengembalikan jumlah byte yang terkirim, `-1` kalau data diantrekan karena klien lambat (backpressure), atau `0` kalau data dibuang — terjadi begitu antrean melewati `WS_BACKPRESSURE_LIMIT`. Jadi saat `-1`, berhenti mengirim dan tunggu `drain`:
 
 ```ts
 export const websocket: WebSocketHandler<{ pty: Pty }> = {
@@ -96,11 +96,13 @@ Handler yang throw (atau mengembalikan promise yang reject) menutup socket itu d
 | Error di handler                        | `1011`       | Sambung ulang, mungkin laporkan |
 | `ws.close(4xxx, …)` milik kamu          | sesuai kirim | Sesuai protokol kamu            |
 
+Upgrade yang masih berada di dalam `upgrade()` async saat server berhenti tetap terbuka — jadi `open` dan `close` jalan dan kamu bisa membersihkan — lalu langsung ditutup dengan `1001`.
+
 Sambung ulang dengan backoff (misal 0,5 dtk, 1 dtk, 2 dtk … sampai 30 dtk) supaya server yang sedang restart tidak dibanjiri.
 
 ## Dev server
 
-`bun run dev` meneruskan WebSocket ke app: proxy tersambung ke app dulu, baru menerima klien, jadi penolakan terlihat sama seperti di production. Kode close, frame teks dan binary diteruskan tanpa berubah. Dua batasan khusus dev: cookie yang diset app di `101` tidak sampai ke klien, dan tidak ada backpressure di hop proxy.
+`bun run dev` meneruskan WebSocket ke app: proxy tersambung ke app dulu, baru menerima klien, jadi browser melihat penolakan sama seperti di production. Frame teks dan binary serta kode close diteruskan tanpa berubah. Beda khusus dev: handshake yang ditolak dijawab `502`, bukan status dari app (hanya klien non-browser yang bisa melihatnya), cookie yang diset app di `101` tidak sampai ke klien, dan tidak ada backpressure di hop proxy.
 
 ## Access log dan `onResponse`
 

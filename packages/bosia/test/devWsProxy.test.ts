@@ -1,6 +1,11 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 
-import { closeProxiedSockets, proxyHandlers, proxyUpgrade } from "../src/core/devWsProxy.ts";
+import {
+	closeProxiedSockets,
+	proxyHandlers,
+	proxyUpgrade,
+	toSendableCode,
+} from "../src/core/devWsProxy.ts";
 
 // The dev proxy's WebSocket leg, between a stand-in app server and a client:
 // the app is reached first, frames and close codes go through, a refusal is a
@@ -9,6 +14,7 @@ import { closeProxiedSockets, proxyHandlers, proxyUpgrade } from "../src/core/de
 let app: ReturnType<typeof Bun.serve>;
 let proxy: ReturnType<typeof Bun.serve>;
 const seenByApp: Record<string, string | null>[] = [];
+const appCloses: number[] = [];
 
 beforeAll(() => {
 	app = Bun.serve({
@@ -39,6 +45,9 @@ beforeAll(() => {
 			message(ws, msg) {
 				if (msg === "close-4403") return ws.close(4403, "nope");
 				ws.send(msg);
+			},
+			close(_ws, code) {
+				appCloses.push(code);
 			},
 		},
 	});
@@ -80,6 +89,19 @@ const closed = (ws: WebSocket) =>
 		ws.addEventListener("close", (e) => r({ code: e.code, reason: e.reason }), { once: true }),
 	);
 
+describe("toSendableCode", () => {
+	test("passes sendable codes, maps describe-only and invalid ones", () => {
+		for (const code of [1000, 1001, 1011, 1012, 3000, 4403])
+			expect(toSendableCode(code, 1011)).toBe(code);
+		expect(toSendableCode(1005, 1011)).toBe(1000);
+		expect(toSendableCode(1006, 1001)).toBe(1001);
+		expect(toSendableCode(1015, 1011)).toBe(1011);
+		// Reserved or out of range: Bun's client close() would throw on these.
+		for (const code of [0, 999, 1004, 1016, 2000, 2999, 5000])
+			expect(toSendableCode(code, 1011)).toBe(1000);
+	});
+});
+
 describe("dev WebSocket proxy", () => {
 	test("text and binary echo through the proxy, headers reach the app", async () => {
 		const ws = await connect("/echo", { headers: { authorization: "Bearer t" } });
@@ -108,6 +130,14 @@ describe("dev WebSocket proxy", () => {
 		const ws = await connect("/crash").catch(() => null);
 		// The app may die before or after the client opened; either way no 1006 reaches a live client.
 		if (ws) expect((await closed(ws)).code).toBe(1011);
+	});
+
+	test("a client close code 1001 reaches the app unchanged", async () => {
+		const ws = await connect("/echo");
+		ws.close(1001, "tab closed");
+		const deadline = Date.now() + 2000;
+		while (appCloses.at(-1) !== 1001 && Date.now() < deadline) await Bun.sleep(10);
+		expect(appCloses.at(-1)).toBe(1001);
 	});
 
 	test("a protocol the app picks is passed to the client", async () => {

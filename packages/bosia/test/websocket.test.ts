@@ -40,7 +40,14 @@ beforeAll(async () => {
 	if (auth === "Bearer rig-token") event.locals.user = "rig";
 	else if (event.cookies.get("session") === "u1") event.locals.user = "u1";
 	event.cookies.set("seen", "1", { path: "/" });
-	return resolve(event);
+	// A hook may hand resolve() a new Request, or rebuild the Response it gets.
+	if (event.url.searchParams.has("swap")) {
+		const request = new Request(event.request, { headers: event.request.headers });
+		return resolve({ ...event, request });
+	}
+	const res = await resolve(event);
+	if (event.url.searchParams.has("rewrap")) return new Response(res.body, res);
+	return res;
 }
 `,
 	);
@@ -121,6 +128,31 @@ export const websocket = {
 		throw new Error("boom");
 	},
 };
+`,
+	);
+
+	write(
+		"routes/ws/slow/+server.ts",
+		`export const websocket = {
+	async upgrade() {
+		await new Promise((r) => setTimeout(r, 400));
+		return {};
+	},
+};
+`,
+	);
+
+	// A stream that never ends on its own, like an SSE feed.
+	write(
+		"routes/sse/+server.ts",
+		`export function GET() {
+	const body = new ReadableStream({
+		start(c) {
+			c.enqueue(new TextEncoder().encode("data: hi\\n\\n"));
+		},
+	});
+	return new Response(body, { headers: { "content-type": "text/event-stream" } });
+}
 `,
 	);
 
@@ -305,6 +337,28 @@ describe("upgrade", () => {
 		expect(res.headers.get("upgrade")).toBe("websocket");
 	});
 
+	test("HEAD gets 426 too; other methods get 405 with Allow: GET, HEAD", async () => {
+		const head = await fetch(`${origin}/ws/echo`, { method: "HEAD" });
+		expect(head.status).toBe(426);
+		const post = await fetch(`${origin}/ws/echo`, { method: "POST", headers: { origin } });
+		expect(post.status).toBe(405);
+		expect(post.headers.get("allow")).toBe("GET, HEAD");
+	});
+
+	test("a hook that passes resolve() a new Request still upgrades", async () => {
+		const ws = await connect("/ws/echo?swap");
+		ws.send("whoami");
+		expect(JSON.parse((await nextMessage(ws)) as string)).toEqual({ user: "rig" });
+		ws.close();
+	});
+
+	test("a hook that rebuilds the Response still upgrades", async () => {
+		const ws = await connect("/ws/echo?rewrap");
+		ws.send("hi");
+		expect(await nextMessage(ws)).toBe("hi");
+		ws.close();
+	});
+
 	test("a route can export GET and websocket together", async () => {
 		expect(await (await fetch(`${origin}/ws/mixed`)).text()).toBe("plain");
 		const ws = await connect("/ws/mixed");
@@ -365,10 +419,21 @@ describe("frames and close", () => {
 
 // Last: it stops the server.
 describe("shutdown", () => {
-	test("SIGTERM closes open sockets with 1001", async () => {
+	test("SIGTERM: sockets close with 1001, a pending upgrade too, and the process exits 0", async () => {
 		const ws = await connect("/ws/echo");
 		const done = closed(ws);
+		// Still inside its async upgrade() when the signal lands: it opens, so
+		// the app sees open/close and can clean up, then gets 1001 at once.
+		const pending = connect("/ws/slow").then(closed);
+		// An open stream never finishes by itself; shutdown must not wait on it.
+		const sse = await fetch(`${origin}/sse`);
+		await sse.body!.getReader().read();
+		await Bun.sleep(100);
 		child!.kill("SIGTERM");
 		expect((await done).code).toBe(1001);
+		expect((await pending).code).toBe(1001);
+		const t = Date.now();
+		expect(await child!.exited).toBe(0);
+		expect(Date.now() - t).toBeLessThan(1500);
 	});
 });
