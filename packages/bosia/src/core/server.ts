@@ -1183,7 +1183,8 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 	if (url.pathname.startsWith("//")) {
 		return new Response(null, {
 			status: 308,
-			headers: { Location: withBase(base, url.pathname.replace(/^\/+/, "/")) + url.search },
+			// `base +`, not withBase: withBase skips a path already under base, so `/sso//sso/x` would lose it.
+			headers: { Location: base + url.pathname.replace(/^\/+/, "/") + url.search },
 		});
 	}
 

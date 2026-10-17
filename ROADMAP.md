@@ -19,6 +19,10 @@
 - [x] 🔴 Review: popstate, hydration and the hash-link branch stored raw `location.pathname`; Back onto `//evil.com/x` hard-loaded evil.com. All go through `locationPath()` now; hover prefetch skips `//` links.
 - [x] 🔴 Review: on `main` too, a catch-all route 308'd `//evil.com/x/` to `Location: //evil.com/x`, and SSR `page.url` read evil.com. The server now 308s any `//x` path to `/x` before routing.
 - [x] 🟡 Review: hydrate's stale-chunk reload (raw pathname) and trailing-slash `replaceState` (throws) on a `//x` page fixed; `buildTarget` takes params from `new URL`, so a full-URL route keeps them.
+- [x] 🟠 Review 8–10: app shells (`capacitor://`) stay in-app: scheme + host match, empty path = `/`; client URLs resolve against `location.href` (`location.origin` can be "null": threw); links take the page's scheme.
+- [x] 🟡 Review 8: the `//` 308 used idempotent `withBase`: `/sso//sso/x` went to `/sso/x`. `URL.canParse` (no Safari 16) swapped for try/`new URL`. Stale reload appends `_v` as text (searchParams re-encoded the query), dropping the last one.
+- [ ] ⚪ Trailing-slash 308 (server.ts) and SSR route (renderer.ts) use idempotent `withBase`: under `/sso`, app route `/sso/x/` 308s to `/sso/x` (app `/x`). Also `redirect(303, "/sso/x")` (errors.ts). Needs a `base + path` helper.
+- [ ] ⚪ Hover prefetch checks links apart from the click handler: no `rel="external"` or scheme check, so a same-origin `blob:` link prefetches. Share one `isAppLink(anchor)`.
 - [ ] ⚪ `goto("")` on `/a#x` drops the hash: a new history entry and a scroll to top.
 - [ ] 🟡 A loader redirect `navigate()` refuses (hook `Response` with a bad/`javascript:` Location) throws in App.svelte's redirect branch: uncaught, maybe `goto()` waiters hang. Wrap it, `abandonRun()`.
 - [ ] ⚪ `redirect(" /x")` validates trimmed but rebases/sends untrimmed: under `BASE_PATH` it skips the prefix. Send the trimmed value.

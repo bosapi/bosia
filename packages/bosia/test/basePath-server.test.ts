@@ -144,6 +144,12 @@ describe("a built server mounted under BASE_PATH", () => {
 		expect(res.headers.get("location")).toBe(`${BASE}/evil.com/x/?q=1`);
 	});
 
+	test("a `//` path that repeats the base keeps it", async () => {
+		const res = await fetch(`${origin}${BASE}/${BASE}/x`, { redirect: "manual" });
+		expect(res.status).toBe(308);
+		expect(res.headers.get("location")).toBe(`${BASE}${BASE}/x`);
+	});
+
 	test("redirect() rebases its Location over the wire", async () => {
 		const res = await fetch(`${origin}${BASE}/masuk`, { redirect: "manual" });
 		expect(res.status).toBe(303);

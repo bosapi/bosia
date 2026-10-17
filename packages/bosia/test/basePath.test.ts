@@ -94,6 +94,14 @@ describe("toRouterPath()", () => {
 		expect(toRouterPath("blob:http://x.test/1234", page)).toBe("blob:http://x.test/1234"));
 	test("mailto: still leaves the app", () =>
 		expect(toRouterPath("mailto:j@bosia.dev", page)).toBe("mailto:j@bosia.dev"));
+	test("an app-shell scheme (capacitor://) stays in the app", () => {
+		const app = "capacitor://localhost/a?q=1";
+		expect(toRouterPath("?page=2", app)).toBe("/a?page=2");
+		expect(toRouterPath("capacitor://localhost/b", app)).toBe("/b");
+		expect(toRouterPath("capacitor://localhost", app)).toBe("/");
+		expect(toRouterPath("capacitor://other/b", app)).toBe("capacitor://other/b");
+		expect(toRouterPath("http://localhost/b", app)).toBe("http://localhost/b");
+	});
 });
 
 describe("stripBase()", () => {

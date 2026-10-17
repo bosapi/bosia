@@ -21,7 +21,7 @@ export type NavResult = "started" | "same" | "cancelled" | "left";
 function buildTarget(path: string): { url: URL; params: Record<string, string> } | null {
 	if (typeof window === "undefined") return null;
 	// From the URL, not a string split: the route may be a full URL (`http://host//x`).
-	const url = new URL(path, window.location.origin);
+	const url = new URL(path, window.location.href);
 	const match = findMatch(clientRoutes, url.pathname);
 	return { url, params: match?.params ?? {} };
 }
@@ -82,9 +82,10 @@ export function locationPath(): string {
 
 export const router = new (class Router {
 	currentRoute = $state(typeof window !== "undefined" ? locationPath() : "/");
-	/** Origin half of `page.url`. Empty on the server until the renderer seeds it
-	 *  per request — see `renderWithPageContext` in core/renderer.ts. */
-	origin = $state(typeof window !== "undefined" ? window.location.origin : "");
+	/** Base `page.url` resolves the route against. Empty on the server until the renderer
+	 *  seeds it per request — see `renderWithPageContext` in core/renderer.ts. The href on the
+	 *  client: `location.origin` can be "null" (app shell, sandboxed iframe), not a valid base. */
+	origin = $state(typeof window !== "undefined" ? window.location.href : "");
 	/** True when navigation was triggered by a link click / navigate() call, false on popstate (back/forward). */
 	isPush = $state(true);
 	/** Source of the most recent navigation — feeds the Navigation object passed to lifecycle hooks. */
@@ -209,7 +210,7 @@ export const router = new (class Router {
 			if (anchor.target) return;
 			if (anchor.hasAttribute("download")) return;
 			if (anchor.rel.split(/\s+/).includes("external")) return;
-			if (anchor.protocol !== "https:" && anchor.protocol !== "http:") return;
+			if (anchor.protocol !== window.location.protocol) return;
 
 			// Same-page hash navigation: skip page reload, just update URL and scroll
 			// to the target element. Mirrors browser default for in-page anchors.

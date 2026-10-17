@@ -207,7 +207,7 @@
 		const currentTick = appState.invalidationTick; // still tracks reactively
 
 		const path = router.currentRoute;
-		const url = new URL(path, window.location.origin);
+		const url = new URL(path, window.location.href);
 		const pathname = url.pathname;
 		const navKey = pathname + url.search;
 		const match = findMatch(clientRoutes, pathname);
@@ -227,7 +227,7 @@
 		const isFirst = firstNav;
 		firstNav = false;
 		if (isFirst) {
-			const hUrl = new URL(router.hydratedRoute, window.location.origin);
+			const hUrl = new URL(router.hydratedRoute, window.location.href);
 			const hMatch = router.hydratedRoute === path ? match : findMatch(clientRoutes, hUrl.pathname);
 			currentLayoutPaths = (hMatch?.route as any)?.layoutPaths ?? [];
 			// The probes ran during hydration, before this effect. A title other than

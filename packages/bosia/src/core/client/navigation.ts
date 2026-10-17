@@ -73,7 +73,7 @@ export function invalidate(target: InvalidateTarget): Promise<void> {
 			try {
 				// Normalize to an absolute URL — fetches the loader recorded are
 				// always absolute, so a relative `/api/foo` must be promoted here.
-				const abs = new URL(str, window.location.origin).href;
+				const abs = new URL(str, window.location.href).href;
 				appState.dirty.urls.add(abs);
 			} catch {
 				appState.dirty.urls.add(str);

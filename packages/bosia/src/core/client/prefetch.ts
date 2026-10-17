@@ -15,7 +15,7 @@ import { base } from "./base.ts";
  * since they may be guards). Returns `null` when the route cannot be matched.
  */
 export function buildMaskBits(path: string): string | null {
-	const url = new URL(path, window.location.origin);
+	const url = new URL(path, window.location.href);
 	const pathname = url.pathname;
 	const match = findMatch(clientRoutes, pathname);
 	// Prerendered data is a fixed file: nothing to skip, and on Workers only a
@@ -47,7 +47,7 @@ export function buildMaskBits(path: string): string | null {
  * fetch that follows an `invalidate()`, so the server skips its cached copy.
  */
 export function dataUrl(path: string, invalidatedBits?: string, fresh = false): string {
-	const url = new URL(path, window.location.origin);
+	const url = new URL(path, window.location.href);
 	let p = url.pathname.replace(/\/$/, "");
 	let qs = url.search;
 	if (invalidatedBits) {
@@ -149,7 +149,7 @@ export async function prefetchPath(path: string): Promise<void> {
 	if (path === window.location.pathname + window.location.search) return;
 	// Warm the route's +loading.svelte chunk alongside its data, so the skeleton
 	// paints instantly on click instead of cold-importing after the old page lingers.
-	const warmMatch = findMatch(clientRoutes, new URL(path, window.location.origin).pathname);
+	const warmMatch = findMatch(clientRoutes, new URL(path, window.location.href).pathname);
 	// Also warm the page and layout chunks: a route not visited yet otherwise
 	// downloads its code only after the click. Errors are swallowed — a stale
 	// chunk is the click's to report, not the hover's (hydrate.ts reloads on it).

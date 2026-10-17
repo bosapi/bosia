@@ -94,7 +94,14 @@ function validateRedirectLocation(location: string, options?: RedirectOptions): 
 
 	// Relative only when it isn't a URL on its own: `http:evil.com` resolves against
 	// SELF as a path, but on an https page the browser reads it as http://evil.com.
-	if (!URL.canParse(trimmed) && url.origin === SELF) return;
+	// try/new URL, not URL.canParse: this file ships to browsers without it (Safari < 17).
+	let absolute = true;
+	try {
+		new URL(trimmed);
+	} catch {
+		absolute = false;
+	}
+	if (!absolute && url.origin === SELF) return;
 
 	// It's an absolute URL — reject external origins
 	throw new Error(

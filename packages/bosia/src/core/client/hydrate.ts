@@ -85,7 +85,7 @@ async function main() {
 	if (match) {
 		// The server's route, not window.location: a click during the chunk loads
 		// above already moved the address bar on.
-		const url = new URL(router.hydratedRoute, window.location.origin);
+		const url = new URL(router.hydratedRoute, window.location.href);
 		const ctx = liveContext(url.pathname, match.params, url);
 		const ssrPageDeps: LoaderDeps | null = (window as any).__BOSIA_PAGE_DEPS__ ?? null;
 		const ssrLayoutDeps: (LoaderDeps | null)[] = (window as any).__BOSIA_LAYOUT_DEPS__ ?? [];
@@ -170,10 +170,12 @@ if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
 				} catch {
 					// Storage may be unavailable (private mode) — best effort.
 				}
-				const sep = window.location.search ? "&" : "?";
-				window.location.replace(
-					`${locationPath().split("#")[0]}${sep}_v=${Date.now()}${window.location.hash}`,
-				);
+				// Appended as text: searchParams.set would re-encode the whole query (breaks signed URLs).
+				const url = new URL(window.location.href);
+				// Drop the last deploy's `_v` first, so they don't pile up.
+				const search = url.search.replace(/[?&]_v=\d+/g, "").replace(/^&/, "?");
+				url.search = `${search}${search ? "&" : "?"}_v=${Date.now()}`;
+				window.location.replace(url.href);
 			});
 		}
 	} catch {

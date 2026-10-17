@@ -45,14 +45,14 @@ export function toRouterPath(url: string, pageHref: string): string {
 	if (DANGEROUS_PROTOCOL.test(u.protocol)) {
 		throw new Error(`navigation: dangerous scheme in URL "${url}". Use a path or an http(s) URL.`);
 	}
-	// A same-origin `blob:` URL has the page's origin too; only http(s) is a page of ours.
+	// Scheme + host, not `origin`: a `blob:` URL shares the page's origin, and the URL
+	// parser gives app shells (`capacitor://localhost`) origin "null" for every host.
 	// A path starting `//` (from `/.//evil.com`) would read as another host once used as
 	// a URL, so it stays a full URL: the router leaves for this origin's `//evil.com` page.
-	const ours =
-		/^https?:$/.test(u.protocol) &&
-		u.origin === new URL(pageHref).origin &&
-		!u.pathname.startsWith("//");
-	return ours ? u.pathname + u.search + u.hash : u.href;
+	const page = new URL(pageHref);
+	const ours = u.protocol === page.protocol && u.host === page.host && !u.pathname.startsWith("//");
+	// `capacitor://localhost` has an empty path: that's the root.
+	return ours ? (u.pathname || "/") + u.search + u.hash : u.href;
 }
 
 /**
