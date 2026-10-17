@@ -13,6 +13,7 @@ let tmpDir: string;
 let child: Bun.Subprocess | null = null;
 let port: number;
 let origin: string;
+let logs = "";
 
 function write(rel: string, body: string): void {
 	const file = join(tmpDir, "src", rel);
@@ -35,7 +36,10 @@ beforeAll(async () => {
 	// before resolve() must ride on the 101.
 	write(
 		"hooks.server.ts",
-		`export async function handle({ event, resolve }) {
+		`// One object for every request, like a cached session user.
+const SHARED = { kind: "shared" };
+export async function handle({ event, resolve }) {
+	event.locals.shared = SHARED;
 	const auth = event.request.headers.get("authorization");
 	if (auth === "Bearer rig-token") event.locals.user = "rig";
 	else if (event.cookies.get("session") === "u1") event.locals.user = "u1";
@@ -156,6 +160,31 @@ export const websocket = {
 `,
 	);
 
+	// Two routes whose upgrade() returns the very same object.
+	for (const name of ["a", "b"]) {
+		write(
+			`routes/ws/shared-${name}/+server.ts`,
+			`export const websocket = {
+	upgrade({ locals }) {
+		return locals.shared;
+	},
+	message(ws) {
+		ws.send("${name}");
+	},
+};
+`,
+		);
+	}
+
+	write(
+		"routes/ws/with-head/+server.ts",
+		`export function HEAD() {
+	return new Response(null);
+}
+export const websocket = {};
+`,
+	);
+
 	write(
 		"routes/ws/mixed/+server.ts",
 		`export function GET() {
@@ -192,10 +221,16 @@ export const websocket = {
 			PORT: String(port),
 			NODE_PATH: BOSIA_NODE_PATH,
 			CSRF_ALLOWED_ORIGINS: "http://ok.test",
+			TRUST_PROXY: "true",
 		},
-		stdout: "ignore",
-		stderr: "ignore",
+		stdout: "pipe",
+		stderr: "pipe",
 	});
+	for (const stream of [child.stdout, child.stderr] as ReadableStream<Uint8Array>[]) {
+		(async () => {
+			for await (const chunk of stream) logs += new TextDecoder().decode(chunk);
+		})();
+	}
 
 	const deadline = Date.now() + 15_000;
 	while (Date.now() < deadline) {
@@ -345,6 +380,23 @@ describe("upgrade", () => {
 		expect(post.headers.get("allow")).toBe("GET, HEAD");
 	});
 
+	test("two routes returning the same object keep their own handlers", async () => {
+		const a = await connect("/ws/shared-a");
+		const b = await connect("/ws/shared-b");
+		a.send("x");
+		expect(await nextMessage(a)).toBe("a");
+		b.send("x");
+		expect(await nextMessage(b)).toBe("b");
+		a.close();
+		b.close();
+	});
+
+	test("405 Allow lists each method once", async () => {
+		const res = await fetch(`${origin}/ws/with-head`, { method: "POST", headers: { origin } });
+		expect(res.status).toBe(405);
+		expect(res.headers.get("allow")).toBe("HEAD, GET");
+	});
+
 	test("a hook that passes resolve() a new Request still upgrades", async () => {
 		const ws = await connect("/ws/echo?swap");
 		ws.send("whoami");
@@ -377,12 +429,66 @@ describe("origin check", () => {
 		expect((await handshake("/ws/echo", RIG)).status).toBe(101);
 	});
 
-	test("a cross-site Origin gets 403", async () => {
-		expect((await handshake("/ws/echo", { ...RIG, origin: "http://evil.test" })).status).toBe(403);
+	test("a cross-site Origin gets 403 before the hooks run", async () => {
+		const { status, head } = await handshake("/ws/echo", { ...RIG, origin: "http://evil.test" });
+		expect(status).toBe(403);
+		// The hook sets this cookie on every request it sees.
+		expect(head.toLowerCase()).not.toContain("seen=1");
+	});
+
+	test("a chained X-Forwarded-Proto makes cookies Secure, like event.url", async () => {
+		const res = await fetch(`${origin}/ws/mixed`, {
+			headers: { "x-forwarded-proto": "https, http", "x-forwarded-host": `localhost:${port}` },
+		});
+		expect(res.headers.get("set-cookie")).toContain("Secure");
 	});
 
 	test("CSRF_ALLOWED_ORIGINS is honoured", async () => {
 		expect((await handshake("/ws/echo", { ...RIG, origin: "http://ok.test" })).status).toBe(101);
+	});
+});
+
+describe("subprotocols", () => {
+	test("a client asking for one gets a warning in the log, once per route", async () => {
+		const ask = { ...RIG, "sec-websocket-protocol": "chat" };
+		expect((await handshake("/ws/echo", ask)).status).toBe(101);
+		expect((await handshake("/ws/echo", ask)).status).toBe(101);
+		await Bun.sleep(50);
+		const warnings = logs.split("\n").filter((l) => l.includes("Sec-WebSocket-Protocol"));
+		expect(warnings).toHaveLength(1);
+		expect(warnings[0]).toContain("chat");
+	});
+});
+
+describe("WS_* env values", () => {
+	async function boot(env: Record<string, string>): Promise<{ code: number; err: string }> {
+		const p = Bun.spawn(["bun", "run", join(tmpDir, "dist", "server", "index.js")], {
+			cwd: tmpDir,
+			env: {
+				...process.env,
+				NODE_ENV: "production",
+				PORT: "0",
+				NODE_PATH: BOSIA_NODE_PATH,
+				...env,
+			},
+			stdout: "ignore",
+			stderr: "pipe",
+		});
+		const [code, err] = await Promise.all([p.exited, new Response(p.stderr).text()]);
+		return { code, err };
+	}
+
+	test("a bad size names its own variable", async () => {
+		const { code, err } = await boot({ WS_MAX_PAYLOAD: "lots" });
+		expect(code).not.toBe(0);
+		expect(err).toContain('Invalid WS_MAX_PAYLOAD: "lots"');
+		expect(err).not.toContain("BODY_SIZE_LIMIT");
+	});
+
+	test("0 is refused without calling it Infinity", async () => {
+		const { code, err } = await boot({ WS_BACKPRESSURE_LIMIT: "0" });
+		expect(code).not.toBe(0);
+		expect(err).toContain('Invalid WS_BACKPRESSURE_LIMIT: "0" (must be above 0)');
 	});
 });
 

@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- WebSockets guide (English + Indonesian): auth, origin check, backpressure, close codes.
+- WebSockets guide (English + Indonesian): auth, origin check, backpressure, close codes, subprotocols.
 - Environment variables guide: the four new `WS_*` WebSocket settings.
 - Routing skill: rule for `websocket` exports in `+server.ts`.
 

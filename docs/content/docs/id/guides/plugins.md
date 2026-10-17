@@ -119,14 +119,14 @@ Hook `dev.*` dan `client.*` dicadangkan untuk v0.5.0.
 
 `app` yang diterima `backend.before` / `backend.after` adalah `BosiaApp` (tipenya diekspor dari `bosia/server`). Setiap method mengembalikan app, jadi bisa dirantai.
 
-| Method                                                  | Fungsinya                                                                   |
-| ------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `get` / `post` / `put` / `patch` / `delete` / `options` | Tambah route. Path persis (`/__my-plugin/health`) atau `"*"`.               |
-| `all(path, handler)`                                    | Route untuk method apa pun.                                                 |
-| `onRequest(({ request, set }) => …)`                    | Jalan paling awal di setiap request. Kembalikan nilai untuk langsung jawab. |
-| `onAfterHandle(({ request, response, set }) => …)`      | Jalan setelah handler. Kembalikan nilai untuk mengganti response.           |
-| `onError(({ request, error, set }) => …)`               | Jalan berurutan. Kembalikan nilai untuk jawab; `undefined` diteruskan.      |
-| `onResponse(({ request, response, start }) => …)`       | Melihat response final sekali per request. Hanya mengamati.                 |
+| Method                                                              | Fungsinya                                                                                                                    |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `get` / `post` / `put` / `patch` / `delete` / `options`             | Tambah route. Path persis (`/__my-plugin/health`) atau `"*"`.                                                                |
+| `all(path, handler)`                                                | Route untuk method apa pun.                                                                                                  |
+| `onRequest(({ request, set }) => …)`                                | Jalan paling awal di setiap request. Kembalikan nilai untuk langsung jawab.                                                  |
+| `onAfterHandle(({ request, response, set }) => …)`                  | Jalan setelah handler. Kembalikan nilai untuk mengganti response.                                                            |
+| `onError(({ request, error, set }) => …)`                           | Jalan berurutan. Kembalikan nilai untuk jawab; `undefined` diteruskan.                                                       |
+| `onResponse(({ request, response, status, upgraded, start }) => …)` | Melihat response final sekali per request. Hanya mengamati. Baca `status`: `101` untuk upgrade WebSocket (`upgraded: true`). |
 
 Handler route menerima `{ request, body, query, set }`. `body` di-parse dari JSON atau form data. Kembalikan `Response`, string (teks biasa), atau objek (JSON). `set.status` dan `set.headers` digabung ke balasan.
 

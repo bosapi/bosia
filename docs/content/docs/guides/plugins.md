@@ -119,14 +119,14 @@ export function myPlugin(): BosiaPlugin {
 
 The `app` passed to `backend.before` / `backend.after` is a `BosiaApp` (type exported from `bosia/server`). Every method returns the app, so calls chain.
 
-| Method                                                  | What it does                                                       |
-| ------------------------------------------------------- | ------------------------------------------------------------------ |
-| `get` / `post` / `put` / `patch` / `delete` / `options` | Add a route. Path is exact (`/__my-plugin/health`) or `"*"`.       |
-| `all(path, handler)`                                    | Route for any method.                                              |
-| `onRequest(({ request, set }) => …)`                    | Runs first on every request. Return a value to answer right away.  |
-| `onAfterHandle(({ request, response, set }) => …)`      | Runs after the handler. Return a value to replace the response.    |
-| `onError(({ request, error, set }) => …)`               | Runs in order. Return a value to answer; `undefined` passes it on. |
-| `onResponse(({ request, response, start }) => …)`       | Sees the final response once per request. Observe only.            |
+| Method                                                              | What it does                                                                                                             |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `get` / `post` / `put` / `patch` / `delete` / `options`             | Add a route. Path is exact (`/__my-plugin/health`) or `"*"`.                                                             |
+| `all(path, handler)`                                                | Route for any method.                                                                                                    |
+| `onRequest(({ request, set }) => …)`                                | Runs first on every request. Return a value to answer right away.                                                        |
+| `onAfterHandle(({ request, response, set }) => …)`                  | Runs after the handler. Return a value to replace the response.                                                          |
+| `onError(({ request, error, set }) => …)`                           | Runs in order. Return a value to answer; `undefined` passes it on.                                                       |
+| `onResponse(({ request, response, status, upgraded, start }) => …)` | Sees the final response once per request. Observe only. Read `status`: `101` for a WebSocket upgrade (`upgraded: true`). |
 
 Route handlers get `{ request, body, query, set }`. `body` is parsed from JSON or form data. Return a `Response`, a string (plain text), or an object (JSON). `set.status` and `set.headers` are merged into the reply.
 

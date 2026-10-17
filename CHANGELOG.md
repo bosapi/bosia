@@ -30,6 +30,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Hovering a `rel="external"` link (like `/logout`) no longer runs its loader in the background.
 - Responses still being sent when the server stops are no longer cut off.
 - Behind chained proxies (`X-Forwarded-Proto: https, http`), form posts no longer get a 403.
+- A wrong `WS_*` setting now names that setting in its error, not `BODY_SIZE_LIMIT`.
+- A browser asking for a WebSocket subprotocol now logs a warning instead of failing silently.
 
 ## [1.2.6] - 2026-10-16
 

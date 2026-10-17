@@ -15,6 +15,8 @@
 - [x] 🟡 Review: an upgrade pending at shutdown got no 1001 → it opens, then closes 1001. `stop(true)` cut drained responses; now a 500ms graceful stop, then forced (SSE can't hang it).
 - [x] 🟡 Review: chained `X-Forwarded-Proto`/`-Host` (`https, http`) gave a wrong origin → 403 on posts and upgrades. One `firstForwarded()` for csrf and `event.url`.
 - [x] 🟡 Review: dev proxy threw on odd close codes and mapped client 1001 to 1000; HEAD on a websocket-only route got 405 with an empty `Allow`.
+- [x] 🟡 Review: route handlers sat on `ws.data`, so one object from two routes (a cached user) ran the wrong handlers. Now a per-socket map. Origin check moved before the hooks.
+- [x] ⚪ Review: `WS_*` size errors named `BODY_SIZE_LIMIT` and called 0 "Infinity"; a requested subprotocol failed silently (now a warning). One redirect and one seconds parser.
 - [ ] ⚪ Not in v1: subprotocol selection (`protocols` on the export), Workers (WebSocketPair + Durable Objects), dev-proxy backpressure and 101 cookies.
 
 ## bosia 1.2.7 (2026-10-17) — goto resolves relative URLs

@@ -15,12 +15,15 @@ let app: ReturnType<typeof Bun.serve>;
 let proxy: ReturnType<typeof Bun.serve>;
 const seenByApp: Record<string, string | null>[] = [];
 const appCloses: number[] = [];
+const appSockets: Record<string, { open: number; closed: number }> = {};
+const count = (path: string) => (appSockets[path] ??= { open: 0, closed: 0 });
 
 beforeAll(() => {
 	app = Bun.serve({
 		port: 0,
-		fetch(req, server) {
+		async fetch(req, server) {
 			const url = new URL(req.url);
+			if (url.pathname === "/slow") await Bun.sleep(300);
 			seenByApp.push({
 				authorization: req.headers.get("authorization"),
 				origin: req.headers.get("origin"),
@@ -39,6 +42,7 @@ beforeAll(() => {
 		},
 		websocket: {
 			open(ws) {
+				count(ws.data.path).open++;
 				if (ws.data.path === "/greet") ws.send("hello first");
 				if (ws.data.path === "/crash") ws.terminate();
 			},
@@ -46,7 +50,8 @@ beforeAll(() => {
 				if (msg === "close-4403") return ws.close(4403, "nope");
 				ws.send(msg);
 			},
-			close(_ws, code) {
+			close(ws, code) {
+				count(ws.data.path).closed++;
 				appCloses.push(code);
 			},
 		},
@@ -158,6 +163,25 @@ describe("dev WebSocket proxy", () => {
 		});
 		expect(res.status).toBe(502);
 		await expect(connect("/refuse")).rejects.toThrow("handshake failed");
+	});
+
+	test("a client that leaves while the app is slow to accept leaves no app socket", async () => {
+		const sock = await Bun.connect({
+			hostname: "127.0.0.1",
+			port: proxy.port!,
+			socket: { data() {} },
+		});
+		sock.write(
+			"GET /slow HTTP/1.1\r\nHost: x\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n" +
+				"Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n",
+		);
+		await Bun.sleep(50);
+		sock.end();
+		await Bun.sleep(700);
+		// The app did accept; Bun refuses the dead client, so the proxy closes it.
+		const slow = count("/slow");
+		expect(slow.open).toBe(1);
+		expect(slow.closed).toBe(1);
 	});
 
 	test("a rebuild closes proxied clients with 1012", async () => {

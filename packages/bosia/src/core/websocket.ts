@@ -2,8 +2,8 @@
 // A `+server.ts` exports `websocket = { upgrade?, open, message, close, … }`.
 // resolve() runs `upgrade()` after the hooks, then hands the request to Bun's
 // `server.upgrade()`. Bun.serve takes one websocket handler for the whole
-// server, so the shared handlers below find each connection's route handlers
-// on its `ws.data`, under a hidden symbol.
+// server, so the upgrade carries the route's handlers in an envelope; open()
+// keeps them per socket and sets `ws.data` to what upgrade() returned.
 //
 // Subprotocols are not selectable yet: `upgrade()` returns only data. To add
 // it, let the export declare `protocols: string[]` and send the first one the
@@ -41,9 +41,19 @@ export interface WebSocketOptions {
 	perMessageDeflate: boolean;
 }
 
-const WS_ROUTE = Symbol("bosia.websocket");
+type Socket = ServerWebSocket<any>;
 
-type Socket = ServerWebSocket<Record<PropertyKey, any>>;
+/** What server.upgrade() carries until open() unwraps it. */
+class Envelope {
+	constructor(
+		readonly handler: WebSocketHandler<any, any>,
+		readonly data: object,
+	) {}
+}
+
+// Per socket, not on ws.data: one object returned by two routes (a cached
+// session user, say) must not carry either route's handlers.
+const routeOf = new WeakMap<Socket, WebSocketHandler<any, any>>();
 
 export function isUpgradeRequest(request: Request): boolean {
 	return request.method === "GET" && request.headers.get("upgrade")?.toLowerCase() === "websocket";
@@ -72,6 +82,21 @@ export function isUpgraded(): boolean {
 
 let closing = false;
 
+// Bun answers without a protocol, so a browser that asked for one fails the
+// handshake with no error on the server. Warn once per route, not per connect.
+const warnedProtocol = new WeakSet<WebSocketHandler<any, any>>();
+
+function warnProtocol(handler: WebSocketHandler<any, any>, request: Request): void {
+	const asked = request.headers.get("sec-websocket-protocol");
+	if (!asked || warnedProtocol.has(handler)) return;
+	warnedProtocol.add(handler);
+	console.warn(
+		`[WebSocket] ${new URL(request.url).pathname}: the client asked for Sec-WebSocket-Protocol ` +
+			`"${asked}", but Bosia can't pick one yet. Browsers fail this handshake; drop the ` +
+			`protocols argument from new WebSocket().`,
+	);
+}
+
 /**
  * Upgrade the current request with `data` as `ws.data`. Returns a placeholder
  * Response (Bun ignores it; isUpgraded() is the signal), or the Response to
@@ -84,12 +109,8 @@ export function upgradeRequest(
 ): Response {
 	const ctx = upgrades.getStore();
 	if (!ctx) return new Response("WebSockets are not supported here", { status: 501 });
-	// The returned object itself becomes ws.data (an app may keep it in a
-	// registry); only a frozen/sealed one is copied so the symbol can be added.
-	// One object returned from two routes would carry the last route's handlers.
-	const target = Object.isExtensible(data) ? data : { ...data };
-	Object.defineProperty(target, WS_ROUTE, { value: handler, configurable: true });
-	if (!ctx.server.upgrade(ctx.request, { data: target as any, headers })) {
+	warnProtocol(handler, ctx.request);
+	if (!ctx.server.upgrade(ctx.request, { data: new Envelope(handler, data) as any, headers })) {
 		return new Response("Bad WebSocket handshake", { status: 400 });
 	}
 	ctx.upgraded = true;
@@ -120,7 +141,7 @@ function run(ws: Socket, name: Exclude<keyof WebSocketHandler, "upgrade">, args:
 }
 
 function call(ws: Socket, name: Exclude<keyof WebSocketHandler, "upgrade">, args: unknown[]): void {
-	const handler = ws.data?.[WS_ROUTE] as WebSocketHandler<any> | undefined;
+	const handler = routeOf.get(ws);
 	const fn = handler?.[name] as ((...a: unknown[]) => unknown) | undefined;
 	if (!fn) return;
 	try {
@@ -133,6 +154,11 @@ function call(ws: Socket, name: Exclude<keyof WebSocketHandler, "upgrade">, args
 
 export const websocketHandlers: BunWebSocketHandler<any> = {
 	open(ws) {
+		// The very object upgrade() returned becomes ws.data (an app may keep it
+		// in a registry).
+		const envelope = ws.data as Envelope;
+		routeOf.set(ws, envelope.handler);
+		ws.data = envelope.data;
 		sockets.add(ws);
 		run(ws, "open", []);
 		// An upgrade still in its async upgrade() during the shutdown sweep opens

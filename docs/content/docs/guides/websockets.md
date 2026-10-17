@@ -119,6 +119,8 @@ An upgrade has no real `Response` (a `101` can't be built), so `onResponse` obse
 
 Open sockets don't count toward `MAX_INFLIGHT`; only the upgrade request does.
 
+Subprotocols aren't supported yet. Bosia can't answer `new WebSocket(url, ["chat"])`, so the browser fails the handshake. The server logs a warning the first time a route gets one.
+
 ## Re-running loaders on a message
 
 To refresh page data when a message arrives, call `invalidate()` in the browser's `onmessage` — see [Data Invalidation](/guides/data-invalidation).

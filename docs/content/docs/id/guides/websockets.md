@@ -119,6 +119,8 @@ Upgrade tidak punya `Response` sungguhan (`101` tidak bisa dibuat), jadi observe
 
 Socket yang terbuka tidak dihitung ke `MAX_INFLIGHT`; hanya request upgrade-nya.
 
+Subprotocol belum didukung. Bosia belum bisa menjawab `new WebSocket(url, ["chat"])`, jadi browser menggagalkan handshake. Server menulis peringatan di log saat sebuah route pertama kali menerimanya.
+
 ## Menjalankan ulang loader saat ada pesan
 
 Untuk memperbarui data halaman saat pesan datang, panggil `invalidate()` di `onmessage` browser — lihat [Invalidasi Data](/id/guides/data-invalidation).

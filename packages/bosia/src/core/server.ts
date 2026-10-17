@@ -383,6 +383,11 @@ async function serveStaticFile(path: string, request: Request): Promise<Response
 	return null;
 }
 
+// Not Response.redirect(): it rejects relative URLs on Workers.
+function redirectResponse(r: Redirect): Response {
+	return new Response(null, { status: r.status, headers: { Location: r.location } });
+}
+
 async function resolve(event: RequestEvent): Promise<Response> {
 	const { request, url, locals, cookies } = event;
 	const path = url.pathname;
@@ -663,18 +668,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			const ws = (mod as { websocket?: WebSocketHandler<any, any> }).websocket;
 			if (ws && isUpgradeRequest(request)) {
 				event.params = apiMatch.params;
-				const originError = checkUpgradeOrigin(request, url, CSRF_CONFIG);
-				if (originError) {
-					console.warn(`[CSRF] Blocked WebSocket upgrade: ${originError}`);
-					return Response.json({ error: "Forbidden", message: originError }, { status: 403 });
-				}
 				const result = ws.upgrade ? await ws.upgrade(event) : undefined;
 				if (result instanceof Response) return result;
 				if (isRedirect(result)) {
-					return new Response(null, {
-						status: result.status,
-						headers: { Location: result.location },
-					});
+					return redirectResponse(result);
 				}
 				if (result !== undefined && (result === null || typeof result !== "object")) {
 					throw new Error(
@@ -700,10 +697,9 @@ async function resolve(event: RequestEvent): Promise<Response> {
 					});
 				}
 				const allowed = Object.keys(mod).filter((k) => /^[A-Z]+$/.test(k));
-				const hasGet = allowed.includes("GET");
-				if (hasGet && !allowed.includes("HEAD")) allowed.push("HEAD");
 				// A websocket route takes GET (the upgrade's method); HEAD answers 426.
-				if (ws && !hasGet) allowed.push("GET", "HEAD");
+				if (ws && !allowed.includes("GET")) allowed.push("GET");
+				if (allowed.includes("GET") && !allowed.includes("HEAD")) allowed.push("HEAD");
 				return Response.json(
 					{ error: `Method ${method} not allowed` },
 					{ status: 405, headers: { Allow: allowed.join(", ") } },
@@ -756,10 +752,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 
 			// Redirect returned (not thrown) — convert to a 303 Response.
 			if (isRedirect(handlerResult)) {
-				return new Response(null, {
-					status: handlerResult.status,
-					headers: { Location: handlerResult.location },
-				});
+				return redirectResponse(handlerResult);
 			}
 
 			const response = handlerResult as Response;
@@ -831,10 +824,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 			// `throw redirect(303, "/")` from a +server.ts handler — turn it into
 			// a real 303 instead of a 500. Mirrors the page-action handler below.
 			if (isRedirect(err)) {
-				return new Response(null, {
-					status: err.status,
-					headers: { Location: err.location },
-				});
+				return redirectResponse(err);
 			}
 			if (isHttpError(err)) {
 				return Response.json({ error: err.message }, { status: err.status });
@@ -1278,6 +1268,15 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 			console.warn(`[CSRF] Blocked request: ${csrfError}`);
 			return Response.json({ error: "Forbidden", message: csrfError }, { status: 403 });
 		}
+		// A WebSocket upgrade is a GET, so checkCsrf skips it. Checked here, before
+		// the hooks, so a cross-site attempt never reaches a session lookup.
+		const upgradeError = isUpgradeRequest(request)
+			? checkUpgradeOrigin(request, url, CSRF_CONFIG)
+			: null;
+		if (upgradeError) {
+			console.warn(`[CSRF] Blocked WebSocket upgrade: ${upgradeError}`);
+			return Response.json({ error: "Forbidden", message: upgradeError }, { status: 403 });
+		}
 
 		const isHttps =
 			(TRUST_PROXY && request.headers.get("x-forwarded-proto") === "https") ||
@@ -1334,14 +1333,15 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		response ??=
 			userHandle && !warmingUp ? await userHandle({ event, resolve }) : await resolve(event);
 
+		// Bun already answered with 101; there is no response left to finish.
+		if (isUpgraded()) return response;
+
 		// A hook that short-circuits a data request with a redirect is answering
 		// the client router, which speaks JSON — an unconverted 3xx is followed by
 		// `fetch` and the router receives the redirect target's HTML instead.
 		// `Location` is copied verbatim: `redirect()` already rebased it through
 		// `withBase()`, and a raw `Response.redirect` under a BASE_PATH carries the
 		// base by hand, so rebasing here would double the prefix on both.
-		// Bun already answered with 101; there is no response left to finish.
-		if (isUpgraded()) return response;
 
 		if (dataReq && response.status >= 300 && response.status < 400) {
 			const location = response.headers.get("location");
@@ -1371,8 +1371,7 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 					? // Shape-identical to the loader conversion below, so the
 						// router has one payload contract regardless of who redirected.
 						Response.json({ redirect: err.location, status: err.status })
-					: // Not Response.redirect(): it rejects relative URLs on Workers.
-						new Response(null, { status: err.status, headers: { Location: err.location } })
+					: redirectResponse(err)
 				: dataReq
 					? Response.json(
 							{
@@ -1439,11 +1438,11 @@ function parseCorsMaxAge(value?: string): number | undefined {
 // Format: "512K", "1M", "1G", plain bytes, or "Infinity".
 // Default: 512K (matches SvelteKit).
 
-function parseBodySizeLimit(value?: string): number {
-	if (!value) return 512 * 1024;
-	if (value === "Infinity") return 0; // Bun: 0 = no limit
+// "Infinity" → 0, Bun's "no limit". `key` names the variable in the error.
+function parseSize(key: string, value: string): number {
+	if (value === "Infinity") return 0;
 	const match = value.match(/^(\d+(?:\.\d+)?)\s*([KMG]?)$/i);
-	if (!match) throw new Error(`Invalid BODY_SIZE_LIMIT: "${value}"`);
+	if (!match) throw new Error(`Invalid ${key}: "${value}"`);
 	const num = parseFloat(match[1]);
 	const unit = match[2].toUpperCase();
 	if (unit === "K") return Math.floor(num * 1024);
@@ -1452,7 +1451,9 @@ function parseBodySizeLimit(value?: string): number {
 	return Math.floor(num);
 }
 
-const BODY_SIZE_LIMIT = parseBodySizeLimit(process.env.BODY_SIZE_LIMIT);
+const BODY_SIZE_LIMIT = process.env.BODY_SIZE_LIMIT
+	? parseSize("BODY_SIZE_LIMIT", process.env.BODY_SIZE_LIMIT)
+	: 512 * 1024;
 
 if (BODY_SIZE_LIMIT === 0) {
 	console.log("📦 Body size limit: none");
@@ -1466,15 +1467,16 @@ if (BODY_SIZE_LIMIT === 0) {
 // Raise when API routes hold streaming responses with long gaps
 // between chunks (e.g. AI tool calls that shell out and wait).
 
-function parseIdleTimeout(value?: string): number {
-	if (!value) return 10;
+// Whole seconds, 0..max. parseInt-lenient ("10s" reads as 10), as it always was.
+function parseSeconds(key: string, value: string | undefined, fallback: number, max: number) {
+	if (!value) return fallback;
 	const n = parseInt(value, 10);
-	if (!Number.isFinite(n) || n < 0) throw new Error(`Invalid IDLE_TIMEOUT: "${value}"`);
-	if (n > 255) throw new Error(`Invalid IDLE_TIMEOUT: "${value}" (max 255)`);
+	if (!Number.isFinite(n) || n < 0) throw new Error(`Invalid ${key}: "${value}"`);
+	if (n > max) throw new Error(`Invalid ${key}: "${value}" (max ${max})`);
 	return n;
 }
 
-const IDLE_TIMEOUT = parseIdleTimeout(process.env.IDLE_TIMEOUT);
+const IDLE_TIMEOUT = parseSeconds("IDLE_TIMEOUT", process.env.IDLE_TIMEOUT, 10, 255);
 
 console.log(`⏱  Idle timeout: ${IDLE_TIMEOUT}s`);
 
@@ -1483,24 +1485,17 @@ console.log(`⏱  Idle timeout: ${IDLE_TIMEOUT}s`);
 // WS_IDLE_TIMEOUT is seconds without a frame before Bun closes the socket; Bun
 // pings idle sockets on its own, so a live peer never hits it.
 
-function parseWsIdleTimeout(value?: string): number {
-	if (!value) return 120;
-	const n = parseInt(value, 10);
-	if (!/^\d+$/.test(value) || n > 960)
-		throw new Error(`Invalid WS_IDLE_TIMEOUT: "${value}" (0–960)`);
-	return n;
-}
-
+// Bun has no "no limit" for these, so 0 and "Infinity" are refused.
 function parseWsSize(key: string, value?: string): number {
 	if (!value) return 16 * 1024 * 1024;
-	const n = parseBodySizeLimit(value);
-	if (n === 0) throw new Error(`Invalid ${key}: "${value}" (Infinity is not allowed)`);
+	const n = parseSize(key, value);
+	if (n === 0) throw new Error(`Invalid ${key}: "${value}" (must be above 0)`);
 	return n;
 }
 
 const WEBSOCKET_OPTIONS: WebSocketOptions = {
 	maxPayloadLength: parseWsSize("WS_MAX_PAYLOAD", process.env.WS_MAX_PAYLOAD),
-	idleTimeout: parseWsIdleTimeout(process.env.WS_IDLE_TIMEOUT),
+	idleTimeout: parseSeconds("WS_IDLE_TIMEOUT", process.env.WS_IDLE_TIMEOUT, 120, 960),
 	backpressureLimit: parseWsSize("WS_BACKPRESSURE_LIMIT", process.env.WS_BACKPRESSURE_LIMIT),
 	perMessageDeflate: process.env.WS_COMPRESS === "true",
 };
