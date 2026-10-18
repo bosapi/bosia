@@ -28,6 +28,8 @@
 - [ ] ⚪ Repeated cookie names: last wins (server and client). Neither order stops cookie tossing; document `__Host-` names for session cookies.
 - [ ] ⚪ Client `readDocumentCookies` (loaderCache.ts) uses a plain object: a loader that read `constructor` sees `Object`. Match the server (null prototype, drop `__proto__`).
 - [ ] ⚪ `_invalidated=1`, `=11`, `=111…` give the same response but separate cache/dedup entries. Key on the mask sized to the layout count.
+- [ ] ⚪ The path index uses the path as it arrived: `invalidate("/files/a|b")` misses a request sent as `/files/a%7Cb` (same for `/caf%C3%A9`). Normalize the encoding on both sides.
+- [ ] ⚪ The loader mask shares the `_invalidated` name with the page's own query: a page's 0/1 `?_invalidated=` is read as the mask, and loaders never see it. Move the mask to a header or `__bosia_mask`.
 - [ ] ⚪ The path index re-parses each cache key (`pathOfKey`). Store the path on the entry if keys grow free-text parts.
 - [ ] ⚪ `sameSite: "none"` over plain HTTP (dev) is sent without `Secure`, so Chrome drops the cookie silently. Warn, or keep `Secure` for `None`.
 - [ ] ⚪ Graceful shutdown is untested on Windows (no SIGTERM; `kill()` terminates). CI skips that test there. Cover Ctrl+C (SIGINT) if Windows hosts matter.

@@ -163,7 +163,7 @@ describe("CookieJar — set / delete", () => {
 
 	test("rejects invalid sameSite", () => {
 		const jar = new CookieJar("");
-		for (const v of ["Bogus", "constructor", "__proto__", "toString"])
+		for (const v of ["Bogus", "STRICT", "constructor", "__proto__", "toString"])
 			expect(() => jar.set("k", "v", { sameSite: v as any })).toThrow();
 	});
 

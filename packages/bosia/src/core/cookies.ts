@@ -5,13 +5,17 @@ import { currentBase } from "./appBase.ts";
 /** Rejects characters that could inject into Set-Cookie headers. */
 const UNSAFE_COOKIE_VALUE = /[;\r\n]/;
 /**
- * Accept any casing (lowercased before lookup) and write the canonical
- * capitalized form into the Set-Cookie header.
+ * Accept both casings (matches SvelteKit/Express convention) and write the
+ * canonical capitalized form into the Set-Cookie header. A Map, so names like
+ * "constructor" are rejected rather than inherited.
  */
 const SAMESITE_NORMALIZE = new Map<string, "Strict" | "Lax" | "None">([
 	["strict", "Strict"],
 	["lax", "Lax"],
 	["none", "None"],
+	["Strict", "Strict"],
+	["Lax", "Lax"],
+	["None", "None"],
 ]);
 
 /**
@@ -143,7 +147,7 @@ export class CookieJar implements Cookies {
 		if (opts.httpOnly) header += "; HttpOnly";
 		if (opts.secure) header += "; Secure";
 		if (opts.sameSite) {
-			const canonical = SAMESITE_NORMALIZE.get(String(opts.sameSite).toLowerCase());
+			const canonical = SAMESITE_NORMALIZE.get(opts.sameSite as string);
 			if (!canonical) throw new Error(`Invalid cookie sameSite: ${opts.sameSite}`);
 			header += `; SameSite=${canonical}`;
 		}

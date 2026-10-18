@@ -236,8 +236,8 @@ function parseDataRequest(url: URL): DataRequest | "invalid" | null {
 	}
 	// Only a 0/1 mask counts: it goes into the cache key, where a stray `?` or
 	// `|o=` would file the entry under the wrong path for invalidate(). Anything
-	// else (a page's own `?_invalidated=<cache-buster>` with no client mask) runs
-	// and sends every loader, as having no mask does.
+	// else runs and sends every loader, as having no mask does. A page's own 0/1
+	// `?_invalidated=` with no client mask after it is still read as the mask.
 	if (invalidatedBits !== null && !/^[01]*$/.test(invalidatedBits)) invalidatedBits = null;
 	return { routeUrl, invalidatedBits, fresh };
 }

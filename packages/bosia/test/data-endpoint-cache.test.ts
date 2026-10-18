@@ -691,9 +691,10 @@ describe("cache key carries the origin", () => {
 describe("invalidate(path) on data endpoint keys", () => {
 	test("a page's own ?_invalidated=<cache-buster> doesn't break the client's mask after it", async () => {
 		// dataUrl() keeps the page query, then appends the mask: the last one wins.
-		const page = await getData("/hitung.json?_invalidated=1700000000&_invalidated=1");
+		// Mask `0` skips the page loader: only honoured if the client's value won.
+		const page = await getData("/hitung.json?_invalidated=1700000000&_invalidated=0");
 		expect(page.res.status).toBe(200);
-		expect(page.body.pageData.runs).toBeGreaterThan(0);
+		expect(page.body.pageData?.runs).toBeUndefined();
 	});
 
 	test("a malformed mask alone runs every loader and still invalidates by path", async () => {

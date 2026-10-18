@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Cookie `sameSite: "constructor"` now throws like any other invalid value.
 - `cookies.get("constructor")` now returns nothing instead of a built-in function.
 
+### Changed
+
+- A data request whose `_invalidated` value isn't only 0s and 1s now runs every loader.
+
 ## [1.2.7] - 2026-10-17
 
 ### Added
