@@ -152,9 +152,19 @@ describe("CookieJar — set / delete", () => {
 		expect(() => jar.set("k", "v", { domain: "x;y" })).toThrow();
 	});
 
+	test("names on Object.prototype are plain cookies, not inherited values", () => {
+		const jar = new CookieJar("__proto__=p; toString=t");
+		expect(jar.get("constructor")).toBeUndefined();
+		expect(jar.get("toString")).toBe("t");
+		// dropped, as before: getAll() must not hand serializers a `__proto__` key
+		expect(jar.get("__proto__")).toBeUndefined();
+		expect(Object.keys(jar.getAll())).toEqual(["toString"]);
+	});
+
 	test("rejects invalid sameSite", () => {
 		const jar = new CookieJar("");
-		expect(() => jar.set("k", "v", { sameSite: "Bogus" as any })).toThrow();
+		for (const v of ["Bogus", "constructor", "__proto__", "toString"])
+			expect(() => jar.set("k", "v", { sameSite: v as any })).toThrow();
 	});
 
 	test("delete sets Max-Age=0 with empty value", () => {

@@ -196,6 +196,13 @@ beforeAll(async () => {
 			`\tconst { campaign } = await parent();\n\treturn { banner: campaign };\n}\n`,
 	);
 
+	mkdirSync(join(routes, "api", "evict-path"), { recursive: true });
+	writeFileSync(
+		join(routes, "api", "evict-path", "+server.ts"),
+		`import { invalidate } from "bosia/server";\n` +
+			`export function POST({ url }: any) {\n\treturn Response.json({ evicted: invalidate(url.searchParams.get("p")) });\n}\n`,
+	);
+
 	// Renders the request's origin, which follows the Host header.
 	mkdirSync(join(routes, "asal"), { recursive: true });
 	writeFileSync(
@@ -679,4 +686,41 @@ describe("cache key carries the origin", () => {
 			expect(body).not.toContain("http://app.test");
 		});
 	}
+});
+
+describe("invalidate(path) on data endpoint keys", () => {
+	test("a page's own ?_invalidated=<cache-buster> doesn't break the client's mask after it", async () => {
+		// dataUrl() keeps the page query, then appends the mask: the last one wins.
+		const page = await getData("/hitung.json?_invalidated=1700000000&_invalidated=1");
+		expect(page.res.status).toBe(200);
+		expect(page.body.pageData.runs).toBeGreaterThan(0);
+	});
+
+	test("a malformed mask alone runs every loader and still invalidates by path", async () => {
+		// `1?x` would put a raw `?` in the key and file it under the wrong path.
+		const path = "/hitung.json?_invalidated=1%3Fx";
+		expect((await getData(path)).res.status).toBe(200);
+		await settle();
+		expect((await getData(path)).res.headers.get("x-bosia-cache")).toBe("HIT");
+		const res = await fetch(`${origin}/api/evict-path?p=/hitung`, {
+			method: "POST",
+			headers: { origin },
+		});
+		expect((await res.json()).evicted).toBeGreaterThan(0);
+		expect((await getData(path)).res.headers.get("x-bosia-cache")).toBeNull();
+	});
+
+	test("path invalidation finds a data entry", async () => {
+		const path = "/hitung.json?_invalidated=1";
+		await getData(path);
+		await settle();
+		expect((await getData(path)).res.headers.get("x-bosia-cache")).toBe("HIT");
+
+		const res = await fetch(`${origin}/api/evict-path?p=/hitung`, {
+			method: "POST",
+			headers: { origin },
+		});
+		expect((await res.json()).evicted).toBeGreaterThan(0);
+		expect((await getData(path)).res.headers.get("x-bosia-cache")).toBeNull();
+	});
 });

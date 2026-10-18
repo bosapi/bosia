@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Cached pages are now kept apart per site address, so a faked `Host` header can't poison them.
 - `X-Forwarded-Proto: constructor` no longer drops a valid forwarded host.
+- `invalidate()` now finds cached pages whose path contains `|`.
+- Cookie `sameSite: "constructor"` now throws like any other invalid value.
+- `cookies.get("constructor")` now returns nothing instead of a built-in function.
 
 ## [1.2.7] - 2026-10-17
 

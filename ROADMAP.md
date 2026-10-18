@@ -21,7 +21,15 @@
 - [x] 🟡 Review: forwarded host kept the inner port (`app.com:3000`); a malformed one half-applied. One strict `applyForwarded()` (proxy.ts); CSRF compares `url.origin` only.
 - [x] 🔴 On `main` too: page cache key was path + query only, but `url` follows `Host`/`X-Forwarded-*`. A spoofed one poisoned pages rendering `url.origin`. Key now has `url.origin`.
 - [ ] 🟡 Any `Host` (or forwarded host) is accepted, so random hosts each get a cache entry and flood the LRU (same as random queries today). Add `ORIGIN`/`ALLOWED_HOSTS` and reject the rest.
-- [x] 🟡 `X-Forwarded-Proto: constructor` hit an inherited key of `SCHEMES` and dropped a valid forwarded host. Now `Object.hasOwn` (proxy.ts).
+- [x] 🟡 `X-Forwarded-Proto: constructor` hit an inherited key of `SCHEMES` and dropped a valid forwarded host. Now a `Map` (proxy.ts), as is cookies' `sameSite` table (same bug).
+- [x] ⚪ Review: a path with a raw `|` (`/files/a|b`) was indexed as `/files/a`, so `invalidate("/files/a|b")` missed it. `pathOfKey` cuts at `?` or `|o=`.
+- [x] ⚪ Review: a data request's `_invalidated` mask went raw into the cache key (`1?x` broke path invalidation). Only a `0`/`1` last value counts now; others run every loader (a page's own `?_invalidated=` cache-buster stays valid).
+- [x] ⚪ Review: incoming cookies sat on a plain object, so `get("constructor")` returned `Object`. Now null-prototype; `__proto__` still dropped (serializers reject it), `getAll()` still plain.
+- [ ] ⚪ Repeated cookie names: last wins (server and client). Neither order stops cookie tossing; document `__Host-` names for session cookies.
+- [ ] ⚪ Client `readDocumentCookies` (loaderCache.ts) uses a plain object: a loader that read `constructor` sees `Object`. Match the server (null prototype, drop `__proto__`).
+- [ ] ⚪ `_invalidated=1`, `=11`, `=111…` give the same response but separate cache/dedup entries. Key on the mask sized to the layout count.
+- [ ] ⚪ The path index re-parses each cache key (`pathOfKey`). Store the path on the entry if keys grow free-text parts.
+- [ ] ⚪ `sameSite: "none"` over plain HTTP (dev) is sent without `Secure`, so Chrome drops the cookie silently. Warn, or keep `Secure` for `None`.
 - [ ] ⚪ Graceful shutdown is untested on Windows (no SIGTERM; `kill()` terminates). CI skips that test there. Cover Ctrl+C (SIGINT) if Windows hosts matter.
 - [ ] ⚪ Dev proxy: a handshake in flight during a rebuild gets 502 (or 1011), not 1012. Needs an in-flight set mapped to 1012.
 - [ ] ⚪ Not in v1: subprotocol selection (`protocols` on the export), Workers (WebSocketPair + Durable Objects), dev-proxy backpressure and 101 cookies.
@@ -104,7 +112,7 @@
 - [ ] ⚪ Slow loaders: `LOAD_TIMEOUT` (30s) and `CACHE_WAIT_TIMEOUT` (60s) outlast Bun's default `IDLE_TIMEOUT` (10s), so the client of a 15s loader is cut off before either applies; documented, raise `IDLE_TIMEOUT` too.
 - [ ] 🟠 Pre-existing, reproduced 2026-10-15 (Playwright, built app): client navigation skips a loader that read the whole query (`Object.fromEntries(url.searchParams)`, `url.search`): `deps.searchParams` stays empty and `uses_url` re-runs only on a pathname change, so `?page=1` → `?page=2` sends `_invalidated=0` and keeps page-1 data (URL says 2, page shows 1). `url.searchParams.get("page")` works (`_invalidated=1`). Server now detects these reads (`markWholeQueryRead`); send a marker in deps and compare the full query in `loaderCache.ts`.
 - [ ] ⚪ Plain-URL lookup + `queryAware` code is copied in renderer.ts and server.ts; a tracked data request computes the identity hash 3× (cacheKey, plain key, dedup key). One helper in cache.ts.
-- [ ] ⚪ Tracking-param gaps: a component `handle` hook or plugin `render` fragment that uses the param isn't tracked (served the param-less copy); `new URL(path, url)` in a loader reads `href`, so that page never matches. Data endpoint `_invalidated` mask isn't validated (`/^[01]*$/`).
+- [ ] ⚪ Tracking-param gaps: a component `handle` hook or plugin `render` fragment that uses the param isn't tracked (served the param-less copy); `new URL(path, url)` in a loader reads `href`, so that page never matches.
 - [ ] ⚪ Cache-write gzip + brotli q5 run sync on the main thread (up to 2MB bodies). Use async zlib in the deferred write.
 - [ ] ⚪ A 404 scans every route 3× (`??=` rescans the `null` match; `renderErrorPage` matches again).
 - [ ] ⚪ Data endpoint calls `computeCacheKey` twice (sort + sha256 each). SSR `?_invalidated` writes an entry no normal request reads.

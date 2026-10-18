@@ -11,13 +11,14 @@ function firstForwarded(request: Request, name: string): string | undefined {
 	return request.headers.get(name)?.split(",")[0]?.trim() || undefined;
 }
 
-const SCHEMES: Record<string, string> = {
-	http: "http:",
-	https: "https:",
+// A Map, not an object: "constructor" or "__proto__" must read as unknown.
+const SCHEMES = new Map([
+	["http", "http:"],
+	["https", "https:"],
 	// Traefik sends ws/wss on upgrades; the origin a browser sends is http(s).
-	ws: "http:",
-	wss: "https:",
-};
+	["ws", "http:"],
+	["wss", "https:"],
+]);
 
 /**
  * Point `url` at the public origin from X-Forwarded-Host/-Proto, in place, so
@@ -27,9 +28,7 @@ const SCHEMES: Record<string, string> = {
  */
 export function applyForwarded(request: Request, url: URL, trustProxy: boolean): void {
 	if (!trustProxy) return;
-	const rawProto = firstForwarded(request, "x-forwarded-proto")?.toLowerCase() ?? "";
-	// own keys only: "constructor" or "__proto__" must read as unknown, not inherited
-	const proto = Object.hasOwn(SCHEMES, rawProto) ? SCHEMES[rawProto] : undefined;
+	const proto = SCHEMES.get(firstForwarded(request, "x-forwarded-proto")?.toLowerCase() ?? "");
 	const host = firstForwarded(request, "x-forwarded-host");
 	let parsed: URL | undefined;
 	if (host) {

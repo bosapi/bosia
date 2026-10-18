@@ -339,9 +339,11 @@ export function depsReadIgnoredParams(
 
 /** Extract pathname portion of a cacheKey for path-based invalidation. */
 function pathOfKey(key: string): string {
+	// A path keeps a raw `|` (`/files/a|b`) but never a raw `?`; the query,
+	// origin and 0/1 mask never hold `?` or `|o=`. Storing the path on the
+	// entry would drop this parsing if keys grow free-text parts.
 	const qIdx = key.indexOf("?");
-	const pIdx = key.indexOf("|");
-	const end = qIdx === -1 ? pIdx : Math.min(qIdx, pIdx);
+	const end = qIdx !== -1 ? qIdx : key.lastIndexOf("|o=");
 	return end === -1 ? key : key.slice(0, end);
 }
 

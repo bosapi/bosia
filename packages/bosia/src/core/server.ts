@@ -223,7 +223,7 @@ function parseDataRequest(url: URL): DataRequest | "invalid" | null {
 	let fresh = false;
 	for (const [key, val] of url.searchParams.entries()) {
 		if (key === "_invalidated") {
-			invalidatedBits = val;
+			invalidatedBits = val; // last wins: the client appends its mask after the page's query
 			continue;
 		}
 		// Set by the client router when the fetch follows an invalidate():
@@ -234,6 +234,11 @@ function parseDataRequest(url: URL): DataRequest | "invalid" | null {
 		}
 		routeUrl.searchParams.append(key, val);
 	}
+	// Only a 0/1 mask counts: it goes into the cache key, where a stray `?` or
+	// `|o=` would file the entry under the wrong path for invalidate(). Anything
+	// else (a page's own `?_invalidated=<cache-buster>` with no client mask) runs
+	// and sends every loader, as having no mask does.
+	if (invalidatedBits !== null && !/^[01]*$/.test(invalidatedBits)) invalidatedBits = null;
 	return { routeUrl, invalidatedBits, fresh };
 }
 

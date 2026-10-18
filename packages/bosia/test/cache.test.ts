@@ -194,12 +194,12 @@ describe("collectTags", () => {
 describe("cacheGet / cacheSet", () => {
 	test("round-trip: set then get returns same entry", () => {
 		const entry = mkEntry();
-		cacheSet("/x|i=0", entry);
-		expect(cacheGet("/x|i=0")).toBe(entry);
+		cacheSet("/x|o=http://localhost|i=0", entry);
+		expect(cacheGet("/x|o=http://localhost|i=0")).toBe(entry);
 	});
 
 	test("miss returns undefined", () => {
-		expect(cacheGet("/missing|i=0")).toBeUndefined();
+		expect(cacheGet("/missing|o=http://localhost|i=0")).toBeUndefined();
 	});
 
 	test("body larger than CACHE_MAX_BODY_BYTES is not stored", async () => {
@@ -207,14 +207,14 @@ describe("cacheGet / cacheSet", () => {
 		const oversized = new Uint8Array(
 			new ArrayBuffer(CACHE_MAX_BODY_BYTES + 1),
 		) as Uint8Array<ArrayBuffer>;
-		cacheSet("/huge|i=0", mkEntry({ raw: oversized }));
-		expect(cacheGet("/huge|i=0")).toBeUndefined();
+		cacheSet("/huge|o=http://localhost|i=0", mkEntry({ raw: oversized }));
+		expect(cacheGet("/huge|o=http://localhost|i=0")).toBeUndefined();
 		// exactly at the limit still stores
 		const atLimit = new Uint8Array(
 			new ArrayBuffer(CACHE_MAX_BODY_BYTES),
 		) as Uint8Array<ArrayBuffer>;
-		cacheSet("/fit|i=0", mkEntry({ raw: atLimit }));
-		expect(cacheGet("/fit|i=0")).toBeDefined();
+		cacheSet("/fit|o=http://localhost|i=0", mkEntry({ raw: atLimit }));
+		expect(cacheGet("/fit|o=http://localhost|i=0")).toBeDefined();
 	});
 
 	test("CACHE_MAX_BYTES evicts the oldest entries once the total passes it", async () => {
@@ -226,10 +226,10 @@ describe("cacheGet / cacheSet", () => {
 		const per = buf.byteLength * 3;
 		const fits = Math.floor(CACHE_MAX_BYTES / per);
 		for (let i = 0; i <= fits; i++) {
-			cacheSet(`/big-${i}|i=0`, mkEntry({ raw: buf, gzip: buf, brotli: buf }));
+			cacheSet(`/big-${i}|o=http://localhost|i=0`, mkEntry({ raw: buf, gzip: buf, brotli: buf }));
 		}
-		expect(cacheGet("/big-0|i=0")).toBeUndefined();
-		expect(cacheGet(`/big-${fits}|i=0`)).toBeDefined();
+		expect(cacheGet("/big-0|o=http://localhost|i=0")).toBeUndefined();
+		expect(cacheGet(`/big-${fits}|o=http://localhost|i=0`)).toBeDefined();
 		// The evicted entry left no path index behind.
 		expect(invalidate("/big-0")).toBe(0);
 	});
@@ -242,8 +242,8 @@ describe("cacheGet / cacheSet", () => {
 			const jar = new CookieJar("my_app_sess=abc; session=xyz");
 			jar.get("my_app_sess");
 			jar.get("session");
-			cacheSet("/warn-a|i=0", mkEntry(), jar);
-			cacheSet("/warn-b|i=0", mkEntry(), jar); // same name → no second warning
+			cacheSet("/warn-a|o=http://localhost|i=0", mkEntry(), jar);
+			cacheSet("/warn-b|o=http://localhost|i=0", mkEntry(), jar); // same name → no second warning
 		} finally {
 			console.warn = orig;
 		}
@@ -253,39 +253,40 @@ describe("cacheGet / cacheSet", () => {
 		// registered key never warns
 		expect(warnings.some((w) => w.includes('"session"'))).toBe(false);
 		// entry still cached — warning does not block the write
-		expect(cacheGet("/warn-a|i=0")).toBeDefined();
+		expect(cacheGet("/warn-a|o=http://localhost|i=0")).toBeDefined();
 	});
 
 	test("overwriting same key replaces the entry and updates index", () => {
 		const first = mkEntry({ tags: ["k:a"] });
 		const second = mkEntry({ tags: ["k:b"] });
-		cacheSet("/x|i=0", first);
-		cacheSet("/x|i=0", second);
-		expect(cacheGet("/x|i=0")).toBe(second);
+		cacheSet("/x|o=http://localhost|i=0", first);
+		cacheSet("/x|o=http://localhost|i=0", second);
+		expect(cacheGet("/x|o=http://localhost|i=0")).toBe(second);
 		// First entry's tag should no longer evict the key
 		invalidate("a");
-		expect(cacheGet("/x|i=0")).toBe(second);
+		expect(cacheGet("/x|o=http://localhost|i=0")).toBe(second);
 		// Second entry's tag should evict it
 		invalidate("b");
-		expect(cacheGet("/x|i=0")).toBeUndefined();
+		expect(cacheGet("/x|o=http://localhost|i=0")).toBeUndefined();
 	});
 
 	test("LRU eviction cleans the evicted entry's tag index, leaving live keys alone", async () => {
 		const { CACHE_MAX_ENTRIES } = await import("../src/core/cache.ts");
 		// Oldest tagged entry — will be pushed out by the LRU.
-		cacheSet("/evictme|i=0", mkEntry({ tags: ["k:gone"] }));
+		cacheSet("/evictme|o=http://localhost|i=0", mkEntry({ tags: ["k:gone"] }));
 		// Second-oldest, different tag — must survive.
-		cacheSet("/keep|i=0", mkEntry({ tags: ["k:live"] }));
+		cacheSet("/keep|o=http://localhost|i=0", mkEntry({ tags: ["k:live"] }));
 		// Push exactly one entry past the cap so only /evictme (the oldest) evicts.
-		for (let i = 0; i < CACHE_MAX_ENTRIES - 1; i++) cacheSet(`/fill-${i}|i=0`, mkEntry());
-		expect(cacheGet("/evictme|i=0")).toBeUndefined();
-		expect(cacheGet("/keep|i=0")).toBeDefined();
+		for (let i = 0; i < CACHE_MAX_ENTRIES - 1; i++)
+			cacheSet(`/fill-${i}|o=http://localhost|i=0`, mkEntry());
+		expect(cacheGet("/evictme|o=http://localhost|i=0")).toBeUndefined();
+		expect(cacheGet("/keep|o=http://localhost|i=0")).toBeDefined();
 		// Evicted entry's tag must leave no dangling pointer: a stale pointer would
 		// make invalidate count it (return 1). Targeted cleanup → the tag is gone.
 		expect(invalidate("gone")).toBe(0);
 		// Live sibling's tag still resolves and evicts it.
 		expect(invalidate("live")).toBe(1);
-		expect(cacheGet("/keep|i=0")).toBeUndefined();
+		expect(cacheGet("/keep|o=http://localhost|i=0")).toBeUndefined();
 	});
 });
 
@@ -293,17 +294,17 @@ describe("cacheGet / cacheSet", () => {
 
 describe("coalesceMiss", () => {
 	test("first caller becomes leader, concurrent caller becomes waiter", () => {
-		const leader = coalesceMiss("/cm/a|i=0");
+		const leader = coalesceMiss("/cm/a|o=http://localhost|i=0");
 		expect(typeof leader.release).toBe("function");
 		expect(leader.wait).toBeUndefined();
-		const waiter = coalesceMiss("/cm/a|i=0");
+		const waiter = coalesceMiss("/cm/a|o=http://localhost|i=0");
 		expect(waiter.wait).toBeInstanceOf(Promise);
 		expect(waiter.release).toBeUndefined();
 		leader.release!();
 	});
 
 	test("waiter re-check hits when leader writes in a microtask before release", async () => {
-		const key = "/cm/b|i=0";
+		const key = "/cm/b|o=http://localhost|i=0";
 		const leader = coalesceMiss(key);
 		const waiter = coalesceMiss(key);
 		// Mirrors the production handoff: cacheSet + release inside queueMicrotask.
@@ -316,7 +317,7 @@ describe("coalesceMiss", () => {
 	});
 
 	test("waiter is not resumed before the leader releases", async () => {
-		const key = "/cm/c|i=0";
+		const key = "/cm/c|o=http://localhost|i=0";
 		const leader = coalesceMiss(key);
 		const waiter = coalesceMiss(key);
 		let resumed = false;
@@ -332,7 +333,7 @@ describe("coalesceMiss", () => {
 	});
 
 	test("leader released without writing → waiter re-check misses", async () => {
-		const key = "/cm/d|i=0";
+		const key = "/cm/d|o=http://localhost|i=0";
 		const leader = coalesceMiss(key);
 		const waiter = coalesceMiss(key);
 		leader.release!();
@@ -341,7 +342,7 @@ describe("coalesceMiss", () => {
 	});
 
 	test("caller after release becomes a new leader", () => {
-		const key = "/cm/e|i=0";
+		const key = "/cm/e|o=http://localhost|i=0";
 		const first = coalesceMiss(key);
 		first.release!();
 		const second = coalesceMiss(key);
@@ -350,7 +351,7 @@ describe("coalesceMiss", () => {
 	});
 
 	test("release is idempotent and never deletes a successor leader's gate", () => {
-		const key = "/cm/f|i=0";
+		const key = "/cm/f|o=http://localhost|i=0";
 		const first = coalesceMiss(key);
 		first.release!();
 		const second = coalesceMiss(key);
@@ -365,20 +366,20 @@ describe("coalesceMiss", () => {
 
 describe("invalidate(key) by depends() tag", () => {
 	test("evicts all entries tagged with the matching k: tag", () => {
-		cacheSet("/a|i=0", mkEntry({ tags: ["k:app:user"] }));
-		cacheSet("/b|i=0", mkEntry({ tags: ["k:app:user"] }));
-		cacheSet("/c|i=0", mkEntry({ tags: ["k:other"] }));
+		cacheSet("/a|o=http://localhost|i=0", mkEntry({ tags: ["k:app:user"] }));
+		cacheSet("/b|o=http://localhost|i=0", mkEntry({ tags: ["k:app:user"] }));
+		cacheSet("/c|o=http://localhost|i=0", mkEntry({ tags: ["k:other"] }));
 		const removed = invalidate("app:user");
 		expect(removed).toBe(2);
-		expect(cacheGet("/a|i=0")).toBeUndefined();
-		expect(cacheGet("/b|i=0")).toBeUndefined();
-		expect(cacheGet("/c|i=0")).toBeDefined();
+		expect(cacheGet("/a|o=http://localhost|i=0")).toBeUndefined();
+		expect(cacheGet("/b|o=http://localhost|i=0")).toBeUndefined();
+		expect(cacheGet("/c|o=http://localhost|i=0")).toBeDefined();
 	});
 
 	test("returns 0 when no entries match", () => {
-		cacheSet("/a|i=0", mkEntry({ tags: ["k:app:user"] }));
+		cacheSet("/a|o=http://localhost|i=0", mkEntry({ tags: ["k:app:user"] }));
 		expect(invalidate("never:matches")).toBe(0);
-		expect(cacheGet("/a|i=0")).toBeDefined();
+		expect(cacheGet("/a|o=http://localhost|i=0")).toBeDefined();
 	});
 });
 
@@ -386,26 +387,35 @@ describe("invalidate(key) by depends() tag", () => {
 
 describe("invalidate(/path)", () => {
 	test("evicts entries tagged with a fetch URL whose path equals key", () => {
-		cacheSet("/page|i=0", mkEntry({ tags: ["u:http://localhost/api/posts"] }));
-		cacheSet("/other|i=0", mkEntry({ tags: ["u:http://localhost/api/users"] }));
+		cacheSet("/page|o=http://localhost|i=0", mkEntry({ tags: ["u:http://localhost/api/posts"] }));
+		cacheSet("/other|o=http://localhost|i=0", mkEntry({ tags: ["u:http://localhost/api/users"] }));
 		const removed = invalidate("/api/posts");
 		expect(removed).toBe(1);
-		expect(cacheGet("/page|i=0")).toBeUndefined();
-		expect(cacheGet("/other|i=0")).toBeDefined();
+		expect(cacheGet("/page|o=http://localhost|i=0")).toBeUndefined();
+		expect(cacheGet("/other|o=http://localhost|i=0")).toBeDefined();
 	});
 
 	test("evicts cache entries whose own path equals key", () => {
-		cacheSet("/api/posts|i=0", mkEntry({ tags: [] }));
+		cacheSet("/api/posts|o=http://localhost|i=0", mkEntry({ tags: [] }));
 		const removed = invalidate("/api/posts");
 		expect(removed).toBe(1);
-		expect(cacheGet("/api/posts|i=0")).toBeUndefined();
+		expect(cacheGet("/api/posts|o=http://localhost|i=0")).toBeUndefined();
+	});
+
+	test("a path with a raw `|` is indexed whole", () => {
+		const key = (p: string) =>
+			computeCacheKey(new URL(`http://localhost${p}`), mkRequest("http://x/"), mkCookies());
+		cacheSet(key("/files/a|b"), mkEntry({ tags: [] }));
+		cacheSet(key("/files/a"), mkEntry({ tags: [] }));
+		expect(invalidate("/files/a|b")).toBe(1);
+		expect(cacheGet(key("/files/a"))).toBeDefined();
 	});
 
 	test("treats /path differently from a bare key", () => {
-		cacheSet("/x|i=0", mkEntry({ tags: ["k:app:user"] }));
+		cacheSet("/x|o=http://localhost|i=0", mkEntry({ tags: ["k:app:user"] }));
 		// `/app:user` should NOT match `k:app:user` tag
 		expect(invalidate("/app:user")).toBe(0);
-		expect(cacheGet("/x|i=0")).toBeDefined();
+		expect(cacheGet("/x|o=http://localhost|i=0")).toBeDefined();
 	});
 });
 
@@ -413,23 +423,23 @@ describe("invalidate(/path)", () => {
 
 describe("invalidateAll(prefix)", () => {
 	test("evicts every entry whose path starts with prefix", () => {
-		cacheSet("/products/1|i=0", mkEntry());
-		cacheSet("/products/2|i=0", mkEntry());
-		cacheSet("/about|i=0", mkEntry());
+		cacheSet("/products/1|o=http://localhost|i=0", mkEntry());
+		cacheSet("/products/2|o=http://localhost|i=0", mkEntry());
+		cacheSet("/about|o=http://localhost|i=0", mkEntry());
 		const removed = invalidateAll("/products/");
 		expect(removed).toBe(2);
-		expect(cacheGet("/products/1|i=0")).toBeUndefined();
-		expect(cacheGet("/products/2|i=0")).toBeUndefined();
-		expect(cacheGet("/about|i=0")).toBeDefined();
+		expect(cacheGet("/products/1|o=http://localhost|i=0")).toBeUndefined();
+		expect(cacheGet("/products/2|o=http://localhost|i=0")).toBeUndefined();
+		expect(cacheGet("/about|o=http://localhost|i=0")).toBeDefined();
 	});
 
 	test("returns 0 when no path matches", () => {
-		cacheSet("/about|i=0", mkEntry());
+		cacheSet("/about|o=http://localhost|i=0", mkEntry());
 		expect(invalidateAll("/nothing/")).toBe(0);
 	});
 
 	test("ignores query string when matching prefix (pathOfKey strips ?)", () => {
-		cacheSet("/products/1?ref=x|i=0", mkEntry());
+		cacheSet("/products/1?ref=x|o=http://localhost|i=0", mkEntry());
 		expect(invalidateAll("/products/")).toBe(1);
 	});
 });
@@ -669,11 +679,11 @@ describe("serveCached", () => {
 
 describe("cacheClear", () => {
 	test("removes all entries and tag/path indexes", () => {
-		cacheSet("/a|i=0", mkEntry({ tags: ["k:x"] }));
-		cacheSet("/b|i=0", mkEntry({ tags: ["k:y"] }));
+		cacheSet("/a|o=http://localhost|i=0", mkEntry({ tags: ["k:x"] }));
+		cacheSet("/b|o=http://localhost|i=0", mkEntry({ tags: ["k:y"] }));
 		cacheClear();
-		expect(cacheGet("/a|i=0")).toBeUndefined();
-		expect(cacheGet("/b|i=0")).toBeUndefined();
+		expect(cacheGet("/a|o=http://localhost|i=0")).toBeUndefined();
+		expect(cacheGet("/b|o=http://localhost|i=0")).toBeUndefined();
 		expect(invalidate("x")).toBe(0);
 		expect(invalidate("y")).toBe(0);
 	});

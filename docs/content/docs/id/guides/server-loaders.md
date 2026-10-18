@@ -155,7 +155,7 @@ export async function load({ params }: LoadEvent) {
 
 ## Deduplikasi Request
 
-Request identik yang bersamaan berbagi satu loader in-flight secara default. Kunci dedup menyertakan hash identitas `CACHE_KEYS`, jadi route per-user aman di-dedup — pengguna dengan session cookie berbeda tidak pernah berbagi hasil loader. Jika aplikasi Anda autentikasi dengan nama cookie atau header kustom, tambahkan ke `CACHE_KEYS`.
+Request identik yang bersamaan berbagi satu loader in-flight secara default. Kunci dedup menyertakan origin request dan hash identitas `CACHE_KEYS`, jadi route per-user aman di-dedup — host atau session cookie berbeda tidak pernah berbagi hasil loader. Jika aplikasi Anda autentikasi dengan nama cookie atau header kustom, tambahkan ke `CACHE_KEYS`.
 
 Lihat [Deduplikasi Request](/id/guides/request-deduplication) untuk model lengkap dan aturan keamanannya.
 

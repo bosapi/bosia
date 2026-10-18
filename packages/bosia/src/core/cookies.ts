@@ -5,17 +5,14 @@ import { currentBase } from "./appBase.ts";
 /** Rejects characters that could inject into Set-Cookie headers. */
 const UNSAFE_COOKIE_VALUE = /[;\r\n]/;
 /**
- * Accept both casings (matches SvelteKit/Express convention) and write the
- * canonical capitalized form into the Set-Cookie header.
+ * Accept any casing (lowercased before lookup) and write the canonical
+ * capitalized form into the Set-Cookie header.
  */
-const SAMESITE_NORMALIZE: Record<string, "Strict" | "Lax" | "None"> = {
-	strict: "Strict",
-	lax: "Lax",
-	none: "None",
-	Strict: "Strict",
-	Lax: "Lax",
-	None: "None",
-};
+const SAMESITE_NORMALIZE = new Map<string, "Strict" | "Lax" | "None">([
+	["strict", "Strict"],
+	["lax", "Lax"],
+	["none", "None"],
+]);
 
 /**
  * RFC 6265 §4.1.1: cookie-name is an HTTP token (RFC 2616 §2.2).
@@ -37,13 +34,15 @@ const COOKIE_DEFAULTS: CookieOptions = {
 // ─── Cookie Helpers ──────────────────────────────────────
 
 function parseCookies(header: string): Record<string, string> {
-	const result: Record<string, string> = {};
+	// No prototype, so `get("constructor")` is undefined. `__proto__` is dropped
+	// (as a plain `{}` did): kept, getAll() would hand serializers that key.
+	const result: Record<string, string> = Object.create(null);
 	for (const pair of header.split(";")) {
 		const idx = pair.indexOf("=");
 		if (idx === -1) continue;
 		const name = pair.slice(0, idx).trim();
 		const value = pair.slice(idx + 1).trim();
-		if (name) {
+		if (name && name !== "__proto__") {
 			try {
 				result[name] = decodeURIComponent(value);
 			} catch {
@@ -144,7 +143,7 @@ export class CookieJar implements Cookies {
 		if (opts.httpOnly) header += "; HttpOnly";
 		if (opts.secure) header += "; Secure";
 		if (opts.sameSite) {
-			const canonical = SAMESITE_NORMALIZE[opts.sameSite as string];
+			const canonical = SAMESITE_NORMALIZE.get(String(opts.sameSite).toLowerCase());
 			if (!canonical) throw new Error(`Invalid cookie sameSite: ${opts.sameSite}`);
 			header += `; SameSite=${canonical}`;
 		}
