@@ -698,9 +698,11 @@ describe("invalidate(path) on data endpoint keys", () => {
 	});
 
 	test("a malformed mask alone runs every loader and still invalidates by path", async () => {
-		// `1?x` would put a raw `?` in the key and file it under the wrong path.
-		const path = "/hitung.json?_invalidated=1%3Fx";
-		expect((await getData(path)).res.status).toBe(200);
+		// `0?x` would put a raw `?` in the key and file it under the wrong path.
+		const path = "/hitung.json?_invalidated=0%3Fx";
+		const first = await getData(path);
+		expect(first.res.status).toBe(200);
+		expect(first.body.pageData?.runs).toBeGreaterThan(0);
 		await settle();
 		expect((await getData(path)).res.headers.get("x-bosia-cache")).toBe("HIT");
 		const res = await fetch(`${origin}/api/evict-path?p=/hitung`, {

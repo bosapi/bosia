@@ -9,7 +9,7 @@ The cache is **safe for logged-in users** because the key includes a hash of coo
 
 ## How a request flows
 
-1. Look up `<path>?<sorted-query>|o=<origin>|i=<identity-hash>` in the cache.
+1. Look up `<normalized-path>?<sorted-query>|o=<origin>|i=<identity-hash>` in the cache.
 2. **Hit** → serve the matching compressed variant (brotli, gzip, or identity) based on `Accept-Encoding`. Done.
 3. **Miss** → the **first** miss on a key becomes the leader: it runs `metadata()`, runs `load()`, renders, builds the HTML, and sends it compressed. Building the cached gzip + brotli copies runs after the response has gone out.
 4. **Concurrent misses** on the same key wait for the leader, then re-check the cache — a hit is served from cache, so N simultaneous misses build the page once instead of N times. If the leader skipped the write (e.g. it set cookies or the response wasn't cacheable), each waiter builds independently.

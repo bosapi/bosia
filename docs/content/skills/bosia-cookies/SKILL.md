@@ -38,7 +38,7 @@ event.cookies.delete("session"); // same default path as set() — don't hardcod
 
 `{ path? /*framework-decided*/, domain?, maxAge? /*sec*/, expires?, httpOnly?=true, secure? /*framework-decided*/, sameSite?: "Strict"|"Lax"|"None" (any case, default "Lax") }`.
 
-Defaults applied automatically: `HttpOnly; Secure; SameSite=Lax; Path=<the mount>`. You normally only pass `maxAge`/`expires` (and `domain` if you have one). `sameSite` is case-insensitive (`"lax"` or `"Lax"`), normalized to the canonical header.
+Defaults applied automatically: `HttpOnly; Secure; SameSite=Lax; Path=<the mount>`. You normally only pass `maxAge`/`expires` (and `domain` if you have one). `sameSite` takes lowercase or capitalized (`"lax"` or `"Lax"`, not `"LAX"`), normalized to the canonical header.
 
 ## `Path` is framework-decided too — DO NOT hardcode `path: "/"`
 

@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Response cache skill: each host caches separately; redirect aliases to one address.
 - Server loaders guide (EN + ID): dedup is also split per site address.
 - Response cache guide (EN + ID): step 1 spells out the full cache key.
+- Cookies skill: `sameSite` takes lowercase or capitalized, not any casing.
 
 ## [0.8.30] - 2026-10-17
 

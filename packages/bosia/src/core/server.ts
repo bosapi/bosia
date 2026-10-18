@@ -306,7 +306,7 @@ async function pageRouteCacheable(route: (typeof serverRoutes)[number]): Promise
 
 /**
  * Decode an `_invalidated` bitmask string. Char 0 = page, char i+1 = layout
- * depth i. Only '0' has a meaning; any other char counts as '1'.
+ * depth i. Only 0/1 reach here: parseDataRequest drops any other mask.
  *   - Page '0': skip the page loader.
  *   - Layout '0': omit its data from the response. The loader still runs,
  *     since it may be a guard.

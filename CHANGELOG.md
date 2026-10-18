@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [1.2.8] - 2026-10-18
 
+### Changed
+
+- A data request whose `_invalidated` value isn't only 0s and 1s now runs every loader.
+
 ### Fixed
 
 - Cached pages are now kept apart per site address, so a faked `Host` header can't poison them.
@@ -15,10 +19,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `invalidate()` now finds cached pages whose path contains `|`.
 - Cookie `sameSite: "constructor"` now throws like any other invalid value.
 - `cookies.get("constructor")` now returns nothing instead of a built-in function.
-
-### Changed
-
-- A data request whose `_invalidated` value isn't only 0s and 1s now runs every loader.
 
 ## [1.2.7] - 2026-10-17
 
