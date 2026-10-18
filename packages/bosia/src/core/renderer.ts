@@ -16,6 +16,7 @@ import {
 	collectTags,
 	depsReadIgnoredParams,
 	markWholeQueryRead,
+	markQueryAware,
 	LOAD_TIMEOUT,
 	METADATA_TIMEOUT,
 	stripIgnoredParams,
@@ -246,6 +247,25 @@ function stampErrorContext(
 	e.partialLayoutData ??= [...partialLayoutData];
 }
 
+/** A page route's `export const cache` flag: the build-time read when it has one
+ *  (true/false), otherwise both compiled modules' exports. Returns the page module
+ *  when it had to import it, so SSR doesn't import it twice. */
+export async function routeCacheFlag(route: {
+	cache?: boolean | null;
+	pageModule: () => Promise<any>;
+	pageServer: (() => Promise<any>) | null;
+}): Promise<{ cacheable: boolean; pageMod: any }> {
+	const flag = route.cache;
+	if (flag === true || flag === false) return { cacheable: flag, pageMod: null };
+	const [pageMod, serverMod] = await Promise.all([
+		route.pageModule(),
+		// A server module that fails to import isn't cached; the loader imports it
+		// again and turns the failure into the route's error page.
+		route.pageServer?.().catch(() => ({ cache: false })),
+	]);
+	return { cacheable: pageMod.cache !== false && serverMod?.cache !== false, pageMod };
+}
+
 // ─── Per-Loader Dependency Tracking ──────────────────────
 // Wraps `params`, `url`, `cookies`, and `fetch` with proxies/closures
 // that record every key read during a single loader run. The client
@@ -274,7 +294,16 @@ function trackedParams(params: Record<string, string>, deps: LoaderDeps): Record
 	});
 }
 
-const URL_TRACKED_PROPS = new Set(["pathname", "origin", "hash", "href", "host", "hostname"]);
+const URL_TRACKED_PROPS = new Set([
+	"pathname",
+	"origin",
+	"hash",
+	"href",
+	"host",
+	"hostname",
+	"toString",
+	"toJSON",
+]);
 
 function trackedUrl(url: URL, deps: LoaderDeps): URL {
 	const trackedSearch = new Proxy(url.searchParams, {
@@ -303,6 +332,10 @@ function trackedUrl(url: URL, deps: LoaderDeps): URL {
 				markWholeQueryRead(deps);
 				return target.search;
 			}
+			// Known cost: `new URL("/api/x", url)` reads `toString` too, so a loader that
+			// only needs the origin re-runs on every query change. Accepted: a full-URL
+			// read can depend on the query, and stale data is worse than an extra run.
+			// Use `url.origin` in such loaders to keep them cached.
 			if (prop === "href" || prop === "toString" || prop === "toJSON") {
 				markWholeQueryRead(deps);
 			}
@@ -549,7 +582,7 @@ export async function loadRouteData(
 			// A left-out layout still feeds the layers below it via parent(): its
 			// ignored-param reads count for every one that is sent.
 			if (omit && depsReadIgnoredParams(null, deps)) omittedReadIgnored = true;
-			else if (!omit && omittedReadIgnored) markWholeQueryRead(deps);
+			else if (!omit && omittedReadIgnored) markQueryAware(deps);
 		} catch (err) {
 			// Loaders below this one already started; dev warns about the guard.
 			const thrown = isDev ? guardLabel(err) : null;
@@ -616,7 +649,7 @@ export async function loadRouteData(
 		}
 	}
 
-	if (omittedReadIgnored && pageDeps) markWholeQueryRead(pageDeps);
+	if (omittedReadIgnored && pageDeps) markQueryAware(pageDeps);
 
 	// `params` are always attached to pageData for client-side router consumption.
 	// When pageData is skipped, the client merges its cached pageData with current
@@ -702,17 +735,11 @@ export async function renderSSRStream(
 	// `export const cache = false`. See cache.ts and docs/guides/response-cache.md.
 	const cacheBypass = url.searchParams.has("_invalidated");
 	// `route.cache` is the build-time static read of `export const cache` in
-	// +page.svelte, letting a cache hit skip the page-module import entirely:
+	// +page.svelte and +page.server.ts, letting a cache hit skip the page-module import entirely:
 	//   true  → cacheable, false → opted out, null → import to read the real value.
-	let pageMod: any = null;
-	const staticCache = (route as any).cache as boolean | null | undefined;
-	let routeCacheable: boolean;
-	if (staticCache === true || staticCache === false) {
-		routeCacheable = staticCache;
-	} else {
-		pageMod = await route.pageModule();
-		routeCacheable = pageMod.cache !== false;
-	}
+	const flag = await routeCacheFlag(route);
+	const routeCacheable = flag.cacheable;
+	let pageMod: any = flag.pageMod;
 	// CSP is incompatible with response cache — the per-request nonce is baked
 	// into the cached HTML but the CSP header is re-derived each request, so a
 	// cached page would ship with a dead nonce and the browser would block its

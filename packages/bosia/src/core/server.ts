@@ -73,6 +73,7 @@ import {
 	renderSSRStream,
 	renderErrorPage,
 	renderPageWithFormData,
+	routeCacheFlag,
 } from "./renderer.ts";
 import { getServerTime } from "../lib/utils.ts";
 import {
@@ -296,14 +297,6 @@ function routesFor(
 
 const jsonEncoder = new TextEncoder();
 
-/** A page route's `export const cache` flag: the build-time read when it has
- *  one, otherwise the compiled page module's own export (see renderer.ts). */
-async function pageRouteCacheable(route: (typeof serverRoutes)[number]): Promise<boolean> {
-	const flag = (route as { cache?: boolean | null }).cache;
-	if (flag === true || flag === false) return flag;
-	return (await route.pageModule()).cache !== false;
-}
-
 /**
  * Decode an `_invalidated` bitmask string. Char 0 = page, char i+1 = layout
  * depth i. Only 0/1 reach here: parseDataRequest drops any other mask.
@@ -493,7 +486,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				!warmingUp &&
 				method === "GET" &&
 				pageMatch !== null &&
-				(await pageRouteCacheable(pageMatch.route));
+				(await routeCacheFlag(pageMatch.route)).cacheable;
 			if (dataCacheable && !fresh) {
 				// Tracking params (CACHE_IGNORE_PARAMS): the plain URL's entry
 				// first, then this URL's own, as before — see cache.ts.

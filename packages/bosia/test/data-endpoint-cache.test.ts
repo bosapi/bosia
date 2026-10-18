@@ -50,6 +50,48 @@ beforeAll(async () => {
 	);
 	writeFileSync(join(routes, "langsung", "+page.server.ts"), counter("langsung"));
 
+	// The opt-out written in +page.server.ts: a literal (read at build) and a
+	// dynamic one (read from the module at runtime).
+	for (const [dir, flag] of [
+		["server-off", "false"],
+		["server-dyn", "!1"],
+	]) {
+		mkdirSync(join(routes, dir), { recursive: true });
+		writeFileSync(join(routes, dir, "+page.svelte"), `<p>${dir}</p>\n`);
+		writeFileSync(
+			join(routes, dir, "+page.server.ts"),
+			`export const cache = ${flag};\n` + counter(dir),
+		);
+	}
+
+	// Loaders that read the whole URL as a string.
+	for (const [dir, read] of [
+		["url-string", "String(url)"],
+		["url-template", "`${url}`"],
+	]) {
+		mkdirSync(join(routes, dir), { recursive: true });
+		writeFileSync(join(routes, dir, "+page.svelte"), `<p>${dir}</p>\n`);
+		writeFileSync(
+			join(routes, dir, "+page.server.ts"),
+			`export const load = ({ url }: any) => ({ s: ${read} });\n`,
+		);
+	}
+
+	// A server module that throws on import: once with a literal flag, once dynamic.
+	for (const [dir, head] of [
+		["crash-static", ""],
+		["crash-dyn", "export const cache = !1;\n"],
+	]) {
+		mkdirSync(join(routes, dir), { recursive: true });
+		writeFileSync(join(routes, dir, "+page.svelte"), `<p>never</p>\n`);
+		writeFileSync(
+			join(routes, dir, "+page.server.ts"),
+			head +
+				`if (process.env.NODE_ENV !== "nope") throw new Error("boom");\n` +
+				`export const load = () => ({});\n`,
+		);
+	}
+
 	mkdirSync(join(routes, "api", "evict"), { recursive: true });
 	writeFileSync(
 		join(routes, "api", "evict", "+server.ts"),
@@ -372,6 +414,43 @@ describe("data endpoint response cache", () => {
 		const second = await getData("/langsung.json");
 		expect(second.res.headers.get("x-bosia-cache")).toBeNull();
 		expect(second.body.pageData.runs).toBe(first.body.pageData.runs + 1);
+	});
+
+	test("`export const cache = false` in +page.server.ts is honored (SSR + data)", async () => {
+		for (const dir of ["server-off", "server-dyn"]) {
+			const first = await getData(`/${dir}.json`);
+			await settle();
+			const second = await getData(`/${dir}.json`);
+			expect(second.res.headers.get("x-bosia-cache")).toBeNull();
+			expect(second.body.pageData.runs).toBe(first.body.pageData.runs + 1);
+
+			await fetch(`${origin}/${dir}`);
+			await settle();
+			const page = await fetch(`${origin}/${dir}`);
+			expect(page.headers.get("x-bosia-cache")).toBeNull();
+		}
+	});
+
+	test("a dynamic flag fails like a literal one when the server module throws on import", async () => {
+		const shape = async (dir: string) => {
+			const page = await fetch(`${origin}/${dir}`);
+			const data = await fetch(`${origin}/__bosia/data/${dir}.json`);
+			return {
+				page: [page.status, page.headers.get("content-type"), await page.text()],
+				data: [data.status, await data.text()],
+			};
+		};
+		const dyn = await shape("crash-dyn");
+		expect(dyn.page[0]).toBe(500);
+		expect(dyn).toEqual(await shape("crash-static"));
+	});
+
+	test("String(url) tells the client router it read the path and the whole query", async () => {
+		for (const dir of ["url-string", "url-template"]) {
+			const { body } = await getData(`/${dir}.json?x=1`);
+			expect(body.pageDeps.uses_url).toBe(true);
+			expect(body.pageDeps.searchParams).toEqual(["*"]);
+		}
 	});
 
 	test("a POST bypasses the cache", async () => {

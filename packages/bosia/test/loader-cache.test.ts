@@ -7,6 +7,7 @@ import {
 	type EvalContext,
 } from "../src/core/client/loaderCache.ts";
 import type { LoaderDeps } from "../src/core/hooks.ts";
+import { markWholeQueryRead } from "../src/core/cache.ts";
 
 function emptyDeps(): LoaderDeps {
 	return { keys: [], urls: [], params: [], searchParams: [], cookies: [], uses_url: false };
@@ -94,6 +95,17 @@ describe("shouldRerun", () => {
 		const e = entry(deps, ctx({ search: "?q=hello" }));
 		expect(shouldRerun(e, emptyDirty(), ctx({ search: "?q=hello" }))).toBe(false);
 		expect(shouldRerun(e, emptyDirty(), ctx({ search: "?q=bye" }))).toBe(true);
+	});
+
+	test("a whole-query read re-runs on any query change, after the trip to the client", () => {
+		const server = emptyDeps();
+		markWholeQueryRead(server);
+		// The deps reach the browser as JSON; the marker must survive it.
+		const deps: LoaderDeps = JSON.parse(JSON.stringify(server));
+		const e = entry(deps, ctx({ pathname: "/list", search: "?page=1" }));
+		expect(shouldRerun(e, emptyDirty(), ctx({ pathname: "/list", search: "?page=1" }))).toBe(false);
+		expect(shouldRerun(e, emptyDirty(), ctx({ pathname: "/list", search: "?page=2" }))).toBe(true);
+		expect(shouldRerun(e, emptyDirty(), ctx({ pathname: "/list" }))).toBe(true);
 	});
 
 	test("re-runs when an untracked searchParam doesn't matter", () => {

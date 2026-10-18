@@ -13,6 +13,7 @@ Loader secara otomatis bergantung pada:
 
 - Setiap `params.X` yang dibaca
 - Setiap `url.searchParams.get(X)` atau `.has(X)` yang dibaca
+- Seluruh query, kalau membaca `url.search`, `url.href` atau me-loop `url.searchParams` (perubahan query apa pun menjalankannya ulang)
 - Setiap `url.pathname`/`origin`/`href` yang dibaca
 - Setiap `cookies.get(X)` yang dibaca
 - Setiap URL yang dilewatkan ke `fetch()` yang di-inject
@@ -124,4 +125,4 @@ Form action adalah titik invalidasi paling umum — setelah mutasi, panggil `inv
 
 Endpoint API (`+server.ts`) di v0.6 hanya bisa di-invalidasi berdasarkan URL/prefix. Invalidasi berbasis tag untuk handler API ada di roadmap.
 
-Matikan response cache per-rute dengan `export const cache = false;` di `+page.ts`, `+page.server.ts`, atau `+server.ts`. Detail lengkap di [Response cache](/id/guides/response-cache).
+Matikan response cache per-rute dengan `export const cache = false;` di `+page.svelte` (`<script module>`), `+page.server.ts`, atau `+server.ts`. Detail lengkap di [Response cache](/id/guides/response-cache).

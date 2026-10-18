@@ -69,12 +69,8 @@ The cache key is the URL plus `CACHE_KEYS`, so it can't honor a `Vary` on anythi
 
 ## Opting out per route
 
-> **⚠️ For page routes the export MUST live in `+page.svelte`, inside `<script module>`.**
-> Putting it in `+page.server.ts` compiles, type-checks, and is **silently ignored** — the
-> page keeps being cached. The build-time scan reads `+page.svelte`
-> (`core/scanner.ts` → `readPageCache`), and the runtime fallback reads the compiled
-> `+page.svelte` module (`core/renderer.ts` → `pageMod.cache`). The server module's
-> exports are never consulted for this flag.
+Page routes can put the export in `+page.svelte` (inside `<script module>`) or in
+`+page.server.ts`. Either one saying `false` turns the cache off for that page.
 
 ```svelte
 <!-- +page.svelte -->
@@ -87,7 +83,16 @@ The cache key is the URL plus `CACHE_KEYS`, so it can't honor a `Vary` on anythi
 </script>
 ```
 
-API handlers are the opposite — they have no component, so the export goes in the handler:
+```ts
+// +page.server.ts
+export const cache = false;
+
+export async function load() {
+	/* ... */
+}
+```
+
+API handlers put the export in the handler:
 
 ```ts
 // +server.ts (API)
@@ -129,7 +134,7 @@ Two ways out:
 - **Tag + evict** (keeps the cache): `depends("app:sidebar")` in the layout loader, and
   `invalidate("app:sidebar")` from **every** write path. The tag on a layout loader covers
   all pages beneath it, so one eviction clears the whole section.
-- **Opt out**: `export const cache = false` in every `+page.svelte` under the layout.
+- **Opt out**: `export const cache = false` in every page (`+page.svelte` or `+page.server.ts`) under the layout.
   Fewer moving parts, but you give up caching for the entire authenticated area.
 
 Tag + evict is the better default — it is what `depends()` exists for. Two things decide

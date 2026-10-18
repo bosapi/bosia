@@ -13,6 +13,7 @@ A loader automatically depends on:
 
 - Every `params.X` it reads
 - Every `url.searchParams.get(X)` or `.has(X)` it reads
+- The whole query, when it reads `url.search`, `url.href` or loops over `url.searchParams` (any query change re-runs it)
 - Every `url.pathname`/`origin`/`href` read
 - Every `cookies.get(X)` it reads
 - Every URL it passes to the injected `fetch()`
@@ -124,4 +125,4 @@ Form actions are the most common invalidation point — after a mutation, call `
 
 API endpoints (`+server.ts`) are invalidated by URL/prefix only in v0.6. Tag-based invalidation for API handlers is on the roadmap.
 
-Opt a route out of the server cache entirely with `export const cache = false;` in `+page.ts`, `+page.server.ts`, or `+server.ts`. See [Response cache](/guides/response-cache) for the full design.
+Opt a route out of the server cache entirely with `export const cache = false;` in `+page.svelte` (`<script module>`), `+page.server.ts`, or `+server.ts`. See [Response cache](/guides/response-cache) for the full design.

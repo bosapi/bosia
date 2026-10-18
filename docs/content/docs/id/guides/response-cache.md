@@ -60,7 +60,7 @@ Key cache adalah URL ditambah `CACHE_KEYS`, jadi tidak bisa menghormati `Vary` p
 
 ## Opt-out per rute
 
-Tambahkan `export const cache = false;` di file `+page.ts`, `+page.server.ts`, atau `+server.ts`:
+Tambahkan `export const cache = false;` di `+page.server.ts`, `<script module>` milik `+page.svelte`, atau `+server.ts`. Salah satu file halaman yang bilang `false` sudah cukup untuk mematikan cache:
 
 ```ts
 import type { CacheOption } from "./$types";

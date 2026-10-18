@@ -318,11 +318,19 @@ export function stripIgnoredParams(url: URL): URL {
 }
 
 /** Loaders that read the whole query string (`url.search`, `url.href`, iterating
- *  `url.searchParams`): their output may depend on any param. */
-const wholeQueryDeps = new WeakSet<LoaderDeps>();
-
+ *  `url.searchParams`): their output may depend on any param. Recorded as a `"*"`
+ *  search param (like the `"*"` cookie) so the client router sees it too. A real
+ *  `?*=` param read by name counts as a whole-query read, which only re-runs more. */
 export function markWholeQueryRead(deps: LoaderDeps): void {
-	wholeQueryDeps.add(deps);
+	if (!deps.searchParams.includes("*")) deps.searchParams.push("*");
+}
+
+/** Server-only: the entry is query-aware (a left-out layout above read an ignored
+ *  param), without telling the client router to re-run on every query change. */
+const queryAwareDeps = new WeakSet<LoaderDeps>();
+
+export function markQueryAware(deps: LoaderDeps): void {
+	queryAwareDeps.add(deps);
 }
 
 /** Whether any loader read an ignored param — its entry must not be served to a
@@ -332,7 +340,7 @@ export function depsReadIgnoredParams(
 	pageDeps: LoaderDeps | null,
 ): boolean {
 	const check = (d: LoaderDeps | null) =>
-		!!d && (wholeQueryDeps.has(d) || d.searchParams.some(isIgnoredParam));
+		!!d && (queryAwareDeps.has(d) || d.searchParams.some((k) => k === "*" || isIgnoredParam(k)));
 	if (check(pageDeps)) return true;
 	return !!layoutDeps && layoutDeps.some(check);
 }

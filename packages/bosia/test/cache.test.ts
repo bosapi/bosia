@@ -17,6 +17,7 @@ import {
 	invalidateAll,
 	isIgnoredParam,
 	markWholeQueryRead,
+	markQueryAware,
 	parseIgnoreParams,
 	parseMs,
 	readBodyForCache,
@@ -759,6 +760,11 @@ describe("CACHE_IGNORE_PARAMS", () => {
 		const whole = emptyDeps();
 		markWholeQueryRead(whole);
 		expect(depsReadIgnoredParams([whole], null)).toBe(true);
+		// Server-only: query-aware without a client-visible "*".
+		const below = emptyDeps();
+		markQueryAware(below);
+		expect(depsReadIgnoredParams(null, below)).toBe(true);
+		expect(below.searchParams).toEqual([]);
 	});
 });
 

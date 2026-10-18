@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `invalidate()` now finds cached pages whose path contains `|`.
 - Cookie `sameSite: "constructor"` now throws like any other invalid value.
 - `cookies.get("constructor")` now returns nothing instead of a built-in function.
+- `export const cache = false` in `+page.server.ts` now turns the cache off, as promised.
+- Changing `?page=` now reloads data for loaders that read the whole query (`url.search`).
+- A loader using `String(url)` now reloads when only the page path changes.
 
 ## [1.2.7] - 2026-10-17
 

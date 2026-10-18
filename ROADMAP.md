@@ -112,7 +112,9 @@
 - [ ] ⚪ A loader `cache-control: s-maxage` still lets a CDN keep a response whose `metadata()` failed.
 - [ ] ⚪ Tracking params: with no usable plain entry (evicted, or `queryAware` — e.g. `metadata()` builds `canonical: url.href`), each unique `fbclid`/`gclid` still writes a single-use entry and churns the LRU. Skipping writes for tracked URLs would undo the repeated-newsletter-link case; maybe skip only for click-id params (`*clid`), keep `utm_*`.
 - [ ] ⚪ Slow loaders: `LOAD_TIMEOUT` (30s) and `CACHE_WAIT_TIMEOUT` (60s) outlast Bun's default `IDLE_TIMEOUT` (10s), so the client of a 15s loader is cut off before either applies; documented, raise `IDLE_TIMEOUT` too.
-- [ ] 🟠 Pre-existing, reproduced 2026-10-15 (Playwright, built app): client navigation skips a loader that read the whole query (`Object.fromEntries(url.searchParams)`, `url.search`): `deps.searchParams` stays empty and `uses_url` re-runs only on a pathname change, so `?page=1` → `?page=2` sends `_invalidated=0` and keeps page-1 data (URL says 2, page shows 1). `url.searchParams.get("page")` works (`_invalidated=1`). Server now detects these reads (`markWholeQueryRead`); send a marker in deps and compare the full query in `loaderCache.ts`.
+- [x] 🟠 Client nav skipped a loader that read the whole query (`url.search`, `Object.fromEntries(url.searchParams)`): `?page=1` → `2` kept page 1. Deps now carry a `"*"` search param; the client compares the full query.
+- [ ] ⚪ `new URL("/api/x", url)` reads `toString`, so an origin-only loader re-runs on every query change. Accepted (stale is worse); use `url.origin`. Noted in `trackedUrl`.
+- [ ] ⚪ A `+page.server.ts` that throws on import gives a plain-text 500, not `+error.svelte` (SSR), same with a literal or dynamic `cache` flag.
 - [ ] ⚪ Plain-URL lookup + `queryAware` code is copied in renderer.ts and server.ts; a tracked data request computes the identity hash 3× (cacheKey, plain key, dedup key). One helper in cache.ts.
 - [ ] ⚪ Tracking-param gaps: a component `handle` hook or plugin `render` fragment that uses the param isn't tracked (served the param-less copy); `new URL(path, url)` in a loader reads `href`, so that page never matches.
 - [ ] ⚪ Cache-write gzip + brotli q5 run sync on the main thread (up to 2MB bodies). Use async zlib in the deferred write.
@@ -254,7 +256,7 @@
 - [x] 🟢 `navigate()` sets `router.loading` on `started`, so a same-tick `goto()` to that URL waits; hydration's early return clears it.
 - [ ] ⚪ Back onto a 404 entry while hydration chunks load skips the hard load (first run forces `moved` false).
 - [ ] ⚪ A redirect back to the shown page superseded before settling leaves `lastNavKey = ""`: next Back refetches and clears `form`.
-- [ ] 🟠 `export const cache = false` in `+page.server.ts` is silently ignored (only `+page.svelte` is read; v0.6.0 promised both): personalised data stays cached. Honor it, or warn at build.
+- [x] 🟠 `export const cache = false` in `+page.server.ts` was silently ignored. Now honored: the scan reads both files (either `false` opts out); a dynamic value reads both modules at runtime.
 - [x] 🟡 Navigating to a route with `+loading.svelte` remounts its layouts (skeleton branch renders them separately): layout state like an open sidebar resets.
 - [x] ⚪ `await goto()` resolves before scroll-to-top is applied, so a `scrollTo()` right after it gets overwritten.
 - [x] 🟠 Route order: `sortRoutes` tie-broke same-tier routes by `localeCompare` (`[` < letters), so `/[a]/[b]` beat `/label/[id]`. Now per segment: static > dynamic > catch-all.

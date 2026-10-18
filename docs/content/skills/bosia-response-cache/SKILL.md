@@ -86,7 +86,7 @@ Also, the client `invalidate()` **resolves immediately**: it flags the loader an
 
 R3. **Opt out per route when the cost outweighs the benefit.** Pages that change on every request (live ticker, per-second counter) or pages with personalised content not covered by `CACHE_KEYS` should opt out.
 
-**For page routes the export MUST be in `+page.svelte`, inside `<script module>`.** Putting it in `+page.server.ts` compiles, type-checks, and does nothing — the page stays cached. `core/scanner.ts` (`readPageCache`) reads `+page.svelte` at scan time, and the runtime fallback reads the compiled `+page.svelte` module (`renderer.ts` → `pageMod.cache`). The server module is never consulted for this flag.
+For page routes the export goes in `+page.svelte` (inside `<script module>`) or in `+page.server.ts`; either one saying `false` opts the page out. The scan (`core/scanner.ts` → `routeCache`) reads both files; a non-literal value falls back to reading both compiled modules at runtime.
 
 ```svelte
 <!-- ✅ +page.svelte -->
@@ -96,7 +96,7 @@ R3. **Opt out per route when the cost outweighs the benefit.** Pages that change
 ```
 
 ```ts
-// ❌ +page.server.ts — silently ignored for page routes
+// ✅ +page.server.ts
 export const cache = false;
 ```
 
@@ -105,7 +105,7 @@ export const cache = false;
 export const cache = false;
 ```
 
-Verify rather than assume — the failure is silent:
+Verify rather than assume:
 
 ```ts
 import { scanRoutes } from "bosia/src/core/scanner.ts";
@@ -121,7 +121,7 @@ The symptom is reliably misread as a client bug:
 
 Both are working as designed. Step 1 goes through client `invalidate()`, whose data request carries `_fresh=1` and therefore **skips the cache read**. Step 2 is a plain GET and is served from cache. Link navigation back to the page is served from cache too (client-router data requests are cached like HTML), but the page you just mutated always looks right because its own `invalidate()` refetched it — which is why this ships.
 
-Tag the layout with `depends()` and evict from **every** write path — that is what tags are for, and a tag on a layout loader covers every page beneath it. Opting out (`export const cache = false` on each `+page.svelte`) is the fallback for pages with no natural tag boundary, or where the writers cannot be enumerated with confidence.
+Tag the layout with `depends()` and evict from **every** write path — that is what tags are for, and a tag on a layout loader covers every page beneath it. Opting out (`export const cache = false` on each page) is the fallback for pages with no natural tag boundary, or where the writers cannot be enumerated with confidence.
 
 Two failure modes decide whether tagging holds:
 

@@ -15,6 +15,8 @@ export type CacheSnapshot = {
 	pathname: string;
 	params: Record<string, string>;
 	searchParams: Record<string, string | null>;
+	/** The full query, for loaders that read all of it (`"*"` in deps.searchParams). */
+	search: string;
 	cookies: Record<string, string | undefined>;
 };
 
@@ -72,7 +74,7 @@ export function captureSnapshot(deps: LoaderDeps, ctx: EvalContext): CacheSnapsh
 	for (const k of deps.searchParams) searchParams[k] = ctx.url.searchParams.get(k);
 	const cookies: Record<string, string | undefined> = {};
 	for (const k of deps.cookies) cookies[k] = ctx.cookies[k];
-	return { pathname: ctx.pathname, params, searchParams, cookies };
+	return { pathname: ctx.pathname, params, searchParams, search: ctx.url.search, cookies };
 }
 
 export type DirtyState = {
@@ -108,7 +110,10 @@ export function shouldRerun(entry: CacheEntry, dirty: DirtyState, next: EvalCont
 	}
 	// Search param value changes
 	for (const k of deps.searchParams) {
-		if (snapshot.searchParams[k] !== next.url.searchParams.get(k)) return true;
+		if (k === "*") {
+			// Whole query read: any change re-runs (a reorder too, which is harmless).
+			if (snapshot.search !== next.url.search) return true;
+		} else if (snapshot.searchParams[k] !== next.url.searchParams.get(k)) return true;
 	}
 	// Cookie value changes
 	for (const k of deps.cookies) {

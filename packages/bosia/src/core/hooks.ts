@@ -155,7 +155,7 @@ export type LoaderDeps = {
 	urls: string[];
 	/** Route params the loader read (`params.X`). */
 	params: string[];
-	/** Search params the loader read (`url.searchParams.get(X)` / `.has(X)`). */
+	/** Search params the loader read (`url.searchParams.get(X)` / `.has(X)`); `"*"` = the whole query. */
 	searchParams: string[];
 	/** Cookies the loader read (`cookies.get(X)`). */
 	cookies: string[];
