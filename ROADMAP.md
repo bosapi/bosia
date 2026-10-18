@@ -116,8 +116,12 @@
 - [x] 🟠 Review: the `cache` regex scan missed export forms (destructuring, `export let cache;`, `;` in a string), leaking per-user pages. Scan removed; `routeCacheFlag` reads the real exports each request.
 - [ ] 🟡 `wantsPrerender` / `prerenderSkipReason` scan raw source, so a commented-out `// export const prerender = true` still prerenders the page (its loader runs once, at build).
 - [ ] ⚪ Serializing the `url` proxy after `load()` returns (`return { link: url }`, `console.log(url)`) calls `toJSON`/`toString` and adds `"*"` to deps late; server and client may disagree.
+- [x] 🟡 Review: client nav compared only the first value of a tracked param, so `getAll("tag")` / `has("tag", "b")` kept old data on `?tag=a&tag=b` → `?tag=a&tag=c`. The snapshot now holds every value.
+- [ ] 🟡 `export const cache = false` in `+layout.server.ts` / `+layout.svelte` is silently ignored (only page modules are read), though `$types` offers `CacheOption` there. Honour it or warn at build.
+- [ ] 🟡 Client loader cache doesn't track `parent()`: when a layout re-runs (`*`, `depends`, params), a page loader using its data via `parent()` keeps old data. Mark parent use in deps; re-run its consumers.
 - [ ] 🟡 `metadata()` deps stay on the server (`metaDeps`), so a `metadata()` reading `?page=` never re-runs on client nav: title and `metadata.data` stay stale. Merge them into the page deps.
-- [ ] ⚪ `routeCacheFlag` treats a module that fails to import as `cache = false` without logging; the data endpoint then serves loader data and the cause is never shown.
+- [ ] ⚪ `routeCacheFlag` treats a module that fails to import as `cache = false` without logging, and re-imports it twice per request (`once()` drops rejections); the cause is never shown.
+- [ ] ⚪ `routeCacheFlag` imports +page.svelte/+page.server.ts before every cache lookup (data endpoint too); on a miss they no longer overlap metadata/layouts. Save the flag per route after a clean import (docs fix it at load).
 - [ ] ⚪ A `+page.server.ts` or `+page.svelte` that throws on import gives a plain-text 500, not `+error.svelte` (SSR); already so on main.
 - [ ] ⚪ Plain-URL lookup + `queryAware` code is copied in renderer.ts and server.ts; a tracked data request computes the identity hash 3× (cacheKey, plain key, dedup key). One helper in cache.ts.
 - [ ] ⚪ Tracking-param gaps: a component `handle` hook or plugin `render` using the param isn't tracked (served the param-less copy); `new URL(path, url)` reads `toString`: re-runs on any query change (accepted; use `url.origin`).
@@ -744,7 +748,7 @@
 - [x] 🟢 Map-based exact-route lookup in `matcher.ts` — O(1) before the dynamic/catch-all linear scan.
 - [x] 🟢 `/dist/` + `/__bosia/` static requests short-circuit before the API scan.
 - [x] 🟢 Sync fast path in `resolveApiMatch` — non-`.json` paths skip the microtask hop.
-- [x] 🟢 Lazy cookie parsing; skip page-module import on cache hits via build-time `cache` flag; module-level `TextEncoder`; alloc-free CSRF origin check.
+- [x] 🟢 Lazy cookie parsing; skip page-module import on cache hits via build-time `cache` flag (flag removed in 1.2.8, see `routeCacheFlag`); module-level `TextEncoder`; alloc-free CSRF origin check.
 - [ ] 🟢 Deferred from item 6: Set-based `LoaderDeps` (ripples into serialization) + CORS origin Set (opt-in, tiny list) — not worth it on 1-5 element lists.
 
 ---
@@ -2038,7 +2042,7 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 - [x] 🟠 Renderer integration (`renderer.ts`) — cache read before metadata/load/render, cache write after chunks are built, streaming preserved on miss. CSP-enabled deploys skip the cache (per-request nonce is incompatible with cached bytes).
 - [x] 🟠 API endpoint integration (`server.ts`) — `+server.ts` GET handlers cached with the same key rules. v0.6 invalidates API entries by URL/prefix only (no `depends()` for API yet).
 - [x] 🟠 Public API — `invalidate(key)` / `invalidateAll(prefix)` from `bosia` mirror the existing browser-side `invalidate()` semantics. Form actions call them after a write.
-- [x] 🟡 Per-route opt-out — `export const cache = false;` in `+page.ts`, `+page.server.ts`, or `+server.ts`. Generated `$types.d.ts` exports a `CacheOption` type alias for IDE support.
+- [x] 🟡 Per-route opt-out — `export const cache = false;` in `+page.server.ts`, `+page.svelte` `<script module>`, or `+server.ts`. Generated `$types.d.ts` exports a `CacheOption` type alias for IDE support.
 - [x] 🟡 Env vars — `CACHE_KEYS` (default `session,sid,auth,token,jwt,Authorization`) controls identity-hash inputs; `CACHE_MAX_ENTRIES` (default 500, 0 disables). Documented in `guides/environment-variables` and the response-cache guide (EN+ID).
 - [x] 🟡 Author guidance — new `bosia-response-cache` skill walks agents through when to call `invalidate()` from server code, how to tag loaders with `depends()`, and when to opt a route out.
 - [x] 🟠 Dev proxy now forces the inner app to `Accept-Encoding: identity`. Previously it forwarded `gzip,br`, the inner returned compressed bytes, Bun's `fetch()` auto-decoded but left `Content-Encoding: gzip`

@@ -86,7 +86,7 @@ Also, the client `invalidate()` **resolves immediately**: it flags the loader an
 
 R3. **Opt out per route when the cost outweighs the benefit.** Pages that change on every request (live ticker, per-second counter) or pages with personalised content not covered by `CACHE_KEYS` should opt out.
 
-For page routes the export goes in `+page.svelte` (inside `<script module>`) or in `+page.server.ts`; either one saying `false` opts the page out. The renderer reads the real `cache` export of both modules (`routeCacheFlag` in `core/renderer.ts`), so any export form works, and so does a dynamic value.
+For page routes the export goes in `+page.svelte` (inside `<script module>`) or in `+page.server.ts`; either one saying `false` opts the page out. The renderer reads the real `cache` export of both modules (`routeCacheFlag` in `core/renderer.ts`), so any export form works, and so does a value computed when the module loads. It is read **before** `load()` and shared by every request: never set `cache` inside `load()` per user — that request is cached already, and the change hits everyone. `setHeaders({ "cache-control": "no-store" })` only keeps that one response from being saved — a cached copy is still served before `load()` runs. Anything that differs per user belongs in `CACHE_KEYS` or `cache = false`.
 
 ```svelte
 <!-- ✅ +page.svelte -->
@@ -105,7 +105,7 @@ export const cache = false;
 export const cache = false;
 ```
 
-Verify rather than assume: GET the page, wait ~1s (the cache write is deferred), GET again; `x-bosia-cache: HIT` on the second means it is still cached. Never use HEAD (`curl -I`) for this — HEAD never fills the cache, so every page looks opted out. Send a signed-in user's cookies (`curl -b`): an anonymous request that redirects or gets `Set-Cookie` is never cached either.
+Verify rather than assume: GET the page, wait ~1s (the cache write is deferred), GET again; `x-bosia-cache: HIT` on the second means it is still cached. Never use HEAD (`curl -I`) for this — HEAD never fills the cache, so every page looks opted out. Send a signed-in user's cookies (`curl -b`): an anonymous request that redirects or gets `Set-Cookie` is never cached either. Run it with production settings: with CSP on or `CACHE_MAX_ENTRIES=0` nothing is ever a HIT.
 
 R3.1. **Authenticated app shells: the sidebar trap.** When a `+layout.server.ts` loads per-user mutable data (conversations, projects, notifications), the entire HTML document — sidebar included — is cached for **every page under that layout**.
 
@@ -135,7 +135,7 @@ invalidate("app:ingest");
 
 Keep the tag strings in one shared module imported by both the loaders and the writers. A typo is silent in both directions: the loader keeps its old tag and the eviction matches nothing.
 
-**Per-response alternative — `Cache-Control` header.** When you want the route cacheable in general but need to skip caching for specific responses (e.g. live status polling that piggy-backs on an otherwise cacheable endpoint, or a conditional that flips on error), return a response with one of `no-store`, `no-cache`, or `private`:
+**Per-response alternative — `Cache-Control` header.** When you want the route cacheable in general but need to keep a one-off response out of the cache (e.g. an error or partial result) — it never stops a cached copy from being served, so live polling needs `cache = false` instead, return a response with one of `no-store`, `no-cache`, or `private`:
 
 ```ts
 // +server.ts

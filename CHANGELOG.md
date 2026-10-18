@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Changing `?page=` now reloads data for loaders that read the whole query (`url.search`).
 - A loader using `String(url)` now reloads when only the page path changes.
 - `cache = false` now works however it is exported (destructured, `export let`, re-exported).
+- Changing a repeated query value (`?tag=a&tag=b` → `&tag=c`) now reloads loaders that read it.
+- The `CacheOption` hint no longer points at a `+page.ts` file that Bosia doesn't read.
 
 ### Removed
 

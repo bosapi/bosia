@@ -66,12 +66,18 @@ export function liveContext(
 	};
 }
 
+/** Every value of a query param, so `getAll`/`has(k, v)` see a change past the first. */
+function paramValues(url: URL, k: string): string | null {
+	const all = url.searchParams.getAll(k);
+	return all.length ? JSON.stringify(all) : null;
+}
+
 /** Capture only the values relevant to a loader's tracked deps. */
 export function captureSnapshot(deps: LoaderDeps, ctx: EvalContext): CacheSnapshot {
 	const params: Record<string, string> = {};
 	for (const k of deps.params) params[k] = ctx.params[k] ?? "";
 	const searchParams: Record<string, string | null> = {};
-	for (const k of deps.searchParams) if (k !== "*") searchParams[k] = ctx.url.searchParams.get(k);
+	for (const k of deps.searchParams) if (k !== "*") searchParams[k] = paramValues(ctx.url, k);
 	const cookies: Record<string, string | undefined> = {};
 	for (const k of deps.cookies) cookies[k] = ctx.cookies[k];
 	return { pathname: ctx.pathname, params, searchParams, search: ctx.url.search, cookies };
@@ -113,7 +119,7 @@ export function shouldRerun(entry: CacheEntry, dirty: DirtyState, next: EvalCont
 		if (k === "*") {
 			// Whole query read: any change re-runs (a reorder too, which is harmless).
 			if (snapshot.search !== next.url.search) return true;
-		} else if (snapshot.searchParams[k] !== next.url.searchParams.get(k)) return true;
+		} else if (snapshot.searchParams[k] !== paramValues(next.url, k)) return true;
 	}
 	// Cookie value changes
 	for (const k of deps.cookies) {

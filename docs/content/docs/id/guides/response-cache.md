@@ -77,7 +77,9 @@ curl -s -o /dev/null -D - http://localhost:3000/live | grep -i x-bosia-cache
 # tidak ada output → opt-out berhasil.  x-bosia-cache: HIT → masih di-cache.
 ```
 
-Uji dengan cookie user yang sedang login (`-b "session=…"`): request anonim yang di-redirect atau dapat `Set-Cookie` tidak pernah di-cache, jadi terlihat opt-out padahal user yang login tetap dapat salinan cache.
+Uji dengan cookie user yang sedang login (`-b "session=…"`): request anonim yang di-redirect atau dapat `Set-Cookie` tidak pernah di-cache, jadi terlihat opt-out padahal user yang login tetap dapat salinan cache. Pakai setelan production juga: dengan CSP aktif atau `CACHE_MAX_ENTRIES=0` tidak akan pernah ada HIT.
+
+`cache` dibaca sebelum `load()` jalan dan dipakai bersama oleh semua request, jadi atur saat module dimuat, jangan di dalam `load()`. `setHeaders({ "cache-control": "no-store" })` hanya mencegah satu response disimpan; salinan cache tetap bisa disajikan. Apa pun yang beda per user harus masuk `CACHE_KEYS` atau `cache = false`.
 
 ## `invalidate()` sisi server
 

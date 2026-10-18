@@ -109,7 +109,9 @@ curl -s -o /dev/null -D - http://localhost:3000/live | grep -i x-bosia-cache
 # no output → opted out.  x-bosia-cache: HIT → still cached.
 ```
 
-Test with a signed-in user's cookies (`-b "session=…"`): an anonymous request that redirects or gets a `Set-Cookie` is never cached, so it looks opted out even when signed-in users are served cached copies.
+Test with a signed-in user's cookies (`-b "session=…"`): an anonymous request that redirects or gets a `Set-Cookie` is never cached, so it looks opted out even when signed-in users are served cached copies. Use production settings too: with CSP on or `CACHE_MAX_ENTRIES=0` nothing is ever a HIT.
+
+`cache` is read before `load()` runs and is shared by every request, so set it when the module loads, never inside `load()`. `cache-control: no-store` (see "Opting out per response") only keeps one response from being saved; it does not stop a cached copy from being served. Anything that differs per user belongs in `CACHE_KEYS` or `cache = false`.
 
 ### Authenticated app shells — the case that bites
 
@@ -176,7 +178,7 @@ export async function GET() {
 }
 ```
 
-Use this when the cache decision is per-request (live polling, conditional error paths). Prefer `export const cache = false` when the whole route is dynamic.
+Use this to keep a one-off response out of the cache (an error, a partial result). It does not stop a cached copy from being served, so live data (polling, status) needs `export const cache = false`.
 
 ## Server-side `invalidate()`
 

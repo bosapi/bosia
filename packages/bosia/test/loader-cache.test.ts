@@ -59,7 +59,7 @@ describe("captureSnapshot", () => {
 			}),
 		);
 		expect(snap.params).toEqual({ slug: "foo" });
-		expect(snap.searchParams).toEqual({ q: "hello" });
+		expect(snap.searchParams).toEqual({ q: JSON.stringify(["hello"]) });
 		expect(snap.cookies).toEqual({ session: "abc" });
 	});
 
@@ -95,6 +95,14 @@ describe("shouldRerun", () => {
 		const e = entry(deps, ctx({ search: "?q=hello" }));
 		expect(shouldRerun(e, emptyDirty(), ctx({ search: "?q=hello" }))).toBe(false);
 		expect(shouldRerun(e, emptyDirty(), ctx({ search: "?q=bye" }))).toBe(true);
+	});
+
+	test("re-runs when a later value of a repeated searchParam changes", () => {
+		const deps: LoaderDeps = { ...emptyDeps(), searchParams: ["tag"] };
+		const e = entry(deps, ctx({ search: "?tag=a&tag=b" }));
+		expect(shouldRerun(e, emptyDirty(), ctx({ search: "?tag=a&tag=b" }))).toBe(false);
+		expect(shouldRerun(e, emptyDirty(), ctx({ search: "?tag=a&tag=c" }))).toBe(true);
+		expect(shouldRerun(e, emptyDirty(), ctx({ search: "?tag=a" }))).toBe(true);
 	});
 
 	test("a whole-query read re-runs on any query change, after the trip to the client", () => {

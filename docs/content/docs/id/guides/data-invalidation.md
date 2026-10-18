@@ -13,7 +13,7 @@ Loader secara otomatis bergantung pada:
 
 - Setiap `params.X` yang dibaca
 - Setiap `url.searchParams.get(X)` atau `.has(X)` yang dibaca
-- Seluruh query, kalau membaca `url.search`, `url.href` atau me-loop `url.searchParams` (perubahan query apa pun menjalankannya ulang)
+- Seluruh query, kalau membaca `url.search`, `url.href`, `String(url)`, `` `${url}` ``, `new URL(path, url)` atau me-loop `url.searchParams` (perubahan query apa pun menjalankannya ulang). Untuk membuat URL API tanpa efek itu, pakai `new URL(path, url.origin)`
 - Setiap `url.pathname`/`origin`/`href` yang dibaca
 - Setiap `cookies.get(X)` yang dibaca
 - Setiap URL yang dilewatkan ke `fetch()` yang di-inject

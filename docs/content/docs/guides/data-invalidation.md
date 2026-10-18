@@ -13,7 +13,7 @@ A loader automatically depends on:
 
 - Every `params.X` it reads
 - Every `url.searchParams.get(X)` or `.has(X)` it reads
-- The whole query, when it reads `url.search`, `url.href` or loops over `url.searchParams` (any query change re-runs it)
+- The whole query, when it reads `url.search`, `url.href`, `String(url)`, `` `${url}` ``, `new URL(path, url)` or loops over `url.searchParams` (any query change re-runs it). To build an API URL without that, use `new URL(path, url.origin)`
 - Every `url.pathname`/`origin`/`href` read
 - Every `cookies.get(X)` it reads
 - Every URL it passes to the injected `fetch()`

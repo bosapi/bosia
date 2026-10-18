@@ -17,7 +17,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Cookies skill: `sameSite` takes lowercase or capitalized, not any casing.
 - Response cache guide + skill (EN + ID): `cache = false` also works in `+page.server.ts`.
 - Data invalidation guide (EN + ID): reading the whole query re-runs on any query change.
+- Data invalidation guide (EN + ID): `String(url)` reads the whole query too; use `url.origin`.
 - Response cache guide + skill (EN + ID): check an opt-out with two GETs and `x-bosia-cache`.
+- Response cache guide + skill (EN + ID): set `cache` at module load, never inside `load()`.
+- Response cache guide + skill (EN + ID): check opt-outs with production cache settings.
+- Response cache guide + skill (EN + ID): live data needs `cache = false`, not `no-store`.
 
 ## [0.8.30] - 2026-10-17
 
