@@ -131,38 +131,6 @@ describe("scanRoutes()", () => {
 		expect(foo.trailingSlash).toBe("never");
 	});
 
-	test("cache = false in +page.server.ts opts the route out", () => {
-		write("a/+page.svelte");
-		write("a/+page.server.ts", "export const cache = false;\nexport const load = () => ({});");
-		write("b/+page.svelte");
-		write("b/+page.server.ts", "export const cache = flag();");
-		write("c/+page.svelte");
-		write("c/+page.server.ts", "export const load = () => ({});");
-		write("d/+page.svelte", "<script module>export const cache = false;</script>");
-		write("d/+page.server.ts", "export const load = () => ({});");
-		write("e/+page.svelte");
-		write("e/+page.server.ts", 'export { cache } from "$lib/private";');
-		write("f/+page.svelte");
-		write("f/+page.server.ts", 'export * from "$lib/private";');
-		write("g/+page.svelte");
-		write("g/+page.server.ts", "export let cache = false;");
-		write("h/+page.svelte");
-		write(
-			"h/+page.server.ts",
-			'export const load = ({ setHeaders }) => setHeaders({ "cache-control": "no-store" });',
-		);
-		const m = scanRoutes();
-		const cache = (p: string) => m.pages.find((r) => r.pattern === p)!.cache;
-		expect(cache("/e")).toBe(null);
-		expect(cache("/f")).toBe(null);
-		expect(cache("/g")).toBe(null);
-		expect(cache("/h")).toBe(true);
-		expect(cache("/a")).toBe(false);
-		expect(cache("/b")).toBe(null);
-		expect(cache("/c")).toBe(true);
-		expect(cache("/d")).toBe(false);
-	});
-
 	test("trailingSlash defaults to 'never' when no config", () => {
 		write("+page.svelte");
 		const m = scanRoutes();

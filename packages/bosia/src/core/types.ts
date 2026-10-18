@@ -28,14 +28,6 @@ export interface PageRoute {
 	errorPages: { path: string; depth: number }[];
 	/** Effective trailing-slash mode (page wins over layout chain). Defaults to "never". */
 	trailingSlash: TrailingSlash;
-	/**
-	 * Build-time read of `export const cache` in +page.svelte / +page.server.ts, so the renderer can
-	 * decide cacheability on a cache hit without importing the page module:
-	 *   `true`  — no `cache` export → cacheable
-	 *   `false` — statically `cache = false` in either file → opted out
-	 *   `null`  — a `cache` export exists but isn't a literal `false` (dynamic) → import at runtime
-	 */
-	cache: boolean | null;
 	/** `export const prerender = true` in +page.server.ts — its data is a static file at runtime. */
 	prerender: boolean;
 }

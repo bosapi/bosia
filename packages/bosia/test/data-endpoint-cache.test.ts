@@ -50,18 +50,17 @@ beforeAll(async () => {
 	);
 	writeFileSync(join(routes, "langsung", "+page.server.ts"), counter("langsung"));
 
-	// The opt-out written in +page.server.ts: a literal (read at build) and a
-	// dynamic one (read from the module at runtime).
+	// The opt-out written in +page.server.ts, in forms a source scan would miss.
 	for (const [dir, flag] of [
-		["server-off", "false"],
-		["server-dyn", "!1"],
+		["server-off", "export const cache = false;"],
+		["server-dyn", "export const cache = !1;"],
+		["server-destr", "export const { cache } = { cache: false };"],
+		["server-let", "export let cache;\ncache = false;"],
+		["server-reexp", 'export { cache } from "./flag.ts";'],
 	]) {
 		mkdirSync(join(routes, dir), { recursive: true });
 		writeFileSync(join(routes, dir, "+page.svelte"), `<p>${dir}</p>\n`);
-		writeFileSync(
-			join(routes, dir, "+page.server.ts"),
-			`export const cache = ${flag};\n` + counter(dir),
-		);
+		writeFileSync(join(routes, dir, "+page.server.ts"), `${flag}\n` + counter(dir));
 	}
 
 	// Loaders that read the whole URL as a string.
@@ -77,20 +76,24 @@ beforeAll(async () => {
 		);
 	}
 
-	// A server module that throws on import: once with a literal flag, once dynamic.
-	for (const [dir, head] of [
-		["crash-static", ""],
-		["crash-dyn", "export const cache = !1;\n"],
-	]) {
-		mkdirSync(join(routes, dir), { recursive: true });
-		writeFileSync(join(routes, dir, "+page.svelte"), `<p>never</p>\n`);
-		writeFileSync(
-			join(routes, dir, "+page.server.ts"),
-			head +
-				`if (process.env.NODE_ENV !== "nope") throw new Error("boom");\n` +
-				`export const load = () => ({});\n`,
-		);
-	}
+	writeFileSync(join(routes, "server-reexp", "flag.ts"), "export const cache = false;\n");
+
+	// A page module that throws on import.
+	mkdirSync(join(routes, "crash-page"), { recursive: true });
+	writeFileSync(
+		join(routes, "crash-page", "+page.svelte"),
+		`<script module>\n\tif (process.env.NODE_ENV !== "nope") throw new Error("boom");\n</script>\n<p>never</p>\n`,
+	);
+	writeFileSync(join(routes, "crash-page", "+page.server.ts"), counter("crash-page"));
+
+	// A server module that throws on import.
+	mkdirSync(join(routes, "crash-server"), { recursive: true });
+	writeFileSync(join(routes, "crash-server", "+page.svelte"), `<p>never</p>\n`);
+	writeFileSync(
+		join(routes, "crash-server", "+page.server.ts"),
+		`if (process.env.NODE_ENV !== "nope") throw new Error("boom");\n` +
+			`export const load = () => ({});\n`,
+	);
 
 	mkdirSync(join(routes, "api", "evict"), { recursive: true });
 	writeFileSync(
@@ -417,7 +420,7 @@ describe("data endpoint response cache", () => {
 	});
 
 	test("`export const cache = false` in +page.server.ts is honored (SSR + data)", async () => {
-		for (const dir of ["server-off", "server-dyn"]) {
+		for (const dir of ["server-off", "server-dyn", "server-destr", "server-let", "server-reexp"]) {
 			const first = await getData(`/${dir}.json`);
 			await settle();
 			const second = await getData(`/${dir}.json`);
@@ -431,18 +434,16 @@ describe("data endpoint response cache", () => {
 		}
 	});
 
-	test("a dynamic flag fails like a literal one when the server module throws on import", async () => {
-		const shape = async (dir: string) => {
-			const page = await fetch(`${origin}/${dir}`);
-			const data = await fetch(`${origin}/__bosia/data/${dir}.json`);
-			return {
-				page: [page.status, page.headers.get("content-type"), await page.text()],
-				data: [data.status, await data.text()],
-			};
-		};
-		const dyn = await shape("crash-dyn");
-		expect(dyn.page[0]).toBe(500);
-		expect(dyn).toEqual(await shape("crash-static"));
+	test("a server module that throws on import 500s for SSR and data", async () => {
+		expect((await fetch(`${origin}/crash-server`)).status).toBe(500);
+		expect((await fetch(`${origin}/__bosia/data/crash-server.json`)).status).toBe(500);
+	});
+
+	test("a page module that throws on import: SSR 500s as before, data still loads", async () => {
+		const page = await fetch(`${origin}/crash-page`);
+		expect(page.status).toBe(500);
+		const data = await fetch(`${origin}/__bosia/data/crash-page.json`);
+		expect(data.status).toBe(200);
 	});
 
 	test("String(url) tells the client router it read the path and the whole query", async () => {

@@ -69,6 +69,16 @@ export const cache: CacheOption = false;
 
 Pakai ini untuk data live (ticker, counter per detik) atau halaman yang personalisasinya tidak ter-cover `CACHE_KEYS`.
 
+Untuk memastikan berhasil, GET halamannya dua kali (bukan `curl -I`: HEAD tidak pernah mengisi cache) dan lihat header `x-bosia-cache`:
+
+```sh
+curl -s -o /dev/null http://localhost:3000/live; sleep 1
+curl -s -o /dev/null -D - http://localhost:3000/live | grep -i x-bosia-cache
+# tidak ada output → opt-out berhasil.  x-bosia-cache: HIT → masih di-cache.
+```
+
+Uji dengan cookie user yang sedang login (`-b "session=…"`): request anonim yang di-redirect atau dapat `Set-Cookie` tidak pernah di-cache, jadi terlihat opt-out padahal user yang login tetap dapat salinan cache.
+
 ## `invalidate()` sisi server
 
 Setelah write, hapus entry cache yang cocok supaya bacaan berikutnya menyajikan HTML segar:

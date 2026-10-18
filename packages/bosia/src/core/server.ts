@@ -486,7 +486,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				!warmingUp &&
 				method === "GET" &&
 				pageMatch !== null &&
-				(await routeCacheFlag(pageMatch.route)).cacheable;
+				(await routeCacheFlag(pageMatch.route));
 			if (dataCacheable && !fresh) {
 				// Tracking params (CACHE_IGNORE_PARAMS): the plain URL's entry
 				// first, then this URL's own, as before — see cache.ts.
@@ -1558,7 +1558,6 @@ function loadBuiltManifest(): RouteManifest {
 			layoutServers: [],
 			errorPages: [],
 			trailingSlash: r.trailingSlash,
-			cache: r.cache ?? null,
 			prerender: false,
 		})),
 		apis: apiRoutes.map((r: any) => ({ pattern: r.pattern, id: r.id, server: "" })),

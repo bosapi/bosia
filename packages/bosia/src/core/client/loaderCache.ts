@@ -71,7 +71,7 @@ export function captureSnapshot(deps: LoaderDeps, ctx: EvalContext): CacheSnapsh
 	const params: Record<string, string> = {};
 	for (const k of deps.params) params[k] = ctx.params[k] ?? "";
 	const searchParams: Record<string, string | null> = {};
-	for (const k of deps.searchParams) searchParams[k] = ctx.url.searchParams.get(k);
+	for (const k of deps.searchParams) if (k !== "*") searchParams[k] = ctx.url.searchParams.get(k);
 	const cookies: Record<string, string | undefined> = {};
 	for (const k of deps.cookies) cookies[k] = ctx.cookies[k];
 	return { pathname: ctx.pathname, params, searchParams, search: ctx.url.search, cookies };

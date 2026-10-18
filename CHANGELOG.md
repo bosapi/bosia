@@ -22,6 +22,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `export const cache = false` in `+page.server.ts` now turns the cache off, as promised.
 - Changing `?page=` now reloads data for loaders that read the whole query (`url.search`).
 - A loader using `String(url)` now reloads when only the page path changes.
+- `cache = false` now works however it is exported (destructured, `export let`, re-exported).
+
+### Removed
+
+- Page routes no longer carry a build-time `cache` flag; the real export is read instead.
 
 ## [1.2.7] - 2026-10-17
 

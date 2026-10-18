@@ -101,13 +101,15 @@ export const cache = false;
 
 Use this for live data (ticker, per-second counter) or pages where personalisation is not covered by `CACHE_KEYS`.
 
-To confirm it took effect, check the scanned flag rather than trusting the source:
+To confirm it took effect, GET the page twice (not `curl -I`: HEAD never fills the cache) and look for the `x-bosia-cache` header:
 
-```ts
-import { scanRoutes } from "bosia/src/core/scanner.ts";
-for (const r of scanRoutes().pages) console.log(r.cache, r.pattern);
-// false → opted out.  true → still cached.
+```sh
+curl -s -o /dev/null http://localhost:3000/live; sleep 1
+curl -s -o /dev/null -D - http://localhost:3000/live | grep -i x-bosia-cache
+# no output → opted out.  x-bosia-cache: HIT → still cached.
 ```
+
+Test with a signed-in user's cookies (`-b "session=…"`): an anonymous request that redirects or gets a `Set-Cookie` is never cached, so it looks opted out even when signed-in users are served cached copies.
 
 ### Authenticated app shells — the case that bites
 

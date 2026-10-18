@@ -247,23 +247,23 @@ function stampErrorContext(
 	e.partialLayoutData ??= [...partialLayoutData];
 }
 
-/** A page route's `export const cache` flag: the build-time read when it has one
- *  (true/false), otherwise both compiled modules' exports. Returns the page module
- *  when it had to import it, so SSR doesn't import it twice. */
+// A module that fails to import isn't cached; the loader path imports it
+// again and turns the failure into the error page.
+const uncached = () => ({ cache: false });
+
+/** A page route's `export const cache`: `false` in either +page.svelte or
+ *  +page.server.ts opts it out. Read from the real modules each time, so no
+ *  export form or later `cache = false` is missed. Cheap because the generated
+ *  `once()` wrapper (routeFile.ts) hands back the settled import promise. */
 export async function routeCacheFlag(route: {
-	cache?: boolean | null;
 	pageModule: () => Promise<any>;
 	pageServer: (() => Promise<any>) | null;
-}): Promise<{ cacheable: boolean; pageMod: any }> {
-	const flag = route.cache;
-	if (flag === true || flag === false) return { cacheable: flag, pageMod: null };
+}): Promise<boolean> {
 	const [pageMod, serverMod] = await Promise.all([
-		route.pageModule(),
-		// A server module that fails to import isn't cached; the loader imports it
-		// again and turns the failure into the route's error page.
-		route.pageServer?.().catch(() => ({ cache: false })),
+		route.pageModule().catch(uncached),
+		route.pageServer?.().catch(uncached),
 	]);
-	return { cacheable: pageMod.cache !== false && serverMod?.cache !== false, pageMod };
+	return pageMod.cache !== false && serverMod?.cache !== false;
 }
 
 // ─── Per-Loader Dependency Tracking ──────────────────────
@@ -734,12 +734,6 @@ export async function renderSSRStream(
 	// from CACHE_KEYS), so per-user pages stay isolated. Routes opt out via
 	// `export const cache = false`. See cache.ts and docs/guides/response-cache.md.
 	const cacheBypass = url.searchParams.has("_invalidated");
-	// `route.cache` is the build-time static read of `export const cache` in
-	// +page.svelte and +page.server.ts, letting a cache hit skip the page-module import entirely:
-	//   true  → cacheable, false → opted out, null → import to read the real value.
-	const flag = await routeCacheFlag(route);
-	const routeCacheable = flag.cacheable;
-	let pageMod: any = flag.pageMod;
 	// CSP is incompatible with response cache — the per-request nonce is baked
 	// into the cached HTML but the CSP header is re-derived each request, so a
 	// cached page would ship with a dead nonce and the browser would block its
@@ -750,8 +744,8 @@ export async function renderSSRStream(
 		CACHE_ENABLED &&
 		!CSP_ENABLED &&
 		!warmingUp &&
-		routeCacheable &&
-		(req.method === "GET" || req.method === "HEAD");
+		(req.method === "GET" || req.method === "HEAD") &&
+		(await routeCacheFlag(route));
 	const cacheable = cacheRead && req.method === "GET";
 	let cacheKey: string | null = null;
 	let releaseMiss: (() => void) | null = null;
@@ -806,8 +800,7 @@ export async function renderSSRStream(
 				match,
 			),
 			Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
-			// pageMod is already loaded when the cache flag was unknown.
-			pageMod ?? route.pageModule(),
+			route.pageModule(),
 		]);
 		// Settled by the early returns below without being read.
 		dataP.catch(() => {});
@@ -857,11 +850,10 @@ export async function renderSSRStream(
 
 		let data: Awaited<ReturnType<typeof loadRouteData>>;
 		let layoutMods: any[];
+		let pageMod: any;
 
 		try {
-			let pm: any;
-			[data, layoutMods, pm] = await dataP;
-			pageMod = pm;
+			[data, layoutMods, pageMod] = await dataP;
 		} catch (err) {
 			if (isRedirect(err))
 				return new Response(null, { status: err.status, headers: { Location: err.location } });

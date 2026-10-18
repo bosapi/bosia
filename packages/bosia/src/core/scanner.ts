@@ -19,42 +19,6 @@ import { segmentName, segmentRank } from "./matcher.ts";
 
 const ROUTES_DIR = "./src/routes";
 
-/**
- * Read `export const cache` from +page.svelte's `<script module>` (or from
- * +page.server.ts) at scan time.
- * Conservative on purpose — the flag lets the renderer skip caching, so a wrong
- * "cacheable" answer would leak a per-user page. Returns `true` ONLY when there
- * is no `cache` export at all; a literal `= false` returns `false`; anything
- * else (dynamic expression, unreadable file) returns `null` so the renderer
- * imports the module and reads the real value.
- */
-function pageCache(src: string | null): boolean | null {
-	if (src === null) return null;
-	if (/export\s+const\s+cache\s*(?::[^=]+)?=\s*false\b/.test(src)) return false;
-	// Any other way `cache` could be exported (re-export, `export *`, `let`, a
-	// second declarator) is read from the module at runtime. Over-matching
-	// (`{ cache: "no-store" }` inside an exported const) only costs that import.
-	if (
-		/export\s*\*|export\s*(?:type\s*)?\{[^}]*\bcache\b|export\s+(?:const|let|var)\b[^;]*\bcache\s*[:=]/.test(
-			src,
-		)
-	)
-		return null;
-	return true;
-}
-
-/** Either file saying `false` opts the route out; both must be `true` to skip the import. */
-function routeCache(
-	pageSrc: string | null,
-	serverFile: string | null,
-	serverSrc: string | null,
-): boolean | null {
-	const page = pageCache(pageSrc);
-	const server = serverFile ? pageCache(serverSrc) : true;
-	if (page === false || server === false) return false;
-	return page && server ? true : null;
-}
-
 /** Literal `export const prerender = true` in a server module's source. */
 export function wantsPrerender(src: string): boolean {
 	return /export\s+const\s+prerender\s*=\s*true/.test(src);
@@ -175,7 +139,6 @@ export function scanRoutes(): RouteManifest {
 			const effectiveTs: TrailingSlash = pageTs ?? currentTrailingSlash;
 
 			const pageFile = rel("+page.svelte");
-			const pageSrc = readSource(join(ROUTES_DIR, pageFile));
 			pages.push({
 				pattern: toUrlPath(urlSegments),
 				id: `/${dir}`,
@@ -186,7 +149,6 @@ export function scanRoutes(): RouteManifest {
 				layoutServers: [...currentLayoutServers],
 				errorPages: [...currentErrorPages],
 				trailingSlash: effectiveTs,
-				cache: routeCache(pageSrc, pageServerFile, pageServerSrc),
 				prerender: prerenderOf(pageServerSrc),
 			});
 		}
