@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
@@ -151,5 +151,23 @@ describe("analyseRoutes() reuse", () => {
 		);
 		const targets = await detectPrerenderRoutes(await analysed());
 		expect(targets.map((t) => t.path)).toEqual(["/blog/hello"]);
+	});
+
+	test("a build warns about import.meta.dir, which points at the bundled copy", async () => {
+		write("blog/[slug]/+page.svelte");
+		write(
+			"blog/[slug]/+page.server.ts",
+			"export const prerender = true;\nexport const entries = () => [{ slug: import.meta.dir.includes('.bosia') ? 'bundled' : 'source' }];\n",
+		);
+		const warn = spyOn(console, "warn").mockImplementation(() => {});
+		try {
+			const targets = await detectPrerenderRoutes(await analysed());
+			expect(targets.map((t) => t.path)).toEqual(["/blog/bundled"]);
+			expect(warn.mock.calls.flat().join("\n")).toContain(
+				"src/routes/blog/[slug]/+page.server.ts uses import.meta.dir/url",
+			);
+		} finally {
+			warn.mockRestore();
+		}
 	});
 });

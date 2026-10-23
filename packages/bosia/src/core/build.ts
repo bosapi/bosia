@@ -12,7 +12,7 @@ import { basename, join, relative, resolve } from "path";
 import type { RouteManifest } from "./types.ts";
 
 import { scanRoutes, RouteConflictError } from "./scanner.ts";
-import { analyseRoutes, RouteAnalyseError } from "./analyse.ts";
+import { analyseRoutes, reason, RouteAnalyseError } from "./analyse.ts";
 import { generateRoutesFile } from "./routeFile.ts";
 import { generateRouteTypes, ensureRootDirs } from "./routeTypes.ts";
 import { makeBosiaPlugin } from "./plugin.ts";
@@ -93,7 +93,8 @@ const classifiedEnv = classifyEnvVars(envVars);
 // of re-walking src/routes. Read before the cleanup below deletes it. Missing
 // or corrupt (e.g. the previous build failed before writing it) → real scan.
 let cachedManifest: RouteManifest | null = null;
-if (process.env.BOSIA_SKIP_ROUTE_SCAN === "1") {
+// Dev only: a production build must run the analyse step (prerender needs it).
+if (process.env.BOSIA_SKIP_ROUTE_SCAN === "1" && process.env.BOSIA_DEV_BUILD === "1") {
 	try {
 		cachedManifest = JSON.parse(readFileSync(join(OUT_DIR, "route-manifest.json"), "utf-8"));
 	} catch {}
@@ -167,7 +168,8 @@ const userClientBunPlugins = userPlugins.flatMap((p) => p.build?.bunPlugins?.("b
 const userServerBunPlugins = userPlugins.flatMap((p) => p.build?.bunPlugins?.("bun") ?? []);
 
 // 1b. Start Tailwind CSS (async — runs concurrently with the analyse step and
-// the client+server builds; it doesn't read the route manifest).
+// the client+server builds; it doesn't read the route manifest). Killed on any
+// exit, so a failed build doesn't leave it writing into dist/client.
 // Output goes to a temp name in dist/client; after the build we content-hash it
 // and rename to bosia-tw-<hash>.css so it gets immutable caching and rebuilds
 // bust browser caches only when the CSS actually changed. mkdir up front —
@@ -191,6 +193,7 @@ const tailwindProc = Bun.spawn(
 	},
 );
 const tailwindPromise = tailwindProc.exited;
+process.on("exit", () => tailwindProc.kill());
 
 // 1c. Read prerender/ssr/actions/trailingSlash from the real route exports.
 // A cached manifest already holds them: no route file changed since.
@@ -198,12 +201,19 @@ if (!cachedManifest) {
 	try {
 		await analyseRoutes(manifest, userServerBunPlugins, process.env.BOSIA_DEV_BUILD === "1");
 	} catch (err) {
-		tailwindProc.kill();
 		if (!(err instanceof RouteAnalyseError)) throw err;
 		console.error(err.message);
 		process.exit(1);
 	}
 }
+// After analyse (its own hook names the file): a route's top-level
+// `db.connect()` can reject once its import has already returned.
+process.on("unhandledRejection", (err) => {
+	console.error(
+		`❌ Unhandled rejection, maybe from a route module's top-level code: ${reason(err)}`,
+	);
+	process.exit(1);
+});
 buildCtx.manifest = manifest;
 console.log(
 	`📂 Found ${manifest.pages.length} page route(s)${cachedManifest ? " (cached scan)" : ""}:`,
@@ -227,7 +237,6 @@ try {
 	);
 } catch (err) {
 	console.error(`❌ src/app.html validation failed:\n${(err as Error).message}`);
-	tailwindProc.kill();
 	process.exit(1);
 }
 

@@ -5,6 +5,8 @@ import type { BunPlugin } from "bun";
 import type { RouteManifest, TrailingSlash } from "./types.ts";
 import { makeBosiaPlugin } from "./plugin.ts";
 import { makeBosiaSvelteCompiler } from "./svelteCompiler.ts";
+import { ROUTES_DIR } from "./scanner.ts";
+import { ANALYSE_DEV_CACHE } from "./paths.ts";
 
 // ─── Route Analyse ───────────────────────────────────────
 // Reads `prerender`, `ssr`, `actions` and `trailingSlash` from the real exports
@@ -13,10 +15,11 @@ import { makeBosiaSvelteCompiler } from "./svelteCompiler.ts";
 // The modules are bundled like the server bundle ($env, $lib, Svelte, user
 // plugins, nothing external) and imported, so their top-level code runs at
 // build time — the same as SvelteKit's analyse step. Any failure fails the build.
+// As in the server bundle, `import.meta.dir`/`url` point at the bundled copy,
+// not src/routes: read files relative to `process.cwd()`.
 // Running them in this process needs a timeout and a rejection hook; a
 // subprocess returning JSON would isolate them (see ROADMAP).
 
-const ROUTES_DIR = "./src/routes";
 const TRAILING_SLASH = new Set(["never", "always", "ignore"]);
 // A top-level `await db.connect()` to a host the build can't reach would
 // otherwise hang the build with no message.
@@ -70,12 +73,16 @@ export async function analyseRoutes(
 			...manifest.apis.map((r) => r.server),
 		]),
 	];
-	const cacheFile = ".bosia/analyse-dev.json";
-	const cache: Cache = dev ? readCache(cacheFile) : {};
+	const cache: Cache = dev ? readCache(ANALYSE_DEV_CACHE) : {};
 	// Stat before bundling: a save made while this run imports is then newer
 	// than what gets cached, and the next rebuild reads it again.
-	const mtimes = new Map(files.map((f) => [f, statSync(join(ROUTES_DIR, f)).mtimeMs]));
-	const stale = files.filter((f) => cache[f]?.mtimeMs !== mtimes.get(f));
+	// A file deleted since the scan has no mtime: stale, so bundling reports it.
+	const mtimes = new Map(
+		dev
+			? files.map((f) => [f, statSync(join(ROUTES_DIR, f), { throwIfNoEntry: false })?.mtimeMs])
+			: [],
+	);
+	const stale = dev ? files.filter((f) => cache[f]?.mtimeMs !== mtimes.get(f)) : files;
 	const { exports: fresh, failed } = await importExports(
 		stale,
 		userPlugins,
@@ -99,7 +106,7 @@ export async function analyseRoutes(
 			else if (cache[f]) next[f] = cache[f];
 		}
 		mkdirSync(".bosia", { recursive: true });
-		writeFileSync(cacheFile, JSON.stringify(next));
+		writeFileSync(ANALYSE_DEV_CACHE, JSON.stringify(next));
 	}
 
 	for (const route of manifest.pages) {
@@ -117,6 +124,15 @@ export async function analyseRoutes(
 		route.prerender = !!e?.prerender && !skip;
 	}
 	for (const api of manifest.apis) api.prerender = exports.get(api.server)!.prerender;
+
+	// The bundled copy runs `entries()` (and the server bundle runs `load()`), so
+	// `import.meta.dir` isn't src/routes: an `existsSync` on it quietly lists nothing.
+	if (!dev)
+		for (const f of files)
+			if (/\bimport\.meta\.(dir|dirname|url)\b/.test(readFileSync(join(ROUTES_DIR, f), "utf-8")))
+				console.warn(
+					`   ⚠️  src/routes/${f} uses import.meta.dir/url: at build and run time it points at the bundled copy, not src/routes; build paths from process.cwd()`,
+				);
 }
 
 function readCache(file: string): Cache {
@@ -132,7 +148,7 @@ function readCache(file: string): Cache {
 // a long-lived caller — would otherwise get the first run's exports.
 let runs = 0;
 
-const reason = (err: unknown) => (err instanceof Error ? err.message : String(err));
+export const reason = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 /** Bundles and imports `files`. Bundling errors throw; per-file problems are returned. */
 async function importExports(

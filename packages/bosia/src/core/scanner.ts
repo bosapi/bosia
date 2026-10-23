@@ -17,7 +17,7 @@ import { segmentName, segmentRank } from "./matcher.ts";
 //   [param]/             — dynamic segment
 //   [...rest]/           — catch-all segment
 
-const ROUTES_DIR = "./src/routes";
+export const ROUTES_DIR = "./src/routes";
 
 export function scanRoutes(): RouteManifest {
 	const pages: PageRoute[] = [];

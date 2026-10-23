@@ -2,7 +2,7 @@ import { spawn, type Subprocess } from "bun";
 import { readdirSync, rmSync, statSync, watch, type Dirent } from "fs";
 import { join } from "path";
 import { loadEnv } from "./env.ts";
-import { BOSIA_NODE_PATH } from "./paths.ts";
+import { ANALYSE_DEV_CACHE, BOSIA_NODE_PATH } from "./paths.ts";
 import { pidsOnPort } from "./port.ts";
 import { affectsRouteManifest, shouldIgnoreForRebuild } from "./devWatch.ts";
 import { closeProxiedSockets, proxyHandlers, proxyUpgrade } from "./devWsProxy.ts";
@@ -19,6 +19,7 @@ const DEV_OUT_DIR = ".bosia/dev";
 // here, once per `bosia dev`, so it only ever holds this session's entries.
 const SVELTE_CACHE_DIR = ".bosia/cache/svelte";
 rmSync(SVELTE_CACHE_DIR, { recursive: true, force: true });
+rmSync(ANALYSE_DEV_CACHE, { force: true });
 
 // Snapshot pure shell env BEFORE any loadEnv call pollutes process.env.
 // On `.env*` change we restore from this snapshot, then re-run loadEnv,
@@ -637,6 +638,9 @@ const envWatcher = watch(process.cwd(), { recursive: false }, (_event, filename)
 	if (!filename || !ENV_FILES.has(filename)) return;
 	console.log(`[watch] env changed: ${filename}`);
 	reloadEnv();
+	// A flag can come from $env: rescan and re-read every route.
+	rmSync(ANALYSE_DEV_CACHE, { force: true });
+	routesDirty = true;
 	scheduleBuild();
 });
 

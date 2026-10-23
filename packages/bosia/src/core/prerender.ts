@@ -8,7 +8,7 @@ import { BOSIA_NODE_PATH, OUT_DIR } from "./paths.ts";
 import { currentBase } from "./appBase.ts";
 import { findMatch, isDynamic, segmentName, segmentRank } from "./matcher.ts";
 import { sortRoutes } from "./routeFile.ts";
-import { analysedModules } from "./analyse.ts";
+import { analysedModules, reason } from "./analyse.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
 
 /** Acquire an OS-assigned ephemeral port. Tiny TOCTOU race window; acceptable for build-time use. */
@@ -322,8 +322,9 @@ async function expandDynamicRoute(
 		return paths.map((path) => ({ path, route: pattern, kind, trailingSlash: ts }));
 	} catch (err) {
 		// Fail the build: skipping the route would silently drop every page it lists.
-		const why = err instanceof Error ? err.message : String(err);
-		throw new PrerenderEntriesError(`Prerender failed for ${pattern}: ${why}`, { cause: err });
+		throw new PrerenderEntriesError(`Prerender failed for ${pattern}: ${reason(err)}`, {
+			cause: err,
+		});
 	}
 }
 
