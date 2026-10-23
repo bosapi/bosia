@@ -199,7 +199,7 @@ export const actions = {
 ```
 
 - `invalidate("app:user")` — evict every cached page whose loader called `depends("app:user")`.
-- `invalidate("/api/posts")` — evict every cached page whose loader fetched `/api/posts`, plus the cached `/api/posts` API response itself.
+- `invalidate("/api/posts")` — evict every cached page whose loader or `metadata()` fetched `/api/posts`, plus the cached `/api/posts` API response itself.
 - `invalidateAll("/products/")` — evict every entry whose path starts with the prefix.
 
 Names mirror the existing browser-side `invalidate()` from `bosia/client`. The server version applies the same key concept to the new server cache.

@@ -19,14 +19,17 @@ import { segmentName, segmentRank } from "./matcher.ts";
 
 const ROUTES_DIR = "./src/routes";
 
-/** Literal `export const prerender = true` in a server module's source. */
+/** `export const prerender = true` in a server module's source, outside comments. */
 export function wantsPrerender(src: string): boolean {
-	return /export\s+const\s+prerender\s*=\s*true/.test(src);
+	return /export\s+const\s+prerender\s*(?::\s*[^=]+)?=\s*true\b/.test(stripComments(src));
 }
 
-/** Why a page that asks for prerender can't have it, or null when it can. */
+/** Why a page that asks for prerender can't have it, or null when it can. Reads
+ *  the raw source, comments included: a false hit only renders the page live,
+ *  while a missed `actions` would ship a static page whose forms can't post. */
 export function prerenderSkipReason(src: string): string | null {
-	if (/export\s+const\s+ssr\s*=\s*false/.test(src)) return "ssr=false — contradictory";
+	if (/export\s+const\s+ssr\s*(?::\s*[^=]+)?=\s*false\b/.test(src))
+		return "ssr=false — contradictory";
 	// A static file can't run an action: Bun would answer the POST with the
 	// prerendered HTML, Workers' asset server with 405. Render it live instead.
 	if (
@@ -43,24 +46,20 @@ function prerenderOf(src: string | null): boolean {
 	return src !== null && wantsPrerender(src) && prerenderSkipReason(src) === null;
 }
 
-const transpiler = new Bun.Transpiler({ loader: "ts" });
-
-/** Code with comments and type annotations removed, so the export regexes don't
- *  match a commented-out `// export const prerender = true`. Text inside strings
- *  is kept; a regex scan can't tell it apart. Unparseable code comes back as is
- *  (the build reports it). */
-export function stripComments(src: string): string {
-	try {
-		return transpiler.transformSync(src);
-	} catch {
-		return src;
-	}
+/** Source with `//` and block comments blanked; string literals are kept (their
+ *  text still matches). Doesn't know regex literals: a `//` or quote inside one
+ *  can drop or keep a comment wrongly, so the actions/ssr skip check doesn't use it. Not `Bun.Transpiler` on purpose: that runs Bun macros. */
+function stripComments(src: string): string {
+	return src.replace(
+		/("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|\/\/[^\n]*|\/\*[\s\S]*?\*\//g,
+		(_m, str: string | undefined) => str ?? " ",
+	);
 }
 
-/** A route file's code (comments stripped), or null when it can't be read. */
+/** A route file's source, or null when it can't be read. */
 function readSource(filePath: string): string | null {
 	try {
-		return stripComments(readFileSync(filePath, "utf-8"));
+		return readFileSync(filePath, "utf-8");
 	} catch {
 		return null;
 	}
@@ -72,9 +71,11 @@ function readSource(filePath: string): string | null {
  * scan avoids invoking server modules during the client bundle.
  */
 function trailingSlashOf(src: string | null): TrailingSlash | null {
-	const m = src?.match(
-		/export\s+const\s+trailingSlash\s*(?::\s*[^=]+)?=\s*["'](never|always|ignore)["']/,
-	);
+	const m =
+		src &&
+		stripComments(src).match(
+			/export\s+const\s+trailingSlash\s*(?::\s*[^=]+)?=\s*["'](never|always|ignore)["']/,
+		);
 	return (m?.[1] ?? null) as TrailingSlash | null;
 }
 

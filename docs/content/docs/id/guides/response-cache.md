@@ -97,7 +97,7 @@ export const actions = {
 ```
 
 - `invalidate("app:user")` — hapus tiap page yang loader-nya panggil `depends("app:user")`.
-- `invalidate("/api/posts")` — hapus tiap page yang loader-nya fetch `/api/posts`, plus response API `/api/posts` yang di-cache.
+- `invalidate("/api/posts")` — hapus tiap page yang loader atau `metadata()`-nya fetch `/api/posts`, plus response API `/api/posts` yang di-cache.
 - `invalidateAll("/products/")` — hapus tiap entry yang path-nya diawali prefix.
 
 Nama-namanya cocok dengan `invalidate()` sisi browser dari `bosia/client`. Versi server menerapkan konsep key yang sama untuk cache server baru.

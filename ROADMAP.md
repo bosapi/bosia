@@ -114,12 +114,17 @@
 - [ ] ⚪ Slow loaders: `LOAD_TIMEOUT` (30s) and `CACHE_WAIT_TIMEOUT` (60s) outlast Bun's default `IDLE_TIMEOUT` (10s), so the client of a 15s loader is cut off before either applies; documented, raise `IDLE_TIMEOUT` too.
 - [x] 🟠 Client nav skipped a loader that read the whole query (`url.search`, `Object.fromEntries(url.searchParams)`): `?page=1` → `2` kept page 1. Deps now carry a `"*"` search param; the client compares the full query.
 - [x] 🟠 Review: the `cache` regex scan missed export forms (destructuring, `export let cache;`, `;` in a string), leaking per-user pages. Scan removed; `routeCacheFlag` reads the real exports each request.
-- [x] 🟡 `wantsPrerender` / `prerenderSkipReason` scanned raw source, so `// export const prerender = true` prerendered the page. Source now goes through `Bun.Transpiler` first (comments + types gone; `prerender: boolean = true` now seen). Text in strings still matches.
+- [x] 🟡 `// export const prerender = true` prerendered the page. The `prerender` check now skips comments (one regex, not `Bun.Transpiler`: it runs macros); `ssr`/`actions` still read raw source (fail-safe).
+- [ ] ⚪ `stripComments` doesn't know regex literals or `${}` quotes: `/'/` before a `// export const prerender = true` still prerenders. Fixed for good by reading `mod.prerender`.
 - [ ] ⚪ Serializing the `url` proxy after `load()` returns (`return { link: url }`, `console.log(url)`) calls `toJSON`/`toString` and adds `"*"` to deps late; server and client may disagree.
 - [x] 🟡 Review: client nav compared only the first value of a tracked param, so `getAll("tag")` / `has("tag", "b")` kept old data on `?tag=a&tag=b` → `?tag=a&tag=c`. The snapshot now holds every value.
 - [x] 🟡 `export const cache = false` in `+layout.server.ts` / `+layout.svelte` was ignored. `routeCacheFlag` now reads every layout module too: a layout opt-out covers all pages below it.
 - [x] 🟡 Client loader cache didn't track `parent()`. Deps now carry `uses_parent`; `maskBitsFor` (shared by nav + prefetch) re-runs a `parent()` caller when a layout above it re-runs.
-- [x] 🟡 `metadata()` deps stayed on the server. Title/meta were never stale (metadata runs every fetch), but a `load()` reading `metadata` kept old data. Its deps now merge into the page's when read.
+- [x] 🟡 `metadata()` deps stayed on the server: a `load()` reading `metadata` kept old data (title/meta were fine). `metadata()` now gets tracked params/url/cookies/fetch, merged into the page deps when read.
+- [ ] ⚪ A `metadata()` that timed out keeps running; reads it makes after `load()` read `metadata` miss the page deps.
+- [ ] ⚪ The `metadata` getter merges deps on any read, so `{...event}` or logging the event re-runs `load()` on metadata()'s deps too (extra re-runs, never stale).
+- [ ] 🟡 Prerender/ssr/actions/trailingSlash are read by regex (holes: `export { p as prerender }`, `let`, strings, regex literals). Add a build "analyse" step: bundle server, read real exports, then client.
+- [ ] ⚪ `detectPrerenderRoutes` re-reads every page server the scanner already checked; use `route.prerender` from the manifest (needs the skip warning moved).
 - [ ] ⚪ `routeCacheFlag` treats a module that fails to import as `cache = false` without logging, and re-imports it twice per request (`once()` drops rejections); the cause is never shown.
 - [ ] ⚪ `routeCacheFlag` imports the page and layout modules before every cache lookup (data endpoint too); on a miss they no longer overlap metadata/layouts. Save the flag per route after a clean import (docs fix it at load).
 - [ ] ⚪ A `+page.server.ts` or `+page.svelte` that throws on import gives a plain-text 500, not `+error.svelte` (SSR); already so on main.

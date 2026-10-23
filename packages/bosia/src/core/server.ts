@@ -559,11 +559,10 @@ async function resolve(event: RequestEvent): Promise<Response> {
 				(cookies as CookieJar).outgoing.length === 0 &&
 				bodyFitsCache(body.length)
 			) {
-				const tags = collectTags(result.data.layoutDeps ?? null, result.data.pageDeps ?? null);
-				const queryAware = depsReadIgnoredParams(
-					[...(result.data.layoutDeps ?? []), result.metaDeps],
-					result.data.pageDeps ?? null,
-				);
+				// metadata() reads count like a layout's: tags and query-awareness.
+				const aboveDeps = [...(result.data.layoutDeps ?? []), result.metaDeps];
+				const tags = collectTags(aboveDeps, result.data.pageDeps ?? null);
+				const queryAware = depsReadIgnoredParams(aboveDeps, result.data.pageDeps ?? null);
 				const rel = releaseDataMiss;
 				releaseDataMiss = null;
 				// Encoded once at cache quality and shared by response and entry.

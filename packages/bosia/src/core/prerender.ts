@@ -6,7 +6,7 @@ import type { RuntimeTarget } from "./types/plugin.ts";
 
 import { BOSIA_NODE_PATH, OUT_DIR } from "./paths.ts";
 import { currentBase } from "./appBase.ts";
-import { prerenderSkipReason, stripComments, wantsPrerender } from "./scanner.ts";
+import { prerenderSkipReason, wantsPrerender } from "./scanner.ts";
 import { findMatch, isDynamic, segmentName, segmentRank } from "./matcher.ts";
 import { sortRoutes } from "./routeFile.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
@@ -328,7 +328,7 @@ export async function detectPrerenderRoutes(manifest: RouteManifest): Promise<Pr
 	const pageTasks = manifest.pages.map(async (route): Promise<PrerenderTarget[]> => {
 		if (!route.pageServer) return [];
 		const filePath = join("src", "routes", route.pageServer);
-		const content = stripComments(await Bun.file(filePath).text());
+		const content = await Bun.file(filePath).text();
 		if (!wantsPrerender(content)) return [];
 		const skip = prerenderSkipReason(content);
 		if (skip) {
@@ -342,7 +342,7 @@ export async function detectPrerenderRoutes(manifest: RouteManifest): Promise<Pr
 
 	const apiTasks = manifest.apis.map(async (route): Promise<PrerenderTarget[]> => {
 		const filePath = join("src", "routes", route.server);
-		const content = stripComments(await Bun.file(filePath).text());
+		const content = await Bun.file(filePath).text();
 		if (!wantsPrerender(content)) return [];
 		if (isDynamic(route.pattern))
 			return expandDynamicRoute(route.pattern, filePath, "api", "never");

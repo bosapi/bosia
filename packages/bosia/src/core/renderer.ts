@@ -699,8 +699,9 @@ export async function loadMetadata(
 	locals: Record<string, any>,
 	cookies: Cookies,
 	req: Request,
-	/** Records which query params metadata() read, for the response cache. */
-	deps?: LoaderDeps,
+	/** Records what metadata() read: query params for the response cache, and
+	 *  everything for a page load() that reads `metadata` (see loadRouteData). */
+	deps: LoaderDeps,
 ): Promise<Metadata | null> {
 	if (!route.pageServer) return null;
 	try {
@@ -710,12 +711,12 @@ export async function loadMetadata(
 			return (
 				(await withTimeout(
 					mod.metadata({
-						params,
+						params: trackedParams(params, deps),
 						route: { id: route.id },
-						url: deps ? trackedUrl(url, deps) : url,
+						url: trackedUrl(url, deps),
 						locals,
-						cookies,
-						fetch,
+						cookies: trackedCookies(cookies, deps),
+						fetch: trackedFetch(fetch, url.origin, deps),
 						platform: getPlatform(),
 					}),
 					METADATA_TIMEOUT,
@@ -728,7 +729,7 @@ export async function loadMetadata(
 		// here made every caller's Redirect/HttpError branch dead code.
 		// Also marked for control flow: the data endpoint swallows it and must
 		// not cache the 200 it sends instead.
-		if (deps) failedMetadata.add(deps);
+		failedMetadata.add(deps);
 		if (isRedirect(err) || isHttpError(err)) throw err;
 		if (isDev) console.error("Metadata load error:", err);
 		else console.error("Metadata load error:", (err as Error).message ?? err);
@@ -1053,11 +1054,10 @@ export async function renderSSRStream(
 			// Oversized bodies skip early so they never pay compression; cacheSet
 			// re-checks as the authoritative guard.
 			if (bodyFitsCache(fullBody.length)) {
-				const tags = collectTags(data.layoutDeps ?? null, data.pageDeps ?? null);
-				const queryAware = depsReadIgnoredParams(
-					[...(data.layoutDeps ?? []), metaDeps],
-					data.pageDeps ?? null,
-				);
+				// metadata() reads count like a layout's: tags and query-awareness.
+				const aboveDeps = [...(data.layoutDeps ?? []), metaDeps];
+				const tags = collectTags(aboveDeps, data.pageDeps ?? null);
+				const queryAware = depsReadIgnoredParams(aboveDeps, data.pageDeps ?? null);
 				const keyForWrite = cacheKey;
 				// Hand the gate release to the deferred write: waiters resume only
 				// after cacheSet ran, so their re-check hits.
@@ -1137,7 +1137,8 @@ export async function renderPageWithFormData(
 	// Same overlap as the GET path: metadata() and the loaders start together,
 	// and only the page load() waits for metadata.data. A metadata redirect or
 	// error() still answers first.
-	const metadataP = loadMetadata(route, params, url, locals, cookies, req).then(
+	const metaDeps = emptyDeps();
+	const metadataP = loadMetadata(route, params, url, locals, cookies, req, metaDeps).then(
 		(value) => ({ ok: true as const, value }),
 		(err: unknown) => ({ ok: false as const, err }),
 	);
@@ -1149,6 +1150,8 @@ export async function renderPageWithFormData(
 			cookies,
 			metadataP.then((m) => (m.ok ? (m.value?.data ?? null) : null)),
 			match,
+			undefined,
+			metaDeps,
 		),
 		route.pageModule(),
 		Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),

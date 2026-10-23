@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - A commented-out `// export const prerender = true` no longer prerenders the page.
 - A loader that calls `parent()` now reloads when a layout above it reloads.
 - A page `load()` that reads `metadata` now reloads when what `metadata()` read changes.
+- `invalidate(url)` now also clears cached pages whose `metadata()` fetched that URL.
+- A commented-out `// export const trailingSlash` is now ignored.
 
 ---
 

@@ -62,7 +62,7 @@ beforeAll(async () => {
 	writeFileSync(
 		join(inner, "+page.server.ts"),
 		SLEEP +
-			`export function metadata({ url }: any) {\n\turl.searchParams.get("lang");\n\treturn { title: "Lambat", data: { fromMeta: "meta" } };\n}\n` +
+			`export function metadata({ url, cookies }: any) {\n\turl.searchParams.get("lang");\n\tcookies.get("theme");\n\treturn { title: "Lambat", data: { fromMeta: "meta" } };\n}\n` +
 			`export async function load({ parent, metadata }: any) {\n` +
 			`\tconst [p] = await Promise.all([parent(), sleep(150)]);\n` +
 			`\treturn { sawA: p.a, sawB: p.b, fromMeta: metadata?.fromMeta ?? null };\n` +
@@ -245,9 +245,10 @@ describe("deps the client router re-runs on", () => {
 		expect(body.pageDeps.uses_parent).toBe(true);
 	});
 
-	test("a load() that read `metadata` carries metadata()'s query reads", async () => {
+	test("a load() that read `metadata` carries what metadata() read", async () => {
 		const body = await (await fetch(dataUrl("/slow/inner", fresh()))).json();
 		expect(body.pageDeps.searchParams).toContain("lang");
+		expect(body.pageDeps.cookies).toContain("theme");
 	});
 
 	test("a load() that didn't read `metadata` doesn't", async () => {
