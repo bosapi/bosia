@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `prerender`, `ssr`, `actions` and `trailingSlash` are read from the real exports at build.
 - A route server file that crashes while loading now fails the build with a clear message.
 - A route server file still loading after 30 seconds now fails the build instead of hanging it.
+- `bosia dev` now warns when a route server file fails to load, instead of stopping rebuilds.
 
 ---
 

@@ -309,9 +309,9 @@ async function expandDynamicRoute(
 ): Promise<PrerenderTarget[]> {
 	try {
 		// The module the analyse step loaded: bundled with $env etc., and its
-		// top-level code not run a second time. Tests call this without analysing.
-		const mod =
-			analysedModules.get(file) ?? (await import(join(process.cwd(), "src", "routes", file)));
+		// top-level code not run a second time.
+		const mod = analysedModules.get(file);
+		if (!mod) throw new Error("the build's analyse step didn't load this route");
 		if (typeof mod.entries !== "function")
 			throw new Error("prerender = true on a dynamic route needs an entries() export");
 		const entryList: Record<string, string>[] = await mod.entries();

@@ -128,6 +128,10 @@
 - [x] 🟡 Review: dynamic `entries()` imported the raw source (no `$env`, top-level code ran twice). Prerender now uses the module analyse loaded.
 - [x] 🟡 Review: analyse hardening — 30s import timeout; deps bundled like the server (no NODE_PATH gap); dev reuses exports by mtime; build-wide unhandledRejection names the cause.
 - [x] ⚪ Review: analyse bundle errors keep file:line (`Bun.inspect`); skip warnings are prod-only; Tailwind starts before analyse.
+- [x] 🟡 Review 2: analyse used a raw path + `?v=` (Windows; Bun ignores the query on file URLs) → file URL in a numbered dir per run. Dev has its own dir/cache, warns on a throw.
+- [x] 🟡 Review 2: dev cache stats before bundling (no lost saves), re-imports only changed files; rejection hook only while modules load; Tailwind killed on early exit.
+- [ ] 🟡 Analyse imports user modules into the build process (timeout can't kill a hung import; handles leak into prerender). Run it in a subprocess returning JSON exports + `entries()`.
+- [ ] ⚪ Route server modules are bundled twice per build (analyse, then server). Build the server first and read exports from `dist/server`, as SvelteKit does.
 - [ ] ⚪ `bosia sync` writes `.bosia/routes.ts` with placeholder `trailingSlash`/`prerender` (no analyse, so `bun run check` in CI needs no DB). Build overwrites it.
 - [x] ⚪ `detectPrerenderRoutes` re-reads every page server the scanner already checked. It now uses `route.prerender` (pages + APIs); the skip warning moved to the analyse step.
 - [ ] ⚪ `routeCacheFlag` treats a module that fails to import as `cache = false` without logging, and re-imports it twice per request (`once()` drops rejections); the cause is never shown.

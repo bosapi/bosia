@@ -144,7 +144,6 @@ for (const p of [
 	".bosia/env.client.ts",
 	".bosia/artifacts.ts",
 	".bosia/runtime.workers.ts",
-	".bosia/analyse",
 	".bosia/types",
 ]) {
 	clearOutput(p);
@@ -196,19 +195,10 @@ const tailwindPromise = tailwindProc.exited;
 // 1c. Read prerender/ssr/actions/trailingSlash from the real route exports.
 // A cached manifest already holds them: no route file changed since.
 if (!cachedManifest) {
-	// Route modules now run in this process. A promise their top-level code
-	// leaves rejecting (an un-awaited `db.connect()`) would crash the build with
-	// an error that doesn't say where it came from.
-	process.on("unhandledRejection", (err) => {
-		console.error(
-			"❌ A promise rejected during the build, often from a route module's top-level code (an un-awaited connect()):",
-		);
-		console.error(err);
-		process.exit(1);
-	});
 	try {
 		await analyseRoutes(manifest, userServerBunPlugins, process.env.BOSIA_DEV_BUILD === "1");
 	} catch (err) {
+		tailwindProc.kill();
 		if (!(err instanceof RouteAnalyseError)) throw err;
 		console.error(err.message);
 		process.exit(1);
@@ -237,6 +227,7 @@ try {
 	);
 } catch (err) {
 	console.error(`❌ src/app.html validation failed:\n${(err as Error).message}`);
+	tailwindProc.kill();
 	process.exit(1);
 }
 

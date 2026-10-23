@@ -113,21 +113,32 @@ describe("analyseRoutes() failures", () => {
 });
 
 describe("analyseRoutes() reuse", () => {
-	test("dev reuses the last exports until a route server file changes", async () => {
+	test("dev re-imports only changed files, and keeps a failing file's last flags", async () => {
 		write("+page.svelte");
 		write("+page.server.ts", "export const trailingSlash = 'always';\n");
+		write("a/+page.svelte");
+		write("a/+page.server.ts", "export const trailingSlash = 'ignore';\n");
 		// Whole seconds: utimesSync can't restore a sub-millisecond mtime.
 		const file = join(tmpDir, "src/routes/+page.server.ts");
 		utimesSync(file, 1e9, 1e9);
-		expect((await analysed()).pages[0]!.trailingSlash).toBe("always");
+		const ts = (m: any, p: string) => m.pages.find((r: any) => r.pattern === p)?.trailingSlash;
+		expect(ts(await analysed(true), "/")).toBe("always");
 		// Same mtime: the cache answers, even though the file now says otherwise.
-		writeFileSync(file, "export const trailingSlash = 'ignore';\n");
+		writeFileSync(file, "export const trailingSlash = 'never';\n");
 		utimesSync(file, 1e9, 1e9);
-		expect((await analysed(true)).pages[0]!.trailingSlash).toBe("always");
-		// A build always reads the files; so does dev once the mtime moves.
-		expect((await analysed()).pages[0]!.trailingSlash).toBe("ignore");
-		write("+page.server.ts", "export const trailingSlash = 'never';\n");
-		expect((await analysed(true)).pages[0]!.trailingSlash).toBe("never");
+		write("a/+page.server.ts", "export const trailingSlash = 'always';\n");
+		utimesSync(join(tmpDir, "src/routes/a/+page.server.ts"), 2e9, 2e9);
+		const m = await analysed(true);
+		expect(ts(m, "/")).toBe("always");
+		expect(ts(m, "/a")).toBe("always");
+		expect([...analysedModules.keys()]).toEqual(["a/+page.server.ts"]);
+		// A build reads every file and doesn't touch the dev cache.
+		expect(ts(await analysed(), "/")).toBe("never");
+		// Dev warns on a throw and keeps the last flags; the build fails.
+		write("a/+page.server.ts", 'throw new Error("db down");\n');
+		utimesSync(join(tmpDir, "src/routes/a/+page.server.ts"), 3e9, 3e9);
+		expect(ts(await analysed(true), "/a")).toBe("always");
+		expect(await analysed().catch((e) => e)).toBeInstanceOf(RouteAnalyseError);
 	});
 
 	test("prerender calls entries() on the analysed module, $env and all", async () => {

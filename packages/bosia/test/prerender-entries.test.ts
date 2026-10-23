@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
+import { analysedModules } from "../src/core/analyse.ts";
 import {
 	detectPrerenderRoutes,
 	findMisownedTargets,
@@ -227,16 +228,22 @@ describe("detectPrerenderRoutes()", () => {
 		route(pattern, file, "export const GET = () => new Response();\n");
 		return { pattern, server: file };
 	};
-	// The build's analyse step sets `prerender`; here the route file's text stands in.
-	const flagged = (r: any) => {
+	// Stands in for the build's analyse step: sets `prerender` from the route
+	// file's text and loads the module that prerender calls `entries()` on.
+	const flagged = async (r: any) => {
 		const file = r.pageServer ?? r.server;
-		const src = file ? readFileSync(join(dir, "src/routes", file), "utf-8") : "";
-		return { ...r, prerender: src.includes("export const prerender = true") };
+		if (!file) return { ...r, prerender: false };
+		const path = join(dir, "src/routes", file);
+		analysedModules.set(file, await import(path));
+		return {
+			...r,
+			prerender: readFileSync(path, "utf-8").includes("export const prerender = true"),
+		};
 	};
-	const detect = (pages: unknown[], apis: unknown[] = []) =>
+	const detect = async (pages: unknown[], apis: unknown[] = []) =>
 		detectPrerenderRoutes({
-			pages: pages.map(flagged),
-			apis: apis.map(flagged),
+			pages: await Promise.all(pages.map(flagged)),
+			apis: await Promise.all(apis.map(flagged)),
 			errorPage: null,
 		} as any).catch((e) => e);
 
@@ -245,6 +252,7 @@ describe("detectPrerenderRoutes()", () => {
 		process.chdir(dir);
 	});
 	afterEach(() => {
+		analysedModules.clear();
 		process.chdir(cwdBefore);
 		rmSync(dir, { recursive: true, force: true });
 	});
