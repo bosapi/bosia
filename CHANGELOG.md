@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - A route server file that crashes while loading now fails the build with a clear message.
 - A route server file still loading after 30 seconds now fails the build instead of hanging it.
 - `bosia dev` now warns when a route server file fails to load, instead of stopping rebuilds.
+- `bosia dev` waits for a save before retrying a route file that was still loading after 30s.
+- A late error from a route file's startup code now fails the build before prerender.
 - Restarting `bosia dev` or editing `.env` now re-reads every route's flags.
 - File paths in `entries()` now start from the build folder; use `process.cwd()` (the build warns).
 

@@ -2,7 +2,7 @@ import { spawn, type Subprocess } from "bun";
 import { readdirSync, rmSync, statSync, watch, type Dirent } from "fs";
 import { join } from "path";
 import { loadEnv } from "./env.ts";
-import { ANALYSE_DEV_CACHE, BOSIA_NODE_PATH } from "./paths.ts";
+import { BOSIA_NODE_PATH } from "./paths.ts";
 import { pidsOnPort } from "./port.ts";
 import { affectsRouteManifest, shouldIgnoreForRebuild } from "./devWatch.ts";
 import { closeProxiedSockets, proxyHandlers, proxyUpgrade } from "./devWsProxy.ts";
@@ -19,7 +19,6 @@ const DEV_OUT_DIR = ".bosia/dev";
 // here, once per `bosia dev`, so it only ever holds this session's entries.
 const SVELTE_CACHE_DIR = ".bosia/cache/svelte";
 rmSync(SVELTE_CACHE_DIR, { recursive: true, force: true });
-rmSync(ANALYSE_DEV_CACHE, { force: true });
 
 // Snapshot pure shell env BEFORE any loadEnv call pollutes process.env.
 // On `.env*` change we restore from this snapshot, then re-run loadEnv,
@@ -137,12 +136,19 @@ const BUILD_SCRIPT = join(import.meta.dir, "build.ts");
 // build.ts reuses the previous route-manifest.json instead of re-walking
 // src/routes. Starts true so the first build always scans.
 let routesDirty = true;
+// Re-read every route's flags, ignoring analyse's mtime cache: at start (a flag
+// can come from a `src/lib` file dev doesn't track) and after a `.env` change.
+// Cleared only by a build that succeeds, so a change during a build isn't lost.
+let analyseFresh = true;
 
 async function runBuild(): Promise<boolean> {
 	console.log("🏗️  Building...");
 	// Managed mode has no watcher, so we never know what changed — always scan.
-	const skipScan = !MANAGED && !routesDirty;
+	// A fresh flag re-read needs the analyse step, which a cached manifest skips.
+	const skipScan = !MANAGED && !routesDirty && !analyseFresh;
 	routesDirty = false;
+	const fresh = analyseFresh;
+	analyseFresh = false;
 	const proc = spawn(["bun", "run", BUILD_SCRIPT], {
 		stdout: "inherit",
 		stderr: "inherit",
@@ -151,13 +157,16 @@ async function runBuild(): Promise<boolean> {
 			...process.env,
 			BOSIA_OUT_DIR: DEV_OUT_DIR,
 			BOSIA_SKIP_ROUTE_SCAN: skipScan ? "1" : "0",
+			BOSIA_ANALYSE_FRESH: fresh ? "1" : "0",
 			// The dev server never serves prerendered pages or dist/static, so the
 			// build skips producing them (~25% of a rebuild on the demo).
 			BOSIA_DEV_BUILD: "1",
 			BOSIA_SVELTE_CACHE_DIR: SVELTE_CACHE_DIR,
 		},
 	});
-	return (await proc.exited) === 0;
+	const ok = (await proc.exited) === 0;
+	if (!ok && fresh) analyseFresh = true;
+	return ok;
 }
 
 // ─── Ports ────────────────────────────────────────────────
@@ -639,8 +648,8 @@ const envWatcher = watch(process.cwd(), { recursive: false }, (_event, filename)
 	console.log(`[watch] env changed: ${filename}`);
 	reloadEnv();
 	// A flag can come from $env: rescan and re-read every route.
-	rmSync(ANALYSE_DEV_CACHE, { force: true });
 	routesDirty = true;
+	analyseFresh = true;
 	scheduleBuild();
 });
 

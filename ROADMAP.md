@@ -124,7 +124,7 @@
 - [ ] ⚪ A `metadata()` that timed out keeps running; reads it makes after `load()` read `metadata` miss the page deps.
 - [ ] ⚪ The `metadata` getter merges deps on any read, so `{...event}` or logging the event re-runs `load()` on metadata()'s deps too (extra re-runs, never stale).
 - [x] 🟡 Prerender/ssr/actions/trailingSlash were read by regex (missed `export { p as prerender }`, `let`). New `analyseRoutes()` bundles + imports route server modules; a throw fails the build.
-- [ ] ⚪ Dev re-reads flags only when a route server file's mtime moves, so a flag imported from `src/lib` stays stale until that file is saved or dev restarts (cache wiped on start; documented).
+- [ ] ⚪ Dev re-reads flags only when a route server file's mtime moves, so a flag imported from `src/lib` stays stale until that file is saved or dev restarts (documented). Key on the bundle's inputs (content hash) instead.
 - [x] 🟡 Review: dynamic `entries()` imported the raw source (no `$env`, top-level code ran twice). Prerender now uses the module analyse loaded.
 - [x] 🟡 Review: analyse hardening — 30s import timeout; deps bundled like the server (no NODE_PATH gap); dev reuses exports by mtime; build-wide unhandledRejection names the cause.
 - [x] ⚪ Review: analyse bundle errors keep file:line (`Bun.inspect`); skip warnings are prod-only; Tailwind starts before analyse.
@@ -135,6 +135,11 @@
 - [x] 🟠 Review 4: a refused top-level `db.connect()` rejected after the hook was gone → build-wide handler fails with a message; prod warns on `import.meta.dir`/`url` in route files.
 - [x] 🟡 Review 4: `.env` edits re-read dev flags; a file deleted mid-rebuild no longer crashes dev; docs: live `load()` must not read `src/` (images ship `dist/` only).
 - [ ] ⚪ A rejection after the analyse imports (late `db.connect()`, timer) fails the build without naming the route. Fixed by the subprocess item.
+- [x] 🟠 Review 5: late-rejection handler exited mid-build (dev too; prerender server orphaned) → dev warns, build fails at the end. A failed dev import isn't retried until saved (no 30s per rebuild).
+- [x] 🟡 Review 5: dev re-reads all flags via `BOSIA_ANALYSE_FRESH` (start, `.env`), not a cache wipe a running build could undo; warning also catches `import.meta.path`/`filename`.
+- [x] 🔴 Review 6: analyse after `postScan` clobbered plugin-set flags and bundled plugin routes outside src/routes → back before `postScan`; prerender raw-imports unanalysed (plugin) routes.
+- [x] 🟡 Review 6: only a timed-out dev import waits for a save (a throw retries); `fresh` keeps last flags as fallback and forces a scan; late rejection checked before prerender + postBuild.
+- [ ] ⚪ The `import.meta` warning scans route files only; a `$lib` helper using `import.meta.dir` in `entries()` still lists nothing silently. Scan non-node_modules inputs of the analyse bundle.
 - [ ] ⚪ User server Bun plugins run twice per build (analyse + server), so a stateful plugin (collects files, emits a manifest) sees analyse entries. Fixed by bundling routes once.
 - [ ] 🟡 Analyse imports user modules into the build process (timeout can't kill a hung import; handles leak into prerender). Run it in a subprocess returning JSON exports + `entries()`.
 - [ ] ⚪ Route server modules are bundled twice per build (analyse, then server). Build the server first and read exports from `dist/server`, as SvelteKit does.

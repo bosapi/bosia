@@ -15,9 +15,9 @@ function write(rel: string, content = "") {
 	writeFileSync(full, content);
 }
 
-async function analysed(dev = false) {
+async function analysed(dev = false, fresh = false) {
 	const m = scanRoutes();
-	await analyseRoutes(m, [], dev);
+	await analyseRoutes(m, [], dev, fresh);
 	return m;
 }
 
@@ -137,8 +137,23 @@ describe("analyseRoutes() reuse", () => {
 		// Dev warns on a throw and keeps the last flags; the build fails.
 		write("a/+page.server.ts", 'throw new Error("db down");\n');
 		utimesSync(join(tmpDir, "src/routes/a/+page.server.ts"), 3e9, 3e9);
-		expect(ts(await analysed(true), "/a")).toBe("always");
-		expect(await analysed().catch((e) => e)).toBeInstanceOf(RouteAnalyseError);
+		const warn = spyOn(console, "warn").mockImplementation(() => {});
+		try {
+			expect(ts(await analysed(true), "/a")).toBe("always");
+			expect(warn.mock.calls.flat().join("\n")).toContain("db down");
+			// And the files that loaded stay cached across runs.
+			expect(ts(await analysed(true), "/")).toBe("always");
+			expect(await analysed().catch((e) => e)).toBeInstanceOf(RouteAnalyseError);
+			// A throw is retried next run though the file's mtime didn't move: the
+			// cause (DB, a src/lib helper) can be fixed elsewhere.
+			write("a/+page.server.ts", "export const trailingSlash = 'ignore';\n");
+			utimesSync(join(tmpDir, "src/routes/a/+page.server.ts"), 3e9, 3e9);
+			expect(ts(await analysed(true), "/a")).toBe("ignore");
+			// `fresh` (dev start, .env change) re-reads every file.
+			expect(ts(await analysed(true, true), "/")).toBe("never");
+		} finally {
+			warn.mockRestore();
+		}
 	});
 
 	test("prerender calls entries() on the analysed module, $env and all", async () => {
@@ -151,6 +166,17 @@ describe("analyseRoutes() reuse", () => {
 		);
 		const targets = await detectPrerenderRoutes(await analysed());
 		expect(targets.map((t) => t.path)).toEqual(["/blog/hello"]);
+	});
+
+	test("prerender imports a dynamic route a plugin added (not analysed) itself", async () => {
+		write("tags/[tag]/+page.svelte");
+		write("tags/[tag]/+page.server.ts", "export const entries = () => [{ tag: 'bun' }];\n");
+		const m = await analysed();
+		// As a postScan plugin would.
+		m.pages.find((r) => r.pattern === "/tags/[tag]")!.prerender = true;
+		analysedModules.clear();
+		const targets = await detectPrerenderRoutes(m);
+		expect(targets.map((t) => t.path)).toEqual(["/tags/bun"]);
 	});
 
 	test("a build warns about import.meta.dir, which points at the bundled copy", async () => {

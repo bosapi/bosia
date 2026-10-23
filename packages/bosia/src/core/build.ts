@@ -196,10 +196,17 @@ const tailwindPromise = tailwindProc.exited;
 process.on("exit", () => tailwindProc.kill());
 
 // 1c. Read prerender/ssr/actions/trailingSlash from the real route exports.
-// A cached manifest already holds them: no route file changed since.
+// Before postScan: a plugin sees the real flags and may change them. Routes it
+// adds aren't analysed (prerender imports those itself). A cached manifest
+// already holds them: no route file changed since.
 if (!cachedManifest) {
 	try {
-		await analyseRoutes(manifest, userServerBunPlugins, process.env.BOSIA_DEV_BUILD === "1");
+		await analyseRoutes(
+			manifest,
+			userServerBunPlugins,
+			process.env.BOSIA_DEV_BUILD === "1",
+			process.env.BOSIA_ANALYSE_FRESH === "1",
+		);
 	} catch (err) {
 		if (!(err instanceof RouteAnalyseError)) throw err;
 		console.error(err.message);
@@ -207,13 +214,22 @@ if (!cachedManifest) {
 	}
 }
 // After analyse (its own hook names the file): a route's top-level
-// `db.connect()` can reject once its import has already returned.
-process.on("unhandledRejection", (err) => {
-	console.error(
-		`❌ Unhandled rejection, maybe from a route module's top-level code: ${reason(err)}`,
-	);
+// `db.connect()` can reject once its import has already returned. Dev warns,
+// as analyse does; a build fails at the next check (before prerender, postBuild
+// and the end), not mid-step, so prerender still stops its server.
+let lateRejection = false;
+function failOnLateRejection() {
+	if (!lateRejection) return;
+	console.error("\n❌ Build failed: an unhandled rejection (above).");
 	process.exit(1);
+}
+process.on("unhandledRejection", (err) => {
+	const msg = `Unhandled rejection, maybe from a route module's top-level code: ${reason(err)}`;
+	if (process.env.BOSIA_DEV_BUILD === "1") return console.warn(`⚠️  ${msg}`);
+	console.error(`❌ ${msg}`);
+	lateRejection = true;
 });
+
 buildCtx.manifest = manifest;
 console.log(
 	`📂 Found ${manifest.pages.length} page route(s)${cachedManifest ? " (cached scan)" : ""}:`,
@@ -425,6 +441,7 @@ await bundleRuntimeUserFiles(process.cwd());
 const devBuild = process.env.BOSIA_DEV_BUILD === "1";
 
 // 9. Prerender static routes
+failOnLateRejection();
 if (!devBuild) {
 	try {
 		await prerenderStaticRoutes(manifest, target);
@@ -461,12 +478,14 @@ if (isProduction && target !== "workers") {
 // still exists — prerender just booted it to crawl static routes.
 if (target === "workers") await buildWorker();
 
+failOnLateRejection();
 for (const p of userPlugins) {
 	if (p.build?.postBuild) {
 		await p.build.postBuild(buildCtx);
 	}
 }
 
+failOnLateRejection();
 console.log(`\n🎉 Build complete in ${Math.round(performance.now() - buildStart)}ms!`);
 // The analyse and prerender steps import user route modules; an open DB pool or
 // timer in one would otherwise keep the build running after it finished.

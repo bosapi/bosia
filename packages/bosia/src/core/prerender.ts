@@ -1,6 +1,7 @@
 import { writeFileSync, mkdirSync, cpSync, existsSync, readFileSync } from "fs";
 import { createServer } from "net";
-import { join } from "path";
+import { join, resolve } from "path";
+import { pathToFileURL } from "url";
 import type { RouteManifest, TrailingSlash } from "./types.ts";
 import type { RuntimeTarget } from "./types/plugin.ts";
 
@@ -9,6 +10,7 @@ import { currentBase } from "./appBase.ts";
 import { findMatch, isDynamic, segmentName, segmentRank } from "./matcher.ts";
 import { sortRoutes } from "./routeFile.ts";
 import { analysedModules, reason } from "./analyse.ts";
+import { ROUTES_DIR } from "./scanner.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
 
 /** Acquire an OS-assigned ephemeral port. Tiny TOCTOU race window; acceptable for build-time use. */
@@ -309,9 +311,10 @@ async function expandDynamicRoute(
 ): Promise<PrerenderTarget[]> {
 	try {
 		// The module the analyse step loaded: bundled with $env etc., and its
-		// top-level code not run a second time.
-		const mod = analysedModules.get(file);
-		if (!mod) throw new Error("the build's analyse step didn't load this route");
+		// top-level code not run a second time. A route a plugin added in
+		// postScan wasn't analysed: import its source, as before analyse existed.
+		const mod =
+			analysedModules.get(file) ?? (await import(pathToFileURL(resolve(ROUTES_DIR, file)).href));
 		if (typeof mod.entries !== "function")
 			throw new Error("prerender = true on a dynamic route needs an entries() export");
 		const entryList: Record<string, string>[] = await mod.entries();
