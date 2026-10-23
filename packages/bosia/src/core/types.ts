@@ -40,6 +40,8 @@ export interface ApiRoute {
 	id: string;
 	/** Path to +server.ts, relative to src/routes/ */
 	server: string;
+	/** `export const prerender = true` in +server.ts — saved as a static file at build. */
+	prerender: boolean;
 }
 
 /** The full route manifest produced by the scanner */

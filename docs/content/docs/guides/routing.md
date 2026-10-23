@@ -216,3 +216,5 @@ export const trailingSlash = "never"; // canonicalize URL form: "never" | "alway
   - Root `/` is never modified. API routes (`+server.ts`) are unaffected.
 
 `ssr = false` together with `csr = false` would render nothing and is overridden to `csr = true` (with a dev warning). `ssr = false` together with `prerender = true` is contradictory; the route is skipped during prerender. The same goes for a page that exports `actions`: a static file can't run a form action, so the page stays live.
+
+`bosia build` and `bosia dev` read these flags by importing each `+page.server.ts`, `+layout.server.ts` and `+server.ts`, so any spelling works (`export { p as prerender }`, `let`, a shared constant). Top-level code in those files runs at build time: if one throws (say it connects to a database the build machine can't reach), the build fails. Move that work into `load()` or behind a function. In `bosia dev` the flags are re-read when a route server file is saved; after changing a constant imported from `src/lib`, save the route file (or restart dev).

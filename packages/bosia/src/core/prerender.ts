@@ -6,9 +6,9 @@ import type { RuntimeTarget } from "./types/plugin.ts";
 
 import { BOSIA_NODE_PATH, OUT_DIR } from "./paths.ts";
 import { currentBase } from "./appBase.ts";
-import { prerenderSkipReason, wantsPrerender } from "./scanner.ts";
 import { findMatch, isDynamic, segmentName, segmentRank } from "./matcher.ts";
 import { sortRoutes } from "./routeFile.ts";
+import { analysedModules } from "./analyse.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
 
 /** Acquire an OS-assigned ephemeral port. Tiny TOCTOU race window; acceptable for build-time use. */
@@ -303,12 +303,15 @@ export function checkPrerenderPaths(
 /** Dynamic route → import module, call entries(), expand to concrete targets. */
 async function expandDynamicRoute(
 	pattern: string,
-	filePath: string,
+	file: string,
 	kind: "page" | "api",
 	ts: TrailingSlash,
 ): Promise<PrerenderTarget[]> {
 	try {
-		const mod = await import(join(process.cwd(), filePath));
+		// The module the analyse step loaded: bundled with $env etc., and its
+		// top-level code not run a second time. Tests call this without analysing.
+		const mod =
+			analysedModules.get(file) ?? (await import(join(process.cwd(), "src", "routes", file)));
 		if (typeof mod.entries !== "function")
 			throw new Error("prerender = true on a dynamic route needs an entries() export");
 		const entryList: Record<string, string>[] = await mod.entries();
@@ -326,32 +329,24 @@ async function expandDynamicRoute(
 
 export async function detectPrerenderRoutes(manifest: RouteManifest): Promise<PrerenderTarget[]> {
 	const pageTasks = manifest.pages.map(async (route): Promise<PrerenderTarget[]> => {
-		if (!route.pageServer) return [];
-		const filePath = join("src", "routes", route.pageServer);
-		const content = await Bun.file(filePath).text();
-		if (!wantsPrerender(content)) return [];
-		const skip = prerenderSkipReason(content);
-		if (skip) {
-			console.warn(`   ⚠️  ${route.pattern} has prerender=true && ${skip}, skipped`);
-			return [];
-		}
+		// Set by analyseRoutes() from the real exports, skip reasons already applied.
+		if (!route.prerender || !route.pageServer) return [];
 		const ts = route.trailingSlash;
-		if (isDynamic(route.pattern)) return expandDynamicRoute(route.pattern, filePath, "page", ts);
+		if (isDynamic(route.pattern))
+			return expandDynamicRoute(route.pattern, route.pageServer, "page", ts);
 		return [{ path: route.pattern, route: route.pattern, kind: "page", trailingSlash: ts }];
 	});
 
 	const apiTasks = manifest.apis.map(async (route): Promise<PrerenderTarget[]> => {
-		const filePath = join("src", "routes", route.server);
-		const content = await Bun.file(filePath).text();
-		if (!wantsPrerender(content)) return [];
+		if (!route.prerender) return [];
 		if (isDynamic(route.pattern))
-			return expandDynamicRoute(route.pattern, filePath, "api", "never");
+			return expandDynamicRoute(route.pattern, route.server, "api", "never");
 		return [{ path: route.pattern, route: route.pattern, kind: "api", trailingSlash: "never" }];
 	});
 
-	// Unbounded Promise.allSettled over all routes; each task holds only small text reads
-	// and route metadata, so RAM stays trivial. Chunk it if route counts ever hit
-	// tens of thousands (open file descriptors would be the first limit).
+	// Unbounded Promise.allSettled over all routes; each task holds only route
+	// metadata (plus an entries() import), so RAM stays trivial. Chunk it if route
+	// counts ever hit tens of thousands (open file descriptors would be the first limit).
 	const results = await Promise.allSettled([...pageTasks, ...apiTasks]);
 	// List every broken entries() route in one error, not just the first.
 	const failed = results.flatMap((r) => (r.status === "rejected" ? [r.reason] : []));

@@ -1560,7 +1560,12 @@ function loadBuiltManifest(): RouteManifest {
 			trailingSlash: r.trailingSlash,
 			prerender: false,
 		})),
-		apis: apiRoutes.map((r: any) => ({ pattern: r.pattern, id: r.id, server: "" })),
+		apis: apiRoutes.map((r: any) => ({
+			pattern: r.pattern,
+			id: r.id,
+			server: "",
+			prerender: false,
+		})),
 		errorPage: null,
 	};
 }

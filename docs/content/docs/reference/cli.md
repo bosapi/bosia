@@ -56,11 +56,12 @@ bosia build
 This runs:
 
 1. Route scanning and manifest generation
-2. Type generation (`$types.d.ts` files)
-3. Environment variable module generation (`$env`)
-4. Client bundle (JavaScript + CSS via Tailwind)
-5. Server entry bundle
-6. Static prerendering (routes with `export const prerender = true`)
+2. Environment variable module generation (`$env`)
+3. Route analyse: imports each route server module to read `prerender`, `ssr`, `actions` and `trailingSlash` (top-level code runs; a throw, or a load still pending after 30s, fails the build)
+4. Type generation (`$types.d.ts` files)
+5. Client bundle (JavaScript + CSS via Tailwind)
+6. Server entry bundle
+7. Static prerendering (routes with `export const prerender = true`)
 
 Output goes to `dist/`.
 

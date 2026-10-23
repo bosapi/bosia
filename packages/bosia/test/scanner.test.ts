@@ -90,7 +90,7 @@ describe("scanRoutes()", () => {
 		write("api/hello/+server.ts", "export const GET = () => new Response('hi')");
 		const m = scanRoutes();
 		expect(m.apis).toEqual([
-			{ pattern: "/api/hello", id: "/api/hello", server: "api/hello/+server.ts" },
+			{ pattern: "/api/hello", id: "/api/hello", server: "api/hello/+server.ts", prerender: false },
 		]);
 	});
 
@@ -117,24 +117,6 @@ describe("scanRoutes()", () => {
 		const m = scanRoutes();
 		const route = m.pages.find((p) => p.pattern === "/dashboard/settings");
 		expect(route!.layouts).toEqual(["+layout.svelte", "dashboard/+layout.svelte"]);
-	});
-
-	test("trailingSlash from +page.server.ts wins over inherited", () => {
-		write("+layout.server.ts", "export const trailingSlash: 'always' = 'always';");
-		write("+page.svelte");
-		write("foo/+page.svelte");
-		write("foo/+page.server.ts", "export const trailingSlash = 'never';");
-		const m = scanRoutes();
-		const root = m.pages.find((p) => p.pattern === "/")!;
-		const foo = m.pages.find((p) => p.pattern === "/foo")!;
-		expect(root.trailingSlash).toBe("always");
-		expect(foo.trailingSlash).toBe("never");
-	});
-
-	test("trailingSlash defaults to 'never' when no config", () => {
-		write("+page.svelte");
-		const m = scanRoutes();
-		expect(m.pages[0].trailingSlash).toBe("never");
 	});
 
 	test("detects root +error.svelte", () => {
@@ -309,52 +291,5 @@ describe("scanRoutes() catch-all prefix warning", () => {
 	test("a missing prefix page still warns", () => {
 		write("docs/[...my_path]/+page.svelte");
 		expect(warnings().join("")).toContain(`doesn't match "/docs" itself`);
-	});
-});
-
-describe("scanRoutes() prerender flag", () => {
-	test("reads the real export, not a commented-out one", () => {
-		write("on/+page.svelte");
-		write("on/+page.server.ts", "export const prerender: boolean = true;\n");
-		write("off/+page.svelte");
-		write(
-			"off/+page.server.ts",
-			"// export const prerender = true\n/* export const prerender = true */\n",
-		);
-		write("form/+page.svelte");
-		write(
-			"form/+page.server.ts",
-			"export const prerender = true;\n// export const actions = {};\n",
-		);
-		write("url/+page.svelte");
-		write(
-			"url/+page.server.ts",
-			'const api = "https://x.dev/*"; export const prerender = true; // done\n',
-		);
-		// The skip check reads raw source: a regex literal's quote (pairing with the
-		// URL's, then `//` read as a comment) must not hide `actions`.
-		write("regex/+page.svelte");
-		write(
-			"regex/+page.server.ts",
-			'const q = /"/; const u = "https://x"; export const actions = {};\nexport const prerender = true;\n',
-		);
-		write("typed/+page.svelte");
-		write("typed/+page.server.ts", "export const prerender: Prerender = true;\n");
-		const flag = (p: string) => scanRoutes().pages.find((r) => r.pattern === p)?.prerender;
-		expect(flag("/on")).toBe(true);
-		expect(flag("/off")).toBe(false);
-		// The skip check reads comments too: a false hit only renders the page live.
-		expect(flag("/form")).toBe(false);
-		expect(flag("/url")).toBe(true);
-		expect(flag("/regex")).toBe(false);
-		expect(flag("/typed")).toBe(true);
-	});
-});
-
-describe("scanRoutes() trailingSlash", () => {
-	test("a commented-out trailingSlash is ignored", () => {
-		write("a/+page.svelte");
-		write("a/+page.server.ts", "// export const trailingSlash = 'always';\n");
-		expect(scanRoutes().pages.find((r) => r.pattern === "/a")?.trailingSlash).toBe("never");
 	});
 });

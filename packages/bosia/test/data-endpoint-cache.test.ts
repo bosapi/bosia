@@ -101,12 +101,13 @@ beforeAll(async () => {
 	);
 	writeFileSync(join(routes, "crash-page", "+page.server.ts"), counter("crash-page"));
 
-	// A server module that throws on import.
+	// A server module that throws on import — at runtime only: the build's analyse
+	// step imports it too, and fails the build on a throw.
 	mkdirSync(join(routes, "crash-server"), { recursive: true });
 	writeFileSync(join(routes, "crash-server", "+page.svelte"), `<p>never</p>\n`);
 	writeFileSync(
 		join(routes, "crash-server", "+page.server.ts"),
-		`if (process.env.NODE_ENV !== "nope") throw new Error("boom");\n` +
+		`if (!process.argv[1]?.endsWith("build.ts")) throw new Error("boom");\n` +
 			`export const load = () => ({});\n`,
 	);
 

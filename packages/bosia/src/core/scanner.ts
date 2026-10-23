@@ -1,6 +1,6 @@
-import { readdirSync, existsSync, readFileSync } from "fs";
+import { readdirSync, existsSync } from "fs";
 import { join } from "path";
-import type { PageRoute, ApiRoute, RouteManifest, TrailingSlash } from "./types.ts";
+import type { PageRoute, ApiRoute, RouteManifest } from "./types.ts";
 import { segmentName, segmentRank } from "./matcher.ts";
 
 // ─── Route Scanner ───────────────────────────────────────
@@ -19,66 +19,6 @@ import { segmentName, segmentRank } from "./matcher.ts";
 
 const ROUTES_DIR = "./src/routes";
 
-/** `export const prerender = true` in a server module's source, outside comments. */
-export function wantsPrerender(src: string): boolean {
-	return /export\s+const\s+prerender\s*(?::\s*[^=]+)?=\s*true\b/.test(stripComments(src));
-}
-
-/** Why a page that asks for prerender can't have it, or null when it can. Reads
- *  the raw source, comments included: a false hit only renders the page live,
- *  while a missed `actions` would ship a static page whose forms can't post. */
-export function prerenderSkipReason(src: string): string | null {
-	if (/export\s+const\s+ssr\s*(?::\s*[^=]+)?=\s*false\b/.test(src))
-		return "ssr=false — contradictory";
-	// A static file can't run an action: Bun would answer the POST with the
-	// prerendered HTML, Workers' asset server with 405. Render it live instead.
-	if (
-		/export\s+(const|let|var|async\s+function|function)\s+actions\b|export\s*\{[^}]*\bactions\b/.test(
-			src,
-		)
-	)
-		return "actions — forms need a live page";
-	return null;
-}
-
-/** True when the page will really be prerendered — the client fetches its data as a static file. */
-function prerenderOf(src: string | null): boolean {
-	return src !== null && wantsPrerender(src) && prerenderSkipReason(src) === null;
-}
-
-/** Source with `//` and block comments blanked; string literals are kept (their
- *  text still matches). Doesn't know regex literals: a `//` or quote inside one
- *  can drop or keep a comment wrongly, so the actions/ssr skip check doesn't use it. Not `Bun.Transpiler` on purpose: that runs Bun macros. */
-function stripComments(src: string): string {
-	return src.replace(
-		/("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|\/\/[^\n]*|\/\*[\s\S]*?\*\//g,
-		(_m, str: string | undefined) => str ?? " ",
-	);
-}
-
-/** A route file's source, or null when it can't be read. */
-function readSource(filePath: string): string | null {
-	try {
-		return readFileSync(filePath, "utf-8");
-	} catch {
-		return null;
-	}
-}
-
-/**
- * Extract `export const trailingSlash = '...'` from a server module file via
- * regex. Static-string read only — runtime expressions return null. Build-time
- * scan avoids invoking server modules during the client bundle.
- */
-function trailingSlashOf(src: string | null): TrailingSlash | null {
-	const m =
-		src &&
-		stripComments(src).match(
-			/export\s+const\s+trailingSlash\s*(?::\s*[^=]+)?=\s*["'](never|always|ignore)["']/,
-		);
-	return (m?.[1] ?? null) as TrailingSlash | null;
-}
-
 export function scanRoutes(): RouteManifest {
 	const pages: PageRoute[] = [];
 	const apis: ApiRoute[] = [];
@@ -89,7 +29,6 @@ export function scanRoutes(): RouteManifest {
 		layoutChain: string[],
 		layoutServerChain: { path: string; depth: number }[],
 		errorPageChain: { path: string; depth: number }[],
-		inheritedTrailingSlash: TrailingSlash,
 		inheritedLoading: string | null,
 	) {
 		const fullDir = join(ROUTES_DIR, dir);
@@ -105,7 +44,6 @@ export function scanRoutes(): RouteManifest {
 		const currentLayouts = [...layoutChain];
 		const currentLayoutServers = [...layoutServerChain];
 		const currentErrorPages = [...errorPageChain];
-		let currentTrailingSlash = inheritedTrailingSlash;
 		// Cascades to every page below, nearest ancestor winning — the same shape
 		// as the layout chain. Without this a section with 40 routes needed 40
 		// identical +loading.svelte files to cover its navigations.
@@ -117,13 +55,10 @@ export function scanRoutes(): RouteManifest {
 			currentLayouts.push(rel("+layout.svelte"));
 		}
 		if (items.some((i) => i.isFile() && i.name === "+layout.server.ts")) {
-			const layoutServerPath = rel("+layout.server.ts");
 			currentLayoutServers.push({
-				path: layoutServerPath,
+				path: rel("+layout.server.ts"),
 				depth: currentLayouts.length - 1,
 			});
-			const ts = trailingSlashOf(readSource(join(ROUTES_DIR, layoutServerPath)));
-			if (ts) currentTrailingSlash = ts;
 		}
 		if (items.some((i) => i.isFile() && i.name === "+error.svelte")) {
 			// depth = number of layouts wrapping this dir (this dir's layout included).
@@ -140,6 +75,7 @@ export function scanRoutes(): RouteManifest {
 				pattern: toUrlPath(urlSegments),
 				id: `/${dir}`,
 				server: rel("+server.ts"),
+				prerender: false,
 			});
 		}
 
@@ -148,10 +84,6 @@ export function scanRoutes(): RouteManifest {
 			const pageServerFile = items.some((i) => i.isFile() && i.name === "+page.server.ts")
 				? rel("+page.server.ts")
 				: null;
-
-			const pageServerSrc = pageServerFile ? readSource(join(ROUTES_DIR, pageServerFile)) : null;
-			const pageTs = trailingSlashOf(pageServerSrc);
-			const effectiveTs: TrailingSlash = pageTs ?? currentTrailingSlash;
 
 			const pageFile = rel("+page.svelte");
 			pages.push({
@@ -163,8 +95,9 @@ export function scanRoutes(): RouteManifest {
 				loading: currentLoading,
 				layoutServers: [...currentLayoutServers],
 				errorPages: [...currentErrorPages],
-				trailingSlash: effectiveTs,
-				prerender: prerenderOf(pageServerSrc),
+				// Read from the real exports by analyseRoutes().
+				trailingSlash: "never",
+				prerender: false,
 			});
 		}
 
@@ -183,13 +116,12 @@ export function scanRoutes(): RouteManifest {
 				currentLayouts,
 				currentLayoutServers,
 				currentErrorPages,
-				currentTrailingSlash,
 				currentLoading,
 			);
 		}
 	}
 
-	walk("", [], [], [], [], "never", null);
+	walk("", [], [], [], [], null);
 
 	// Invalid segments first, so they get their own message, not a conflict or warning.
 	checkParams(pages, (p) => p.page);

@@ -4,7 +4,7 @@
 // A finding that is a new kind of outcome (not just a new value) also gets an oracle check in
 // prerender-invariants.test.ts, and a tricky part added to its PARTS list.
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
 import {
@@ -222,13 +222,23 @@ describe("detectPrerenderRoutes()", () => {
 	};
 	const entries = (...values: string[]) =>
 		`export const prerender = true;\nexport const entries = () => ${JSON.stringify(values.map((slug) => ({ slug })))};\n`;
-	// A live (not prerendered) +server.ts, written so detect can read it.
+	// A live (not prerendered) +server.ts, written so flagged() can read it.
 	const liveApi = (pattern: string, file: string) => {
 		route(pattern, file, "export const GET = () => new Response();\n");
 		return { pattern, server: file };
 	};
+	// The build's analyse step sets `prerender`; here the route file's text stands in.
+	const flagged = (r: any) => {
+		const file = r.pageServer ?? r.server;
+		const src = file ? readFileSync(join(dir, "src/routes", file), "utf-8") : "";
+		return { ...r, prerender: src.includes("export const prerender = true") };
+	};
 	const detect = (pages: unknown[], apis: unknown[] = []) =>
-		detectPrerenderRoutes({ pages, apis, errorPage: null } as any).catch((e) => e);
+		detectPrerenderRoutes({
+			pages: pages.map(flagged),
+			apis: apis.map(flagged),
+			errorPage: null,
+		} as any).catch((e) => e);
 
 	beforeEach(() => {
 		dir = mkdtempSync(join(tmpdir(), "bosia-detect-"));

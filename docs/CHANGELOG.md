@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Response cache guide + skills: `cache = false` in a layout covers every page below it.
 - Data invalidation guide (EN + ID): `parent()` and `metadata` reads are tracked too.
 - Response cache guide (EN + ID): `invalidate(url)` also clears pages whose `metadata()` fetched it.
+- Routing guide, CLI docs + skill: page flags are read by importing route files at build.
 
 ---
 

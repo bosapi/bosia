@@ -49,11 +49,12 @@ bosia build
 Perintah ini menjalankan:
 
 1. Pemindaian rute dan pembuatan manifest
-2. Pembuatan tipe (`$types.d.ts` files)
-3. Pembuatan modul variabel lingkungan (`$env`)
-4. Bundle klien (JavaScript + CSS via Tailwind)
-5. Bundle entry server
-6. Prerendering statis (rute dengan `export const prerender = true`)
+2. Pembuatan modul variabel lingkungan (`$env`)
+3. Analisis rute: meng-import setiap modul server rute untuk membaca `prerender`, `ssr`, `actions` dan `trailingSlash` (kode top-level ikut jalan; error, atau pemuatan yang belum selesai setelah 30 detik, menggagalkan build)
+4. Pembuatan tipe (`$types.d.ts` files)
+5. Bundle klien (JavaScript + CSS via Tailwind)
+6. Bundle entry server
+7. Prerendering statis (rute dengan `export const prerender = true`)
 
 Output disimpan ke `dist/`.
 

@@ -12,6 +12,7 @@ import { basename, join, relative, resolve } from "path";
 import type { RouteManifest } from "./types.ts";
 
 import { scanRoutes, RouteConflictError } from "./scanner.ts";
+import { analyseRoutes, RouteAnalyseError } from "./analyse.ts";
 import { generateRoutesFile } from "./routeFile.ts";
 import { generateRouteTypes, ensureRootDirs } from "./routeTypes.ts";
 import { makeBosiaPlugin } from "./plugin.ts";
@@ -143,6 +144,7 @@ for (const p of [
 	".bosia/env.client.ts",
 	".bosia/artifacts.ts",
 	".bosia/runtime.workers.ts",
+	".bosia/analyse",
 	".bosia/types",
 ]) {
 	clearOutput(p);
@@ -156,6 +158,61 @@ try {
 	if (!(err instanceof RouteConflictError)) throw err;
 	console.error(`❌ ${err.message}`);
 	process.exit(1);
+}
+
+// 1a. $env must exist before the analyse step bundles the route modules.
+generateEnvModules(classifiedEnv);
+
+// Collect Bun build plugins contributed by user plugins, per target.
+const userClientBunPlugins = userPlugins.flatMap((p) => p.build?.bunPlugins?.("browser") ?? []);
+const userServerBunPlugins = userPlugins.flatMap((p) => p.build?.bunPlugins?.("bun") ?? []);
+
+// 1b. Start Tailwind CSS (async — runs concurrently with the analyse step and
+// the client+server builds; it doesn't read the route manifest).
+// Output goes to a temp name in dist/client; after the build we content-hash it
+// and rename to bosia-tw-<hash>.css so it gets immutable caching and rebuilds
+// bust browser caches only when the CSS actually changed. mkdir up front —
+// Bun.build writes the same dir concurrently and mkdir is idempotent.
+mkdirSync(join(OUT_DIR, "client"), { recursive: true });
+const tailwindBin = resolveBosiaBin("tailwindcss");
+const tailwindTempPath = join(OUT_DIR, "client", TW_TEMP_BASENAME);
+const tailwindProc = Bun.spawn(
+	[
+		tailwindBin,
+		"-i",
+		"./src/app.css",
+		"-o",
+		tailwindTempPath,
+		...(isProduction ? ["--minify"] : []),
+	],
+	{
+		cwd: process.cwd(),
+		env: { ...process.env, NODE_PATH: BOSIA_NODE_PATH },
+		stderr: "pipe",
+	},
+);
+const tailwindPromise = tailwindProc.exited;
+
+// 1c. Read prerender/ssr/actions/trailingSlash from the real route exports.
+// A cached manifest already holds them: no route file changed since.
+if (!cachedManifest) {
+	// Route modules now run in this process. A promise their top-level code
+	// leaves rejecting (an un-awaited `db.connect()`) would crash the build with
+	// an error that doesn't say where it came from.
+	process.on("unhandledRejection", (err) => {
+		console.error(
+			"❌ A promise rejected during the build, often from a route module's top-level code (an un-awaited connect()):",
+		);
+		console.error(err);
+		process.exit(1);
+	});
+	try {
+		await analyseRoutes(manifest, userServerBunPlugins, process.env.BOSIA_DEV_BUILD === "1");
+	} catch (err) {
+		if (!(err instanceof RouteAnalyseError)) throw err;
+		console.error(err.message);
+		process.exit(1);
+	}
 }
 buildCtx.manifest = manifest;
 console.log(
@@ -171,7 +228,7 @@ if (manifest.apis.length > 0) {
 	}
 }
 
-// 1b. Load & validate src/app.html template (required)
+// 1d. Load & validate src/app.html template (required)
 let appHtml: any;
 try {
 	appHtml = loadAppHtmlTemplate(process.cwd());
@@ -199,41 +256,9 @@ generateRouteTypes(manifest);
 // 2c. Ensure tsconfig.json has rootDirs pointing at .bosia/types
 ensureRootDirs();
 
-// 2d. Generate .bosia/env.server.ts, .bosia/env.client.ts, .bosia/types/env.d.ts
-generateEnvModules(classifiedEnv);
-
-// 3. Start Tailwind CSS (async — runs concurrently with client+server builds).
-// Output goes to a temp name in dist/client; after the build we content-hash it
-// and rename to bosia-tw-<hash>.css so it gets immutable caching and rebuilds
-// bust browser caches only when the CSS actually changed. mkdir up front —
-// Bun.build writes the same dir concurrently and mkdir is idempotent.
-mkdirSync(join(OUT_DIR, "client"), { recursive: true });
-const tailwindBin = resolveBosiaBin("tailwindcss");
-const tailwindTempPath = join(OUT_DIR, "client", TW_TEMP_BASENAME);
-const tailwindProc = Bun.spawn(
-	[
-		tailwindBin,
-		"-i",
-		"./src/app.css",
-		"-o",
-		tailwindTempPath,
-		...(isProduction ? ["--minify"] : []),
-	],
-	{
-		cwd: process.cwd(),
-		env: { ...process.env, NODE_PATH: BOSIA_NODE_PATH },
-		stderr: "pipe",
-	},
-);
-const tailwindPromise = tailwindProc.exited;
-
 // Separate plugin instances per build target ($env resolves differently)
 const clientPlugin = makeBosiaPlugin("browser");
 const serverPlugin = makeBosiaPlugin("bun");
-
-// Collect Bun build plugins contributed by user plugins, per target.
-const userClientBunPlugins = userPlugins.flatMap((p) => p.build?.bunPlugins?.("browser") ?? []);
-const userServerBunPlugins = userPlugins.flatMap((p) => p.build?.bunPlugins?.("bun") ?? []);
 
 // Build-time defines: inline PUBLIC_STATIC_* and STATIC_* vars
 const staticDefines: Record<string, string> = {};
@@ -443,6 +468,9 @@ for (const p of userPlugins) {
 }
 
 console.log(`\n🎉 Build complete in ${Math.round(performance.now() - buildStart)}ms!`);
+// The analyse and prerender steps import user route modules; an open DB pool or
+// timer in one would otherwise keep the build running after it finished.
+process.exit(0);
 
 // ─── Helpers ─────────────────────────────────────────────
 
