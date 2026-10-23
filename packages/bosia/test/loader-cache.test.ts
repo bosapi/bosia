@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
 	captureSnapshot,
+	maskBitsFor,
 	shouldRerun,
 	type CacheEntry,
 	type DirtyState,
@@ -217,5 +218,43 @@ describe("server bitmask decoding", () => {
 
 	test("missing bits default to run", () => {
 		expect(buildMaskFromBits("1", 2)).toEqual({ page: true, layouts: [true, true] });
+	});
+});
+
+describe("maskBitsFor", () => {
+	const at = ctx({ params: { id: "1" } });
+	const cached = (nodeId: string, deps: LoaderDeps): CacheEntry => ({
+		...entry(deps, at),
+		nodeId,
+	});
+	const ids = ["root", "inner"];
+
+	test("nothing changed: nothing re-runs", () => {
+		const cache = {
+			page: cached("page", { ...emptyDeps(), uses_parent: true }),
+			layouts: { root: cached("root", emptyDeps()), inner: cached("inner", emptyDeps()) },
+		};
+		expect(maskBitsFor(ids, "page", cache, emptyDirty(), at)).toBe("000");
+	});
+
+	test("a layout re-run re-runs the parent() callers below it, not the others", () => {
+		const cache = {
+			page: cached("page", emptyDeps()),
+			layouts: {
+				root: cached("root", { ...emptyDeps(), params: ["id"] }),
+				inner: cached("inner", { ...emptyDeps(), uses_parent: true }),
+			},
+		};
+		const next = ctx({ params: { id: "2" } });
+		expect(maskBitsFor(ids, "page", cache, emptyDirty(), next)).toBe("011");
+		cache.page = cached("page", { ...emptyDeps(), uses_parent: true });
+		expect(maskBitsFor(ids, "page", cache, emptyDirty(), next)).toBe("111");
+	});
+
+	test("a new page node or `force` re-runs it; a depth with no loader never does", () => {
+		const cache = { page: cached("other", emptyDeps()), layouts: {} };
+		expect(maskBitsFor([null], "page", cache, emptyDirty(), at)).toBe("10");
+		cache.page = cached("page", emptyDeps());
+		expect(maskBitsFor([null], "page", cache, emptyDirty(), at, true)).toBe("10");
 	});
 });

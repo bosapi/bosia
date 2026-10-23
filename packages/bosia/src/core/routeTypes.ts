@@ -92,7 +92,8 @@ export function generateRouteTypes(manifest: RouteManifest): void {
 		lines.push(``);
 		lines.push(`/** Set \`export const cache: CacheOption = false;\` in +page.server.ts, the`);
 		lines.push(` *  <script module> of +page.svelte, or +server.ts to opt the route out of`);
-		lines.push(` *  the server response cache. Layouts don't read it. */`);
+		lines.push(` *  the server response cache. In a layout (+layout.server.ts or its`);
+		lines.push(` *  <script module>) it opts out every page below it. */`);
 		lines.push(`export type CacheOption = false;`);
 		lines.push(``);
 		lines.push(

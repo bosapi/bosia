@@ -1,7 +1,7 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.2.8**
+> Current version: **1.2.9**
 
 ---
 
@@ -114,14 +114,14 @@
 - [ ] ⚪ Slow loaders: `LOAD_TIMEOUT` (30s) and `CACHE_WAIT_TIMEOUT` (60s) outlast Bun's default `IDLE_TIMEOUT` (10s), so the client of a 15s loader is cut off before either applies; documented, raise `IDLE_TIMEOUT` too.
 - [x] 🟠 Client nav skipped a loader that read the whole query (`url.search`, `Object.fromEntries(url.searchParams)`): `?page=1` → `2` kept page 1. Deps now carry a `"*"` search param; the client compares the full query.
 - [x] 🟠 Review: the `cache` regex scan missed export forms (destructuring, `export let cache;`, `;` in a string), leaking per-user pages. Scan removed; `routeCacheFlag` reads the real exports each request.
-- [ ] 🟡 `wantsPrerender` / `prerenderSkipReason` scan raw source, so a commented-out `// export const prerender = true` still prerenders the page (its loader runs once, at build).
+- [x] 🟡 `wantsPrerender` / `prerenderSkipReason` scanned raw source, so `// export const prerender = true` prerendered the page. Source now goes through `Bun.Transpiler` first (comments + types gone; `prerender: boolean = true` now seen). Text in strings still matches.
 - [ ] ⚪ Serializing the `url` proxy after `load()` returns (`return { link: url }`, `console.log(url)`) calls `toJSON`/`toString` and adds `"*"` to deps late; server and client may disagree.
 - [x] 🟡 Review: client nav compared only the first value of a tracked param, so `getAll("tag")` / `has("tag", "b")` kept old data on `?tag=a&tag=b` → `?tag=a&tag=c`. The snapshot now holds every value.
-- [ ] 🟡 `export const cache = false` in `+layout.server.ts` / `+layout.svelte` is silently ignored (only page modules are read), though `$types` offers `CacheOption` there. Honour it or warn at build.
-- [ ] 🟡 Client loader cache doesn't track `parent()`: when a layout re-runs (`*`, `depends`, params), a page loader using its data via `parent()` keeps old data. Mark parent use in deps; re-run its consumers.
-- [ ] 🟡 `metadata()` deps stay on the server (`metaDeps`), so a `metadata()` reading `?page=` never re-runs on client nav: title and `metadata.data` stay stale. Merge them into the page deps.
+- [x] 🟡 `export const cache = false` in `+layout.server.ts` / `+layout.svelte` was ignored. `routeCacheFlag` now reads every layout module too: a layout opt-out covers all pages below it.
+- [x] 🟡 Client loader cache didn't track `parent()`. Deps now carry `uses_parent`; `maskBitsFor` (shared by nav + prefetch) re-runs a `parent()` caller when a layout above it re-runs.
+- [x] 🟡 `metadata()` deps stayed on the server. Title/meta were never stale (metadata runs every fetch), but a `load()` reading `metadata` kept old data. Its deps now merge into the page's when read.
 - [ ] ⚪ `routeCacheFlag` treats a module that fails to import as `cache = false` without logging, and re-imports it twice per request (`once()` drops rejections); the cause is never shown.
-- [ ] ⚪ `routeCacheFlag` imports +page.svelte/+page.server.ts before every cache lookup (data endpoint too); on a miss they no longer overlap metadata/layouts. Save the flag per route after a clean import (docs fix it at load).
+- [ ] ⚪ `routeCacheFlag` imports the page and layout modules before every cache lookup (data endpoint too); on a miss they no longer overlap metadata/layouts. Save the flag per route after a clean import (docs fix it at load).
 - [ ] ⚪ A `+page.server.ts` or `+page.svelte` that throws on import gives a plain-text 500, not `+error.svelte` (SSR); already so on main.
 - [ ] ⚪ Plain-URL lookup + `queryAware` code is copied in renderer.ts and server.ts; a tracked data request computes the identity hash 3× (cacheKey, plain key, dedup key). One helper in cache.ts.
 - [ ] ⚪ Tracking-param gaps: a component `handle` hook or plugin `render` using the param isn't tracked (served the param-less copy); `new URL(path, url)` reads `toString`: re-runs on any query change (accepted; use `url.origin`).
@@ -2054,7 +2054,7 @@ A is preferred. Plus a P0 doc/skill update so the workaround (`locals`-based far
 
 - [ ] 🟡 Key-based invalidation for `+server.ts` endpoints — give API handlers a `depends()` argument or support `export const tags = [...]` so `invalidate("app:user")` evicts API responses too.
 - [ ] 🟡 TTL-based expiry — author wants pure-invalidate today, but TTL is useful for "refresh every N seconds" pages.
-- [ ] 🟡 Layout-level `cache = false` cascade — a layout opting out should make its child routes uncached too.
+- [x] 🟡 Layout-level `cache = false` cascade — done in 1.2.9 (`routeCacheFlag` reads layout modules).
 - [ ] 🟡 Multi-replica cache (pub/sub invalidation) — single-replica only in v0.6.
 - [ ] 🟡 Soft-purge / stale-while-revalidate.
 - [ ] 🟡 Custom key function — `export const cache = { key: (req) => string }`.

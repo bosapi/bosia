@@ -5,7 +5,7 @@
 	import { clientRoutes, defaultTitle } from "bosia:routes";
 	import { consumePrefetch, clearPrefetches, dataUrl, readDataResponse } from "./prefetch.ts";
 	import { appState, clearDirty } from "./appState.svelte.ts";
-	import { captureSnapshot, liveContext, shouldRerun, type CacheEntry } from "./loaderCache.ts";
+	import { captureSnapshot, liveContext, maskBitsFor, type CacheEntry } from "./loaderCache.ts";
 	import { pickErrorPage } from "../errorMatch.ts";
 	import { fireAfterNavigate, type Navigation } from "./navListeners.ts";
 	import { drainNavResolvers } from "./navigation.ts";
@@ -307,35 +307,21 @@
 
 		// ─── Loader cache: decide which loaders need to re-run ─────────────
 		// For each layout depth + the page, compare the cached entry (if any)
-		// against the live URL/params and the dirty set. If everything is
-		// cacheable, skip the fetch entirely.
+		// against the live URL/params and the dirty set (see maskBitsFor); a
+		// `carried` nav is owed a refresh, so everything runs. We always issue the
+		// fetch (even when every layer is cached) so page-level metadata stays
+		// fresh on every navigation.
 		const ctx = liveContext(pathname, match.params, url);
 		const layoutIds = (match.route as any).layoutIds as (string | null)[];
 		const pageId = (match.route as any).pageId as string | null;
-
-		const layoutRunFlags: boolean[] = layoutIds.map((id) => {
-			if (id === null) return false; // no server loader at this depth
-			const entry = appState.loaderCache.layouts[id];
-			if (!entry || carried) return true; // never loaded, or owed a refresh → must run
-			return shouldRerun(entry, appState.dirty, ctx);
-		});
-
-		let pageRun = false;
-		if (pageId !== null) {
-			const entry = appState.loaderCache.page;
-			if (!entry || entry.nodeId !== pageId || carried) {
-				pageRun = true;
-			} else {
-				pageRun = shouldRerun(entry, appState.dirty, ctx);
-			}
-		}
-
-		// Build `_invalidated=<bits>` — char 0 = page, char i+1 = layouts[i].
-		// '1' = send, '0' = omit (the client renders that layer from its cache;
-		// the server still runs layout loaders, which may be guards).
-		// We always issue the fetch (even when every layer is cached) so page-level
-		// metadata stays fresh on every navigation.
-		const maskBits = (pageRun ? "1" : "0") + layoutRunFlags.map((b) => (b ? "1" : "0")).join("");
+		const maskBits = maskBitsFor(
+			layoutIds,
+			pageId,
+			appState.loaderCache,
+			appState.dirty,
+			ctx,
+			carried,
+		);
 
 		// An invalidate() since the last nav — tick bump or any dirty entry —
 		// must read past the server's response cache, not just re-run loaders.

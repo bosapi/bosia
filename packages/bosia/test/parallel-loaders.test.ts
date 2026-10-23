@@ -62,7 +62,7 @@ beforeAll(async () => {
 	writeFileSync(
 		join(inner, "+page.server.ts"),
 		SLEEP +
-			`export function metadata() {\n\treturn { title: "Lambat", data: { fromMeta: "meta" } };\n}\n` +
+			`export function metadata({ url }: any) {\n\turl.searchParams.get("lang");\n\treturn { title: "Lambat", data: { fromMeta: "meta" } };\n}\n` +
 			`export async function load({ parent, metadata }: any) {\n` +
 			`\tconst [p] = await Promise.all([parent(), sleep(150)]);\n` +
 			`\treturn { sawA: p.a, sawB: p.b, fromMeta: metadata?.fromMeta ?? null };\n` +
@@ -234,5 +234,24 @@ describe("plain-function loaders", () => {
 		const body = await (await fetch(dataUrl("/plain/inner", fresh()))).json();
 		expect(body.layoutData[0]).toMatchObject({ a: "sync" });
 		expect(body.pageData).toMatchObject({ b: "plain-page" });
+	});
+});
+
+describe("deps the client router re-runs on", () => {
+	test("a loader that called parent() says so; the root layout didn't", async () => {
+		const body = await (await fetch(dataUrl("/slow/inner", fresh()))).json();
+		expect(body.layoutDeps[0].uses_parent).toBeUndefined();
+		expect(body.layoutDeps[1].uses_parent).toBe(true);
+		expect(body.pageDeps.uses_parent).toBe(true);
+	});
+
+	test("a load() that read `metadata` carries metadata()'s query reads", async () => {
+		const body = await (await fetch(dataUrl("/slow/inner", fresh()))).json();
+		expect(body.pageDeps.searchParams).toContain("lang");
+	});
+
+	test("a load() that didn't read `metadata` doesn't", async () => {
+		const body = await (await fetch(dataUrl("/plain/inner", fresh()))).json();
+		expect(body.pageDeps.searchParams).toEqual([]);
 	});
 });

@@ -448,6 +448,7 @@ async function resolve(event: RequestEvent): Promise<Response> {
 					metaP.then((m) => m?.data ?? null),
 					pageMatch,
 					mask,
+					metaDeps,
 				);
 				const meta = await metaP;
 				// Explicit whitelist, not a spread: `metadata.data` feeds load() on the

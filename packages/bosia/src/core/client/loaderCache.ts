@@ -136,3 +136,34 @@ export function shouldRerun(entry: CacheEntry, dirty: DirtyState, next: EvalCont
 	if (deps.uses_url && snapshot.pathname !== next.pathname) return true;
 	return false;
 }
+
+/**
+ * The `_invalidated` mask for a nav: char 0 = page, char i+1 = layout depth i;
+ * '1' = run and send, '0' = the client renders it from its cache (the server
+ * still runs layout loaders, since they may be guards). A loader that called
+ * `parent()` re-runs whenever a layout above it does. `force` re-runs all.
+ */
+export function maskBitsFor(
+	layoutIds: (string | null)[],
+	pageId: string | null,
+	cache: { page: CacheEntry | null; layouts: Record<string, CacheEntry> },
+	dirty: DirtyState,
+	ctx: EvalContext,
+	force = false,
+): string {
+	let aboveRan = false;
+	const run = (entry: CacheEntry | null | undefined, id: string) =>
+		!entry ||
+		entry.nodeId !== id ||
+		force ||
+		(aboveRan && !!entry.deps.uses_parent) ||
+		shouldRerun(entry, dirty, ctx);
+	const layouts = layoutIds.map((id) => {
+		if (id === null) return "0"; // no server loader at this depth
+		const ran = run(cache.layouts[id], id);
+		aboveRan ||= ran;
+		return ran ? "1" : "0";
+	});
+	const page = pageId !== null && run(cache.page, pageId);
+	return (page ? "1" : "0") + layouts.join("");
+}

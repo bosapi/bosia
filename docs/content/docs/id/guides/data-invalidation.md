@@ -17,6 +17,8 @@ Loader secara otomatis bergantung pada:
 - Setiap `url.pathname`/`origin`/`href` yang dibaca
 - Setiap `cookies.get(X)` yang dibaca
 - Setiap URL yang dilewatkan ke `fetch()` yang di-inject
+- Layout di atasnya, kalau memanggil `parent()` (layout yang dijalankan ulang ikut menjalankannya ulang)
+- Apa yang dibaca `metadata()` halaman, kalau `load()` halaman membaca `metadata`
 
 ```ts
 // +page.server.ts

@@ -86,7 +86,7 @@ Also, the client `invalidate()` **resolves immediately**: it flags the loader an
 
 R3. **Opt out per route when the cost outweighs the benefit.** Pages that change on every request (live ticker, per-second counter) or pages with personalised content not covered by `CACHE_KEYS` should opt out.
 
-For page routes the export goes in `+page.svelte` (inside `<script module>`) or in `+page.server.ts`; either one saying `false` opts the page out. The renderer reads the real `cache` export of both modules (`routeCacheFlag` in `core/renderer.ts`), so any export form works, and so does a value computed when the module loads. It is read **before** `load()` and shared by every request: never set `cache` inside `load()` per user — that request is cached already, and the change hits everyone. `setHeaders({ "cache-control": "no-store" })` only keeps that one response from being saved — a cached copy is still served before `load()` runs. Anything that differs per user belongs in `CACHE_KEYS` or `cache = false`.
+For page routes the export goes in `+page.svelte` (inside `<script module>`) or in `+page.server.ts`; either one saying `false` opts the page out. In a layout (`+layout.server.ts`, or `+layout.svelte`'s `<script module>`) it opts out every page below it. The renderer reads the real `cache` export of the page and layout modules (`routeCacheFlag` in `core/renderer.ts`), so any export form works, and so does a value computed when the module loads. It is read **before** `load()` and shared by every request: never set `cache` inside `load()` per user — that request is cached already, and the change hits everyone. `setHeaders({ "cache-control": "no-store" })` only keeps that one response from being saved — a cached copy is still served before `load()` runs. Anything that differs per user belongs in `CACHE_KEYS` or `cache = false`.
 
 ```svelte
 <!-- ✅ +page.svelte -->
@@ -116,7 +116,7 @@ The symptom is reliably misread as a client bug:
 
 Both are working as designed. Step 1 goes through client `invalidate()`, whose data request carries `_fresh=1` and therefore **skips the cache read**. Step 2 is a plain GET and is served from cache. Link navigation back to the page is served from cache too (client-router data requests are cached like HTML), but the page you just mutated always looks right because its own `invalidate()` refetched it — which is why this ships.
 
-Tag the layout with `depends()` and evict from **every** write path — that is what tags are for, and a tag on a layout loader covers every page beneath it. Opting out (`export const cache = false` on each page) is the fallback for pages with no natural tag boundary, or where the writers cannot be enumerated with confidence.
+Tag the layout with `depends()` and evict from **every** write path — that is what tags are for, and a tag on a layout loader covers every page beneath it. Opting out (`export const cache = false` in the layout, which covers every page below it) is the fallback for pages with no natural tag boundary, or where the writers cannot be enumerated with confidence.
 
 Two failure modes decide whether tagging holds:
 

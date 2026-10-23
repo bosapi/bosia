@@ -70,7 +70,9 @@ The cache key is the URL plus `CACHE_KEYS`, so it can't honor a `Vary` on anythi
 ## Opting out per route
 
 Page routes can put the export in `+page.svelte` (inside `<script module>`) or in
-`+page.server.ts`. Either one saying `false` turns the cache off for that page.
+`+page.server.ts`. Either one saying `false` turns the cache off for that page. In a
+layout (`+layout.server.ts`, or the `<script module>` of `+layout.svelte`) it turns the
+cache off for every page below that layout.
 
 ```svelte
 <!-- +page.svelte -->
@@ -138,7 +140,7 @@ Two ways out:
 - **Tag + evict** (keeps the cache): `depends("app:sidebar")` in the layout loader, and
   `invalidate("app:sidebar")` from **every** write path. The tag on a layout loader covers
   all pages beneath it, so one eviction clears the whole section.
-- **Opt out**: `export const cache = false` in every page (`+page.svelte` or `+page.server.ts`) under the layout.
+- **Opt out**: `export const cache = false` in the layout (`+layout.server.ts` or `+layout.svelte`'s `<script module>`) covers every page under it.
   Fewer moving parts, but you give up caching for the entire authenticated area.
 
 Tag + evict is the better default — it is what `depends()` exists for. Two things decide

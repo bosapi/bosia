@@ -5,15 +5,14 @@
 import { findMatch } from "../matcher.ts";
 import { clientRoutes } from "bosia:routes";
 import { appState } from "./appState.svelte.ts";
-import { liveContext, shouldRerun } from "./loaderCache.ts";
+import { liveContext, maskBitsFor } from "./loaderCache.ts";
 import { base } from "./base.ts";
 import { appLinkPath, locationPath } from "./router.svelte.ts";
 
 /**
  * Build the `_invalidated` mask bits for a target path using the current
- * client loader cache. Char 0 = page, char i+1 = layout depth i; '1' = send,
- * '0' = the client already holds it (the server still runs layout loaders,
- * since they may be guards). Returns `null` when the route cannot be matched.
+ * client loader cache (see maskBitsFor). Returns `null` when the route cannot
+ * be matched.
  */
 export function buildMaskBits(path: string): string | null {
 	const url = new URL(path, window.location.href);
@@ -22,25 +21,13 @@ export function buildMaskBits(path: string): string | null {
 	// Prerendered data is a fixed file: nothing to skip, and on Workers only a
 	// plain GET reaches it (the asset server answers a POST with 405).
 	if (!match || match.route.prerender) return null;
-	const ctx = liveContext(pathname, match.params, url);
-	const layoutIds = (match.route as any).layoutIds as (string | null)[];
-	const pageId = (match.route as any).pageId as string | null;
-
-	const layoutRunFlags = layoutIds.map((id) => {
-		if (id === null) return false;
-		const entry = appState.loaderCache.layouts[id];
-		if (!entry) return true;
-		return shouldRerun(entry, appState.dirty, ctx);
-	});
-
-	let pageRun = false;
-	if (pageId !== null) {
-		const entry = appState.loaderCache.page;
-		if (!entry || entry.nodeId !== pageId) pageRun = true;
-		else pageRun = shouldRerun(entry, appState.dirty, ctx);
-	}
-
-	return (pageRun ? "1" : "0") + layoutRunFlags.map((b) => (b ? "1" : "0")).join("");
+	return maskBitsFor(
+		(match.route as any).layoutIds,
+		(match.route as any).pageId,
+		appState.loaderCache,
+		appState.dirty,
+		liveContext(pathname, match.params, url),
+	);
 }
 
 /**

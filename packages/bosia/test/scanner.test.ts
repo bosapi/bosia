@@ -311,3 +311,24 @@ describe("scanRoutes() catch-all prefix warning", () => {
 		expect(warnings().join("")).toContain(`doesn't match "/docs" itself`);
 	});
 });
+
+describe("scanRoutes() prerender flag", () => {
+	test("reads the real export, not a commented-out one", () => {
+		write("on/+page.svelte");
+		write("on/+page.server.ts", "export const prerender: boolean = true;\n");
+		write("off/+page.svelte");
+		write(
+			"off/+page.server.ts",
+			"// export const prerender = true\n/* export const prerender = true */\n",
+		);
+		write("form/+page.svelte");
+		write(
+			"form/+page.server.ts",
+			"export const prerender = true;\n// export const actions = {};\n",
+		);
+		const flag = (p: string) => scanRoutes().pages.find((r) => r.pattern === p)?.prerender;
+		expect(flag("/on")).toBe(true);
+		expect(flag("/off")).toBe(false);
+		expect(flag("/form")).toBe(true);
+	});
+});

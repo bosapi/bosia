@@ -161,6 +161,8 @@ export type LoaderDeps = {
 	cookies: string[];
 	/** True if the loader read `url.pathname`/`url.origin`/`url.hash`/`url.href`. */
 	uses_url: boolean;
+	/** True if the loader called `parent()`: it re-runs whenever a layout above it does. */
+	uses_parent?: boolean;
 };
 
 export type ResolveFunction = (event: RequestEvent) => MaybePromise<Response>;

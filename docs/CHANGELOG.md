@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.32] - 2026-10-23
+
+### Changed
+
+- Response cache guide + skills: `cache = false` in a layout covers every page below it.
+- Data invalidation guide (EN + ID): `parent()` and `metadata` reads are tracked too.
+
+---
+
 ## [0.8.31] - 2026-10-18
 
 ### Changed

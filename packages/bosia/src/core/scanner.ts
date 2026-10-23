@@ -43,10 +43,24 @@ function prerenderOf(src: string | null): boolean {
 	return src !== null && wantsPrerender(src) && prerenderSkipReason(src) === null;
 }
 
-/** A route file's source, or null when it can't be read. */
+const transpiler = new Bun.Transpiler({ loader: "ts" });
+
+/** Code with comments and type annotations removed, so the export regexes don't
+ *  match a commented-out `// export const prerender = true`. Text inside strings
+ *  is kept; a regex scan can't tell it apart. Unparseable code comes back as is
+ *  (the build reports it). */
+export function stripComments(src: string): string {
+	try {
+		return transpiler.transformSync(src);
+	} catch {
+		return src;
+	}
+}
+
+/** A route file's code (comments stripped), or null when it can't be read. */
 function readSource(filePath: string): string | null {
 	try {
-		return readFileSync(filePath, "utf-8");
+		return stripComments(readFileSync(filePath, "utf-8"));
 	} catch {
 		return null;
 	}

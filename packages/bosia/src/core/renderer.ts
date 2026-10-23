@@ -251,19 +251,26 @@ function stampErrorContext(
 // again and turns the failure into the error page.
 const uncached = () => ({ cache: false });
 
-/** A page route's `export const cache`: `false` in either +page.svelte or
- *  +page.server.ts opts it out. Read from the real modules each time, so no
- *  export form or later `cache = false` is missed. Cheap because the generated
- *  `once()` wrapper (routeFile.ts) hands back the settled import promise. */
+/** A page route's `export const cache`: `false` in +page.svelte, +page.server.ts,
+ *  or any layout above it (+layout.svelte / +layout.server.ts) opts it out. Read
+ *  from the real modules each time, so no export form or later `cache = false`
+ *  is missed. Cheap because the generated `once()` wrapper (routeFile.ts) hands
+ *  back the settled import promise. */
 export async function routeCacheFlag(route: {
 	pageModule: () => Promise<any>;
 	pageServer: (() => Promise<any>) | null;
+	layoutModules: (() => Promise<any>)[];
+	layoutServers: { loader: () => Promise<any> }[];
 }): Promise<boolean> {
-	const [pageMod, serverMod] = await Promise.all([
-		route.pageModule().catch(uncached),
-		route.pageServer?.().catch(uncached),
-	]);
-	return pageMod.cache !== false && serverMod?.cache !== false;
+	const mods = await Promise.all(
+		[
+			route.pageModule,
+			route.pageServer,
+			...route.layoutModules,
+			...route.layoutServers.map((ls) => ls.loader),
+		].map((load) => load?.().catch(uncached)),
+	);
+	return mods.every((mod) => mod?.cache !== false);
 }
 
 // ─── Per-Loader Dependency Tracking ──────────────────────
@@ -388,6 +395,14 @@ function trackedFetch(
 	};
 }
 
+/** Adds `from`'s reads to `into`. */
+function mergeDeps(into: LoaderDeps, from: LoaderDeps): void {
+	for (const k of ["keys", "urls", "params", "searchParams", "cookies"] as const) {
+		for (const v of from[k]) if (!into[k].includes(v)) into[k].push(v);
+	}
+	into.uses_url ||= from.uses_url;
+}
+
 function makeDepends(deps: LoaderDeps): (...keys: string[]) => void {
 	return (...keys: string[]) => {
 		for (const k of keys) {
@@ -462,6 +477,8 @@ export async function loadRouteData(
 	metadataData: Record<string, any> | null | Promise<Record<string, any> | null> = null,
 	match?: RouteMatch<(typeof serverRoutes)[number]> | null,
 	mask?: LoaderMask,
+	/** What `metadata()` read; folded into the page's deps when load() reads `metadata`. */
+	metaDeps?: LoaderDeps,
 ) {
 	match ??= findMatch(serverRoutes, url.pathname);
 	if (!match) return null;
@@ -479,13 +496,14 @@ export async function loadRouteData(
 	// Merged data of the first `n` layout layers. A fresh object per call, so
 	// loaders cannot mutate what the others see.
 	const layers: Promise<LayerResult>[] = [];
-	const parentOf = (n: number) => async () => {
+	const parentOf = (n: number, deps: LoaderDeps) => async () => {
+		deps.uses_parent = true;
 		const above = await Promise.all(layers.slice(0, n));
 		return Object.assign({}, ...above.map((l) => l.data));
 	};
 
 	for (const ls of route.layoutServers) {
-		const parent = parentOf(layers.length);
+		const depth = layers.length;
 		const layer = (async (): Promise<LayerResult> => {
 			const mod = await ls.loader();
 			if (typeof mod.load !== "function" || warmingUp) return { data: {}, deps: emptyDeps() };
@@ -498,7 +516,7 @@ export async function loadRouteData(
 						url: trackedUrl(url, deps),
 						locals,
 						cookies: trackedCookies(cookies, deps),
-						parent,
+						parent: parentOf(depth, deps),
 						fetch: trackedFetch(fetch, origin, deps),
 						metadata: null,
 						depends: makeDepends(deps),
@@ -525,6 +543,7 @@ export async function loadRouteData(
 				if (typeof mod.load !== "function" || warmingUp)
 					return { ...flags, data: {}, deps: emptyDeps() };
 				const deps = emptyDeps();
+				const metadata = await metadataData;
 				const data =
 					(await withTimeout(
 						mod.load({
@@ -533,9 +552,14 @@ export async function loadRouteData(
 							url: trackedUrl(url, deps),
 							locals,
 							cookies: trackedCookies(cookies, deps),
-							parent: parentOf(layers.length),
+							parent: parentOf(layers.length, deps),
 							fetch: trackedFetch(fetch, origin, deps),
-							metadata: await metadataData,
+							// metadata() ran before load() did, so its deps are complete:
+							// a load() that reads its data re-runs when they change.
+							get metadata() {
+								if (metaDeps) mergeDeps(deps, metaDeps);
+								return metadata;
+							},
 							depends: makeDepends(deps),
 							platform: getPlatform(),
 							setHeaders,
@@ -798,6 +822,8 @@ export async function renderSSRStream(
 				// failure ends the request, the result below is never read.
 				metadataP.then((m) => (m.ok ? (m.value?.data ?? null) : null)),
 				match,
+				undefined,
+				metaDeps,
 			),
 			Promise.all(route.layoutModules.map((l: () => Promise<any>) => l())),
 			route.pageModule(),

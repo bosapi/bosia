@@ -78,6 +78,21 @@ beforeAll(async () => {
 
 	writeFileSync(join(routes, "server-reexp", "flag.ts"), "export const cache = false;\n");
 
+	// The opt-out in a layout (server module or <script module>) covers the pages below it.
+	for (const [dir, file, flag] of [
+		["layout-server-off", "+layout.server.ts", "export const cache = false;\n"],
+		[
+			"layout-svelte-off",
+			"+layout.svelte",
+			`<script module>\n\texport const cache = false;\n</script>\n<script>let { children } = $props();</script>\n{@render children()}\n`,
+		],
+	]) {
+		mkdirSync(join(routes, dir, "inner"), { recursive: true });
+		writeFileSync(join(routes, dir, file), flag);
+		writeFileSync(join(routes, dir, "inner", "+page.svelte"), `<p>${dir}</p>\n`);
+		writeFileSync(join(routes, dir, "inner", "+page.server.ts"), counter(dir));
+	}
+
 	// A page module that throws on import.
 	mkdirSync(join(routes, "crash-page"), { recursive: true });
 	writeFileSync(
@@ -430,6 +445,21 @@ describe("data endpoint response cache", () => {
 			await fetch(`${origin}/${dir}`);
 			await settle();
 			const page = await fetch(`${origin}/${dir}`);
+			expect(page.headers.get("x-bosia-cache")).toBeNull();
+		}
+	});
+
+	test("`export const cache = false` in a layout opts out the pages below it", async () => {
+		for (const dir of ["layout-server-off", "layout-svelte-off"]) {
+			const first = await getData(`/${dir}/inner.json`);
+			await settle();
+			const second = await getData(`/${dir}/inner.json`);
+			expect(second.res.headers.get("x-bosia-cache")).toBeNull();
+			expect(second.body.pageData.runs).toBe(first.body.pageData.runs + 1);
+
+			await fetch(`${origin}/${dir}/inner`);
+			await settle();
+			const page = await fetch(`${origin}/${dir}/inner`);
 			expect(page.headers.get("x-bosia-cache")).toBeNull();
 		}
 	});

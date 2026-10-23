@@ -17,6 +17,8 @@ A loader automatically depends on:
 - Every `url.pathname`/`origin`/`href` read
 - Every `cookies.get(X)` it reads
 - Every URL it passes to the injected `fetch()`
+- The layouts above it, when it calls `parent()` (a layout that re-runs re-runs it too)
+- What the page's `metadata()` read, when the page `load()` reads `metadata`
 
 ```ts
 // +page.server.ts

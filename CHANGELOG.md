@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.9] - 2026-10-23
+
+### Fixed
+
+- `export const cache = false` in a layout now turns the cache off for every page below it.
+- A commented-out `// export const prerender = true` no longer prerenders the page.
+- A loader that calls `parent()` now reloads when a layout above it reloads.
+- A page `load()` that reads `metadata` now reloads when what `metadata()` read changes.
+
+---
+
 ## [1.2.8] - 2026-10-18
 
 ### Changed
