@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.10] - 2026-10-26
+
+### Fixed
+
+- `bosia start` now passes stop signals to the server, so Docker stops it cleanly.
+- `bosia dev` now stops its app server when Docker or `kill` stops it.
+
 ## [1.2.9] - 2026-10-23
 
 ### Fixed

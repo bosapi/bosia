@@ -181,6 +181,8 @@ The production server handles `SIGTERM` and `SIGINT` signals:
 2. Waits for in-flight requests to complete
 3. Force exits after 10 seconds if shutdown hangs
 
+Running the server through `bosia start` works too: it passes `SIGTERM` on. Draining can take up to ~12 seconds, longer than Docker's default 10, so set `docker stop --stop-timeout 15` (Compose: `stop_grace_period: 15s`) or slow requests get cut off.
+
 ## Docker
 
 Example `Dockerfile`:

@@ -31,9 +31,11 @@ export async function runStart() {
 	});
 
 	// Survive ^C so we keep waiting for the child instead of orphaning it
-	// mid-drain. The terminal delivers SIGINT to the whole process group,
-	// so the child already gets the signal — no forwarding needed.
-	for (const sig of ["SIGINT", "SIGTERM"] as const) process.on(sig, () => {});
+	// mid-drain. The terminal delivers SIGINT to the whole process group, so
+	// the child already has it. SIGTERM (Docker, systemd, `kill`) reaches only
+	// this process, so pass it on; terminals never send it, so no duplicates.
+	process.on("SIGINT", () => {});
+	process.on("SIGTERM", () => proc.kill("SIGTERM"));
 	// Propagate the child's code — a refused boot must not report success to CI,
 	// Docker restart policies or orchestrators.
 	process.exit(await proc.exited);

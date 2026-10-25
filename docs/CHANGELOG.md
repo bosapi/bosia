@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.33] - 2026-10-26
+
+### Changed
+
+- Deployment guide (EN + ID): `bosia start` passes `SIGTERM` on; set a Docker stop timeout of 15s.
+
 ## [0.8.32] - 2026-10-23
 
 ### Changed

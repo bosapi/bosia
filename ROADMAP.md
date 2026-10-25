@@ -1,9 +1,13 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.2.9**
+> Current version: **1.2.10**
 
 ---
+
+## bosia 1.2.10 (2026-10-26) — `bosia start` forwards stop signals
+
+- [x] 🟠 `bosia start` swallowed SIGTERM, so Docker/systemd/`kill` never reached the server: no drain, SIGKILL after 10s (exit 137). Now SIGTERM is forwarded (SIGINT not: the terminal already sends it to the group). `bosia dev` too.
 
 ## bosia 1.2.7 (2026-10-17) — WebSockets
 
