@@ -102,16 +102,18 @@ export function myPlugin(): BosiaPlugin {
 
 ## Referensi Lifecycle
 
-| Hook                               | Kapan                                       | Menerima                     |
-| ---------------------------------- | ------------------------------------------- | ---------------------------- |
-| `backend.before(app)`              | Start server, sebelum route framework       | `BosiaApp`                   |
-| `backend.after(app, { manifest })` | Start server, setelah route framework       | `BosiaApp` + `RouteManifest` |
-| `build.preBuild(ctx)`              | Sebelum pemindaian route                    | `BuildContext` (mode, cwd)   |
-| `build.postScan(manifest, ctx)`    | Setelah pemindaian route, sebelum bundling  | `RouteManifest`              |
-| `build.bunPlugins(target)`         | Bundling — digabung ke plugin `Bun.build()` | `"browser"` atau `"bun"`     |
-| `build.postBuild(ctx)`             | Setelah pembuatan situs statis              | `BuildContext`               |
-| `render.head(ctx)`                 | SSR streaming, sebelum `</head>`            | `RenderContext`              |
-| `render.bodyEnd(ctx)`              | SSR streaming, sebelum `</body>`            | `RenderContext`              |
+| Hook                               | Kapan                                                         | Menerima                     |
+| ---------------------------------- | ------------------------------------------------------------- | ---------------------------- |
+| `backend.before(app)`              | Start server, sebelum route framework                         | `BosiaApp`                   |
+| `backend.after(app, { manifest })` | Start server, setelah route framework                         | `BosiaApp` + `RouteManifest` |
+| `build.preBuild(ctx)`              | Sebelum pemindaian route                                      | `BuildContext` (mode, cwd)   |
+| `build.postScan(manifest, ctx)`    | Setelah pemindaian route dan pembacaan flag, sebelum bundling | `RouteManifest`              |
+| `build.bunPlugins(target)`         | Bundling — digabung ke plugin `Bun.build()`                   | `"browser"` atau `"bun"`     |
+| `build.postBuild(ctx)`             | Setelah pembuatan situs statis                                | `BuildContext`               |
+| `render.head(ctx)`                 | SSR streaming, sebelum `</head>`                              | `RenderContext`              |
+| `render.bodyEnd(ctx)`              | SSR streaming, sebelum `</body>`                              | `RenderContext`              |
+
+Sebelum `postScan`, Bosia mem-bundle dan meng-import setiap modul server route sekali untuk membaca `prerender`, `ssr`, `actions` dan `trailingSlash`, jadi `bunPlugins("bun")` juga berjalan untuk bundle itu. Route yang kamu tambahkan di `postScan` tidak dibaca saat itu: Bosia mem-prerender-nya jika kamu set `prerender: true` atau file-nya berisi `export const prerender = true`.
 
 Hook `dev.*` dan `client.*` dicadangkan untuk v0.5.0.
 

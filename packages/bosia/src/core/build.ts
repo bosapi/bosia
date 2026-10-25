@@ -12,14 +12,19 @@ import { basename, join, relative, resolve } from "path";
 import type { RouteManifest } from "./types.ts";
 
 import { scanRoutes, RouteConflictError } from "./scanner.ts";
-import { analyseRoutes, reason, RouteAnalyseError } from "./analyse.ts";
+import { analyseRoutes, RouteAnalyseError } from "./analyse.ts";
 import { generateRoutesFile } from "./routeFile.ts";
 import { generateRouteTypes, ensureRootDirs } from "./routeTypes.ts";
 import { makeBosiaPlugin } from "./plugin.ts";
 import { makeBosiaSvelteCompiler, svelteMapCache } from "./svelteCompiler.ts";
 import { finalizeComponentCss } from "./componentCss.ts";
 import { buildPreloadMap } from "./preloadMap.ts";
-import { prerenderStaticRoutes, generateStaticSite, PrerenderEntriesError } from "./prerender.ts";
+import {
+	flagPostScanRoutes,
+	prerenderStaticRoutes,
+	generateStaticSite,
+	PrerenderEntriesError,
+} from "./prerender.ts";
 import { precompressDir } from "./precompress.ts";
 import { loadEnv, classifyEnvVars } from "./env.ts";
 import { generateEnvModules } from "./envCodegen.ts";
@@ -197,7 +202,7 @@ process.on("exit", () => tailwindProc.kill());
 
 // 1c. Read prerender/ssr/actions/trailingSlash from the real route exports.
 // Before postScan: a plugin sees the real flags and may change them. Routes it
-// adds aren't analysed (prerender imports those itself). A cached manifest
+// adds aren't analysed: flagPostScanRoutes() reads their source. A cached manifest
 // already holds them: no route file changed since.
 if (!cachedManifest) {
 	try {
@@ -224,7 +229,9 @@ function failOnLateRejection() {
 	process.exit(1);
 }
 process.on("unhandledRejection", (err) => {
-	const msg = `Unhandled rejection, maybe from a route module's top-level code: ${reason(err)}`;
+	// Not attributed by stack: Bun's own fetch/socket errors carry no user frame.
+	// What the build awaits still finished, so dev can go on (a local DB down).
+	const msg = `Unhandled rejection: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`;
 	if (process.env.BOSIA_DEV_BUILD === "1") return console.warn(`⚠️  ${msg}`);
 	console.error(`❌ ${msg}`);
 	lateRejection = true;
@@ -256,11 +263,13 @@ try {
 	process.exit(1);
 }
 
+const scannedRoutes = new Set<object>([...manifest.pages, ...manifest.apis]);
 for (const p of userPlugins) {
 	if (p.build?.postScan) {
 		await p.build.postScan(manifest, buildCtx);
 	}
 }
+flagPostScanRoutes(manifest, scannedRoutes, process.env.BOSIA_DEV_BUILD === "1");
 
 // 2. Generate .bosia/routes.ts (single file replaces all old code generators).
 // The client names a page with no title after app.html, as SSR does.

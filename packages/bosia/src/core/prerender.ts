@@ -9,7 +9,7 @@ import { BOSIA_NODE_PATH, OUT_DIR } from "./paths.ts";
 import { currentBase } from "./appBase.ts";
 import { findMatch, isDynamic, segmentName, segmentRank } from "./matcher.ts";
 import { sortRoutes } from "./routeFile.ts";
-import { analysedModules, reason } from "./analyse.ts";
+import { analysedModules, pagePrerenders, reason } from "./analyse.ts";
 import { ROUTES_DIR } from "./scanner.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
 
@@ -302,6 +302,57 @@ export function checkPrerenderPaths(
 	}
 }
 
+/**
+ * Sets `prerender` on the routes a postScan plugin added (not in `scanned`),
+ * which analyse never saw: the plugin's own `true`, or its file's. Before
+ * .bosia/routes.ts is written, so the client knows the page is static. By route,
+ * not file: a plugin that clones a scanned route reuses its server file.
+ */
+export function flagPostScanRoutes(manifest: RouteManifest, scanned: Set<object>, quiet = false) {
+	for (const route of manifest.pages) {
+		if (scanned.has(route) || !route.pageServer) continue;
+		const e = sourceExports(route.pageServer);
+		route.prerender = pagePrerenders(
+			{ ...e, prerender: route.prerender || e.prerender },
+			route.pattern,
+			quiet,
+		);
+	}
+	for (const api of manifest.apis)
+		if (!scanned.has(api)) api.prerender = !!api.prerender || sourceExports(api.server).prerender;
+}
+
+/** A file's flags from its source text, as before analyse existed. Not an import:
+ *  unbundled, `$env` and `$lib` don't resolve, and a hung top-level `await` would
+ *  have no timeout. A file that can't be read (a plugin's virtual id) has none. */
+function sourceExports(file: string) {
+	let src: string;
+	try {
+		src = readFileSync(resolve(ROUTES_DIR, file), "utf-8");
+	} catch {
+		return { prerender: false, ssr: true, actions: false };
+	}
+	return {
+		prerender: /export\s+const\s+prerender\s*(?::\s*[^=]+)?=\s*true\b/.test(stripComments(src)),
+		// Raw source, comments included: a false hit only renders the page live,
+		// while a missed `actions` would ship a static page whose forms can't post.
+		ssr: !/export\s+const\s+ssr\s*(?::\s*[^=]+)?=\s*false\b/.test(src),
+		actions:
+			/export\s+(const|let|var|async\s+function|function)\s+actions\b|export\s*\{[^}]*\bactions\b/.test(
+				src,
+			),
+	};
+}
+
+/** Source with `//` and block comments blanked; string literals are kept. Doesn't
+ *  know regex literals. Not `Bun.Transpiler` on purpose: that runs Bun macros. */
+function stripComments(src: string): string {
+	return src.replace(
+		/("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|\/\/[^\n]*|\/\*[\s\S]*?\*\//g,
+		(_m, str: string | undefined) => str ?? " ",
+	);
+}
+
 /** Dynamic route → import module, call entries(), expand to concrete targets. */
 async function expandDynamicRoute(
 	pattern: string,
@@ -333,7 +384,7 @@ async function expandDynamicRoute(
 
 export async function detectPrerenderRoutes(manifest: RouteManifest): Promise<PrerenderTarget[]> {
 	const pageTasks = manifest.pages.map(async (route): Promise<PrerenderTarget[]> => {
-		// Set by analyseRoutes() from the real exports, skip reasons already applied.
+		// Set by analyseRoutes() or flagPostScanRoutes(), skip reasons already applied.
 		if (!route.prerender || !route.pageServer) return [];
 		const ts = route.trailingSlash;
 		if (isDynamic(route.pattern))

@@ -102,16 +102,18 @@ export function myPlugin(): BosiaPlugin {
 
 ## Lifecycle Reference
 
-| Hook                               | When                                         | Receives                     |
-| ---------------------------------- | -------------------------------------------- | ---------------------------- |
-| `backend.before(app)`              | Server start, before framework routes        | `BosiaApp`                   |
-| `backend.after(app, { manifest })` | Server start, after framework routes         | `BosiaApp` + `RouteManifest` |
-| `build.preBuild(ctx)`              | Before route scan                            | `BuildContext` (mode, cwd)   |
-| `build.postScan(manifest, ctx)`    | After route scan, before bundling            | `RouteManifest`              |
-| `build.bunPlugins(target)`         | Bundling — merged into `Bun.build()` plugins | `"browser"` or `"bun"`       |
-| `build.postBuild(ctx)`             | After static site generation                 | `BuildContext`               |
-| `render.head(ctx)`                 | Streaming SSR, before `</head>`              | `RenderContext`              |
-| `render.bodyEnd(ctx)`              | Streaming SSR, before `</body>`              | `RenderContext`              |
+| Hook                               | When                                            | Receives                     |
+| ---------------------------------- | ----------------------------------------------- | ---------------------------- |
+| `backend.before(app)`              | Server start, before framework routes           | `BosiaApp`                   |
+| `backend.after(app, { manifest })` | Server start, after framework routes            | `BosiaApp` + `RouteManifest` |
+| `build.preBuild(ctx)`              | Before route scan                               | `BuildContext` (mode, cwd)   |
+| `build.postScan(manifest, ctx)`    | After route scan and flag read, before bundling | `RouteManifest`              |
+| `build.bunPlugins(target)`         | Bundling — merged into `Bun.build()` plugins    | `"browser"` or `"bun"`       |
+| `build.postBuild(ctx)`             | After static site generation                    | `BuildContext`               |
+| `render.head(ctx)`                 | Streaming SSR, before `</head>`                 | `RenderContext`              |
+| `render.bodyEnd(ctx)`              | Streaming SSR, before `</body>`                 | `RenderContext`              |
+
+Before `postScan`, Bosia bundles and imports every route server module once to read its `prerender`, `ssr`, `actions` and `trailingSlash`, so `bunPlugins("bun")` also runs for that bundle. A route you add in `postScan` isn't read then: Bosia prerenders it if you set `prerender: true` on it or its file has `export const prerender = true`.
 
 `dev.*` and `client.*` hooks are reserved for v0.5.0.
 

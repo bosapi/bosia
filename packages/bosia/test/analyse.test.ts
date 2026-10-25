@@ -4,7 +4,7 @@ import { tmpdir } from "os";
 import { dirname, join } from "path";
 import { scanRoutes } from "../src/core/scanner.ts";
 import { analyseRoutes, analysedModules, RouteAnalyseError } from "../src/core/analyse.ts";
-import { detectPrerenderRoutes } from "../src/core/prerender.ts";
+import { detectPrerenderRoutes, flagPostScanRoutes } from "../src/core/prerender.ts";
 
 let originalCwd: string;
 let tmpDir: string;
@@ -172,11 +172,89 @@ describe("analyseRoutes() reuse", () => {
 		write("tags/[tag]/+page.svelte");
 		write("tags/[tag]/+page.server.ts", "export const entries = () => [{ tag: 'bun' }];\n");
 		const m = await analysed();
-		// As a postScan plugin would.
+		// As a postScan plugin would: it added the route and set the flag.
 		m.pages.find((r) => r.pattern === "/tags/[tag]")!.prerender = true;
 		analysedModules.clear();
+		flagPostScanRoutes(m, new Set());
 		const targets = await detectPrerenderRoutes(m);
 		expect(targets.map((t) => t.path)).toEqual(["/tags/bun"]);
+	});
+
+	test("a file that throws on a fresh read is retried by the next run", async () => {
+		write("+page.svelte");
+		const file = join(tmpDir, "src/routes/+page.server.ts");
+		writeFileSync(file, "export const trailingSlash = 'always';\n");
+		utimesSync(file, 1e9, 1e9);
+		await analysed(true);
+		// Fresh read (dev restart), same mtime, its DB is down.
+		writeFileSync(file, 'throw new Error("db down");\n');
+		utimesSync(file, 1e9, 1e9);
+		const warn = spyOn(console, "warn").mockImplementation(() => {});
+		try {
+			await analysed(true, true);
+		} finally {
+			warn.mockRestore();
+		}
+		// DB back: not fresh, mtime unchanged, still re-read.
+		writeFileSync(file, "export const trailingSlash = 'ignore';\n");
+		utimesSync(file, 1e9, 1e9);
+		const m = await analysed(true);
+		expect(m.pages[0]!.trailingSlash).toBe("ignore");
+	});
+
+	test("prerender reads a plugin route's source text, never importing a live one", async () => {
+		mkdirSync(join(tmpDir, ".bosia"), { recursive: true });
+		writeFileSync(join(tmpDir, ".bosia/env.server.ts"), 'export const DB = "x";\n');
+		write("admin/+page.svelte");
+		// Unbundled, `$env` wouldn't resolve: an import would fail the build.
+		write(
+			"admin/+page.server.ts",
+			'import { DB } from "$env";\n// export const prerender = true;\nexport const load = () => DB;\n',
+		);
+		const m = await analysed();
+		analysedModules.clear();
+		flagPostScanRoutes(m, new Set());
+		expect(await detectPrerenderRoutes(m)).toEqual([]);
+	});
+
+	test("prerender reads `prerender` from a route a plugin added (not analysed)", async () => {
+		write("feed/+page.svelte");
+		write("feed/+page.server.ts", "export const prerender = true;\n");
+		write(
+			"feed.xml/+server.ts",
+			"export const prerender = true;\nexport const GET = () => new Response('');\n",
+		);
+		const m = await analysed();
+		// As a postScan plugin written before analyse would: no flags set.
+		for (const r of m.pages) r.prerender = false;
+		for (const r of m.apis) delete r.prerender;
+		analysedModules.clear();
+		flagPostScanRoutes(m, new Set());
+		// Set on the route too, so .bosia/routes.ts tells the client it's static.
+		expect(m.pages[0]!.prerender).toBe(true);
+		const targets = await detectPrerenderRoutes(m);
+		expect(targets.map((t) => t.path).sort()).toEqual(["/feed", "/feed.xml"]);
+	});
+
+	test("a route a plugin cloned from a scanned one reads the shared file", async () => {
+		write("about/+page.svelte");
+		write("about/+page.server.ts", "export const prerender = true;\n");
+		const m = await analysed();
+		const scanned = new Set<object>(m.pages);
+		// An i18n plugin: same server file, no `prerender` copied.
+		m.pages.push({ ...m.pages[0]!, pattern: "/id/about", prerender: false });
+		flagPostScanRoutes(m, scanned);
+		const targets = await detectPrerenderRoutes(m);
+		expect(targets.map((t) => t.path).sort()).toEqual(["/about", "/id/about"]);
+	});
+
+	test("a route module importing `bosia:routes` (via bosia/client) still analyses", async () => {
+		write("+page.svelte");
+		write(
+			"+page.server.ts",
+			'import { clientRoutes } from "bosia:routes";\nexport const prerender = clientRoutes.length === 0;\n',
+		);
+		expect((await analysed()).pages[0]!.prerender).toBe(true);
 	});
 
 	test("a build warns about import.meta.dir, which points at the bundled copy", async () => {

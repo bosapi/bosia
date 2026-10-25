@@ -6,6 +6,7 @@ import type { RouteManifest, TrailingSlash } from "./types.ts";
 import { makeBosiaPlugin } from "./plugin.ts";
 import { makeBosiaSvelteCompiler } from "./svelteCompiler.ts";
 import { ROUTES_DIR } from "./scanner.ts";
+import { ANALYSE_DEV_CACHE, ANALYSE_FRESH_DONE } from "./paths.ts";
 
 // ─── Route Analyse ───────────────────────────────────────
 // Reads `prerender`, `ssr`, `actions` and `trailingSlash` from the real exports
@@ -23,8 +24,6 @@ const TRAILING_SLASH = new Set(["never", "always", "ignore"]);
 // A top-level `await db.connect()` to a host the build can't reach would
 // otherwise hang the build with no message.
 const IMPORT_TIMEOUT_MS = 30_000;
-// Dev's flags cache, outside .bosia/dev (each build clears that).
-const DEV_CACHE = ".bosia/analyse-dev.json";
 // A file that hasn't loaded yet (dev only): nothing exported.
 const NO_EXPORTS: Exports = { prerender: false, ssr: true, actions: false };
 
@@ -45,12 +44,24 @@ type Failure = { file?: string; msg: string; timedOut?: boolean };
 export const analysedModules = new Map<string, Record<string, any>>();
 
 /** Why a page that asks for prerender can't have it, or null when it can. */
-export function prerenderSkipReason(e: Exports): string | null {
+export function prerenderSkipReason(e: Pick<Exports, "ssr" | "actions">): string | null {
 	if (!e.ssr) return "ssr=false — contradictory";
 	// A static file can't run an action: Bun would answer the POST with the
 	// prerendered HTML, Workers' asset server with 405. Render it live instead.
 	if (e.actions) return "actions — forms need a live page";
 	return null;
+}
+
+/** True when a page exporting `e` is prerendered; warns (unless `quiet`) when it asks but can't be. */
+export function pagePrerenders(
+	e: Pick<Exports, "prerender" | "ssr" | "actions">,
+	pattern: string,
+	quiet = false,
+): boolean {
+	if (!e.prerender) return false;
+	const skip = prerenderSkipReason(e);
+	if (skip && !quiet) console.warn(`   ⚠️  ${pattern} has prerender=true && ${skip}, skipped`);
+	return !skip;
 }
 
 /**
@@ -81,7 +92,7 @@ export async function analyseRoutes(
 		]),
 	];
 	// Read even when `fresh`: a file that fails then still has its last flags.
-	const cache: Cache = dev ? readCache(DEV_CACHE) : {};
+	const cache: Cache = dev ? readCache(ANALYSE_DEV_CACHE) : {};
 	// Stat before bundling: a save made while this run imports is then newer
 	// than what gets cached, and the next rebuild reads it again.
 	// A file deleted since the scan has no mtime: stale, so bundling reports it.
@@ -119,11 +130,13 @@ export async function analyseRoutes(
 			const why = timedOut.get(f);
 			if (e) next[f] = { ...e, mtimeMs: mtimes.get(f) };
 			else if (why) next[f] = { ...(cache[f] ?? NO_EXPORTS), mtimeMs: mtimes.get(f), failed: why };
-			// A throw keeps the old entry (old mtime): last flags, retried next run.
-			else if (cache[f]) next[f] = cache[f];
+			// A throw keeps the last flags but drops the mtime, so the next run retries
+			// it (a fresh run may have read a file whose mtime still matches).
+			else if (cache[f]) next[f] = staleSet.has(f) ? { ...cache[f], mtimeMs: undefined } : cache[f];
 		}
 		mkdirSync(".bosia", { recursive: true });
-		writeFileSync(DEV_CACHE, JSON.stringify(next));
+		writeFileSync(ANALYSE_DEV_CACHE, JSON.stringify(next));
+		if (fresh) writeFileSync(ANALYSE_FRESH_DONE, "");
 	}
 
 	for (const route of manifest.pages) {
@@ -134,11 +147,8 @@ export async function analyseRoutes(
 				.filter(Boolean)
 				.map((f) => exports.get(f)!.trailingSlash)
 				.findLast((ts) => ts !== undefined) ?? "never";
-		const e = route.pageServer ? exports.get(route.pageServer)! : null;
-		const skip = e?.prerender ? prerenderSkipReason(e) : null;
-		if (skip && !dev)
-			console.warn(`   ⚠️  ${route.pattern} has prerender=true && ${skip}, skipped`);
-		route.prerender = !!e?.prerender && !skip;
+		route.prerender =
+			!!route.pageServer && pagePrerenders(exports.get(route.pageServer)!, route.pattern, dev);
 	}
 	for (const api of manifest.apis) api.prerender = exports.get(api.server)!.prerender;
 
@@ -163,6 +173,24 @@ function readCache(file: string): Cache {
 		return {};
 	}
 }
+
+// .bosia/routes.ts is written after analyse (it holds the flags), so a route
+// module that imports `bosia:routes` (e.g. through `bosia/client`) gets empty
+// routes here. First plugin: Bun takes the first onResolve that answers.
+const routesStub: BunPlugin = {
+	name: "bosia-analyse-routes",
+	setup(build) {
+		build.onResolve({ filter: /^bosia:routes$/ }, () => ({
+			path: "routes",
+			namespace: "bosia-analyse",
+		}));
+		build.onLoad({ filter: /.*/, namespace: "bosia-analyse" }, () => ({
+			contents:
+				"export const clientRoutes = [], serverRoutes = [], apiRoutes = [], errorPage = null, defaultTitle = '';",
+			loader: "js",
+		}));
+	},
+};
 
 // Each run bundles into its own numbered dir. Bun caches a module by path (and
 // ignores a `?v=` query on a file URL), so a second run in one process — tests,
@@ -193,7 +221,7 @@ async function importExports(
 		conditions: ["svelte"],
 		splitting: true,
 		naming: { entry: "[dir]/[name].[ext]", chunk: "chunk-[hash].[ext]" },
-		plugins: [makeBosiaPlugin("bun"), ...userPlugins, makeBosiaSvelteCompiler("bun")],
+		plugins: [routesStub, makeBosiaPlugin("bun"), ...userPlugins, makeBosiaSvelteCompiler("bun")],
 	}).catch((err: unknown) => ({
 		success: false as const,
 		logs: err instanceof AggregateError ? err.errors : [err],

@@ -35,6 +35,11 @@ export const BOSIA_NODE_PATH = ALL_NM.join(delimiter); // ";" on Windows, ":" el
 // `bun run build` (./dist) don't clobber each other.
 export const OUT_DIR = process.env.BOSIA_OUT_DIR ?? "./dist";
 
+/** Dev's route-flags cache (analyse.ts), outside .bosia/dev: each build clears that. */
+export const ANALYSE_DEV_CACHE = ".bosia/analyse-dev.json";
+/** Written once a fresh dev analyse has saved its cache: dev re-arms "fresh" only without it. */
+export const ANALYSE_FRESH_DONE = ".bosia/analyse-dev.fresh";
+
 /** Normalize a filesystem path to forward slashes (for URLs, manifests, imports). */
 export function toPosix(p: string): string {
 	return p.replace(/\\/g, "/");

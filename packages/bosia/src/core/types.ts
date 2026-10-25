@@ -40,8 +40,9 @@ export interface ApiRoute {
 	id: string;
 	/** Path to +server.ts, relative to src/routes/ */
 	server: string;
-	/** `export const prerender = true` in +server.ts — saved as a static file at build. */
-	prerender: boolean;
+	/** `export const prerender = true` in +server.ts — saved as a static file at build.
+	 *  Optional: a route a postScan plugin adds is read from its module instead. */
+	prerender?: boolean;
 }
 
 /** The full route manifest produced by the scanner */

@@ -16,6 +16,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - A page `load()` that reads `metadata` now reloads when what `metadata()` read changes.
 - `invalidate(url)` now also clears cached pages whose `metadata()` fetched that URL.
 - A commented-out `// export const trailingSlash` is now ignored.
+- Routes a plugin adds are prerendered again when their file says `prerender = true`.
+- A page a plugin copies from another route is now prerendered like the original.
+- Prerendered pages a plugin adds now load their data as static files when you navigate.
+- A route file that imports `bosia/client` no longer breaks the build.
+- `bosia dev` no longer waits 30s on every save after a failed first build.
+- `bosia dev` retries a route file that failed on restart, even when it wasn't saved again.
+- An unhandled error during a build now shows its full stack, not a guess at its cause.
 
 ### Changed
 

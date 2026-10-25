@@ -1,8 +1,8 @@
 import { spawn, type Subprocess } from "bun";
-import { readdirSync, rmSync, statSync, watch, type Dirent } from "fs";
+import { existsSync, readdirSync, rmSync, statSync, watch, type Dirent } from "fs";
 import { join } from "path";
 import { loadEnv } from "./env.ts";
-import { BOSIA_NODE_PATH } from "./paths.ts";
+import { ANALYSE_FRESH_DONE, BOSIA_NODE_PATH } from "./paths.ts";
 import { pidsOnPort } from "./port.ts";
 import { affectsRouteManifest, shouldIgnoreForRebuild } from "./devWatch.ts";
 import { closeProxiedSockets, proxyHandlers, proxyUpgrade } from "./devWsProxy.ts";
@@ -138,7 +138,7 @@ const BUILD_SCRIPT = join(import.meta.dir, "build.ts");
 let routesDirty = true;
 // Re-read every route's flags, ignoring analyse's mtime cache: at start (a flag
 // can come from a `src/lib` file dev doesn't track) and after a `.env` change.
-// Cleared only by a build that succeeds, so a change during a build isn't lost.
+// Kept by a failed build only if analyse didn't finish, so a change isn't lost.
 let analyseFresh = true;
 
 async function runBuild(): Promise<boolean> {
@@ -149,6 +149,7 @@ async function runBuild(): Promise<boolean> {
 	routesDirty = false;
 	const fresh = analyseFresh;
 	analyseFresh = false;
+	if (fresh) rmSync(ANALYSE_FRESH_DONE, { force: true });
 	const proc = spawn(["bun", "run", BUILD_SCRIPT], {
 		stdout: "inherit",
 		stderr: "inherit",
@@ -165,7 +166,9 @@ async function runBuild(): Promise<boolean> {
 		},
 	});
 	const ok = (await proc.exited) === 0;
-	if (!ok && fresh) analyseFresh = true;
+	// Re-arm only if the failure came before analyse wrote its cache: once it
+	// has, the fresh read is done, and a timed-out file stays skipped until saved.
+	if (!ok && fresh && !existsSync(ANALYSE_FRESH_DONE)) analyseFresh = true;
 	return ok;
 }
 
