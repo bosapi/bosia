@@ -21,6 +21,7 @@ import { finalizeComponentCss } from "./componentCss.ts";
 import { buildPreloadMap } from "./preloadMap.ts";
 import {
 	flagPostScanRoutes,
+	type ScannedRoute,
 	prerenderStaticRoutes,
 	generateStaticSite,
 	PrerenderEntriesError,
@@ -263,7 +264,10 @@ try {
 	process.exit(1);
 }
 
-const scannedRoutes = new Set<object>([...manifest.pages, ...manifest.apis]);
+const scannedRoutes = new Map<object, ScannedRoute>([
+	...manifest.pages.map((r) => [r, { prerender: r.prerender, file: r.pageServer }] as const),
+	...manifest.apis.map((r) => [r, { prerender: r.prerender, file: r.server }] as const),
+]);
 for (const p of userPlugins) {
 	if (p.build?.postScan) {
 		await p.build.postScan(manifest, buildCtx);

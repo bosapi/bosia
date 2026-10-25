@@ -113,7 +113,11 @@ export function myPlugin(): BosiaPlugin {
 | `render.head(ctx)`                 | SSR streaming, sebelum `</head>`                              | `RenderContext`              |
 | `render.bodyEnd(ctx)`              | SSR streaming, sebelum `</body>`                              | `RenderContext`              |
 
-Sebelum `postScan`, Bosia mem-bundle dan meng-import setiap modul server route sekali untuk membaca `prerender`, `ssr`, `actions` dan `trailingSlash`, jadi `bunPlugins("bun")` juga berjalan untuk bundle itu. Route yang kamu tambahkan di `postScan` tidak dibaca saat itu: Bosia mem-prerender-nya jika kamu set `prerender: true` atau file-nya berisi `export const prerender = true`.
+Sebelum `postScan`, Bosia mem-bundle dan meng-import setiap modul server route sekali untuk membaca `prerender`, `ssr`, `actions` dan `trailingSlash`, jadi `bunPlugins("bun")` juga berjalan untuk bundle itu. Setelah `postScan`, Bosia menetapkan flag route yang kamu tambahkan atau ubah:
+
+- **Route baru:** di-prerender jika kamu set `prerender: true` atau file-nya berisi `export const prerender = true`. `false` yang kamu set tidak mengalahkan file. `trailingSlash`-nya diambil dari file page dan layout-nya (default `"never"`) kecuali kamu set sendiri.
+- **Route yang diubah:** `prerender` darimu yang dipakai. Jika kamu hanya mengganti file server-nya, flag dari file baru yang dipakai.
+- **Selalu:** page dengan `actions` atau `ssr = false`, atau tanpa file server, tidak pernah di-prerender, meski kamu set `prerender: true`.
 
 Hook `dev.*` dan `client.*` dicadangkan untuk v0.5.0.
 

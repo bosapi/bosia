@@ -9,7 +9,7 @@ import { BOSIA_NODE_PATH, OUT_DIR } from "./paths.ts";
 import { currentBase } from "./appBase.ts";
 import { findMatch, isDynamic, segmentName, segmentRank } from "./matcher.ts";
 import { sortRoutes } from "./routeFile.ts";
-import { analysedModules, pagePrerenders, reason } from "./analyse.ts";
+import { analysedExports, analysedModules, flagPage, reason } from "./analyse.ts";
 import { ROUTES_DIR } from "./scanner.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
 
@@ -302,24 +302,52 @@ export function checkPrerenderPaths(
 	}
 }
 
+/** A scanned route before postScan: its flag and its server file. */
+export type ScannedRoute = { prerender?: boolean; file: string | null };
+
 /**
- * Sets `prerender` on the routes a postScan plugin added (not in `scanned`),
- * which analyse never saw: the plugin's own `true`, or its file's. Before
- * .bosia/routes.ts is written, so the client knows the page is static. By route,
- * not file: a plugin that clones a scanned route reuses its server file.
+ * Final flags for the routes postScan touched, before .bosia/routes.ts is
+ * written (so the client knows a page is static). `before` holds every scanned
+ * route as it was before postScan; keyed by route, not file, as a clone reuses
+ * its file. A route a plugin left alone keeps analyse's flags. Otherwise:
+ * - the plugin changed the flag: its value, a `true` still checked for ssr/actions;
+ * - the plugin swapped the file: the new file's flag;
+ * - the plugin added the route: its `true`, else its file's. An added route's
+ *   `false` doesn't win: older plugins set it as a placeholder, and main ignored it.
+ * A file's flags come from analyse, or from its source text if analyse never saw it.
  */
-export function flagPostScanRoutes(manifest: RouteManifest, scanned: Set<object>, quiet = false) {
+export function flagPostScanRoutes(
+	manifest: RouteManifest,
+	before: Map<object, ScannedRoute>,
+	quiet = false,
+) {
+	const memo = new Map<string, ReturnType<typeof sourceExports>>();
+	const exportsOf = (file: string) => {
+		let e = memo.get(file);
+		if (!e) memo.set(file, (e = analysedExports.get(file) ?? sourceExports(file)));
+		return e;
+	};
+	// The plugin's own value, or undefined to use the file's.
+	const wantsOf = (route: { prerender?: boolean }) => {
+		const was = before.get(route);
+		if (!was) return route.prerender || undefined;
+		return was.prerender !== route.prerender ? route.prerender : undefined;
+	};
+	const untouched = (route: { prerender?: boolean }, file: string | null) => {
+		const was = before.get(route);
+		return !!was && was.prerender === route.prerender && was.file === file;
+	};
 	for (const route of manifest.pages) {
-		if (scanned.has(route) || !route.pageServer) continue;
-		const e = sourceExports(route.pageServer);
-		route.prerender = pagePrerenders(
-			{ ...e, prerender: route.prerender || e.prerender },
-			route.pattern,
-			quiet,
-		);
+		if (untouched(route, route.pageServer)) continue;
+		// A trailingSlash the plugin set wins over the files'.
+		const ts = route.trailingSlash;
+		flagPage(route, exportsOf, quiet, wantsOf(route));
+		if (ts) route.trailingSlash = ts;
 	}
-	for (const api of manifest.apis)
-		if (!scanned.has(api)) api.prerender = !!api.prerender || sourceExports(api.server).prerender;
+	for (const api of manifest.apis) {
+		if (untouched(api, api.server)) continue;
+		api.prerender = !!(wantsOf(api) ?? exportsOf(api.server).prerender);
+	}
 }
 
 /** A file's flags from its source text, as before analyse existed. Not an import:

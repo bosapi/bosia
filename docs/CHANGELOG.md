@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Routing guide, CLI docs + skill: page flags are read by importing route files at build.
 - Routing guide + skill: read files next to a route via `process.cwd()`, not `import.meta.dir`.
 - Plugins guide (EN + ID): route flags are read before `postScan`, also through `bunPlugins`.
+- Plugins guide (EN + ID): how Bosia sets flags on routes a plugin adds or changes.
 
 ---
 

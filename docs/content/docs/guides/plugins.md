@@ -113,7 +113,11 @@ export function myPlugin(): BosiaPlugin {
 | `render.head(ctx)`                 | Streaming SSR, before `</head>`                 | `RenderContext`              |
 | `render.bodyEnd(ctx)`              | Streaming SSR, before `</body>`                 | `RenderContext`              |
 
-Before `postScan`, Bosia bundles and imports every route server module once to read its `prerender`, `ssr`, `actions` and `trailingSlash`, so `bunPlugins("bun")` also runs for that bundle. A route you add in `postScan` isn't read then: Bosia prerenders it if you set `prerender: true` on it or its file has `export const prerender = true`.
+Before `postScan`, Bosia bundles and imports every route server module once to read its `prerender`, `ssr`, `actions` and `trailingSlash`, so `bunPlugins("bun")` also runs for that bundle. After `postScan`, Bosia settles the flags of the routes you added or changed:
+
+- **Added route:** prerendered if you set `prerender: true` or its file has `export const prerender = true`. A `false` you set doesn't override the file. Its `trailingSlash` comes from its page and layout files (default `"never"`) unless you set one.
+- **Changed route:** your `prerender` wins. If you only swap its server file, the new file's flag is used.
+- **Always:** a page with `actions` or `ssr = false`, or with no server file, is never prerendered, even if you set `prerender: true`.
 
 `dev.*` and `client.*` hooks are reserved for v0.5.0.
 

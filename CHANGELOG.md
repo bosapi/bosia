@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Routes a plugin adds are prerendered again when their file says `prerender = true`.
 - A page a plugin copies from another route is now prerendered like the original.
 - Prerendered pages a plugin adds now load their data as static files when you navigate.
+- A page with forms is never prerendered, even when a plugin turns prerender on for it.
+- A page a plugin adds now takes `trailingSlash` from its files, like any other page.
+- A page whose file a plugin swaps is now checked again before it's prerendered.
 - A route file that imports `bosia/client` no longer breaks the build.
 - `bosia dev` no longer waits 30s on every save after a failed first build.
 - `bosia dev` retries a route file that failed on restart, even when it wasn't saved again.

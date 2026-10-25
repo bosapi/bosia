@@ -3,8 +3,14 @@ import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
 import { scanRoutes } from "../src/core/scanner.ts";
-import { analyseRoutes, analysedModules, RouteAnalyseError } from "../src/core/analyse.ts";
+import {
+	analyseRoutes,
+	analysedExports,
+	analysedModules,
+	RouteAnalyseError,
+} from "../src/core/analyse.ts";
 import { detectPrerenderRoutes, flagPostScanRoutes } from "../src/core/prerender.ts";
+import type { PageRoute } from "../src/core/types.ts";
 
 let originalCwd: string;
 let tmpDir: string;
@@ -14,6 +20,10 @@ function write(rel: string, content = "") {
 	mkdirSync(dirname(full), { recursive: true });
 	writeFileSync(full, content);
 }
+
+/** Each page before postScan, as build.ts takes it. */
+const flagsOf = (pages: PageRoute[]) =>
+	new Map(pages.map((r) => [r, { prerender: r.prerender, file: r.pageServer }]));
 
 async function analysed(dev = false, fresh = false) {
 	const m = scanRoutes();
@@ -175,7 +185,8 @@ describe("analyseRoutes() reuse", () => {
 		// As a postScan plugin would: it added the route and set the flag.
 		m.pages.find((r) => r.pattern === "/tags/[tag]")!.prerender = true;
 		analysedModules.clear();
-		flagPostScanRoutes(m, new Set());
+		analysedExports.clear();
+		flagPostScanRoutes(m, new Map());
 		const targets = await detectPrerenderRoutes(m);
 		expect(targets.map((t) => t.path)).toEqual(["/tags/bun"]);
 	});
@@ -213,7 +224,8 @@ describe("analyseRoutes() reuse", () => {
 		);
 		const m = await analysed();
 		analysedModules.clear();
-		flagPostScanRoutes(m, new Set());
+		analysedExports.clear();
+		flagPostScanRoutes(m, new Map());
 		expect(await detectPrerenderRoutes(m)).toEqual([]);
 	});
 
@@ -229,7 +241,8 @@ describe("analyseRoutes() reuse", () => {
 		for (const r of m.pages) r.prerender = false;
 		for (const r of m.apis) delete r.prerender;
 		analysedModules.clear();
-		flagPostScanRoutes(m, new Set());
+		analysedExports.clear();
+		flagPostScanRoutes(m, new Map());
 		// Set on the route too, so .bosia/routes.ts tells the client it's static.
 		expect(m.pages[0]!.prerender).toBe(true);
 		const targets = await detectPrerenderRoutes(m);
@@ -240,12 +253,82 @@ describe("analyseRoutes() reuse", () => {
 		write("about/+page.svelte");
 		write("about/+page.server.ts", "export const prerender = true;\n");
 		const m = await analysed();
-		const scanned = new Set<object>(m.pages);
+		const before = flagsOf(m.pages);
 		// An i18n plugin: same server file, no `prerender` copied.
 		m.pages.push({ ...m.pages[0]!, pattern: "/id/about", prerender: false });
-		flagPostScanRoutes(m, scanned);
+		flagPostScanRoutes(m, before);
 		const targets = await detectPrerenderRoutes(m);
 		expect(targets.map((t) => t.path).sort()).toEqual(["/about", "/id/about"]);
+	});
+
+	test("a clone is judged by analyse's real exports, warned once per file", async () => {
+		write("about/+page.svelte");
+		write("about/actions.ts", "export const actions = { default: () => {} };\n");
+		// The regex can't see actions coming through `export *`; analyse can.
+		write("about/+page.server.ts", "export const prerender = true;\nexport * from './actions';\n");
+		const warn = spyOn(console, "warn").mockImplementation(() => {});
+		try {
+			const m = await analysed();
+			const before = flagsOf(m.pages);
+			for (const lang of ["id", "ja"])
+				m.pages.push({ ...m.pages[0]!, pattern: `/${lang}/about`, prerender: false });
+			flagPostScanRoutes(m, before);
+			expect(m.pages.map((r) => r.prerender)).toEqual([false, false, false]);
+			expect(warn).toHaveBeenCalledTimes(1);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	test("a plugin's `true` on a scanned page still gets the actions check", async () => {
+		write("contact/+page.svelte");
+		write("contact/+page.server.ts", "export const actions = { default: () => {} };\n");
+		const m = await analysed();
+		const before = flagsOf(m.pages);
+		m.pages[0]!.prerender = true;
+		const warn = spyOn(console, "warn").mockImplementation(() => {});
+		try {
+			flagPostScanRoutes(m, before);
+		} finally {
+			warn.mockRestore();
+		}
+		expect(m.pages[0]!.prerender).toBe(false);
+	});
+
+	test("an added page gets trailingSlash 'never', and no server file means not static", async () => {
+		write("+page.svelte");
+		const m = await analysed();
+		const before = flagsOf(m.pages);
+		m.pages.push({ ...m.pages[0]!, pattern: "/x", pageServer: null, prerender: true });
+		delete (m.pages[1] as { trailingSlash?: string }).trailingSlash;
+		flagPostScanRoutes(m, before);
+		expect(m.pages[1]!.prerender).toBe(false);
+		expect(m.pages[1]!.trailingSlash).toBe("never");
+	});
+
+	test("an added page takes trailingSlash from its files, unless the plugin set one", async () => {
+		write("about/+page.svelte");
+		write("about/+page.server.ts", "export const trailingSlash = 'always';\n");
+		const m = await analysed();
+		const before = flagsOf(m.pages);
+		const { trailingSlash: _, ...about } = m.pages[0]!;
+		m.pages.push({ ...about, pattern: "/id/about" } as PageRoute);
+		m.pages.push({ ...m.pages[0]!, pattern: "/ja/about", trailingSlash: "ignore" });
+		flagPostScanRoutes(m, before);
+		expect(m.pages.map((r) => r.trailingSlash)).toEqual(["always", "always", "ignore"]);
+	});
+
+	test("a scanned page whose file a plugin swapped is re-checked", async () => {
+		write("about/+page.svelte");
+		write("about/+page.server.ts", "export const prerender = true;\n");
+		write("contact/+page.svelte");
+		write("contact/+page.server.ts", "export const actions = { default: () => {} };\n");
+		const m = await analysed();
+		const before = flagsOf(m.pages);
+		const about = m.pages.find((r) => r.pattern === "/about")!;
+		about.pageServer = "contact/+page.server.ts";
+		flagPostScanRoutes(m, before);
+		expect(about.prerender).toBe(false);
 	});
 
 	test("a route module importing `bosia:routes` (via bosia/client) still analyses", async () => {

@@ -143,7 +143,15 @@
 - [x] 🟠 Review 7: plugin docs: analyse runs before postScan (rejection stack attribution reverted in review 8).
 - [x] 🟠 Review 8: plugin routes read `prerender` from source text again (no unbundled import); dev warns on any rejection with its stack; fresh-read throws retried; fresh re-arm via a marker file.
 - [x] 🟠 Review 9: postScan routes get `prerender` set (by route, not file) before routes.ts is written: clones of a scanned route prerender; client sees them as static.
-- [ ] ⚪ PostScan-added routes are judged by source text (misses `let`, re-exports), ignore their `trailingSlash`, and skip the ssr/actions check on a plugin-set flag. Fix: analyse the postScan delta.
+- [x] 🟠 Review 10: one pass after postScan: clones reuse analyse's exports, a plugin's `true` gets the ssr/actions check, no server file = not static, trailingSlash defaults to never.
+- [x] 🟡 Review 11: one `flagPage()` for analyse and post-postScan (clones get file trailingSlash); swapped files re-checked (APIs too); one skip warning per file; docs.
+- [ ] 🟡 Analyse the files postScan adds (bundle root = project dir; plugin files can sit outside src/routes), then `flagPage()` every touched route. Removes the text check + snapshot rules and fixes:
+  - [ ] Plugin-only files judged by regex: miss `let`/re-exports/`trailingSlash`; a stray quote fools stripComments; an added route can't opt out of a file's `prerender = true`.
+  - [ ] Touched routes keep a stale `trailingSlash`: a swapped server file, a clone moved under new layouts, or a plugin-added layout server (layout changes aren't re-checked).
+  - [ ] Dev cached-manifest rebuilds skip analyse, so clones fall back to the regex and their flags can flip between rebuilds. Or: seed `analysedExports` from the dev cache.
+  - [ ] One skip warning per file names only the first route; other clones are dropped silently. List all patterns in that one warning.
+- [ ] ⚪ The `bosia:routes` stub is empty during analyse, and prerender calls `entries()` on those modules: an `entries()` built from the route table lists nothing.
+- [ ] ⚪ Dev's fresh-done signal is a marker file (`.bosia/analyse-dev.fresh`); a field in the dev cache would avoid the extra state.
 - [ ] ⚪ The `import.meta` warning scans route files only; a `$lib` helper using `import.meta.dir` in `entries()` still lists nothing silently. Scan non-node_modules inputs of the analyse bundle.
 - [ ] ⚪ User server Bun plugins run twice per build (analyse + server), so a stateful plugin (collects files, emits a manifest) sees analyse entries. Fixed by bundling routes once.
 - [ ] 🟡 Analyse imports user modules into the build process (timeout can't kill a hung import; handles leak into prerender). Run it in a subprocess returning JSON exports + `entries()`.

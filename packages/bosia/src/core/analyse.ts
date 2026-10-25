@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
 import { join } from "path";
 import { pathToFileURL } from "url";
 import type { BunPlugin } from "bun";
-import type { RouteManifest, TrailingSlash } from "./types.ts";
+import type { PageRoute, RouteManifest, TrailingSlash } from "./types.ts";
 import { makeBosiaPlugin } from "./plugin.ts";
 import { makeBosiaSvelteCompiler } from "./svelteCompiler.ts";
 import { ROUTES_DIR } from "./scanner.ts";
@@ -42,6 +42,9 @@ type Failure = { file?: string; msg: string; timedOut?: boolean };
 /** Modules the last analyse imported, by path under src/routes. Prerender calls
  *  `entries()` on these, so each route's top-level code runs once. */
 export const analysedModules = new Map<string, Record<string, any>>();
+/** Every route server file's flags from the last analyse (dev: cached ones too).
+ *  postScan routes reuse these, so a clone is judged like the route it copies. */
+export const analysedExports = new Map<string, Exports>();
 
 /** Why a page that asks for prerender can't have it, or null when it can. */
 export function prerenderSkipReason(e: Pick<Exports, "ssr" | "actions">): string | null {
@@ -52,16 +55,43 @@ export function prerenderSkipReason(e: Pick<Exports, "ssr" | "actions">): string
 	return null;
 }
 
-/** True when a page exporting `e` is prerendered; warns (unless `quiet`) when it asks but can't be. */
-export function pagePrerenders(
-	e: Pick<Exports, "prerender" | "ssr" | "actions">,
-	pattern: string,
-	quiet = false,
-): boolean {
-	if (!e.prerender) return false;
-	const skip = prerenderSkipReason(e);
-	if (skip && !quiet) console.warn(`   ⚠️  ${pattern} has prerender=true && ${skip}, skipped`);
-	return !skip;
+// Files already warned about this build: one skip warning per file, not per clone.
+const warnedFiles = new Set<string>();
+
+/**
+ * Sets a page's `trailingSlash` (the nearest of page, then closest layout above,
+ * that exports one) and `prerender` (needs a server file and passes the
+ * ssr/actions check) from its files' exports. `wants` replaces the file's
+ * `prerender`: a postScan plugin's own value. Shared by analyse and the pass
+ * after postScan, so a route a plugin adds is judged like a scanned one.
+ */
+export function flagPage(
+	route: PageRoute,
+	exportsOf: (file: string) => Partial<Exports>,
+	quiet: boolean,
+	wants?: boolean,
+): void {
+	const chain = [...route.layoutServers.map((ls) => ls.path), route.pageServer ?? ""];
+	route.trailingSlash =
+		chain
+			.filter(Boolean)
+			.map((f) => exportsOf(f).trailingSlash)
+			.findLast((ts) => ts !== undefined) ?? "never";
+	const file = route.pageServer;
+	if (!file) {
+		route.prerender = false;
+		return;
+	}
+	const e = exportsOf(file);
+	route.prerender = !!(wants ?? e.prerender);
+	const skip = route.prerender
+		? prerenderSkipReason({ ssr: e.ssr ?? true, actions: !!e.actions })
+		: null;
+	if (!skip) return;
+	route.prerender = false;
+	if (!quiet && !warnedFiles.has(file))
+		console.warn(`   ⚠️  ${route.pattern} has prerender=true && ${skip}, skipped`);
+	warnedFiles.add(file);
 }
 
 /**
@@ -121,7 +151,9 @@ export async function analyseRoutes(
 		);
 	}
 
-	const exports = new Map(files.map((f) => [f, loaded.get(f) ?? cache[f] ?? NO_EXPORTS]));
+	analysedExports.clear();
+	for (const f of files) analysedExports.set(f, loaded.get(f) ?? cache[f] ?? NO_EXPORTS);
+	warnedFiles.clear();
 	if (dev) {
 		const timedOut = new Map(failed.flatMap((x) => (x.timedOut ? [[x.file!, x.msg]] : [])));
 		const next: Cache = {};
@@ -139,18 +171,9 @@ export async function analyseRoutes(
 		if (fresh) writeFileSync(ANALYSE_FRESH_DONE, "");
 	}
 
-	for (const route of manifest.pages) {
-		// Nearest wins: the page, then the closest +layout.server.ts above it.
-		const chain = [...route.layoutServers.map((ls) => ls.path), route.pageServer ?? ""];
-		route.trailingSlash =
-			chain
-				.filter(Boolean)
-				.map((f) => exports.get(f)!.trailingSlash)
-				.findLast((ts) => ts !== undefined) ?? "never";
-		route.prerender =
-			!!route.pageServer && pagePrerenders(exports.get(route.pageServer)!, route.pattern, dev);
-	}
-	for (const api of manifest.apis) api.prerender = exports.get(api.server)!.prerender;
+	const exportsOf = (f: string) => analysedExports.get(f)!;
+	for (const route of manifest.pages) flagPage(route, exportsOf, dev);
+	for (const api of manifest.apis) api.prerender = exportsOf(api.server).prerender;
 
 	// The bundled copy runs `entries()` (and the server bundle runs `load()`), so
 	// `import.meta.dir` isn't src/routes: an `existsSync` on it quietly lists nothing.
