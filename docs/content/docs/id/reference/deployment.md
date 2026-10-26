@@ -181,7 +181,9 @@ Server produksi menangani sinyal `SIGTERM` dan `SIGINT`:
 2. Menunggu request yang sedang berjalan untuk selesai
 3. Memaksa keluar setelah 10 detik jika proses shutdown terhenti
 
-Menjalankan server lewat `bosia start` juga aman: ia meneruskan `SIGTERM` ke server. Proses drain bisa memakan waktu hingga ~12 detik, lebih lama dari batas default Docker 10 detik, jadi atur `docker stop --stop-timeout 15` (Compose: `stop_grace_period: 15s`) agar request yang lambat tidak terpotong.
+Sinyal setelah yang pertama diabaikan, jadi Ctrl+C kedua tidak memotong request. Untuk keluar seketika, gunakan `kill -9`.
+
+`bosia start` meneruskan kedua sinyal ke server, jadi proses drain-nya sama. Drain bisa memakan waktu hingga ~12 detik, lebih lama dari batas default Docker 10 detik, jadi beri container waktu lebih agar request yang lambat tidak terpotong: `docker stop -t 15`, `docker run --stop-timeout 15`, atau `stop_grace_period: 15s` di Compose. PM2 secara default hanya menunggu 1,6 detik; atur `kill_timeout: 15000`.
 
 ## Docker
 

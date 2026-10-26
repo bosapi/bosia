@@ -669,16 +669,12 @@ console.log(
 // a second ^C.
 
 let shuttingDown = false;
-let firstSignalAt = 0;
 async function shutdown() {
-	if (shuttingDown) {
-		// One ^C arrives multiple times (process group + `bun run` forwarding
-		// to its child) — only a genuinely later signal is a second ^C.
-		if (Date.now() - firstSignalAt > 200) process.exit(130); // second ^C = force quit
-		return;
-	}
+	// One ^C arrives more than once (terminal to the group + `bosia dev` /
+	// `bun run` forwarding), so later signals are ignored; the app server is
+	// SIGKILLed after 2.5s below if it hangs.
+	if (shuttingDown) return;
 	shuttingDown = true;
-	firstSignalAt = Date.now();
 	intentionalKill = true;
 
 	if (buildTimer) clearTimeout(buildTimer);

@@ -8,11 +8,13 @@ export async function runDev() {
 		stderr: "inherit",
 		cwd: process.cwd(),
 	});
-	// Survive ^C so we keep waiting for the child instead of orphaning it
-	// mid-shutdown. The terminal delivers SIGINT to the whole process group, so
-	// the child already has it. SIGTERM (Docker, systemd, `kill`) reaches only
-	// this process, so pass it on; terminals never send it, so no duplicates.
-	process.on("SIGINT", () => {});
-	process.on("SIGTERM", () => proc.kill("SIGTERM"));
-	await proc.exited;
+	// Survive the signal so we keep waiting for the child instead of orphaning
+	// it mid-shutdown, and pass it on: Docker and `kill <pid>` signal only this
+	// process. A terminal ^C (or systemd/PM2 signalling the whole group) reaches
+	// the child too; it ignores every signal after its first. Windows: kill() is
+	// TerminateProcess, which skips the child's cleanup, and the console already
+	// sends Ctrl+C on.
+	for (const sig of ["SIGINT", "SIGTERM"] as const)
+		process.on(sig, () => process.platform !== "win32" && proc.kill(sig));
+	process.exit(await proc.exited);
 }

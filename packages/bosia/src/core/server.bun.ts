@@ -83,16 +83,14 @@ try {
 
 // ─── Graceful Shutdown ───────────────────────────────────
 
-let firstSignalAt = 0;
+let shuttingDown = false;
 
 async function shutdown() {
-	if (firstSignalAt) {
-		// One ^C arrives multiple times (process group + `bun run` forwarding
-		// to its child) — only a genuinely later signal is a second ^C.
-		if (Date.now() - firstSignalAt > 200) process.exit(130); // second ^C = force quit
-		return;
-	}
-	firstSignalAt = Date.now();
+	// One ^C arrives more than once (terminal to the group + `bosia start` /
+	// `bun run` forwarding), so every later signal is ignored, like SvelteKit's
+	// adapter-node. The timeouts below stop a drain that hangs.
+	if (shuttingDown) return;
+	shuttingDown = true;
 	const drained = beginShutdown();
 	// Dev: nothing worth draining — exit instantly so ^C feels immediate.
 	if (isDev) process.exit(0);

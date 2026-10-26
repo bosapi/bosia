@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `bosia start` now passes stop signals to the server, so Docker stops it cleanly.
 - `bosia dev` now stops its app server when Docker or `kill` stops it.
+- `bosia dev` now exits with an error code when the dev server fails.
+
+### Changed
+
+- Pressing Ctrl+C twice no longer force-quits; the server lets requests finish (up to 10s).
 
 ## [1.2.9] - 2026-10-23
 

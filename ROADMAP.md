@@ -7,7 +7,10 @@
 
 ## bosia 1.2.10 (2026-10-26) — `bosia start` forwards stop signals
 
-- [x] 🟠 `bosia start` swallowed SIGTERM, so Docker/systemd/`kill` never reached the server: no drain, SIGKILL after 10s (exit 137). Now SIGTERM is forwarded (SIGINT not: the terminal already sends it to the group). `bosia dev` too.
+- [x] 🟠 `bosia start` swallowed SIGTERM, so Docker/systemd/`kill` never reached the server (SIGKILL after 10s, exit 137). Now SIGINT/SIGTERM are forwarded; `bosia dev` too. Own process group dropped: orphans on SIGHUP.
+- [x] 🟡 A doubled ^C (terminal + forward) force-quit (130) if handled 200+ ms apart. Server and dev runner now ignore every signal after the first, like SvelteKit; timeouts end a hung drain.
+- [ ] ⚪ `kill -HUP` / `-QUIT` on `bosia start`/`dev` alone kills the CLI and leaves the server running (on `main` too). Forward them, or stop the child on exit.
+- [ ] ⚪ `bosia start` waits forever on a child that ignores signals. A second signal could SIGKILL the child and exit.
 
 ## bosia 1.2.7 (2026-10-17) — WebSockets
 

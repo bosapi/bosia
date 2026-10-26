@@ -30,12 +30,17 @@ export async function runStart() {
 		},
 	});
 
-	// Survive ^C so we keep waiting for the child instead of orphaning it
-	// mid-drain. The terminal delivers SIGINT to the whole process group, so
-	// the child already has it. SIGTERM (Docker, systemd, `kill`) reaches only
-	// this process, so pass it on; terminals never send it, so no duplicates.
-	process.on("SIGINT", () => {});
-	process.on("SIGTERM", () => proc.kill("SIGTERM"));
+	// Survive the signal so we keep waiting for the child instead of orphaning
+	// it mid-drain, and pass it on: Docker and `kill <pid>` signal only this
+	// process. A terminal ^C (or systemd/PM2 signalling the whole group) reaches
+	// the child too; the Bun server ignores every signal after its first. wrangler
+	// doesn't, so it gets ^C from the terminal alone. Windows: kill() is
+	// TerminateProcess (no drain) and the console already sends Ctrl+C on.
+	for (const sig of ["SIGINT", "SIGTERM"] as const)
+		process.on(sig, () => {
+			if (process.platform === "win32" || (sig === "SIGINT" && target === "workers")) return;
+			proc.kill(sig);
+		});
 	// Propagate the child's code — a refused boot must not report success to CI,
 	// Docker restart policies or orchestrators.
 	process.exit(await proc.exited);

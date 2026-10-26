@@ -10,7 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Deployment guide (EN + ID): `bosia start` passes `SIGTERM` on; set a Docker stop timeout of 15s.
+- Deployment guide (EN + ID): give Docker a 15s stop timeout so slow requests can finish.
+- Deployment guide (EN + ID): set PM2's `kill_timeout` to 15s for the same reason.
+- Deployment guide (EN + ID): a second Ctrl+C is ignored; use `kill -9` to quit at once.
 
 ## [0.8.32] - 2026-10-23
 

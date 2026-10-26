@@ -148,6 +148,16 @@ export const websocket = {
 `,
 	);
 
+	// A request still in flight when shutdown starts.
+	write(
+		"routes/slow/+server.ts",
+		`export async function GET() {
+	await new Promise((r) => setTimeout(r, 600));
+	return new Response("done");
+}
+`,
+	);
+
 	// A stream that never ends on its own, like an SSE feed.
 	write(
 		"routes/sse/+server.ts",
@@ -592,10 +602,15 @@ describe("shutdown", () => {
 			// An open stream never finishes by itself; shutdown must not wait on it.
 			const sse = await fetch(`${origin}/sse`);
 			await sse.body!.getReader().read();
+			const slow = fetch(`${origin}/slow`).then((r) => r.text());
 			await Bun.sleep(100);
 			child!.kill("SIGTERM");
 			expect((await done).code).toBe(1001);
 			expect((await pending).code).toBe(1001);
+			// A later copy of the signal (a doubled ^C) must not cut the drain short.
+			await Bun.sleep(300);
+			child!.kill("SIGINT");
+			expect(await slow).toBe("done");
 			const t = Date.now();
 			expect(await child!.exited).toBe(0);
 			expect(Date.now() - t).toBeLessThan(1500);
