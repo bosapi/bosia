@@ -24,7 +24,7 @@ The cache key is (data requests add `|data` and the loader mask):
 <normalized-path>?<sorted-query>|o=<origin>|i=<identity-hash>
 ```
 
-`origin` is the request's `url.origin` (protocol + host). It follows the `Host` header (and `X-Forwarded-*` with `TRUST_PROXY=true`), so a faked `Host` can't poison the copy other visitors get. Each address your app answers on (`app.com`, `www.app.com`, `http://` and `https://`) keeps its own copies; redirect aliases to one address to share them.
+`origin` is the request's `url.origin` (protocol + host). It follows the `Host` header (and `X-Forwarded-*` with `TRUST_PROXY=true`), so a faked `Host` can't poison the copy other visitors get. Each address your app answers on (`app.com`, `www.app.com`, `http://` and `https://`) keeps its own copies; redirect aliases to one address to share them. Set [`ALLOWED_HOSTS`](/guides/security/#allowed-hosts-allowed_hosts) so requests for random hosts get a 400 instead of filling the cache.
 
 `identity-hash` is built from every cookie AND header whose name appears in `CACHE_KEYS`. The default value covers common session names:
 

@@ -47,3 +47,42 @@ export function applyForwarded(request: Request, url: URL, trustProxy: boolean):
 		url.port = parsed.port;
 	}
 }
+
+// `app.com.` is the same name as `app.com` in DNS.
+const noTrailingDot = (hostname: string) => hostname.replace(/\.$/, "");
+
+/**
+ * Parse ALLOWED_HOSTS entries (`host` or `host:port`) into the form `hostAllowed`
+ * compares: run through the URL parser like the request, so IDN, IPv6 and
+ * default ports match. An entry that isn't a bare host (`https://app.com`,
+ * `app.com/`, `*.app.com`) is returned in `invalid` instead of silently never
+ * matching.
+ */
+export function parseAllowedHosts(entries: string[]): { hosts: Set<string>; invalid: string[] } {
+	const hosts = new Set<string>();
+	const invalid: string[] = [];
+	for (const entry of entries) {
+		// Bare IPv6 (`::1`) needs brackets to parse.
+		const raw = entry.split(":").length > 2 && !entry.startsWith("[") ? `[${entry}]` : entry;
+		let url: URL | undefined;
+		if (!/[\s/?#@\\*]/.test(raw)) {
+			try {
+				url = new URL(`http://${raw}`);
+			} catch {}
+		}
+		if (!url) {
+			invalid.push(entry);
+			continue;
+		}
+		const hostname = noTrailingDot(url.hostname);
+		// The request url drops 80 (http) and 443 (https), so an entry naming them means the bare host.
+		hosts.add(url.port && url.port !== "443" ? `${hostname}:${url.port}` : hostname);
+	}
+	return { hosts, invalid };
+}
+
+/** True when `url`'s host (or host:port) is in `hosts` from parseAllowedHosts. */
+export function hostAllowed(hosts: Set<string>, url: URL): boolean {
+	const hostname = noTrailingDot(url.hostname);
+	return hosts.has(hostname) || (url.port !== "" && hosts.has(`${hostname}:${url.port}`));
+}

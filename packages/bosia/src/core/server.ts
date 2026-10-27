@@ -17,7 +17,7 @@ import { CookieJar } from "./cookies.ts";
 import { safePath } from "./safePath.ts";
 import { HEALTH_PATH, isFrameworkPath, isStaticPath } from "./staticPath.ts";
 import { checkCsrf, checkUpgradeOrigin } from "./csrf.ts";
-import { applyForwarded } from "./proxy.ts";
+import { applyForwarded, hostAllowed, parseAllowedHosts } from "./proxy.ts";
 import type { CsrfConfig } from "./csrf.ts";
 import { applyCorsVary, getCorsHeaders, handlePreflight } from "./cors.ts";
 import type { CorsConfig } from "./cors.ts";
@@ -1118,11 +1118,24 @@ const TRUST_PROXY = process.env.TRUST_PROXY === "true";
 // Unset = any host. Each host gets its own page-cache entry (the key has
 // url.origin), so random Host / X-Forwarded-Host values would flood the LRU.
 // Exact match only; add `*.example.com` wildcards if a multi-tenant app needs them.
-const ALLOWED_HOSTS = new Set(splitCsvEnv("ALLOWED_HOSTS")?.map((h) => h.toLowerCase()));
+const { hosts: ALLOWED_HOSTS, invalid: _invalidHosts } = parseAllowedHosts(
+	splitCsvEnv("ALLOWED_HOSTS") ?? [],
+);
 
+for (const entry of _invalidHosts) {
+	console.warn(
+		`⚠️  ALLOWED_HOSTS: ignoring "${entry}" — use a bare host like app.com or app.com:8080`,
+	);
+}
 if (ALLOWED_HOSTS.size > 0) {
 	console.log(`🏠 Allowed hosts: ${[...ALLOWED_HOSTS].join(", ")}`);
+} else if (_invalidHosts.length > 0) {
+	// Every entry was bad: refuse to start rather than 400 every request while /_health says 200.
+	throw new Error("ALLOWED_HOSTS has no valid entry");
 }
+
+// One warning a minute at most: a flood of random hosts must not flood the log.
+let _lastHostWarn = 0;
 
 const SECURITY_HEADERS: Record<string, string> = {
 	"X-Content-Type-Options": "nosniff",
@@ -1216,12 +1229,13 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 
 	// After applyForwarded, so the public host is the one checked. /_health stays
 	// open: orchestrators probe it by pod IP.
-	if (
-		ALLOWED_HOSTS.size > 0 &&
-		url.pathname !== HEALTH_PATH &&
-		!ALLOWED_HOSTS.has(url.hostname) &&
-		!ALLOWED_HOSTS.has(url.host)
-	) {
+	if (ALLOWED_HOSTS.size > 0 && url.pathname !== HEALTH_PATH && !hostAllowed(ALLOWED_HOSTS, url)) {
+		if (Date.now() - _lastHostWarn > 60_000) {
+			_lastHostWarn = Date.now();
+			console.warn(
+				`[ALLOWED_HOSTS] Rejected host "${url.host}" (400); further rejections muted for 1 min`,
+			);
+		}
 		return new Response("Invalid Host", { status: 400 });
 	}
 

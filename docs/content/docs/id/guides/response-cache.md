@@ -24,7 +24,7 @@ Cache key berbentuk:
 <normalized-path>?<sorted-query>|o=<origin>|i=<identity-hash>
 ```
 
-`origin` adalah `url.origin` request (protokol + host). Nilainya mengikuti header `Host` (dan `X-Forwarded-*` dengan `TRUST_PROXY=true`), jadi `Host` palsu tidak bisa meracuni salinan untuk pengunjung lain. Tiap alamat yang dilayani app (`app.com`, `www.app.com`, `http://` dan `https://`) punya salinan sendiri; redirect alias ke satu alamat agar salinan dipakai bersama.
+`origin` adalah `url.origin` request (protokol + host). Nilainya mengikuti header `Host` (dan `X-Forwarded-*` dengan `TRUST_PROXY=true`), jadi `Host` palsu tidak bisa meracuni salinan untuk pengunjung lain. Tiap alamat yang dilayani app (`app.com`, `www.app.com`, `http://` dan `https://`) punya salinan sendiri; redirect alias ke satu alamat agar salinan dipakai bersama. Setel [`ALLOWED_HOSTS`](/id/guides/security/#host-yang-diizinkan-allowed_hosts) agar request untuk host acak mendapat 400, bukan memenuhi cache.
 
 `identity-hash` dibangun dari setiap cookie DAN header yang namanya muncul di `CACHE_KEYS`. Default sudah menutup nama session umum:
 

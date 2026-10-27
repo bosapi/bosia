@@ -63,7 +63,9 @@ Secara default Bosia menjawab header `Host` apa pun (atau `X-Forwarded-Host` den
 ALLOWED_HOSTS=app.com,www.app.com
 ```
 
-Isinya hostname dipisah koma, atau `host:port` untuk mengizinkan satu port saja. Pencocokan persis (tanpa wildcard). Host lain mendapat `400 Invalid Host`. `/_health` selalu dijawab, jadi load balancer tetap bisa cek lewat IP. `bun run dev` dan langkah prerender saat build mengabaikannya.
+Isinya hostname dipisah koma, atau `host:port` untuk mengizinkan satu port saja. Pencocokan persis (tanpa wildcard); huruf besar/kecil, titik di akhir, dan port default tidak berpengaruh. Halaman dan route `+server.ts` di host lain mendapat `400 Invalid Host` (warning dicatat paling banyak sekali per menit). Route yang ditambahkan plugin di `backend.before` berjalan sebelum pengecekan ini. `/_health` selalu dijawab, jadi load balancer tetap bisa cek lewat IP.
+
+Entri yang bukan host polos (`https://app.com`, `app.com/`, `*.app.com`) diabaikan dengan warning; jika tidak ada entri yang valid, server menolak start. `bun run dev` dan langkah prerender saat build mengabaikan `ALLOWED_HOSTS`. `bosia start` tidak: untuk mencoba build production di `localhost`, tambahkan `localhost` ke daftar atau kosongkan.
 
 ## CORS
 
