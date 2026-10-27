@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-import { mkdirSync, writeFileSync, rmSync } from "fs";
+import { mkdirSync, writeFileSync, rmSync, existsSync } from "fs";
 import { join } from "path";
 
 import { getEphemeralPort } from "../src/core/prerender.ts";
@@ -151,8 +151,10 @@ export const websocket = {
 	// A request still in flight when shutdown starts.
 	write(
 		"routes/slow/+server.ts",
-		`export async function GET() {
-	await new Promise((r) => setTimeout(r, 600));
+		`import { writeFileSync } from "fs";
+export async function GET() {
+	writeFileSync("slow-started", ""); // the test signals only once it's in flight
+	await new Promise((r) => setTimeout(r, 1000));
 	return new Response("done");
 }
 `,
@@ -602,7 +604,11 @@ describe("shutdown", () => {
 			// An open stream never finishes by itself; shutdown must not wait on it.
 			const sse = await fetch(`${origin}/sse`);
 			await sse.body!.getReader().read();
-			const slow = fetch(`${origin}/slow`).then((r) => r.text());
+			// Settles to its error, if any, so a failed fetch is a clear assertion, not an unhandled rejection.
+			const slow = fetch(`${origin}/slow`).then((r) => r.text(), String);
+			const started = join(tmpDir, "slow-started");
+			for (let i = 0; i < 100 && !existsSync(started); i++) await Bun.sleep(20);
+			expect(existsSync(started)).toBe(true);
 			await Bun.sleep(100);
 			child!.kill("SIGTERM");
 			expect((await done).code).toBe(1001);

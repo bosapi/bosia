@@ -84,6 +84,7 @@ try {
 // ─── Graceful Shutdown ───────────────────────────────────
 
 let shuttingDown = false;
+const DRAIN_MS = 10_000;
 
 async function shutdown() {
 	// One ^C arrives more than once (terminal to the group + `bosia start` /
@@ -91,12 +92,15 @@ async function shutdown() {
 	// adapter-node. The timeouts below stop a drain that hangs.
 	if (shuttingDown) return;
 	shuttingDown = true;
+	// Later signals can't get us out, so exit even if the steps below throw or stall.
+	// Drain, then the 2s force timer below, plus 1s slack.
+	setTimeout(() => process.exit(1), DRAIN_MS + 3_000);
 	const drained = beginShutdown();
 	// Dev: nothing worth draining — exit instantly so ^C feels immediate.
 	if (isDev) process.exit(0);
 	console.log("⏳ Shutting down — draining in-flight requests...");
 
-	await Promise.race([drained, Bun.sleep(10_000)]);
+	await Promise.race([drained, Bun.sleep(DRAIN_MS)]);
 
 	const left = inFlightCount();
 	if (left > 0) {

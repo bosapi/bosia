@@ -52,6 +52,7 @@ let intentionalKill = false;
 let crashCount = 0;
 let restartTimer: ReturnType<typeof setTimeout> | null = null;
 let healthyTimer: ReturnType<typeof setTimeout> | null = null;
+let buildProc: Subprocess | null = null;
 const HEALTHY_AFTER_MS = 5_000;
 // Exponential backoff between successive crash restarts (capped at last value).
 const BACKOFF_SCHEDULE_MS = [500, 1_000, 2_000, 4_000, 5_000];
@@ -150,7 +151,7 @@ async function runBuild(): Promise<boolean> {
 	const fresh = analyseFresh;
 	analyseFresh = false;
 	if (fresh) rmSync(ANALYSE_FRESH_DONE, { force: true });
-	const proc = spawn(["bun", "run", BUILD_SCRIPT], {
+	const proc = (buildProc = spawn(["bun", "run", BUILD_SCRIPT], {
 		stdout: "inherit",
 		stderr: "inherit",
 		cwd: process.cwd(),
@@ -164,8 +165,9 @@ async function runBuild(): Promise<boolean> {
 			BOSIA_DEV_BUILD: "1",
 			BOSIA_SVELTE_CACHE_DIR: SVELTE_CACHE_DIR,
 		},
-	});
+	}));
 	const ok = (await proc.exited) === 0;
+	buildProc = null;
 	// Re-arm only if the failure came before analyse wrote its cache: once it
 	// has, the fresh read is done, and a timed-out file stays skipped until saved.
 	if (!ok && fresh && !existsSync(ANALYSE_FRESH_DONE)) analyseFresh = true;
@@ -308,6 +310,7 @@ async function buildAndRestart(): Promise<boolean> {
 		do {
 			buildPending = false;
 			ok = await runBuild();
+			if (shuttingDown) return false; // stopped mid-build, not a build error
 			if (!ok) {
 				console.error("❌ Build failed — fix errors and save again");
 				return false;
@@ -511,6 +514,59 @@ const devServer = Bun.serve({
 	},
 });
 
+// ─── Shutdown ─────────────────────────────────────────────
+// Own SIGINT/SIGTERM so we can cleanly stop the child app server.
+// Without this, the terminal's ^C reaches both processes; the parent
+// exits instantly while the child blocks in `app.stop()`, requiring
+// a second ^C. Set up before the first build, so a stop that lands during
+// it (forwarded by `bosia dev`) still stops the build and Tailwind.
+
+// Declared here so shutdown() can run before the watchers below exist.
+let srcWatcher: ReturnType<typeof watch> | null = null;
+let mtimePoll: ReturnType<typeof setInterval> | null = null;
+let envWatcher: ReturnType<typeof watch> | null = null;
+
+let shuttingDown = false;
+async function shutdown() {
+	// One ^C arrives more than once (terminal to the group + `bosia dev` /
+	// `bun run` forwarding), so later signals are ignored; the app server is
+	// SIGKILLed after 2.5s below if it hangs. A second ^C no longer gets you out,
+	// so if cleanup itself throws or stalls, exit anyway.
+	if (shuttingDown) return;
+	shuttingDown = true;
+	setTimeout(() => process.exit(1), 5_000);
+	intentionalKill = true;
+
+	if (buildTimer) clearTimeout(buildTimer);
+	if (restartTimer) clearTimeout(restartTimer);
+	if (healthyTimer) clearTimeout(healthyTimer);
+	if (mtimePoll) clearInterval(mtimePoll);
+	srcWatcher?.close();
+	envWatcher?.close();
+	devServer.stop(true); // closes SSE conns → abort listeners clear ping intervals
+
+	// The build's exit hook stops Tailwind. Don't orphan a slow-to-stop child
+	// (the app would keep APP_PORT bound and break the next `bun run dev`; a
+	// build would keep writing .bosia/dev). Force it down before we exit.
+	await Promise.all(
+		[buildProc, appProcess].map(async (proc) => {
+			if (!proc) return;
+			proc.kill("SIGTERM");
+			const exited = await Promise.race([
+				proc.exited.then(() => true),
+				Bun.sleep(2_500).then(() => false),
+			]);
+			if (!exited) proc.kill("SIGKILL");
+		}),
+	);
+
+	// Everything is stopped — exit now rather than waiting for the loop to drain.
+	process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
+
 // ─── Initial Build ────────────────────────────────────────
 
 // Clear any orphaned app server from a previous session before the first spawn.
@@ -549,8 +605,6 @@ const mtimes = new Map<string, number>();
 // change. Leave both watchers unstarted (null) — boot build + startAppServer
 // still run, so the server builds once and serves; it just waits for the host's
 // POST /__bosia/rebuild instead of watching.
-let srcWatcher: ReturnType<typeof watch> | null = null;
-let mtimePoll: ReturnType<typeof setInterval> | null = null;
 
 if (!MANAGED) {
 	srcWatcher = watch(join(process.cwd(), "src"), { recursive: true }, (_event, filename) => {
@@ -646,7 +700,7 @@ if (!MANAGED) {
 
 const ENV_FILES = new Set([".env", ".env.local", ".env.development", ".env.development.local"]);
 
-const envWatcher = watch(process.cwd(), { recursive: false }, (_event, filename) => {
+envWatcher = watch(process.cwd(), { recursive: false }, (_event, filename) => {
 	if (!filename || !ENV_FILES.has(filename)) return;
 	console.log(`[watch] env changed: ${filename}`);
 	reloadEnv();
@@ -661,44 +715,3 @@ console.log(
 		? "🛰️  Host-managed mode — builds driven by POST /__bosia/rebuild\n"
 		: "👀 Watching src/ for changes...\n",
 );
-
-// ─── Shutdown ─────────────────────────────────────────────
-// Own SIGINT/SIGTERM so we can cleanly stop the child app server.
-// Without this, the terminal's ^C reaches both processes; the parent
-// exits instantly while the child blocks in `app.stop()`, requiring
-// a second ^C.
-
-let shuttingDown = false;
-async function shutdown() {
-	// One ^C arrives more than once (terminal to the group + `bosia dev` /
-	// `bun run` forwarding), so later signals are ignored; the app server is
-	// SIGKILLed after 2.5s below if it hangs.
-	if (shuttingDown) return;
-	shuttingDown = true;
-	intentionalKill = true;
-
-	if (buildTimer) clearTimeout(buildTimer);
-	if (restartTimer) clearTimeout(restartTimer);
-	if (healthyTimer) clearTimeout(healthyTimer);
-	if (mtimePoll) clearInterval(mtimePoll);
-	srcWatcher?.close();
-	envWatcher.close();
-	devServer.stop(true); // closes SSE conns → abort listeners clear ping intervals
-
-	if (appProcess) {
-		appProcess.kill("SIGTERM");
-		const exited = await Promise.race([
-			appProcess.exited.then(() => true),
-			Bun.sleep(2_500).then(() => false),
-		]);
-		// Don't orphan a slow-to-stop child (it would keep APP_PORT bound and
-		// break the next `bun run dev`). Force it down before we exit.
-		if (!exited) appProcess.kill("SIGKILL");
-	}
-
-	// Everything is stopped — exit now rather than waiting for the loop to drain.
-	process.exit(0);
-}
-
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);

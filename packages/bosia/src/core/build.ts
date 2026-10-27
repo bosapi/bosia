@@ -200,6 +200,12 @@ const tailwindProc = Bun.spawn(
 );
 const tailwindPromise = tailwindProc.exited;
 process.on("exit", () => tailwindProc.kill());
+// A signal's default action skips "exit" hooks; exit instead so Tailwind stops
+// with us (`bosia dev` stops a running build with SIGTERM). Dev builds only: a
+// full build's prerender has its own handler that stops its server first.
+if (process.env.BOSIA_DEV_BUILD === "1")
+	for (const sig of ["SIGINT", "SIGTERM"] as const)
+		process.on(sig, () => process.exit(sig === "SIGINT" ? 130 : 143));
 
 // 1c. Read prerender/ssr/actions/trailingSlash from the real route exports.
 // Before postScan: a plugin sees the real flags and may change them. Routes it
