@@ -63,9 +63,9 @@ Secara default Bosia menjawab header `Host` apa pun (atau `X-Forwarded-Host` den
 ALLOWED_HOSTS=app.com,www.app.com
 ```
 
-Isinya hostname dipisah koma, atau `host:port` untuk mengizinkan satu port saja. Pencocokan persis (tanpa wildcard); huruf besar/kecil, titik di akhir, dan port default tidak berpengaruh. Halaman dan route `+server.ts` di host lain mendapat `400 Invalid Host` (warning dicatat paling banyak sekali per menit). Route yang ditambahkan plugin di `backend.before` berjalan sebelum pengecekan ini. `/_health` selalu dijawab, jadi load balancer tetap bisa cek lewat IP.
+Isinya hostname dipisah koma, atau `host:port` untuk port non-default. Host tanpa port hanya mengizinkan port default (80/443), karena tiap port punya salinan cache sendiri: app yang diakses langsung lewat `:3000` perlu `app.com:3000`. Pencocokan persis (tanpa wildcard); huruf besar/kecil tidak berpengaruh. `ALLOWED_HOSTS=*` berarti semua host, sama dengan tidak di-set. Request ke `app.com.` (titik di akhir) ditolak. Halaman dan route `+server.ts` di host lain mendapat `400 Invalid Host` (warning dicatat paling banyak sekali per menit). Route yang ditambahkan plugin di `backend.before` berjalan sebelum pengecekan ini. `/_health` selalu dijawab, jadi load balancer tetap bisa cek lewat IP.
 
-Entri yang bukan host polos (`https://app.com`, `app.com/`, `*.app.com`) diabaikan dengan warning; jika tidak ada entri yang valid, server menolak start. `bun run dev` dan langkah prerender saat build mengabaikan `ALLOWED_HOSTS`. `bosia start` tidak: untuk mencoba build production di `localhost`, tambahkan `localhost` ke daftar atau kosongkan.
+Entri yang bukan host polos (`https://app.com`, `app.com/`, `*.app.com`) diabaikan dengan warning; jika tidak ada entri yang valid, server menolak start. `bun run dev` dan langkah prerender saat build mengabaikan `ALLOWED_HOSTS`. `bosia start` tidak: untuk mencoba build production di `localhost`, tambahkan `localhost:3000` ke daftar atau kosongkan.
 
 ## CORS
 

@@ -11,6 +11,10 @@ function firstForwarded(request: Request, name: string): string | undefined {
 	return request.headers.get(name)?.split(",")[0]?.trim() || undefined;
 }
 
+// Characters the URL parser would quietly cut at or keep part of
+// (`evil.com@app.com`, `app.com/x`), and `*`, which no real host has.
+const NOT_BARE_HOST = /[\s/?#@\\*]/;
+
 // A Map, not an object: "constructor" or "__proto__" must read as unknown.
 const SCHEMES = new Map([
 	["http", "http:"],
@@ -32,8 +36,7 @@ export function applyForwarded(request: Request, url: URL, trustProxy: boolean):
 	const host = firstForwarded(request, "x-forwarded-host");
 	let parsed: URL | undefined;
 	if (host) {
-		// The parser would quietly keep part of `evil.com@app.com` or `app.com/x`.
-		if (/[\s/?#@\\]/.test(host)) return;
+		if (NOT_BARE_HOST.test(host)) return;
 		try {
 			parsed = new URL(`${proto ?? url.protocol}//${host}`);
 		} catch {
@@ -48,13 +51,11 @@ export function applyForwarded(request: Request, url: URL, trustProxy: boolean):
 	}
 }
 
-// `app.com.` is the same name as `app.com` in DNS.
-const noTrailingDot = (hostname: string) => hostname.replace(/\.$/, "");
-
 /**
- * Parse ALLOWED_HOSTS entries (`host` or `host:port`) into the form `hostAllowed`
- * compares: run through the URL parser like the request, so IDN, IPv6 and
- * default ports match. An entry that isn't a bare host (`https://app.com`,
+ * Parse ALLOWED_HOSTS entries (`host` or `host:port`) into `url.host` form:
+ * run through the URL parser like the request, so IDN and IPv6 match. A bare
+ * host means the default port only: every port is its own `url.origin`, so its
+ * own page-cache entry, and "any port" would let `app.com:1…65535` flood it. An entry that isn't a bare host (`https://app.com`,
  * `app.com/`, `*.app.com`) is returned in `invalid` instead of silently never
  * matching.
  */
@@ -65,7 +66,7 @@ export function parseAllowedHosts(entries: string[]): { hosts: Set<string>; inva
 		// Bare IPv6 (`::1`) needs brackets to parse.
 		const raw = entry.split(":").length > 2 && !entry.startsWith("[") ? `[${entry}]` : entry;
 		let url: URL | undefined;
-		if (!/[\s/?#@\\*]/.test(raw)) {
+		if (!NOT_BARE_HOST.test(raw)) {
 			try {
 				url = new URL(`http://${raw}`);
 			} catch {}
@@ -74,15 +75,16 @@ export function parseAllowedHosts(entries: string[]): { hosts: Set<string>; inva
 			invalid.push(entry);
 			continue;
 		}
-		const hostname = noTrailingDot(url.hostname);
+		// `app.com.` names the same DNS host; the request side keeps the dot (and
+		// 400s), so `app.com.` never gets a second set of cache entries.
+		const hostname = url.hostname.replace(/\.$/, "");
 		// The request url drops 80 (http) and 443 (https), so an entry naming them means the bare host.
 		hosts.add(url.port && url.port !== "443" ? `${hostname}:${url.port}` : hostname);
 	}
 	return { hosts, invalid };
 }
 
-/** True when `url`'s host (or host:port) is in `hosts` from parseAllowedHosts. */
+/** True when `url.host` is in `hosts` from parseAllowedHosts. */
 export function hostAllowed(hosts: Set<string>, url: URL): boolean {
-	const hostname = noTrailingDot(url.hostname);
-	return hosts.has(hostname) || (url.port !== "" && hosts.has(`${hostname}:${url.port}`));
+	return hosts.has(url.host);
 }

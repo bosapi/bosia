@@ -9,6 +9,8 @@
 
 - [x] 🟡 Any `Host` (or forwarded host) was accepted, so random hosts each got a cache entry and flooded the LRU. `ALLOWED_HOSTS` (exact host or host:port) 400s the rest; `/_health` stays open; dev + prerender ignore it.
 - [x] 🟡 Review: entries weren't normalized (IDN, `::1`, `:443`, `app.com.`) and a bad one (`https://app.com`) 400'd all with no log. Parsed by URL now; bad ones warn; none valid → no start.
+- [x] 🟡 Review 2: a bare host allowed any port, and each port is its own cache origin (`app.com:1…65535` flooded it). Bare = default port only; `app.com.` 400s; `*` = any.
+- [ ] ⚪ `ALLOWED_HOSTS=,` (only separators) reads as unset, so any host, with no warning; an all-invalid list refuses to start.
 - [ ] ⚪ `ALLOWED_HOSTS` is exact-match only; add `*.example.com` wildcards if a multi-tenant app needs them.
 - [ ] ⚪ `ALLOWED_HOSTS` is opt-in, so by default random hosts still fill the page cache. Skip cache writes for a non-canonical host, or cap entries per origin.
 - [ ] ⚪ `backend.before` plugin routes skip the `ALLOWED_HOSTS` check (and CSRF); they don't use the page cache.

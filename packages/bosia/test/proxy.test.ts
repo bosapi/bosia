@@ -85,14 +85,23 @@ describe("ALLOWED_HOSTS", () => {
 	});
 
 	test("entries match the parser's form: case, IDN, IPv6, default port, trailing dot", () => {
-		expect(allowed("https://app.com/")).toBe(true);
-		expect(allowed("http://APP.com:3000/")).toBe(true);
+		expect(allowed("https://APP.com/")).toBe(true);
+		expect(allowed("http://app.com/")).toBe(true);
 		expect(allowed("https://secure.com/")).toBe(true);
 		expect(allowed("http://xn--bcher-kva.de/")).toBe(true);
-		expect(allowed("http://[::1]:3000/")).toBe(true);
+		expect(allowed("http://[::1]/")).toBe(true);
 		expect(allowed("http://dot.com/")).toBe(true);
-		expect(allowed("http://app.com./")).toBe(true);
 		expect(allowed("http://evil.com/")).toBe(false);
+	});
+
+	test("a bare host allows the default port only: each port is its own cache origin", () => {
+		expect(allowed("http://app.com:3000/")).toBe(false);
+		expect(allowed("https://secure.com:8443/")).toBe(false);
+		expect(allowed("http://[::1]:3000/")).toBe(false);
+	});
+
+	test("a trailing-dot request is refused, so it can't double the cache entries", () => {
+		expect(allowed("http://app.com./")).toBe(false);
 	});
 
 	test("a host:port entry allows that port only", () => {

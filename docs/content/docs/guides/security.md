@@ -63,9 +63,9 @@ By default Bosia answers any `Host` header (or `X-Forwarded-Host` with `TRUST_PR
 ALLOWED_HOSTS=app.com,www.app.com
 ```
 
-Entries are comma-separated hostnames, or `host:port` to allow one port only. Matching is exact (no wildcards); case, a trailing dot and the default port don't matter. Pages and `+server.ts` routes on any other host get `400 Invalid Host` (a warning is logged at most once a minute). Routes a plugin adds in `backend.before` run before this check. `/_health` is always answered, so load balancers can probe by IP.
+Entries are comma-separated hostnames, or `host:port` for a non-default port. A bare host allows the default port (80/443) only, because each port gets its own cache copies: an app reached directly on `:3000` needs `app.com:3000`. Matching is exact (no wildcards); case doesn't matter. `ALLOWED_HOSTS=*` means any host, same as unset. A request for `app.com.` (trailing dot) is refused. Pages and `+server.ts` routes on any other host get `400 Invalid Host` (a warning is logged at most once a minute). Routes a plugin adds in `backend.before` run before this check. `/_health` is always answered, so load balancers can probe by IP.
 
-An entry that isn't a bare host (`https://app.com`, `app.com/`, `*.app.com`) is ignored with a warning; if no entry is valid, the server refuses to start. `bun run dev` and the build's prerender step ignore `ALLOWED_HOSTS`. `bosia start` does not: to try a production build at `localhost`, add `localhost` to the list or unset it.
+An entry that isn't a bare host (`https://app.com`, `app.com/`, `*.app.com`) is ignored with a warning; if no entry is valid, the server refuses to start. `bun run dev` and the build's prerender step ignore `ALLOWED_HOSTS`. `bosia start` does not: to try a production build at `localhost`, add `localhost:3000` to the list or unset it.
 
 ## CORS
 

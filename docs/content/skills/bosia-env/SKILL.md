@@ -69,35 +69,35 @@ Never `process.env.PUBLIC_API_URL` for user vars. The `$env` module is the contr
 
 These are reserved by Bosia and live outside `$env` (so is every `BOSIA_*` name):
 
-| Var                          | Default    | Purpose                                                                                              |
-| ---------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
-| `PORT`                       | `9000`     | Server port                                                                                          |
-| `NODE_ENV`                   | —          | `development` / `production`                                                                         |
-| `BASE_PATH`                  | `""`       | Mount the app under a sub-path, e.g. `/sso`. Set it for `bosia build` too — see [[bosia-navigation]] |
-| `BODY_SIZE_LIMIT`            | `512K`     | Max request body. `K`/`M`/`G`/`Infinity`                                                             |
-| `IDLE_TIMEOUT`               | `10`       | `Bun.serve` idle seconds. Raise for streaming                                                        |
-| `BOSIA_REUSE_PORT`           | `0`        | `1` = let N processes share one port (`SO_REUSEPORT`)                                                |
-| `MAX_INFLIGHT`               | `Infinity` | Soft concurrency cap → fast `503` over the line                                                      |
-| `LOAD_TIMEOUT`               | `30000`    | `load()` timeout in ms. `0` = off                                                                    |
-| `METADATA_TIMEOUT`           | `10000`    | `metadata()` timeout in ms. `0` = off                                                                |
-| `PRERENDER_TIMEOUT`          | `5000`     | Prerender fetch timeout; the only limit at build (LOAD/METADATA/IDLE_TIMEOUT, MAX_INFLIGHT off)      |
-| `PRERENDER_CONCURRENCY`      | `6`        | Prerender requests at once (page + data = 2 loader runs)                                             |
-| `ASSET_CACHE_MAX_BYTES`      | `52428800` | Memory for static files + prerendered pages after first hit. `0` = always disk                       |
-| `ASSET_CACHE_MAX_FILE_BYTES` | `1048576`  | Largest file kept in that memory cache                                                               |
-| `CACHE_IGNORE_PARAMS`        | `utm_*,…`  | Query params left out of page cache keys. `none` = off                                               |
-| `CACHE_WAIT_TIMEOUT`         | `60000`    | Ms a miss waits for another request building the same entry                                          |
-| `CSRF_ALLOWED_ORIGINS`       | —          | Extra origins allowed on POST/PUT/PATCH/DELETE                                                       |
-| `TRUST_PROXY`                | `false`    | Trust `X-Forwarded-Host` / `-Proto`: rebuilds `event.url` (CSRF/WS origin, redirects, `Secure`)      |
-| `ALLOWED_HOSTS`              | —          | Hosts answered (`host`/`host:port`, exact); others 400, `/_health` exempt. Set in production         |
-| `CORS_ALLOWED_ORIGINS`       | —          | Enable CORS; see [[bosia-cors]]                                                                      |
-| `CORS_ALLOWED_METHODS`       | —          | Override allowed methods                                                                             |
-| `CORS_ALLOWED_HEADERS`       | —          | Override allowed headers                                                                             |
-| `CORS_EXPOSED_HEADERS`       | —          | Browser-visible response headers                                                                     |
-| `CORS_CREDENTIALS`           | `false`    | `"true"` enables cookie/credential mode                                                              |
-| `CORS_MAX_AGE`               | `86400`    | Preflight cache seconds                                                                              |
-| `DISABLE_X_FRAME_OPTIONS`    | `false`    | Drop `X-Frame-Options` (intentional iframe embeds)                                                   |
-| `CSP_DIRECTIVES`             | —          | Opt-in CSP; `{nonce}` placeholder substituted per-request                                            |
-| `BOSIA_OUT_DIR`              | `./dist`   | Build output directory                                                                               |
+| Var                          | Default    | Purpose                                                                                                                                                     |
+| ---------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                       | `9000`     | Server port                                                                                                                                                 |
+| `NODE_ENV`                   | —          | `development` / `production`                                                                                                                                |
+| `BASE_PATH`                  | `""`       | Mount the app under a sub-path, e.g. `/sso`. Set it for `bosia build` too — see [[bosia-navigation]]                                                        |
+| `BODY_SIZE_LIMIT`            | `512K`     | Max request body. `K`/`M`/`G`/`Infinity`                                                                                                                    |
+| `IDLE_TIMEOUT`               | `10`       | `Bun.serve` idle seconds. Raise for streaming                                                                                                               |
+| `BOSIA_REUSE_PORT`           | `0`        | `1` = let N processes share one port (`SO_REUSEPORT`)                                                                                                       |
+| `MAX_INFLIGHT`               | `Infinity` | Soft concurrency cap → fast `503` over the line                                                                                                             |
+| `LOAD_TIMEOUT`               | `30000`    | `load()` timeout in ms. `0` = off                                                                                                                           |
+| `METADATA_TIMEOUT`           | `10000`    | `metadata()` timeout in ms. `0` = off                                                                                                                       |
+| `PRERENDER_TIMEOUT`          | `5000`     | Prerender fetch timeout; the only limit at build (LOAD/METADATA/IDLE_TIMEOUT, MAX_INFLIGHT off)                                                             |
+| `PRERENDER_CONCURRENCY`      | `6`        | Prerender requests at once (page + data = 2 loader runs)                                                                                                    |
+| `ASSET_CACHE_MAX_BYTES`      | `52428800` | Memory for static files + prerendered pages after first hit. `0` = always disk                                                                              |
+| `ASSET_CACHE_MAX_FILE_BYTES` | `1048576`  | Largest file kept in that memory cache                                                                                                                      |
+| `CACHE_IGNORE_PARAMS`        | `utm_*,…`  | Query params left out of page cache keys. `none` = off                                                                                                      |
+| `CACHE_WAIT_TIMEOUT`         | `60000`    | Ms a miss waits for another request building the same entry                                                                                                 |
+| `CSRF_ALLOWED_ORIGINS`       | —          | Extra origins allowed on POST/PUT/PATCH/DELETE                                                                                                              |
+| `TRUST_PROXY`                | `false`    | Trust `X-Forwarded-Host` / `-Proto`: rebuilds `event.url` (CSRF/WS origin, redirects, `Secure`)                                                             |
+| `ALLOWED_HOSTS`              | —          | Hosts answered: `host` = port 80/443 only, else `host:port`; others 400, `/_health` exempt. `*` = any. Bad entry (`https://x`) warns; none valid → no start |
+| `CORS_ALLOWED_ORIGINS`       | —          | Enable CORS; see [[bosia-cors]]                                                                                                                             |
+| `CORS_ALLOWED_METHODS`       | —          | Override allowed methods                                                                                                                                    |
+| `CORS_ALLOWED_HEADERS`       | —          | Override allowed headers                                                                                                                                    |
+| `CORS_EXPOSED_HEADERS`       | —          | Browser-visible response headers                                                                                                                            |
+| `CORS_CREDENTIALS`           | `false`    | `"true"` enables cookie/credential mode                                                                                                                     |
+| `CORS_MAX_AGE`               | `86400`    | Preflight cache seconds                                                                                                                                     |
+| `DISABLE_X_FRAME_OPTIONS`    | `false`    | Drop `X-Frame-Options` (intentional iframe embeds)                                                                                                          |
+| `CSP_DIRECTIVES`             | —          | Opt-in CSP; `{nonce}` placeholder substituted per-request                                                                                                   |
+| `BOSIA_OUT_DIR`              | `./dist`   | Build output directory                                                                                                                                      |
 
 ```ts
 const port = Number(process.env.PORT ?? 9000);

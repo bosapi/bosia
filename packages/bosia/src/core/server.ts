@@ -1118,8 +1118,10 @@ const TRUST_PROXY = process.env.TRUST_PROXY === "true";
 // Unset = any host. Each host gets its own page-cache entry (the key has
 // url.origin), so random Host / X-Forwarded-Host values would flood the LRU.
 // Exact match only; add `*.example.com` wildcards if a multi-tenant app needs them.
+// `*` (the Django/Vite spelling) means any host, same as unset.
+const _hostEntries = splitCsvEnv("ALLOWED_HOSTS") ?? [];
 const { hosts: ALLOWED_HOSTS, invalid: _invalidHosts } = parseAllowedHosts(
-	splitCsvEnv("ALLOWED_HOSTS") ?? [],
+	_hostEntries.includes("*") ? [] : _hostEntries,
 );
 
 for (const entry of _invalidHosts) {

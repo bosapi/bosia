@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Security, env vars, deployment and `bosia-env` skill (EN + ID): document `ALLOWED_HOSTS`.
 - Response cache guide (EN + ID): set `ALLOWED_HOSTS` so random hosts can't fill the cache.
+- Security, env vars, `bosia-env` skill: a bare host means ports 80/443 only; `*` means any host.
 
 ## [0.8.33] - 2026-10-26
 

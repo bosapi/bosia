@@ -104,7 +104,7 @@ beforeAll(async () => {
 			BASE_PATH: BASE,
 			PORT: String(port),
 			NODE_PATH: BOSIA_NODE_PATH,
-			ALLOWED_HOSTS: "app.example, localhost",
+			ALLOWED_HOSTS: `app.example, localhost:${port}`,
 		},
 		stdout: "ignore",
 		stderr: "ignore",
