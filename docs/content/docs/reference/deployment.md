@@ -110,6 +110,8 @@ so that CSRF origin checks honour `X-Forwarded-Host` and `X-Forwarded-Proto` and
 
 See [Security › Reverse-proxy deployments](/guides/security/#reverse-proxy-deployments-trust_proxy) for the full rationale.
 
+Also set `ALLOWED_HOSTS` to your public host(s), e.g. `ALLOWED_HOSTS=app.com,www.app.com`, so requests for other hosts get a 400 instead of filling the page cache. See [Security › Allowed hosts](/guides/security/#allowed-hosts-allowed_hosts).
+
 ## Mounting Under a Sub-Path
 
 To serve an app from `example.com/sso` rather than the origin root — several apps sharing one hostname, or no subdomain available — set:

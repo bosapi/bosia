@@ -709,6 +709,8 @@ export async function prerenderStaticRoutes(
 			IDLE_TIMEOUT: "0",
 			LOAD_TIMEOUT: "Infinity",
 			METADATA_TIMEOUT: "Infinity",
+			// The build fetches http://localhost:PORT, which a production ALLOWED_HOSTS would 400.
+			ALLOWED_HOSTS: "",
 			NODE_PATH: BOSIA_NODE_PATH,
 		},
 		stdout: "ignore",

@@ -55,6 +55,16 @@ Do **not** set `TRUST_PROXY=true` when Bosia is internet-facing with no proxy in
 
 In **dev mode**, `bun run dev` runs a proxy in front of the inner app server on a different port. The dev proxy injects `X-Forwarded-Host` / `X-Forwarded-Proto` and sets `TRUST_PROXY=true` on the spawned app process automatically, so same-origin form submissions and `POST`s work without any extra configuration.
 
+### Allowed hosts (`ALLOWED_HOSTS`)
+
+By default Bosia answers any `Host` header (or `X-Forwarded-Host` with `TRUST_PROXY=true`). The page cache keeps a separate copy per host, so a client sending random hosts can push real pages out of the cache. In production, list the hosts your app serves:
+
+```bash
+ALLOWED_HOSTS=app.com,www.app.com
+```
+
+Entries are comma-separated hostnames, or `host:port` to allow one port only. Matching is exact (no wildcards). Any other host gets `400 Invalid Host`. `/_health` is always answered, so load balancers can probe by IP. `bun run dev` and the build's prerender step ignore it.
+
 ## CORS
 
 CORS is **disabled by default**. Enable it by setting allowed origins:

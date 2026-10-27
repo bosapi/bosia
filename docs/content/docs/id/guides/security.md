@@ -55,6 +55,16 @@ Saat aktif, Bosia membangun ulang URL request dari header itu, jadi `event.url`,
 
 Pada **mode dev**, `bun run dev` menjalankan proxy di depan app server internal pada port berbeda. Dev proxy menyuntikkan `X-Forwarded-Host` / `X-Forwarded-Proto` dan menyetel `TRUST_PROXY=true` di proses app secara otomatis, sehingga submission form same-origin dan `POST` bekerja tanpa konfigurasi tambahan.
 
+### Host yang diizinkan (`ALLOWED_HOSTS`)
+
+Secara default Bosia menjawab header `Host` apa pun (atau `X-Forwarded-Host` dengan `TRUST_PROXY=true`). Page cache menyimpan salinan terpisah per host, jadi klien yang mengirim host acak bisa mendorong halaman asli keluar dari cache. Di production, daftarkan host yang dilayani app:
+
+```bash
+ALLOWED_HOSTS=app.com,www.app.com
+```
+
+Isinya hostname dipisah koma, atau `host:port` untuk mengizinkan satu port saja. Pencocokan persis (tanpa wildcard). Host lain mendapat `400 Invalid Host`. `/_health` selalu dijawab, jadi load balancer tetap bisa cek lewat IP. `bun run dev` dan langkah prerender saat build mengabaikannya.
+
 ## CORS
 
 CORS **dinonaktifkan secara bawaan**. Aktifkan dengan menyetel origin yang diizinkan:

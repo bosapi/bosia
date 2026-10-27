@@ -110,6 +110,8 @@ agar pemeriksaan origin CSRF menghormati `X-Forwarded-Host` dan `X-Forwarded-Pro
 
 Lihat [Keamanan › Deployment di belakang reverse-proxy](/id/guides/security/#deployment-di-belakang-reverse-proxy-trust_proxy) untuk penjelasan lengkapnya.
 
+Setel juga `ALLOWED_HOSTS` ke host publik kamu, misalnya `ALLOWED_HOSTS=app.com,www.app.com`, agar request untuk host lain mendapat 400 alih-alih memenuhi page cache. Lihat [Keamanan › Host yang diizinkan](/id/guides/security/#host-yang-diizinkan-allowed_hosts).
+
 ## Memasang di Sub-Path
 
 Untuk menyajikan aplikasi dari `example.com/sso`, bukan dari akar origin — beberapa aplikasi berbagi satu hostname, atau subdomain tidak tersedia — setel:

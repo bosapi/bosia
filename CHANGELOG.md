@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.11] - 2026-10-28
+
+### Added
+
+- `ALLOWED_HOSTS` lists the hosts your app answers; other hosts get a 400 and can't flood the cache.
+
 ## [1.2.10] - 2026-10-26
 
 ### Changed

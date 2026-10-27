@@ -1114,6 +1114,16 @@ const _xfoDisabled = process.env.DISABLE_X_FRAME_OPTIONS === "true";
 // spoofable from any client that talks directly to the app.
 const TRUST_PROXY = process.env.TRUST_PROXY === "true";
 
+// ALLOWED_HOSTS: comma-separated hostnames (or host:port) the app answers for.
+// Unset = any host. Each host gets its own page-cache entry (the key has
+// url.origin), so random Host / X-Forwarded-Host values would flood the LRU.
+// Exact match only; add `*.example.com` wildcards if a multi-tenant app needs them.
+const ALLOWED_HOSTS = new Set(splitCsvEnv("ALLOWED_HOSTS")?.map((h) => h.toLowerCase()));
+
+if (ALLOWED_HOSTS.size > 0) {
+	console.log(`🏠 Allowed hosts: ${[...ALLOWED_HOSTS].join(", ")}`);
+}
+
 const SECURITY_HEADERS: Record<string, string> = {
 	"X-Content-Type-Options": "nosniff",
 	...(_xfoDisabled ? {} : { "X-Frame-Options": "SAMEORIGIN" }),
@@ -1202,6 +1212,17 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 		const appPath = stripBase(base, url.pathname);
 		if (appPath === null) return new Response("Not Found", { status: 404 });
 		url.pathname = appPath;
+	}
+
+	// After applyForwarded, so the public host is the one checked. /_health stays
+	// open: orchestrators probe it by pod IP.
+	if (
+		ALLOWED_HOSTS.size > 0 &&
+		url.pathname !== HEALTH_PATH &&
+		!ALLOWED_HOSTS.has(url.hostname) &&
+		!ALLOWED_HOSTS.has(url.host)
+	) {
+		return new Response("Invalid Host", { status: 400 });
 	}
 
 	// No page lives at a `//x` path: anything that echoes it as a URL (the trailing-slash

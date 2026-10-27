@@ -248,6 +248,9 @@ async function startAppServer() {
 			// origin checks must honour them. Safe in dev because the proxy controls these
 			// headers — no untrusted client can spoof them.
 			TRUST_PROXY: "true",
+			// The browser reaches dev as localhost / a LAN IP; a production ALLOWED_HOSTS
+			// from .env would 400 every request.
+			ALLOWED_HOSTS: "",
 		},
 	});
 

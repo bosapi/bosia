@@ -88,6 +88,7 @@ These are reserved by Bosia and live outside `$env` (so is every `BOSIA_*` name)
 | `CACHE_WAIT_TIMEOUT`         | `60000`    | Ms a miss waits for another request building the same entry                                          |
 | `CSRF_ALLOWED_ORIGINS`       | —          | Extra origins allowed on POST/PUT/PATCH/DELETE                                                       |
 | `TRUST_PROXY`                | `false`    | Trust `X-Forwarded-Host` / `-Proto`: rebuilds `event.url` (CSRF/WS origin, redirects, `Secure`)      |
+| `ALLOWED_HOSTS`              | —          | Hosts answered (`host`/`host:port`, exact); others 400, `/_health` exempt. Set in production         |
 | `CORS_ALLOWED_ORIGINS`       | —          | Enable CORS; see [[bosia-cors]]                                                                      |
 | `CORS_ALLOWED_METHODS`       | —          | Override allowed methods                                                                             |
 | `CORS_ALLOWED_HEADERS`       | —          | Override allowed headers                                                                             |

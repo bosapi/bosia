@@ -1,9 +1,14 @@
 # Bosia — Roadmap
 
 > Track what's done, what's next, and where we're headed.
-> Current version: **1.2.10**
+> Current version: **1.2.11**
 
 ---
+
+## bosia 1.2.11 (2026-10-28) — `ALLOWED_HOSTS`
+
+- [x] 🟡 Any `Host` (or forwarded host) was accepted, so random hosts each got a cache entry and flooded the LRU. `ALLOWED_HOSTS` (exact host or host:port) 400s the rest; `/_health` stays open; dev + prerender ignore it.
+- [ ] ⚪ `ALLOWED_HOSTS` is exact-match only; add `*.example.com` wildcards if a multi-tenant app needs them.
 
 ## bosia 1.2.10 (2026-10-26) — `bosia start` forwards stop signals
 
@@ -32,7 +37,7 @@
 - [x] 🟡 Review: `X-Forwarded-Proto: wss` (Traefik) → 403; `Upgrade` without `Sec-WebSocket-Key` ran `upgrade()`; upgrade context outlived its request; hook throw after 101 left the socket open.
 - [x] 🟡 Review: forwarded host kept the inner port (`app.com:3000`); a malformed one half-applied. One strict `applyForwarded()` (proxy.ts); CSRF compares `url.origin` only.
 - [x] 🔴 On `main` too: page cache key was path + query only, but `url` follows `Host`/`X-Forwarded-*`. A spoofed one poisoned pages rendering `url.origin`. Key now has `url.origin`.
-- [ ] 🟡 Any `Host` (or forwarded host) is accepted, so random hosts each get a cache entry and flood the LRU (same as random queries today). Add `ORIGIN`/`ALLOWED_HOSTS` and reject the rest.
+- [x] 🟡 Any `Host` (or forwarded host) is accepted, so random hosts each get a cache entry and flood the LRU (same as random queries today). Add `ORIGIN`/`ALLOWED_HOSTS` and reject the rest. Done in 1.2.11.
 - [x] 🟡 `X-Forwarded-Proto: constructor` hit an inherited key of `SCHEMES` and dropped a valid forwarded host. Now a `Map` (proxy.ts), as is cookies' `sameSite` table (same bug).
 - [x] ⚪ Review: a path with a raw `|` (`/files/a|b`) was indexed as `/files/a`, so `invalidate("/files/a|b")` missed it. `pathOfKey` cuts at `?` or `|o=`.
 - [x] ⚪ Review: a data request's `_invalidated` mask went raw into the cache key (`1?x` broke path invalidation). Only a `0`/`1` last value counts now; others run every loader (a page's own `?_invalidated=` cache-buster stays valid).

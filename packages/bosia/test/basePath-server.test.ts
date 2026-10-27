@@ -81,6 +81,8 @@ beforeAll(async () => {
 			NODE_ENV: "production",
 			BASE_PATH: BASE,
 			NODE_PATH: BOSIA_NODE_PATH,
+			// Prerender fetches http://localhost, so it must ignore a production list.
+			ALLOWED_HOSTS: "app.example",
 		},
 		stdout: "pipe",
 		stderr: "pipe",
@@ -102,6 +104,7 @@ beforeAll(async () => {
 			BASE_PATH: BASE,
 			PORT: String(port),
 			NODE_PATH: BOSIA_NODE_PATH,
+			ALLOWED_HOSTS: "app.example, localhost",
 		},
 		stdout: "ignore",
 		stderr: "ignore",
@@ -141,6 +144,16 @@ describe("a built server mounted under BASE_PATH", () => {
 		ws.close();
 		// Off the mount it was never ours.
 		expect((await fetch(`${origin}/ws`)).status).toBe(404);
+	});
+
+	test("ALLOWED_HOSTS: other hosts get 400, /_health stays open", async () => {
+		expect(existsSync(join(tmpDir, "dist", "prerendered", "about.html"))).toBe(true);
+		const evil = { host: "evil.test" };
+		expect((await fetch(`${origin}${BASE}`, { headers: evil })).status).toBe(400);
+		expect((await fetch(`${origin}${BASE}/_health`, { headers: evil })).ok).toBe(true);
+		expect((await fetch(`${origin}${BASE}`, { headers: { host: "app.example" } })).status).toBe(
+			200,
+		);
 	});
 
 	test("404s the origin root — off-mount was never ours", async () => {
