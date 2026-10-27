@@ -9,6 +9,7 @@
 
 - [x] 🟠 `bosia start` swallowed SIGTERM, so Docker/systemd/`kill` never reached the server (SIGKILL after 10s, exit 137). Now SIGINT/SIGTERM are forwarded; `bosia dev` too. Own process group dropped: orphans on SIGHUP.
 - [x] 🟡 A doubled ^C (terminal + forward) force-quit (130) if handled 200+ ms apart. Server and dev runner now ignore every signal after the first, like SvelteKit; timeouts end a hung drain.
+- [x] Toolchain: `.bun-version` 1.4.2 → 1.4.4 (local + CI), `@types/bun` 1.4.4 in `bun.lock`. `engines.bun >=1.4` unchanged.
 - [ ] ⚪ `kill -HUP` / `-QUIT` on `bosia start`/`dev` alone kills the CLI and leaves the server running (on `main` too). Forward them, or stop the child on exit.
 - [ ] ⚪ `bosia build` / `bosia test` CLIs don't forward signals: `kill <pid>` leaves core/build (and its prerender server or Tailwind) running. On `main` too.
 - [ ] 🟡 Dev shutdown races its own in-flight work: boot continues after a stop, a rebuild can spawn an app mid-shutdown, ^C may print "Build failed", a SIGKILLed build orphans Tailwind.
