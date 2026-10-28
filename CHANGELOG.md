@@ -11,9 +11,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - `ALLOWED_HOSTS` lists the hosts your app answers; other hosts get a 400 and can't flood the cache.
-- A bad `ALLOWED_HOSTS` entry (like `https://app.com`) is skipped with a warning.
-- `ALLOWED_HOSTS=app.com` allows ports 80/443 only; write `app.com:3000` for other ports.
+- `ALLOWED_HOSTS=app.com` covers ports 80 and 443; write `app.com:3000` for any other port.
+- A bad `ALLOWED_HOSTS` entry (like `https://app.com`) stops the server from starting and is named.
 - `ALLOWED_HOSTS=*` means any host, like leaving it unset.
+
+### Changed
+
+- Breaking: `ALLOWED_HOSTS` is now Bosia's own; an app using that name must rename its variable.
 
 ## [1.2.10] - 2026-10-26
 

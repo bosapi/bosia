@@ -51,40 +51,61 @@ export function applyForwarded(request: Request, url: URL, trustProxy: boolean):
 	}
 }
 
+// 80 and 443 count as the default port for either scheme, so `app.com`,
+// `app.com:80` and `app.com:443` are one host on both sides of the check: a
+// proxy that keeps `:443` in the Host still matches. Any other port must match
+// exactly — each port is its own `url.origin`, so its own page-cache entry, and
+// "any port" would let `app.com:1…65535` flood it. That caps a host at 4 cache
+// origins (2 schemes × 2 default ports).
+function hostKey(hostname: string, port: string): string {
+	return port && port !== "80" && port !== "443" ? `${hostname}:${port}` : hostname;
+}
+
 /**
- * Parse ALLOWED_HOSTS entries (`host` or `host:port`) into `url.host` form:
- * run through the URL parser like the request, so IDN and IPv6 match. A bare
- * host means the default port only: every port is its own `url.origin`, so its
- * own page-cache entry, and "any port" would let `app.com:1…65535` flood it. An entry that isn't a bare host (`https://app.com`,
- * `app.com/`, `*.app.com`) is returned in `invalid` instead of silently never
- * matching.
+ * Parse ALLOWED_HOSTS entries (`host` or `host:port`) into hostKey form, through
+ * the URL parser like the request, so IDN and IPv6 match. An entry that isn't a
+ * bare host (`https://app.com`, `app.com/`, `*.app.com`, `.`) is returned in
+ * `invalid` instead of silently never matching. `*` (the Django/Vite spelling)
+ * sets `any`: every host is allowed.
  */
-export function parseAllowedHosts(entries: string[]): { hosts: Set<string>; invalid: string[] } {
+export function parseAllowedHosts(entries: string[]): {
+	hosts: Set<string>;
+	invalid: string[];
+	any: boolean;
+} {
 	const hosts = new Set<string>();
 	const invalid: string[] = [];
 	for (const entry of entries) {
-		// Bare IPv6 (`::1`) needs brackets to parse.
-		const raw = entry.split(":").length > 2 && !entry.startsWith("[") ? `[${entry}]` : entry;
+		if (entry === "*") continue;
+		// IPv6 needs brackets (`[::1]:9000`); unbracketed `::1:9000` is ambiguous and fails to parse.
 		let url: URL | undefined;
-		if (!NOT_BARE_HOST.test(raw)) {
+		if (!NOT_BARE_HOST.test(entry)) {
 			try {
-				url = new URL(`http://${raw}`);
+				url = new URL(`http://${entry}`);
 			} catch {}
 		}
-		if (!url) {
+		// `app.com.` names the same DNS host as `app.com`. The request side keeps
+		// the dot (and 400s), so it never gets a second set of cache entries.
+		const hostname = url?.hostname.replace(/\.$/, "");
+		// Typos that parse but can never match a request: `.`, `app.com..`, `app..com`, `:0`,
+		// and Django's `.app.com` (subdomains too), which is literal here.
+		if (
+			!url ||
+			!hostname ||
+			hostname.startsWith(".") ||
+			hostname.endsWith(".") ||
+			hostname.includes("..") ||
+			url.port === "0"
+		) {
 			invalid.push(entry);
 			continue;
 		}
-		// `app.com.` names the same DNS host; the request side keeps the dot (and
-		// 400s), so `app.com.` never gets a second set of cache entries.
-		const hostname = url.hostname.replace(/\.$/, "");
-		// The request url drops 80 (http) and 443 (https), so an entry naming them means the bare host.
-		hosts.add(url.port && url.port !== "443" ? `${hostname}:${url.port}` : hostname);
+		hosts.add(hostKey(hostname, url.port));
 	}
-	return { hosts, invalid };
+	return { hosts, invalid, any: entries.includes("*") };
 }
 
-/** True when `url.host` is in `hosts` from parseAllowedHosts. */
+/** True when `url`'s host is in `hosts` from parseAllowedHosts. */
 export function hostAllowed(hosts: Set<string>, url: URL): boolean {
-	return hosts.has(url.host);
+	return hosts.has(hostKey(url.hostname, url.port));
 }

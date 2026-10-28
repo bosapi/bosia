@@ -1118,22 +1118,28 @@ const TRUST_PROXY = process.env.TRUST_PROXY === "true";
 // Unset = any host. Each host gets its own page-cache entry (the key has
 // url.origin), so random Host / X-Forwarded-Host values would flood the LRU.
 // Exact match only; add `*.example.com` wildcards if a multi-tenant app needs them.
-// `*` (the Django/Vite spelling) means any host, same as unset.
 const _hostEntries = splitCsvEnv("ALLOWED_HOSTS") ?? [];
-const { hosts: ALLOWED_HOSTS, invalid: _invalidHosts } = parseAllowedHosts(
-	_hostEntries.includes("*") ? [] : _hostEntries,
-);
+const {
+	hosts: _parsedHosts,
+	invalid: _invalidHosts,
+	any: _anyHost,
+} = parseAllowedHosts(_hostEntries);
+// Empty = no check.
+const ALLOWED_HOSTS = _anyHost ? new Set<string>() : _parsedHosts;
 
-for (const entry of _invalidHosts) {
-	console.warn(
-		`⚠️  ALLOWED_HOSTS: ignoring "${entry}" — use a bare host like app.com or app.com:8080`,
+// Any bad entry stops the boot: a skipped `https://www.app.com` would 400 that
+// host's visitors while /_health says 200.
+if (_invalidHosts.length > 0) {
+	throw new Error(
+		`ALLOWED_HOSTS: invalid ${_invalidHosts.map((e) => `"${e}"`).join(", ")} — use a bare host like app.com, app.com:8080 or [::1]:9000`,
 	);
 }
-if (ALLOWED_HOSTS.size > 0) {
+if (_anyHost) {
+	if (_parsedHosts.size > 0) {
+		console.warn(`⚠️  ALLOWED_HOSTS: "*" allows any host; the other entries are ignored`);
+	}
+} else if (ALLOWED_HOSTS.size > 0) {
 	console.log(`🏠 Allowed hosts: ${[...ALLOWED_HOSTS].join(", ")}`);
-} else if (_invalidHosts.length > 0) {
-	// Every entry was bad: refuse to start rather than 400 every request while /_health says 200.
-	throw new Error("ALLOWED_HOSTS has no valid entry");
 }
 
 // One warning a minute at most: a flood of random hosts must not flood the log.
@@ -1231,11 +1237,17 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
 
 	// After applyForwarded, so the public host is the one checked. /_health stays
 	// open: orchestrators probe it by pod IP.
-	if (ALLOWED_HOSTS.size > 0 && url.pathname !== HEALTH_PATH && !hostAllowed(ALLOWED_HOSTS, url)) {
+	// Workers' warm-up renders `http://localhost/`; a 400 would leave the render path cold.
+	if (
+		ALLOWED_HOSTS.size > 0 &&
+		!warmingUp &&
+		url.pathname !== HEALTH_PATH &&
+		!hostAllowed(ALLOWED_HOSTS, url)
+	) {
 		if (Date.now() - _lastHostWarn > 60_000) {
 			_lastHostWarn = Date.now();
 			console.warn(
-				`[ALLOWED_HOSTS] Rejected host "${url.host}" (400); further rejections muted for 1 min`,
+				`[ALLOWED_HOSTS] Rejected host "${url.host}" (400); add it if it's yours (a bare host is ports 80/443 only). Muted for 1 min`,
 			);
 		}
 		return new Response("Invalid Host", { status: 400 });

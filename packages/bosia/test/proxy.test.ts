@@ -72,16 +72,32 @@ describe("ALLOWED_HOSTS", () => {
 		"api.com:8080",
 		"secure.com:443",
 		"bücher.de",
-		"::1",
+		"[::1]",
+		"::1:9000",
 		"dot.com.",
 		"https://bad.com",
 		"bad.com/",
 		"*.bad.com",
+		".",
+		"bad.com..",
+		"bad..com",
+		"bad.com:0",
+		".bad.com",
 	]);
 	const allowed = (href: string) => hostAllowed(hosts, new URL(href));
 
-	test("an entry that isn't a bare host is reported, not silently unmatched", () => {
-		expect(invalid).toEqual(["https://bad.com", "bad.com/", "*.bad.com"]);
+	test("an entry that isn't a bare host (or unbracketed IPv6) is reported, not silently unmatched", () => {
+		expect(invalid).toEqual([
+			"::1:9000",
+			"https://bad.com",
+			"bad.com/",
+			"*.bad.com",
+			".",
+			"bad.com..",
+			"bad..com",
+			"bad.com:0",
+			".bad.com",
+		]);
 	});
 
 	test("entries match the parser's form: case, IDN, IPv6, default port, trailing dot", () => {
@@ -94,7 +110,7 @@ describe("ALLOWED_HOSTS", () => {
 		expect(allowed("http://evil.com/")).toBe(false);
 	});
 
-	test("a bare host allows the default port only: each port is its own cache origin", () => {
+	test("a bare host allows the default ports only: each port is its own cache origin", () => {
 		expect(allowed("http://app.com:3000/")).toBe(false);
 		expect(allowed("https://secure.com:8443/")).toBe(false);
 		expect(allowed("http://[::1]:3000/")).toBe(false);
@@ -102,6 +118,31 @@ describe("ALLOWED_HOSTS", () => {
 
 	test("a trailing-dot request is refused, so it can't double the cache entries", () => {
 		expect(allowed("http://app.com./")).toBe(false);
+	});
+
+	test("80 and 443 are one default port on both sides: host, host:80, host:443 match alike", () => {
+		for (const entry of ["a.com", "a.com:80", "a.com:443"]) {
+			const { hosts } = parseAllowedHosts([entry]);
+			for (const href of [
+				"https://a.com/",
+				"http://a.com/",
+				"http://a.com:443/",
+				"https://a.com:80/",
+			]) {
+				expect(hostAllowed(hosts, new URL(href))).toBe(true);
+			}
+			expect(hostAllowed(hosts, new URL("http://a.com:8443/"))).toBe(false);
+		}
+	});
+
+	test("`*` means any host; entries next to it are still parsed and reported", () => {
+		expect(parseAllowedHosts(["*"])).toEqual({ hosts: new Set(), invalid: [], any: true });
+		expect(parseAllowedHosts(["*", "*"])).toEqual({ hosts: new Set(), invalid: [], any: true });
+		expect(parseAllowedHosts(["app.com", "*", "https://x"])).toEqual({
+			hosts: new Set(["app.com"]),
+			invalid: ["https://x"],
+			any: true,
+		});
 	});
 
 	test("a host:port entry allows that port only", () => {

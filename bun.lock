@@ -42,7 +42,7 @@
     },
     "docs": {
       "name": "docs",
-      "version": "0.8.33",
+      "version": "0.8.34",
       "dependencies": {
         "@lucide/svelte": "^1.17.0",
         "bosia": "workspace:*",

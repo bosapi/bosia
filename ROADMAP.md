@@ -7,12 +7,15 @@
 
 ## bosia 1.2.11 (2026-10-28) — `ALLOWED_HOSTS`
 
-- [x] 🟡 Any `Host` (or forwarded host) was accepted, so random hosts each got a cache entry and flooded the LRU. `ALLOWED_HOSTS` (exact host or host:port) 400s the rest; `/_health` stays open; dev + prerender ignore it.
-- [x] 🟡 Review: entries weren't normalized (IDN, `::1`, `:443`, `app.com.`) and a bad one (`https://app.com`) 400'd all with no log. Parsed by URL now; bad ones warn; none valid → no start.
-- [x] 🟡 Review 2: a bare host allowed any port, and each port is its own cache origin (`app.com:1…65535` flooded it). Bare = default port only; `app.com.` 400s; `*` = any.
-- [ ] ⚪ `ALLOWED_HOSTS=,` (only separators) reads as unset, so any host, with no warning; an all-invalid list refuses to start.
+- [x] 🟡 Any `Host` (or forwarded host) was accepted, so random hosts each got a cache entry and flooded the LRU. `ALLOWED_HOSTS` 400s the rest; `/_health` stays open; dev, prerender, Workers warm-up skip it.
+- [x] 🟡 Entries go through the URL parser like the request (IDN, `[::1]`). Bare host = ports 80/443 (one `hostKey` both sides); others exact, since each port is its own cache origin. `*` = any.
+- [x] 🟡 A bad entry (`https://app.com`, `.app.com`, `app..com`, `:0`, `::1:9000`) stops the boot, naming it: a skipped one would 400 that host while `/_health` says 200. A trailing-dot request (`app.com.`) 400s.
+- [ ] ⚪ Host match skips ports only to protect the cache key (`url.origin`). Key the cache on the matched canonical host instead, then a bare host could allow any port again.
+- [ ] ⚪ `ALLOWED_HOSTS=,` (only separators) reads as unset, so any host, with no warning, while a bad entry stops the boot.
 - [ ] ⚪ `ALLOWED_HOSTS` is exact-match only; add `*.example.com` wildcards if a multi-tenant app needs them.
 - [ ] ⚪ `ALLOWED_HOSTS` is opt-in, so by default random hosts still fill the page cache. Skip cache writes for a non-canonical host, or cap entries per origin.
+- [ ] ⚪ `bosia build` doesn't check `ALLOWED_HOSTS`, so a bad entry passes CI and only stops the server at deploy. Validate it at build too.
+- [ ] ⚪ `/_health` is exempt inside `resolve()`, so `hooks.server` `handle` still sees any host there (as before 1.2.11). Answer it before hooks if a hook does per-host work.
 - [ ] ⚪ `backend.before` plugin routes skip the `ALLOWED_HOSTS` check (and CSRF); they don't use the page cache.
 
 ## bosia 1.2.10 (2026-10-26) — `bosia start` forwards stop signals
